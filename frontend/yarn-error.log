@@ -1,0 +1,51 @@
+Arguments: 
+  D:\NodeJs\node.exe D:\Yarn\bin\yarn.js
+
+PATH: 
+  D:\Program Files\Python311\Scripts\;D:\Program Files\Python311\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;D:\Repository\Npm\node_global;D:\Repository\Yarn\node_global\node_modules\.bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;D:\redis\;C:\ProgramData\chocolatey\bin;D:\微信web开发者工具\dll;D:\Yar;\bin\;D:\NodeJs\;D:\Program Files\Go\bin;D:\Program Files\Git\bin;C:\Users\Tangerg\AppData\Local\Microsoft\WindowsApps;"D:\Java\jdk1.8.0_172\bin;D:\Java\jdk1.8.0_172\jre\bin";D:\Microsoft VS Code\bin;D:\apache-maven-3.6.3\bin;D:\Repository\Npm\node_global;D:\MongoDB\Server\3.2\bin;D:\Git\cmd;C:\Program Files\MySQL\MySQL Server 5.7\bin;D:\JetBrains\IntelliJ IDEA 2021.2.2\bin;;D:\JetBrains\WebStorm 2021.2.3\bin;;D:\Yarn\bin;D:\Repository\Yarn\node_global\node_modules\.bin;D:\JetBrains\GoLand 2021.2.4\bin;;D:\Go\bin;D:\GoProject\bin;D:\ffmpeg\bin;C:\Program Files\OpenSSL-Win64\bin;D:\JetBrains\DataGrip 2022.3\bin;;D:\protoc-22.0-win64\bin;C:\Users\Tangerg\AppData\Local\Yarn\bin;C:\Users\Tangerg\AppData\Roaming\npm;D:\JetBrains\PyCharm 2023.1.2\bin;;C:\Users\Tangerg\go\bin;D:\Program Files\Git\bin;
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  18.16.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: certificate has expired
+      at TLSSocket.onConnectSecure (node:_tls_wrap:1540:34)
+      at TLSSocket.emit (node:events:513:28)
+      at TLSSocket._finishInit (node:_tls_wrap:959:8)
+      at ssl.onhandshakedone (node:_tls_wrap:743:12)
+
+npm manifest: 
+  {
+    "name": "frontend",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview"
+    },
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+      "@types/react": "^18.0.17",
+      "@types/react-dom": "^18.0.6",
+      "@vitejs/plugin-react": "^2.0.1",
+      "typescript": "^4.6.4",
+      "vite": "^3.0.7"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
