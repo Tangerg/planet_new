@@ -1,3 +1,5 @@
+import {createOnceFunction} from "../../shared-utils/function";
+
 export interface IEventEmitter {
     on(name: string, fn: Function, ctx?: Object): IEventEmitter
 
@@ -11,48 +13,56 @@ export interface IEventEmitter {
 }
 
 
-type IEventField = {
+type Listener = {
     fn: Function
     ctx: Object
 }
+type Listeners = Array<Readonly<Listener>>
 
 export class EventEmitter implements IEventEmitter {
 
-    private events: {
-        [name: string]: IEventField[]
-    }
+    private readonly events: Map<string, Listeners>
 
     constructor() {
-        this.events = {}
+        this.events = new Map()
     }
 
+    private mustGetListeners(name: string): Listeners {
+        return this.events.get(name) as Listeners
+    }
+
+
     on(name: string, fn: Function, ctx: Object = this): EventEmitter {
-        if (!Boolean(this.events[name])) {
-            this.events[name] = []
+        if (!this.events.has(name)) {
+            this.events.set(name, [])
         }
 
-        this.events[name].push({fn, ctx})
+        this.mustGetListeners(name).push({fn, ctx})
+
         return this
     }
 
     once(name: string, fn: Function, ctx: Object = this): EventEmitter {
-        return this.on(name, this.createOnceFunc(fn, ctx), ctx)
+        fn = createOnceFunction(fn)
+        return this.on(name, fn, ctx)
     }
 
     off(name: string, fn?: Function): EventEmitter {
-        const events = this.events[name]
-        if (!Boolean(events)) {
-            return this
-        }
-        if (!Boolean(fn)) {
-            this.events[name] = []
+        if (!this.events.has(name)) {
             return this
         }
 
-        let count = events.length
+        if (!Boolean(fn)) {
+            this.events.set(name, [])
+            return this
+        }
+
+        const listeners = this.mustGetListeners(name)
+
+        let count = listeners.length
         while (count--) {
-            if (events[count].fn === fn) {
-                events.splice(count, 1)
+            if (listeners[count].fn === fn) {
+                listeners.splice(count, 1)
             }
         }
 
@@ -60,29 +70,20 @@ export class EventEmitter implements IEventEmitter {
     }
 
     emit(name: string, ...args: any[]): void {
-        const events = this.events[name]
-        if (!Boolean(events)) {
-            return
+        if (!this.events.has(name)) {
+            return;
         }
-        events.forEach(event => {
-            if (!Boolean(event.fn)) {
-                event.fn.apply(event.ctx, args)
+        const listeners = this.mustGetListeners(name)
+
+        listeners.forEach(listener => {
+            if (!Boolean(listener.fn)) {
+                listener.fn.apply(listener.ctx, args)
             }
         })
     }
 
     clear() {
-        this.events = {}
-    }
-
-    private createOnceFunc(fn: Function, ctx: Object = this) {
-        let called = false
-        return function (this: any, ...args: any[]) {
-            if (!called) {
-                called = true
-                fn.apply(ctx, args)
-            }
-        }
+        this.events.clear()
     }
 
 }

@@ -8,15 +8,19 @@ export interface IPlanetPlugin {
     name(): string
 
     install(p: IPlanet): void
+
+    uninstall():void
 }
 
 export interface IPlanetOptions {
 }
 
 export interface IPlanet extends IEventEmitter {
-    readonly audioElement: HTMLAudioElement
+
+    readonly audioElement: HTMLAudioElement;
     readonly options: IPlanetOptions
     readonly providersManager: IProvidersManager
+    readonly eventEmitter: IEventEmitter
 
     applyTracks(Tracks: Track[]): void
 
@@ -43,15 +47,21 @@ export interface IPlanet extends IEventEmitter {
     changeVolume(v: number): void
 
     mute(): void
+
+
 }
 
 export class Planet extends EventEmitter implements IPlanet {
-    static plugins: IPlanetPlugin[] = []
+    private static plugins: IPlanetPlugin[] = []
+    private static instance: Planet | undefined = undefined
+
+
+    readonly plugins: IPlanetPlugin[]
 
     readonly audioElement: HTMLAudioElement;
-    readonly plugins: IPlanetPlugin[]
     readonly options: IPlanetOptions
     readonly providersManager: IProvidersManager
+    readonly eventEmitter: IEventEmitter
 
     static use(plugin: IPlanetPlugin) {
         const installed = Planet.plugins.some(
@@ -64,10 +74,18 @@ export class Planet extends EventEmitter implements IPlanet {
         return Planet
     }
 
+    static getInstance(options: IPlanetOptions = {}) {
+        if (!Planet.instance) {
+            Planet.instance = new Planet(options)
+        }
+        return Planet.instance
+    }
+
     constructor(options: IPlanetOptions = {}) {
         super();
         this.plugins = []
         this.providersManager = new ProvidersManager()
+        this.eventEmitter = new EventEmitter()
         this.options = options
         this.audioElement = new Audio()
         this.init()
@@ -79,10 +97,11 @@ export class Planet extends EventEmitter implements IPlanet {
             plugin.install(this)
             this.plugins.push(plugin)
         })
-        if (!Boolean(this.providersManager.getProvider())) {
+        if (!this.providersManager.current()) {
             const err = warn(`at least one provider is required`)
             throw new Error(err)
         }
+
     }
 
     applyTracks(Tracks: Track[]): void {

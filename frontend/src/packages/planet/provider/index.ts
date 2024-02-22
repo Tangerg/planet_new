@@ -3,115 +3,127 @@ import {warn} from "../../shared-utils/debug";
 
 
 export interface IProvider {
-    platform(): string
+    name(): string
 
     playlist(id: string): Promise<Track[]>
 }
 
 export interface IProvidersManager {
-    applyProviders(ps: IProvider[], p?: IProvider): void
+    apply(ps: IProvider[], p?: IProvider): void
 
-    clearProviders(): void
+    clear(): void
 
-    addProvider(p: IProvider): void
+    add(p: IProvider): void
 
-    removeProvider(name: string): void
+    remove(name: string): void
 
-    getProviders(): Readonly<Readonly<IProvider>[]>
+    all(): ReadonlyArray<Readonly<IProvider>>
 
-    getProvider(): Readonly<IProvider> | null
+    get(name: string): Readonly<IProvider> | null
 
-    useProvider(name: string): void
+    current(): Readonly<IProvider> | null
+
+    use(name: string): void
 }
 
 export class ProvidersManager implements IProvidersManager {
-    private providers: IProvider[] = []
-    private readonly providersMap: Map<string, IProvider> = new Map<string, IProvider>
-    private currentProvider: IProvider | null = null
+    private providers: IProvider[]
+    private readonly providersMap: Map<string, IProvider>
+    private currentProvider: IProvider | null
 
     constructor(ps?: IProvider[], p?: IProvider) {
+        this.providers = []
+        this.providersMap = new Map<string, IProvider>()
+        this.currentProvider = null
+
         if (ps && ps.length > 0) {
-            this.applyProviders(ps, p)
+            this.apply(ps, p)
         }
     }
 
 
-    private _removeProvider(name: string): void {
+    private removeProvider(name: string): void {
         this.providersMap.delete(name)
-        const idx = this.providers.findIndex((p) => p.platform() === name)
+        const idx = this.providers.findIndex((p) => p.name() === name)
         this.providers.splice(idx, 1)
-        if (this.currentProvider?.platform() === name) {
+        if (this.currentProvider?.name() === name) {
             this.currentProvider = this.providers[0]
         }
     }
 
-    private _useProviderOrDefault(name: string): void {
-        if (this.providersMap.has(name)) {
-            this.useProvider(name)
+    private setInitProvider(provider?: IProvider): void {
+        if (provider && this.providersMap.has(provider.name())) {
+            this.use(provider.name())
             return
         }
-
         if (this.providers.length > 0) {
-            this.useProvider(this.providers[0].platform())
+            this.use(this.providers[0].name())
         }
     }
 
-    clearProviders(): void {
+    clear(): void {
         this.currentProvider = null
         this.providersMap.clear()
         this.providers = []
     }
 
-    applyProviders(ps: IProvider[], p?: IProvider): void {
-        this.clearProviders()
+    apply(ps: IProvider[], p?: IProvider): void {
+        this.clear()
         ps.forEach(provider => {
-            this.addProvider(provider)
+            this.add(provider)
         })
-        const name = p ? p.platform() : ""
-        this._useProviderOrDefault(name)
-    }
-
-    getProviders(): readonly Readonly<IProvider>[] {
-        return this.providers
+        this.setInitProvider(p)
     }
 
 
-    addProvider(provider: IProvider): void {
-        if (provider.platform() === "") {
-            warn("the provider must have platform")
+    add(provider: IProvider): void {
+        if (provider.name() === "") {
+            warn("the provider must have a name")
             return;
         }
-        if (this.providersMap.has(provider.platform())) {
+        if (this.providersMap.has(provider.name())) {
+            warn(`the provider ${provider.name()} should be add only once`)
             return
         }
-        this.providersMap.set(provider.platform(), provider)
+        this.providersMap.set(provider.name(), provider)
         this.providers.push(provider)
     }
 
 
-    removeProvider(name: string): void {
+    remove(name: string): void {
         if (!this.providersMap.has(name)) {
             return
         }
         if (this.providersMap.size === 1) {
-            this.clearProviders()
+            this.clear()
             return
         }
-        this._removeProvider(name)
+        this.removeProvider(name)
     }
 
-    getProvider(): Readonly<IProvider> | null {
+    all(): ReadonlyArray<Readonly<IProvider>> {
+        return this.providers
+    }
+
+    get(name: string): Readonly<IProvider> | null {
+        if (!this.providersMap.has(name)) {
+            return null
+        }
+        return this.providersMap.get(name) as Readonly<IProvider>
+    }
+
+    current(): Readonly<IProvider> | null {
         return this.currentProvider
     }
 
-    useProvider(name: string): void {
+    use(name: string): void {
         if (!this.providersMap.has(name)) {
             return
         }
-        if (this.currentProvider?.platform() === name) {
+        if (this.currentProvider?.name() === name) {
             return
         }
-        this.currentProvider = this.providersMap.get(name) as IProvider
+        this.currentProvider = this.providersMap.get(name) as Readonly<IProvider>
     }
 
 }

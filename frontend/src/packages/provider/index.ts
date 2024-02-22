@@ -24,7 +24,7 @@ export class Provider extends Plugin {
     }
 
     init(): void {
-        this.planet.providersManager.applyProviders(this.providers, this.providers[0])
+        this.planet.providersManager.apply(this.providers, this.providers[0])
     }
 
 
