@@ -4,6 +4,10 @@ import {IProvider} from "../planet/provider";
 export const PlatformSpotify = " Spotify"
 
 export class Spotify implements IProvider {
+    id(): string {
+        return this.name()
+    }
+
     name(): string {
         return PlatformSpotify
     }

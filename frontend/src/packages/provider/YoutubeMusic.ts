@@ -4,6 +4,10 @@ import {IProvider} from "../planet/provider";
 export const PlatformYoutubeMusic = "YoutubeMusic"
 
 export class YoutubeMusic implements IProvider {
+    id(): string {
+        return this.name()
+    }
+
     name(): string {
         return PlatformYoutubeMusic
     }

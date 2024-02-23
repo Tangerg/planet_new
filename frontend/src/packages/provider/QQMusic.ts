@@ -4,6 +4,10 @@ import {IProvider} from "../planet/provider";
 export const PlatformQQMusic = "QQMusic"
 
 export class QQMusic implements IProvider {
+    id(): string {
+        return this.name()
+    }
+
     name(): string {
         return PlatformQQMusic
     }

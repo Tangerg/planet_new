@@ -4,6 +4,10 @@ import {IProvider} from "../planet/provider";
 export const PlatformNeteaseCloudMusic = "NeteaseCloudMusic"
 
 export class NeteaseCloudMusic implements IProvider {
+    id(): string {
+        return this.name()
+    }
+
     name(): string {
         return PlatformNeteaseCloudMusic
     }
