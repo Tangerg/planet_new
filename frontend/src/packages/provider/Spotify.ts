@@ -1,15 +1,12 @@
 import {Track} from "../planet/model/track";
-import {IProvider} from "../planet/provider";
+import AbstractProvider from "./provider";
 
-export const PlatformSpotify = " Spotify"
 
-export class Spotify implements IProvider {
-    id(): string {
-        return this.name()
-    }
+export class Spotify extends AbstractProvider {
+    public static Name = "Spotify"
 
     name(): string {
-        return PlatformSpotify
+        return Spotify.Name
     }
 
     playlist(id: string): Promise<Track[]> {

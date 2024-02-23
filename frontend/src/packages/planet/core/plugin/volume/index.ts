@@ -1,4 +1,4 @@
-import {Plugin} from "../plugin";
+import {AbstractPlugin} from "../abstract-plugin";
 
 export const volumeEvents = {
     mute: "mute",
@@ -7,7 +7,7 @@ export const volumeEvents = {
     volumeChanged: "volume-changed"
 }
 
-export class Volume extends Plugin {
+export class Volume extends AbstractPlugin {
     private preVolume: number = 0
 
 

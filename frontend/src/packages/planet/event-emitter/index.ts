@@ -1,17 +1,5 @@
 import {createOnceFunction} from "../../shared-utils/function";
-
-export interface IEventEmitter {
-    on(name: string, fn: Function, ctx?: Object): IEventEmitter
-
-    once(name: string, fn: Function, ctx?: Object): IEventEmitter
-
-    off(name: string, fn?: Function): IEventEmitter
-
-    emit(name: string, ...args: any[]): void
-
-    clear(): void
-}
-
+import {IEventEmitter} from "../core";
 
 type Listener = {
     fn: Function
@@ -24,7 +12,7 @@ export class EventEmitter implements IEventEmitter {
     private readonly events: Map<string, Listeners>
 
     constructor() {
-        this.events = new Map()
+        this.events = new Map<string, Listeners>()
     }
 
     private mustGetListeners(name: string): Listeners {

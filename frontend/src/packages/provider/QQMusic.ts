@@ -1,15 +1,12 @@
 import {Track} from "../planet/model/track";
-import {IProvider} from "../planet/provider";
+import AbstractProvider from "./provider";
 
-export const PlatformQQMusic = "QQMusic"
 
-export class QQMusic implements IProvider {
-    id(): string {
-        return this.name()
-    }
+export class QQMusic extends AbstractProvider {
+    public static Name: string = "QQMusic"
 
     name(): string {
-        return PlatformQQMusic
+        return QQMusic.Name
     }
 
     playlist(id: string): Promise<Track[]> {

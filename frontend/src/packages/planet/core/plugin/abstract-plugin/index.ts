@@ -1,7 +1,8 @@
-import {IPlanet, IPlanetPlugin} from "../planet";
-import {warn} from "../../../shared-utils/debug";
+import {warn} from "../../../../shared-utils/debug";
+import {IPlanet, IPlugin} from "../../types";
 
-export abstract class Plugin implements IPlanetPlugin {
+export abstract class AbstractPlugin implements IPlugin {
+
     private installed: boolean = false
     protected planet!: IPlanet
 
@@ -10,6 +11,10 @@ export abstract class Plugin implements IPlanetPlugin {
     }
 
     abstract init(): void
+
+    get id(): string {
+        return this.name()
+    }
 
     abstract name(): string
 

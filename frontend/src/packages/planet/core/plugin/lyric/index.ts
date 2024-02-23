@@ -1,4 +1,4 @@
-import {Plugin} from "../plugin";
+import {AbstractPlugin} from "../abstract-plugin";
 import {Lyric as LyricModel} from "../../../model/lyric";
 
 class LyricContext {
@@ -116,7 +116,7 @@ class LyricPlayStateStop extends LyricPlayState {
     }
 }
 
-export class Lyric extends Plugin {
+export class Lyric extends AbstractPlugin {
     private readonly ctx: LyricContext
     private currentPlayState!: LyricPlayState
 
@@ -132,7 +132,6 @@ export class Lyric extends Plugin {
 
 
     init(): void {
-        throw new Error("Method not implemented.");
     }
 
     apply(lyrics: LyricModel[]): void {

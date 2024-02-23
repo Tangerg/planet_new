@@ -1,4 +1,4 @@
-import {Plugin} from "../plugin";
+import {AbstractPlugin} from "../abstract-plugin";
 
 export const playEvents = {
     play: "play",
@@ -10,7 +10,7 @@ export const playEvents = {
     seeked: "seeked"
 }
 
-export class Play extends Plugin {
+export class Play extends AbstractPlugin {
 
     constructor() {
         super();

@@ -1,15 +1,11 @@
 import {Track} from "../planet/model/track";
-import {IProvider} from "../planet/provider";
+import AbstractProvider from "./provider";
 
-export const PlatformYoutubeMusic = "YoutubeMusic"
-
-export class YoutubeMusic implements IProvider {
-    id(): string {
-        return this.name()
-    }
+export class YoutubeMusic extends AbstractProvider {
+    public static Name: string = "YoutubeMusic"
 
     name(): string {
-        return PlatformYoutubeMusic
+        return YoutubeMusic.Name
     }
 
     playlist(id: string): Promise<Track[]> {

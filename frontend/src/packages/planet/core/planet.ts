@@ -1,69 +1,29 @@
-import {EventEmitter, IEventEmitter} from "../event-emitter";
-import {Track} from "../model/track";
-import {IProvidersManager, ProvidersManager} from "../provider";
+import {
+    IEventEmitter,
+    IPlanet,
+    IPlanetOptions,
+    IPlugin,
+    IPluginManager,
+    IProvidersManager,
+} from "./types";
+import {EventEmitter} from "../event-emitter";
+import {ProvidersManager} from "../provider";
 import {warn} from "../../shared-utils/debug";
+import {PluginManager} from "./plugin";
 
-
-export interface IPlanetPlugin {
-    name(): string
-
-    install(p: IPlanet): void
-
-    uninstall():void
-}
-
-export interface IPlanetOptions {
-}
-
-export interface IPlanet extends IEventEmitter {
-
-    readonly audioElement: HTMLAudioElement;
-    readonly options: IPlanetOptions
-    readonly providersManager: IProvidersManager
-    readonly eventEmitter: IEventEmitter
-
-    applyTracks(Tracks: Track[]): void
-
-    addTrack(t: Track): void
-
-    removeTrack(t: Track): void
-
-    clearTracks(): void
-
-    changePlayMode(): void
-
-    prevTrack(): void
-
-    nextTrack(): void
-
-    selectTrack(t: Track): void
-
-    play(): void
-
-    pause(): void
-
-    seek(t: number): void
-
-    changeVolume(v: number): void
-
-    mute(): void
-
-
-}
 
 export class Planet extends EventEmitter implements IPlanet {
-    private static plugins: IPlanetPlugin[] = []
-    private static instance: Planet | undefined = undefined
+    private static plugins: IPlugin[] = []
+    private static instance: Planet | null = null
 
-
-    readonly plugins: IPlanetPlugin[]
 
     readonly audioElement: HTMLAudioElement;
     readonly options: IPlanetOptions
-    readonly providersManager: IProvidersManager
     readonly eventEmitter: IEventEmitter
+    readonly pluginManager: IPluginManager;
+    readonly providersManager: IProvidersManager
 
-    static use(plugin: IPlanetPlugin) {
+    static use(plugin: IPlugin) {
         const installed = Planet.plugins.some(
             p => p.name() === plugin.name()
         )
@@ -83,11 +43,13 @@ export class Planet extends EventEmitter implements IPlanet {
 
     constructor(options: IPlanetOptions = {}) {
         super();
-        this.plugins = []
-        this.providersManager = new ProvidersManager()
-        this.eventEmitter = new EventEmitter()
-        this.options = options
         this.audioElement = new Audio()
+        this.options = options
+        this.eventEmitter = new EventEmitter()
+        this.providersManager = new ProvidersManager()
+        this.pluginManager = new PluginManager()
+
+
         this.init()
     }
 
@@ -95,65 +57,13 @@ export class Planet extends EventEmitter implements IPlanet {
     private init() {
         Planet.plugins.forEach(plugin => {
             plugin.install(this)
-            this.plugins.push(plugin)
+            this.pluginManager.add(plugin)
         })
         if (!this.providersManager.current()) {
             const err = warn(`at least one provider is required`)
             throw new Error(err)
         }
 
-    }
-
-    applyTracks(Tracks: Track[]): void {
-        throw new Error("Method not implemented.");
-    }
-
-    addTrack(t: Track): void {
-        throw new Error("Method not implemented.");
-    }
-
-    removeTrack(t: Track): void {
-        throw new Error("Method not implemented.");
-    }
-
-    clearTracks(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    changePlayMode(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    prevTrack(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    nextTrack(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    selectTrack(t: Track): void {
-        throw new Error("Method not implemented.");
-    }
-
-    play(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    pause(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    seek(t: number): void {
-        throw new Error("Method not implemented.");
-    }
-
-    changeVolume(v: number): void {
-        throw new Error("Method not implemented.");
-    }
-
-    mute(): void {
-        throw new Error("Method not implemented.");
     }
 
 

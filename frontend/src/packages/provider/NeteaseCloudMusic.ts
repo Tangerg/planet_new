@@ -1,15 +1,12 @@
 import {Track} from "../planet/model/track";
-import {IProvider} from "../planet/provider";
+import AbstractProvider from "./provider";
 
-export const PlatformNeteaseCloudMusic = "NeteaseCloudMusic"
 
-export class NeteaseCloudMusic implements IProvider {
-    id(): string {
-        return this.name()
-    }
+export class NeteaseCloudMusic extends AbstractProvider {
+    public static Name: string = "NeteaseCloudMusic"
 
     name(): string {
-        return PlatformNeteaseCloudMusic
+        return NeteaseCloudMusic.Name
     }
 
     playlist(id: string): Promise<Track[]> {

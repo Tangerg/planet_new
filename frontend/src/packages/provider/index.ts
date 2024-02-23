@@ -1,11 +1,11 @@
-import {Plugin} from "../planet/core";
-import {IProvider} from "../planet/provider";
+import {AbstractPlugin} from "../planet/core";
 import QQMusic from "./QQMusic";
 import NeteaseCloudMusic from "./NeteaseCloudMusic";
 import Spotify from "./Spotify";
 import YoutubeMusic from "./YoutubeMusic";
+import {IProvider} from "../planet/core";
 
-export class Provider extends Plugin {
+export class Provider extends AbstractPlugin {
     private readonly providers: IProvider[]
 
     constructor() {

@@ -1,102 +1,62 @@
 import {warn} from "../../shared-utils/debug";
-
-export interface IManageable {
-    id(): string
-}
-
-export interface IManager<T extends IManageable> {
-    apply(ts: T[], t?: T): void
-
-    clear(): void
-
-    add(t: T): void
-
-    remove(id: string): void
-
-    all(): ReadonlyArray<Readonly<T>>
-
-    get(id: string): Readonly<T> | null
-
-    current(): Readonly<T> | null
-
-    use(id: string): void
-}
+import {IManageable, IManager, IUseableManager} from "../core";
 
 export abstract class AbstractManager<T extends IManageable> implements IManager<T> {
     private storeArray: T[]
     private readonly storeMap: Map<string, T>
-    private _current: T | null
 
-    protected constructor(ts?: T[], t?: T) {
+
+    protected constructor() {
         this.storeArray = []
         this.storeMap = new Map<string, T>()
-        this._current = null
-        if (ts && ts.length > 0) {
-            this.apply(ts, t)
-        }
     }
 
-    private setCurrent(t: T): void {
-        this._current = t
+
+    private addItem(t: T): void {
+        this.storeMap.set(t.id, t)
+        this.storeArray.push(t)
     }
 
-    private removeItem(id: string): void {
+
+    protected removeItem(id: string): number {
         if (this.storeArray.length == 1) {
             this.clear()
-            return
+            return 0
         }
 
         this.storeMap.delete(id)
-        let idx = this.storeArray.findIndex((t) => t.id() === id)
+        let idx = this.storeArray.findIndex((t) => t.id === id)
         this.storeArray.splice(idx, 1)
 
-        if (this.storeArray.length <= idx) {
-            idx = 0
-        }
-        if (this._current?.id() === id) {
-            this.setCurrent(this.storeArray[idx])
-        }
+        return idx
     }
 
-    private setInitCurrent(t?: T): void {
-        if (t && this.storeMap.has(t.id())) {
-            this.setCurrent(t)
-            return
-        }
-        if (this.storeArray.length > 0) {
-            this.setCurrent(this.storeArray[0])
-        }
-    }
-
-    apply(ts: T[], t?: T): void {
+    apply(ts: T[], t?: T | undefined | null): void {
         this.clear()
         ts.forEach(t => {
             this.add(t)
         })
-        this.setInitCurrent(t)
     }
 
     clear(): void {
         this.storeMap.clear()
         this.storeArray = []
-        this._current = null
     }
 
     add(t: T): void {
-        if (t.id() === "") {
-            warn("the item must have a id")
+        if (t.id === "") {
+            warn("the item must have an id")
             return
         }
-        if (this.storeMap.has(t.id())) {
-            warn(`the item ${t.id()} should be add only once`)
+        if (this.has(t.id)) {
+            warn(`the item ${t.id} should be add only once`)
             return
         }
-        this.storeMap.set(t.id(), t)
-        this.storeArray.push(t)
+        this.addItem(t)
     }
 
     remove(id: string): void {
-        if (!this.storeMap.has(id)) {
+        if (!this.has(id)) {
             return
         }
         this.removeItem(id)
@@ -107,10 +67,71 @@ export abstract class AbstractManager<T extends IManageable> implements IManager
     }
 
     get(id: string): Readonly<T> | null {
-        if (!this.storeMap.has(id)) {
+        if (!this.has(id)) {
             return null
         }
-        return this.storeMap.get(id) as Readonly<T>
+        return assert(this.storeMap.get(id))
+    }
+
+    has(id: string): boolean {
+        return this.storeMap.has(id)
+    }
+
+    get size(): number {
+        return this.storeArray.length
+    }
+}
+
+export abstract class AbstractUseableManager<T extends IManageable> extends AbstractManager<T> implements IUseableManager<T> {
+    private _current: T | null
+    private readonly covering: "head" | "tail"
+
+    protected constructor(covering: "head" | "tail" = "tail") {
+        super();
+        this._current = null
+        this.covering = covering
+    }
+
+    private setInitCurrent(t?: T | undefined | null): void {
+        if (t && this.has(t.id)) {
+            this.use(t.id)
+            return
+        }
+        if (this.size > 0) {
+            this.use(this.all()[0].id)
+        }
+    }
+
+    protected removeItem(id: string): number {
+
+        let idx = super.removeItem(id);
+
+        if (this.current()?.id !== id) {
+            return idx
+        }
+
+        if (this.size <= idx) {
+            if (this.covering === "head") {
+                idx = 0
+            } else if (this.covering === "tail") {
+                idx = this.size - 1
+            } else {
+                idx = this.size - 1
+            }
+        }
+        this.use(this.all()[idx].id)
+        return idx
+    }
+
+
+    apply(ts: T[], t?: T | undefined | null) {
+        super.apply(ts, t);
+        this.setInitCurrent(t)
+    }
+
+    clear(): void {
+        super.clear()
+        this._current = null
     }
 
     current(): Readonly<T> | null {
@@ -118,15 +139,14 @@ export abstract class AbstractManager<T extends IManageable> implements IManager
     }
 
     use(id: string): void {
-        if (!this.storeMap.has(id)) {
+        if (!this.has(id)) {
             return
         }
-        if (this.current()?.id() === id) {
+        if (this.current()?.id === id) {
             return
         }
-        this.setCurrent(this.storeMap.get(id) as T)
+        this._current = this.get(id)
     }
-
 }
 
-export default AbstractManager
+export default AbstractUseableManager
