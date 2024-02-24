@@ -1,5 +1,6 @@
-import {createOnceFunction} from "../../shared-utils/function";
-import {IEventEmitter} from "../core";
+import {createOnceFunction} from "../../../shared-utils/function";
+import {IEventMap, IEventListener, IEventEmitter} from "../types";
+
 
 type Listener = {
     fn: Function
@@ -7,20 +8,20 @@ type Listener = {
 }
 type Listeners = Array<Readonly<Listener>>
 
-export class EventEmitter implements IEventEmitter {
+export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
 
-    private readonly events: Map<string, Listeners>
+    private readonly events: Map<keyof E, Listeners>
 
     constructor() {
         this.events = new Map<string, Listeners>()
     }
 
-    private mustGetListeners(name: string): Listeners {
+    private mustGetListeners(name: keyof E): Listeners {
         return this.events.get(name) as Listeners
     }
 
 
-    on(name: string, fn: Function, ctx: Object = this): EventEmitter {
+    on<T extends keyof E>(name: T, fn: IEventListener<E, T>, ctx: Object = this): EventEmitter<E> {
         if (!this.events.has(name)) {
             this.events.set(name, [])
         }
@@ -30,12 +31,12 @@ export class EventEmitter implements IEventEmitter {
         return this
     }
 
-    once(name: string, fn: Function, ctx: Object = this): EventEmitter {
+    once<T extends keyof E>(name: T, fn: IEventListener<E, T>, ctx: Object = this): EventEmitter<E> {
         fn = createOnceFunction(fn)
         return this.on(name, fn, ctx)
     }
 
-    off(name: string, fn?: Function): EventEmitter {
+    off<T extends keyof E>(name: T, fn?: IEventListener<E, T>): EventEmitter<E> {
         if (!this.events.has(name)) {
             return this
         }
@@ -57,7 +58,7 @@ export class EventEmitter implements IEventEmitter {
         return this
     }
 
-    emit(name: string, ...args: any[]): void {
+    emit<T extends keyof E>(name: T, arg?: E[T]): void {
         if (!this.events.has(name)) {
             return;
         }
@@ -65,7 +66,7 @@ export class EventEmitter implements IEventEmitter {
 
         listeners.forEach(listener => {
             if (!Boolean(listener.fn)) {
-                listener.fn.apply(listener.ctx, args)
+                listener.fn.apply(listener.ctx, arg)
             }
         })
     }

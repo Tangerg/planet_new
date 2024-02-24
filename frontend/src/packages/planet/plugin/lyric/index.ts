@@ -1,5 +1,5 @@
-import {AbstractPlugin} from "../abstract-plugin";
-import {Lyric as LyricModel} from "../../../model/lyric";
+import {Plugin} from "../plugin";
+import {Lyric as LyricModel} from "../../model/lyric";
 
 class LyricContext {
     readonly lyric: Lyric
@@ -116,7 +116,7 @@ class LyricPlayStateStop extends LyricPlayState {
     }
 }
 
-export class Lyric extends AbstractPlugin {
+export class Lyric extends Plugin {
     private readonly ctx: LyricContext
     private currentPlayState!: LyricPlayState
 

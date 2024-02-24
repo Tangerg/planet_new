@@ -1,11 +1,11 @@
-import {Track} from "../../../model/track";
-import {IQueue, Playmode} from "../../types";
-import {AbstractUseableManager} from "../../../manager";
-import {AbstractPlugin} from "../abstract-plugin";
-import {shuffleArray} from "../../../../shared-utils/math";
+import {Track} from "../../model/track";
+import {IQueue, Playmode} from "../../core";
+import {UseableManager} from "../../core";
+import {Plugin} from "../plugin";
+import {shuffleArray} from "../../../shared-utils/math";
 
 
-class Queue extends AbstractUseableManager<Track> implements IQueue {
+class Queue extends UseableManager<Track> implements IQueue {
     private currentIndex: number
 
     constructor() {
@@ -56,7 +56,7 @@ class Queue extends AbstractUseableManager<Track> implements IQueue {
 }
 
 
-export class QueuePlugin extends AbstractPlugin implements IQueue {
+export class QueuePlugin extends Plugin implements IQueue {
     private playmode: Playmode
     private queue: Queue
 

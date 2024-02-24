@@ -1,11 +1,19 @@
-export interface IEventEmitter {
-    on(name: string, fn: Function, ctx?: Object): IEventEmitter
+import {IClearable} from "./base";
 
-    once(name: string, fn: Function, ctx?: Object): IEventEmitter
+export interface IEventMap {
+    [name: string]: any
+}
 
-    off(name: string, fn?: Function): IEventEmitter
+export interface IEventListener<E extends IEventMap, K extends keyof E> extends Function {
+    (arg?: E[K]): void
+}
 
-    emit(name: string, ...args: any[]): void
+export interface IEventEmitter<E extends IEventMap> extends IClearable {
+    on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: Object): IEventEmitter<E>
 
-    clear(): void
+    once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: Object): IEventEmitter<E>
+
+    off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E>
+
+    emit<K extends keyof E>(name: K, arg?: E[K]): void
 }

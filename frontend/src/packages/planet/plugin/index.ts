@@ -1,5 +1,4 @@
-export * from "./abstract-plugin"
+export * from "./plugin"
 export * from "./play"
 export * from "./volume"
 export * from "./lyric"
-export * from "./manager"

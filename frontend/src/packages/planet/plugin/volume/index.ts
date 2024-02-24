@@ -1,4 +1,4 @@
-import {AbstractPlugin} from "../abstract-plugin";
+import {Plugin} from "../plugin";
 
 export const volumeEvents = {
     mute: "mute",
@@ -7,7 +7,7 @@ export const volumeEvents = {
     volumeChanged: "volume-changed"
 }
 
-export class Volume extends AbstractPlugin {
+export class Volume extends Plugin {
     private preVolume: number = 0
 
 
@@ -16,14 +16,14 @@ export class Volume extends AbstractPlugin {
     }
 
     init() {
-        this.planet.on(volumeEvents.changeVolume, this.volume)
-        this.planet.on(volumeEvents.mute, this.mute)
+        this.planet.eventEmitter.on(volumeEvents.changeVolume, this.volume)
+        this.planet.eventEmitter.on(volumeEvents.mute, this.mute)
     }
 
     volume(v: number): void {
         this.preVolume = this.planet.audioElement.volume
         this.planet.audioElement.volume = v
-        this.planet.emit(volumeEvents.volumeChanged, v)
+        this.planet.eventEmitter.emit(volumeEvents.volumeChanged, v)
     }
 
     mute(): void {

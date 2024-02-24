@@ -5,3 +5,7 @@ export interface IIDable {
 export interface IDispose {
     dispose(): void
 }
+
+export interface IClearable {
+    clear(): void
+}

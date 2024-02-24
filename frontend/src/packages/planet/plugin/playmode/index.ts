@@ -1,7 +1,7 @@
-import {Playmode as PlaymodeType} from "../../types"
-import {AbstractPlugin} from "../abstract-plugin";
+import {Playmode as PlaymodeType} from "../../core"
+import {Plugin} from "../plugin";
 
-class Playmode extends AbstractPlugin {
+class Playmode extends Plugin {
     private currentIndex: number = 0
     private models: PlaymodeType[] = ["sequence", "queue", "repeat", "shuffle"]
 

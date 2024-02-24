@@ -5,32 +5,31 @@ import {
     IPlugin,
     IPluginManager,
     IProvidersManager,
-} from "./types";
+} from "../types";
 import {EventEmitter} from "../event-emitter";
-import {ProvidersManager} from "../provider";
-import {warn} from "../../shared-utils/debug";
-import {PluginManager} from "./plugin";
+import {ProvidersManager} from "../manager";
+import {PluginManager} from "../manager";
+import {warn} from "../../../shared-utils/debug";
+import {EventMap} from "../event";
 
 
-export class Planet extends EventEmitter implements IPlanet {
-    private static plugins: IPlugin[] = []
+export class Planet implements IPlanet {
+    private static plugins: IPluginManager = new PluginManager()
     private static instance: Planet | null = null
 
 
     readonly audioElement: HTMLAudioElement;
     readonly options: IPlanetOptions
-    readonly eventEmitter: IEventEmitter
+    readonly eventEmitter: IEventEmitter<EventMap>
     readonly pluginManager: IPluginManager;
     readonly providersManager: IProvidersManager
 
     static use(plugin: IPlugin) {
-        const installed = Planet.plugins.some(
-            p => p.name() === plugin.name()
-        )
-        if (installed) {
+
+        if (Planet.plugins.has(plugin.id)) {
             return Planet
         }
-        Planet.plugins.push(plugin)
+        Planet.plugins.add(plugin)
         return Planet
     }
 
@@ -42,20 +41,18 @@ export class Planet extends EventEmitter implements IPlanet {
     }
 
     constructor(options: IPlanetOptions = {}) {
-        super();
         this.audioElement = new Audio()
         this.options = options
         this.eventEmitter = new EventEmitter()
         this.providersManager = new ProvidersManager()
         this.pluginManager = new PluginManager()
 
-
         this.init()
     }
 
 
     private init() {
-        Planet.plugins.forEach(plugin => {
+        Planet.plugins.all().forEach(plugin => {
             plugin.install(this)
             this.pluginManager.add(plugin)
         })
@@ -63,7 +60,6 @@ export class Planet extends EventEmitter implements IPlanet {
             const err = warn(`at least one provider is required`)
             throw new Error(err)
         }
-
     }
 
 

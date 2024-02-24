@@ -1,4 +1,4 @@
-import {AbstractPlugin} from "../abstract-plugin";
+import {Plugin} from "../plugin";
 
 export const playEvents = {
     play: "play",
@@ -10,7 +10,7 @@ export const playEvents = {
     seeked: "seeked"
 }
 
-export class Play extends AbstractPlugin {
+export class Play extends Plugin {
 
     constructor() {
         super();
@@ -21,24 +21,24 @@ export class Play extends AbstractPlugin {
     }
 
     init(): void {
-        this.planet.on(playEvents.play, this.play)
-        this.planet.on(playEvents.pause, this.pause)
-        this.planet.on(playEvents.seek, this.seek)
+        this.planet.eventEmitter.on(playEvents.play, this.play)
+        this.planet.eventEmitter.on(playEvents.pause, this.pause)
+        this.planet.eventEmitter.on(playEvents.seek, this.seek)
     }
 
     async play(): Promise<void> {
         await this.planet.audioElement.play()
-        this.planet.emit(playEvents.played)
+        this.planet.eventEmitter.emit(playEvents.played)
     }
 
     pause(): void {
         this.planet.audioElement.pause()
-        this.planet.emit(playEvents.paused)
+        this.planet.eventEmitter.emit(playEvents.paused)
     }
 
     seek(t: number): void {
         this.planet.audioElement.currentTime = t
-        this.planet.emit(playEvents.seeked)
+        this.planet.eventEmitter.emit(playEvents.seeked)
     }
 }
 

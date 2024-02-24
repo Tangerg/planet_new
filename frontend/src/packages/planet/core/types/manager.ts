@@ -1,12 +1,10 @@
-import {IIDable} from "./base";
+import {IClearable, IIDable} from "./base";
 
 export interface IManageable extends IIDable {
 }
 
-export interface IManager<T extends IManageable> {
+export interface IManager<T extends IManageable> extends IClearable {
     apply(ts: T[], t?: T | undefined | null): void
-
-    clear(): void
 
     add(t: T): void
 

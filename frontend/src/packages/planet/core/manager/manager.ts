@@ -1,7 +1,7 @@
-import {warn} from "../../shared-utils/debug";
-import {IManageable, IManager, IUseableManager} from "../core";
+import {warn} from "../../../shared-utils/debug";
+import {IManageable, IManager, IUseableManager} from "../types";
 
-export abstract class AbstractManager<T extends IManageable> implements IManager<T> {
+export abstract class Manager<T extends IManageable> implements IManager<T> {
     private storeArray: T[]
     private readonly storeMap: Map<string, T>
 
@@ -70,7 +70,7 @@ export abstract class AbstractManager<T extends IManageable> implements IManager
         if (!this.has(id)) {
             return null
         }
-        return assert(this.storeMap.get(id))
+        return this.storeMap.get(id) as T
     }
 
     has(id: string): boolean {
@@ -82,7 +82,7 @@ export abstract class AbstractManager<T extends IManageable> implements IManager
     }
 }
 
-export abstract class AbstractUseableManager<T extends IManageable> extends AbstractManager<T> implements IUseableManager<T> {
+export abstract class UseableManager<T extends IManageable> extends Manager<T> implements IUseableManager<T> {
     private _current: T | null
     private readonly covering: "head" | "tail"
 
@@ -104,22 +104,24 @@ export abstract class AbstractUseableManager<T extends IManageable> extends Abst
 
     protected removeItem(id: string): number {
 
-        let idx = super.removeItem(id);
+        const idx = super.removeItem(id);
 
         if (this.current()?.id !== id) {
             return idx
         }
 
-        if (this.size <= idx) {
+        let useIdx = idx
+        if (this.size <= useIdx) {
             if (this.covering === "head") {
-                idx = 0
+                useIdx = 0
             } else if (this.covering === "tail") {
-                idx = this.size - 1
+                useIdx = this.size - 1
             } else {
-                idx = this.size - 1
+                useIdx = this.size - 1
             }
         }
-        this.use(this.all()[idx].id)
+        this.use(this.all()[useIdx].id)
+
         return idx
     }
 
@@ -149,4 +151,4 @@ export abstract class AbstractUseableManager<T extends IManageable> extends Abst
     }
 }
 
-export default AbstractUseableManager
+export default UseableManager

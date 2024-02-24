@@ -1,7 +1,7 @@
-import {warn} from "../../../../shared-utils/debug";
-import {IPlanet, IPlugin} from "../../types";
+import {warn} from "../../../shared-utils/debug";
+import {IPlanet, IPlugin} from "../../core";
 
-export abstract class AbstractPlugin implements IPlugin {
+export abstract class Plugin implements IPlugin {
 
     private installed: boolean = false
     protected planet!: IPlanet
