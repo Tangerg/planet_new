@@ -4,8 +4,20 @@ import './App.css';
 import './index.css';
 import {Greet} from "../wailsjs/go/main/App";
 import {Button} from "@nextui-org/react";
-
+import planet from "./planet";
+planet.eventEmitter.on("ADDTRACK",(arg)=>{
+    console.log("app")
+    console.log(arg)
+    console.log(arg?.id)
+    console.log(arg?.name)
+})
+planet.eventEmitter.on("ADDTRACK1",(arg)=>{
+    console.log("app")
+    console.log(arg)
+})
 function App() {
+
+
     const [resultText, setResultText] = useState("Please enter your name below 👇");
     const [name, setName] = useState('');
     const updateName = (e: any) => setName(e.target.value);
@@ -25,7 +37,15 @@ function App() {
             <div id="input" className="input-box">
                 <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
                 <button className="btn" onClick={greet}>Greet</button>
-                <Button color="primary">
+                <Button color="primary" onClick={()=>{
+                    planet.eventEmitter.emit("ADDTRACK",{
+                        coverURL: "sad",
+                        name: "ddd",
+                        playURL: "ddds",
+                        id:"asdas"
+                    })
+                    planet.eventEmitter.emit("ADDTRACK1",5)
+                }}>
                     Button
                 </Button>
             </div>

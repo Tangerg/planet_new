@@ -65,8 +65,8 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
         const listeners = this.mustGetListeners(name)
 
         listeners.forEach(listener => {
-            if (!Boolean(listener.fn)) {
-                listener.fn.apply(listener.ctx, arg)
+            if (Boolean(listener.fn)) {
+                listener.fn.call(listener.ctx, arg)
             }
         })
     }
