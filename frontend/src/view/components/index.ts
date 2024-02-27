@@ -1,0 +1,5 @@
+import "./"
+import Player from "./player";
+export {
+    Player
+}
