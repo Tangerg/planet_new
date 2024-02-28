@@ -1,11 +1,16 @@
 import {FC} from "react";
-import {Player} from "../../components";
+import "./index.styl"
+import {Menu, Player,Content,Header} from "../../components";
 
 const Layout:FC = ()=>{
-    return <main>
-        <header/>
-        <aside/>
-        <div/>
+    return <main className={"planet"}>
+        <div className={"planet-main"}>
+            <Menu/>
+            <div className={"planet-main-right"}>
+                <Header/>
+                <Content/>
+            </div>
+        </div>
         <Player/>
     </main>
 }

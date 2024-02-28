@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@icon-park/react": "^1.4.2",
     "@nextui-org/react": "^2.2.9",
     "classnames": "^2.5.1",
     "framer-motion": "^11.0.6",

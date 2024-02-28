@@ -1,6 +1,7 @@
 import {FC} from "react";
 import {Slider} from "@nextui-org/react";
 import classnames from "classnames"
+import {Entertainment, GoEnd, GoStart, MenuUnfold, MicrophoneOne, Play, PlayOnce} from "@icon-park/react";
 
 interface MiddleControlsProps {
 
@@ -33,32 +34,40 @@ const ProgressSlider: FC = () => {
 }
 
 
-const ActionPlayPause: FC = () => {
-    return <div>PlayPause</div>
+const PlayPause: FC = () => {
+    return <button className={"action-btn"}>
+        <Play theme="filled" size={40} fill="#4a90e2"  strokeWidth={4} strokeLinejoin="miter" strokeLinecap="butt"/>
+    </button>
 }
 
-interface ActionQueueProps {
-    type: "previous" | "next"
-}
 
-const ActionQueue: FC<ActionQueueProps> = (props) => {
-    const {type} = props
-    return <div>
-        {type}
-    </div>
+const QueuePrevious: FC = (props) => {
+    return <button className={"action-btn"}>
+        <GoStart theme="filled" size={25} fill="#4a90e2"  strokeWidth={3} strokeLinejoin="miter" strokeLinecap="butt"/>
+    </button>
 }
-const ActionPlayMode: FC = () => {
-    return <div>
-        PlayMode
-    </div>
+const QueueNext: FC = (props) => {
+    return <button className={"action-btn"}>
+        <GoEnd theme="filled" size={25} fill="#4a90e2"  strokeWidth={3} strokeLinejoin="miter" strokeLinecap="butt"/>
+    </button>
+}
+const PlayMode: FC = () => {
+    return <button className={"action-btn"}>
+        <PlayOnce theme="filled" size={25} fill="#4a90e2"  strokeWidth={3} strokeLinejoin="miter" strokeLinecap="butt"/>
+    </button>
+}
+const Lyric: FC = () => {
+    return <button className={"action-btn"}>
+        <Entertainment theme="filled" size={25} fill="#4a90e2"  strokeWidth={3} strokeLinejoin="miter" strokeLinecap="butt"/>
+    </button>
 }
 const Actions: FC = () => {
     return <div className={"middle-controls_actions"}>
-        <ActionPlayMode/>
-        <ActionQueue type={"previous"}/>
-        <ActionPlayPause/>
-        <ActionQueue type={"next"}/>
-        <ActionPlayMode/>
+        <PlayMode/>
+        <QueuePrevious/>
+        <PlayPause/>
+        <QueueNext/>
+        <Lyric/>
     </div>
 }
 
