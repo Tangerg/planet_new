@@ -1,17 +1,14 @@
-@import "../var.styl"
+@import "../../var.styl"
 side-margin = 20px
 item-gap = 10px
 item-gap2 = item-gap+ 5px
 .player
-  height footer-height
-  width auto
-  background-color white
+  height planet-main-footer-height
+  background-color #fbdcdc
   user-select none
-  border 1px solid black
 
   .player-wrapper
     height 100%
-    width 100%
     display flex
     flex-direction row
     justify-content space-between
@@ -59,7 +56,6 @@ item-gap2 = item-gap+ 5px
 
       .middle-controls
         height 100%
-        width 100%
         display flex
         flex-direction column
         justify-content space-evenly
@@ -76,11 +72,13 @@ item-gap2 = item-gap+ 5px
           margin 0 auto
 
           .middle-controls_progress-slider-time
-          .middle-controls_progress-slider-time-left
-          .middle-controls_progress-slider-time-right
-            color red
+            color black
             font-weight 400
-            font-size 13px
+            font-size 12px
+          .middle-controls_progress-slider-time-left
+            opacity 0.6
+          .middle-controls_progress-slider-time-right
+            opacity 0.9
 
 
     .right-controls-wrapper

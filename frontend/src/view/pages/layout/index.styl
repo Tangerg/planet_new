@@ -1,12 +1,11 @@
+@import "./var.styl"
 .planet
-  width 100%
-  height 100%
-  min-width 880px
-  min-height 640px
+  min-width planet-min-width
+  min-height planet-min-height
   display flex
   flex-direction column
   .planet-main
-    min-height calc(800px - 80px)
+    min-height planet-main-body-height
     display flex
     .planet-main-right
       flex 1
