@@ -1,8 +1,9 @@
+@import "../var.styl"
 side-margin = 20px
-item-gap =  10px
-item-gap2 = item-gap+5px
+item-gap = 10px
+item-gap2 = item-gap+ 5px
 .player
-  height 80px
+  height footer-height
   width auto
   background-color white
   user-select none
@@ -55,6 +56,7 @@ item-gap2 = item-gap+5px
 
     .middle-controls-wrapper
       width 50%
+
       .middle-controls
         height 100%
         width 100%
@@ -66,13 +68,13 @@ item-gap2 = item-gap+5px
           display flex
           flex-direction row
           justify-content center
-          gap item-gap2+5px
-
+          gap item-gap2+ 5px
 
 
         .middle-controls_progress-slider
           width 90%
           margin 0 auto
+
           .middle-controls_progress-slider-time
           .middle-controls_progress-slider-time-left
           .middle-controls_progress-slider-time-right
@@ -81,12 +83,12 @@ item-gap2 = item-gap+5px
             font-size 13px
 
 
-
     .right-controls-wrapper
       width 25%
       display flex
       flex-direction column
       justify-content center
+
       .right-controls
         margin-right side-margin
         display flex

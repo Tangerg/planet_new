@@ -1,6 +1,12 @@
 import {FC} from "react";
 import "./index.styl"
-const Menu:FC = ()=>{
-    return <aside className={"menu"}>Menu</aside>
+import Header from "./header";
+import Body from "./body";
+
+const Menu: FC = () => {
+    return <aside className={"menu"}>
+        <Header/>
+        <Body/>
+    </aside>
 }
 export default Menu
