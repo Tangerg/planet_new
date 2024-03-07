@@ -5,7 +5,7 @@ export interface IEventMap {
 }
 
 export interface IEventListener<E extends IEventMap, K extends keyof E> extends Function {
-    (arg?: E[K]): void
+    (arg: E[K]): void
 }
 
 export interface IEventEmitter<E extends IEventMap> extends IClearable {

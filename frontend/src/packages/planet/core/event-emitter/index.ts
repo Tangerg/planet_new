@@ -58,7 +58,17 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
         return this
     }
 
-    emit<T extends keyof E>(name: T, arg?: E[T]): void {
+    private emitAll(arg?: any): void {
+        this.events.forEach(listeners => {
+            listeners.forEach(listener => {
+                if (Boolean(listener.fn)) {
+                    listener.fn.call(listener.ctx, arg)
+                }
+            })
+        })
+    }
+
+    private emitByName<T extends keyof E>(name: T, arg?: E[T]): void {
         if (!this.events.has(name)) {
             return;
         }
@@ -71,7 +81,14 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
         })
     }
 
-    clear() {
+    emit<T extends keyof E>(name: T, arg?: E[T]): void {
+        if (name === "*") {
+            return this.emitAll(arg)
+        }
+        return this.emitByName(name, arg)
+    }
+
+    clear(): void {
         this.events.clear()
     }
 
