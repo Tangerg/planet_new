@@ -1,5 +1,5 @@
 import {Plugin} from "../plugin";
-import {Effect, Option, EqualizerOptionNormalizer} from "./option";
+import {Effect, BiquadFilterOptions, EqualizerOptionNormalizer, Option} from "./biquadFilterOptions";
 import {IManager} from "../../core";
 
 export class Equalizer extends Plugin {
@@ -10,30 +10,32 @@ export class Equalizer extends Plugin {
     private biquadFilterNodeChain!: BiquadFilterNode
     private effectManager!: IManager<Effect>
 
-
     private state: "running" | "suspended" = "suspended"
 
-    constructor(opts: Option[]) {
+    constructor(opt?: Option) {
         super();
         this.normalizer = new EqualizerOptionNormalizer()
         this.init()
-        this.initBiquadFilterNodes(opts)
+        this.initBiquadFilterNodes(opt?.biquadFilters || [])
+        this.initEffects(opt?.effects || [])
         this.connectBiquadFilterNodes()
     }
 
 
     init(): void {
         this.mediaElementAudioSourceNode = new MediaElementAudioSourceNode(
-            this.planet.audioContext, {
+            this.planet.audioContext,
+            {
                 mediaElement: this.planet.audioElement
-            })
+            }
+        )
     }
 
     name(): string {
         return this.fullname("equalizer")
     }
 
-    private initBiquadFilterNodes(opts: Option[]) {
+    private initBiquadFilterNodes(opts: BiquadFilterOptions[]) {
         opts.forEach(opt => {
             const normalized = this.normalizer.normalize(opt)
             const biquadFilterNode = new BiquadFilterNode(this.planet.audioContext, {
@@ -43,6 +45,10 @@ export class Equalizer extends Plugin {
             })
             this.biquadFilterNodes.push(biquadFilterNode)
         })
+    }
+
+    private initEffects(effects: Effect[]) {
+        this.effectManager.apply(effects)
     }
 
     connectBiquadFilterNodes() {
@@ -75,7 +81,6 @@ export class Equalizer extends Plugin {
             this.biquadFilterNodes[i].gain.value = effect.gains[i]
         }
     }
-
 }
 
 export default Equalizer

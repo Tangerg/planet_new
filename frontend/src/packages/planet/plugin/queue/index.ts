@@ -108,7 +108,7 @@ export class QueuePlugin extends Plugin implements IQueue {
         this.queue.next()
     }
 
-    apply(ts: Track[], t?: Track | undefined | null): void {
+    apply(ts: Track[], t?: Track | null): void {
         this.queue.apply(ts, t)
     }
 

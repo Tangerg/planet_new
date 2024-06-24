@@ -4,7 +4,7 @@ export interface IManageable extends IIDable {
 }
 
 export interface IManager<T extends IManageable> extends IClearable {
-    apply(ts: T[], t?: T | undefined | null): void
+    apply(ts: T[]): void
 
     add(t: T): void
 
@@ -20,6 +20,8 @@ export interface IManager<T extends IManageable> extends IClearable {
 }
 
 export interface IUseableManager<T extends IManageable> extends IManager<T> {
+    apply(ts: T[], t?: T | null): void
+
     current(): Readonly<T> | null
 
     use(id: string): void

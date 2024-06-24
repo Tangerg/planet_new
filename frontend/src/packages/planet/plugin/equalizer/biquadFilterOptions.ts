@@ -1,4 +1,8 @@
-export type Option = {
+export type Option  = {
+    biquadFilters:BiquadFilterOptions[]
+    effects:Effect[]
+}
+export type BiquadFilterOptions = {
     type: BiquadFilterType
     frequency: number
     gain: number
@@ -13,7 +17,7 @@ export class EqualizerOptionNormalizer {
     constructor() {
     }
 
-    normalize(opt: Option): Option {
+    normalize(opt: BiquadFilterOptions): BiquadFilterOptions {
         return {
             type: opt.type,
             frequency: this.normalizeFrequency(opt.frequency),

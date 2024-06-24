@@ -31,7 +31,7 @@ export abstract class Manager<T extends IManageable> implements IManager<T> {
         return idx
     }
 
-    apply(ts: T[], t?: T | undefined | null): void {
+    apply(ts: T[]): void {
         this.clear()
         ts.forEach(t => {
             this.add(t)
@@ -126,8 +126,8 @@ export abstract class UseableManager<T extends IManageable> extends Manager<T> i
     }
 
 
-    apply(ts: T[], t?: T | undefined | null) {
-        super.apply(ts, t);
+    apply(ts: T[], t?: T | null) {
+        super.apply(ts);
         this.setInitCurrent(t)
     }
 
