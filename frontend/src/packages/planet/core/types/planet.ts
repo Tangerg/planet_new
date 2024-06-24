@@ -6,7 +6,8 @@ import {EventMap} from "../event";
 export type Playmode = "sequence" | "queue" | "repeat" | "shuffle"
 
 export interface IPlanet {
-    readonly audioElement: HTMLAudioElement;
+    readonly audioElement: HTMLAudioElement
+    readonly audioContext: AudioContext
     readonly options: IPlanetOptions
     readonly eventEmitter: IEventEmitter<EventMap>
     readonly pluginManager: IPluginManager

@@ -19,6 +19,7 @@ export class Planet implements IPlanet {
 
 
     readonly audioElement: HTMLAudioElement;
+    readonly audioContext: AudioContext;
     readonly options: IPlanetOptions
     readonly eventEmitter: IEventEmitter<EventMap>
     readonly pluginManager: IPluginManager;
@@ -42,6 +43,7 @@ export class Planet implements IPlanet {
 
     constructor(options: IPlanetOptions = {}) {
         this.audioElement = new Audio()
+        this.audioContext = new AudioContext()
         this.options = options
         this.eventEmitter = new EventEmitter()
         this.providersManager = new ProvidersManager()

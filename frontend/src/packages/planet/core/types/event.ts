@@ -15,5 +15,5 @@ export interface IEventEmitter<E extends IEventMap> extends IClearable {
 
     off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E>
 
-    emit<K extends keyof E>(name: K, arg?: E[K]): void
+    emit<K extends keyof E>(name: K | "*", arg?: E[K] | any): void
 }
