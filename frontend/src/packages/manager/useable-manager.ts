@@ -28,12 +28,9 @@ export class UseableManager<T extends IManageable> extends Manager<T> implements
 
     private static substituteRuleRandom(ids: string[], delIdx: number): string {
         let random = 0
-        const randomFunc = () => {
-            random = getRandomInt(0, ids.length)
-            if (random == delIdx) {
-                randomFunc()
-            }
-        }
+        do {
+            random = getRandomInt(0, ids.length);
+        } while (random === delIdx);
         return ids[random]
     }
 
