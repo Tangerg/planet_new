@@ -52,7 +52,7 @@ class LyricContext {
                 this.currentIndex++
                 this.keepPlay()
             }
-        }, delay)
+        }, delay) as unknown as number
     }
 
     resetCurrentIndex() {

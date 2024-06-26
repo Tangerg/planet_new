@@ -11,5 +11,10 @@ test('emitter', () => {
     em.on('test', (test) => {
         console.log("test 333")
     })
+    em.once("test", () => {
+        console.log("test once")
+    })
+    em.emit('test')
+    em.emit('test')
     em.emit('test')
 });

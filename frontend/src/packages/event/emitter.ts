@@ -28,10 +28,10 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
     }
 
     once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: Object = this): IEventEmitter<E> {
-        fn = createOnceFunction(fn, () => {
-            this.off(name, fn)
+        const onceFn = createOnceFunction(fn, () => {
+            this.off(name, onceFn)
         })
-        return this.on(name, fn, ctx)
+        return this.on(name, onceFn, ctx)
     }
 
     off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E> {

@@ -7,16 +7,15 @@ export function createOnceFunction<T extends Function>(this: unknown, fn: T, fnD
         if (called) {
             return result;
         }
-        called = true;
-        if (fnDoneCallback) {
-            try {
-                result = fn.apply(_this, arguments);
-            } finally {
-                fnDoneCallback();
-            }
-        } else {
+
+        try {
             result = fn.apply(_this, arguments);
+        } finally {
+            fnDoneCallback && fnDoneCallback()
         }
+
+        called = true;
         return result;
+
     } as unknown as T;
 }

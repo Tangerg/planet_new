@@ -1,6 +1,6 @@
 import Manager from "./manager";
 import {IManageable, IUseableManager} from "./types";
-import {getRandomInt} from "../shared-utils/math";
+import {getRandomIntExclude} from "../shared-utils/math";
 
 type UseableManagerSubstituteRule = "previous" | "next" | "random"
 type UseableManagerOption = {
@@ -27,10 +27,7 @@ export class UseableManager<T extends IManageable> extends Manager<T> implements
     }
 
     private static substituteRuleRandom(ids: string[], delIdx: number): string {
-        let random = 0
-        do {
-            random = getRandomInt(0, ids.length);
-        } while (random === delIdx);
+        const random = getRandomIntExclude(0, ids.length, delIdx)
         return ids[random]
     }
 
