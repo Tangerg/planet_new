@@ -1,4 +1,4 @@
-import {IClearable, IIDable} from "../core/types";
+import {IClearable, IIDable} from "../types";
 
 export interface IManageable extends IIDable {
 }

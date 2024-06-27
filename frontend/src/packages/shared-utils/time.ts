@@ -1,9 +1,5 @@
-export function sleep(timeout: number): Promise<void> {
-    let timer: number = 0
+export function sleep(duration: number): Promise<void> {
     return new Promise<void>(resolve => {
-        timer = setTimeout(() => {
-            clearTimeout(timer)
-            resolve()
-        }, timeout) as unknown as number
+        setTimeout(resolve, duration);
     });
 }

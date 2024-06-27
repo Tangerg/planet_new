@@ -1,4 +1,4 @@
-import {IClearable} from "../core/types";
+import {IClearable} from "../types";
 
 export interface IEventMap {
     [key: string]: any;

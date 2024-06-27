@@ -1,6 +1,6 @@
 export function getRandomInt(min: number, max: number): number {
     if (min >= max) {
-        throw new Error("the first number should less than second")
+        throw new Error("The first number should be less than the second number")
     }
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
@@ -26,4 +26,24 @@ export function shuffleArray<T>(arr: Array<T> | ReadonlyArray<T>): Array<T> {
         rv[j] = t
     }
     return rv
+}
+
+/**
+ * 获取某个范围呢一个期望的值,
+ *
+ * @param min 范围内的最小值,如果期望的值比它小,则返回该值
+ * @param max 范围内的最大值,如果期望的值比它大,则返回该值
+ * @param expect 期望从范围内获取的值
+ */
+export function getNumberInRange(min: number, max: number, expect: number): number {
+    if (min > max) {
+        throw new Error("The first number should be less than or equal to the second number")
+    }
+    if (expect < min) {
+        return min
+    }
+    if (expect > max) {
+        return max
+    }
+    return expect
 }
