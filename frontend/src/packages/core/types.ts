@@ -12,9 +12,12 @@ export interface IContext {
 }
 
 export interface IPlugin extends IManageable, IDisposeable {
+    beforeInstall(): void
     install(ctx: IContext): void
-
+    afterInstall():void
+    beforeUninstall(): void
     uninstall(): void
+    afterUninstall():void
 }
 
 export interface IPlanet<> {

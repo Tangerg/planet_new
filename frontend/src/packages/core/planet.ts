@@ -18,10 +18,16 @@ export class Planet implements IPlanet {
         this.context = new Context()
 
         if (opt && opt.plugins) {
+            opt.plugins.forEach(plugin=>{
+                plugin.beforeInstall()
+            })
             opt.plugins.forEach(plugin => {
                 plugin.install(this.context)
-                this.pluginManager.add(plugin)
             })
+            opt.plugins.forEach(plugin=>{
+                plugin.afterInstall()
+            })
+            this.pluginManager.apply(opt.plugins)
         }
     }
 
