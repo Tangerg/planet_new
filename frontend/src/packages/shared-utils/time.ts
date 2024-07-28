@@ -1,4 +1,14 @@
-export function sleep(duration: number): Promise<void> {
+export type Duration = number
+
+export const Millisecond :Duration = 1
+export const Second :Duration = 1000 * Millisecond
+export const Minute :Duration = 60 * Second
+export const Hour :Duration = 60 * Minute
+
+export function sleep(duration: Duration): Promise<void> {
+    if (duration < 0 || isNaN(duration)) {
+        return Promise.reject(new Error("Invalid duration"));
+    }
     return new Promise<void>(resolve => {
         setTimeout(resolve, duration);
     });
@@ -8,13 +18,13 @@ export class Timer {
     protected state: "running" | "suspended" = "suspended"
     protected startAt: number = 0
     protected lastPauseAt: number = 0
-    protected pausedDuration: number = 0
+    protected pausedDuration: Duration = 0
 
     get isRunning(): boolean {
         return this.state === "running";
     }
 
-    get duration(): number {
+    get duration(): Duration {
         const endAt = this.isRunning ? Date.now() : this.lastPauseAt
         return endAt - this.startAt - this.pausedDuration;
     }
@@ -50,16 +60,9 @@ export class Timer {
 }
 
 
-export type Duration = number
-
-export const Millisecond = 1
-export const Second :Duration = 1000 * Millisecond
-export const Minute :Duration = 60 * Second
-export const Hour :Duration = 60 * Minute
-
 /**
  * 格式化时间长度
- * @param duration 需要被格式化的时间长度，向下取整
+ * @param duration 需要被格式化的时间长度，以毫秒为单位, 向下取整
  * @return 返回 “00:00:00” 的格式
  */
 export function formatDuration(duration: Duration): string {
@@ -73,7 +76,7 @@ export function formatDuration(duration: Duration): string {
 }
 /**
  * 格式化秒级别时间长度
- * @param seconds 需要被格式化的时间长度，以秒为单位,向下取整
+ * @param seconds 需要被格式化的时间长度，以秒为单位, 向下取整
  * @return 返回 “00:00:00” 的格式
  */
 export function formatDurationSeconds(seconds :number):string {
