@@ -3,7 +3,7 @@ import {warn} from "../shared-utils/debug";
 
 export abstract class Plugin implements IPlugin {
     private installed: boolean = false;
-    protected _context: IContext | undefined;
+    private _context: IContext | undefined;
 
     abstract get id(): string
 
