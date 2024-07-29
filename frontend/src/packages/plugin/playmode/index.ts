@@ -1,10 +1,16 @@
 import {Plugin} from "../../core";
 
-export type Mode = "sequence" | "queue" | "repeat" | "shuffle"
+enum Mode {
+    Sequence = "sequence",
+    Queue = "queue",
+    Repeat = "repeat",
+    Shuffle = "shuffle",
+}
+
 
 export class Playmode extends Plugin {
     private current: number = 0
-    private modes: Mode[] = ["sequence", "queue", "repeat", "shuffle"];
+    private modes: Mode[] = [Mode.Sequence, Mode.Queue, Mode.Repeat, Mode.Shuffle];
 
     public static id: string = "playmode"
     get id(): string {
@@ -18,7 +24,7 @@ export class Playmode extends Plugin {
         return this.modes[this.current]
     }
 
-    next(): void {
+    private next(): void {
         if (this.current === this.modes.length - 1) {
             this.current = 0
         } else {

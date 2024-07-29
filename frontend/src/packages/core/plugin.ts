@@ -18,7 +18,8 @@ export abstract class Plugin implements IPlugin {
         return this._context
     }
 
-    beforeInstall(): void{ }
+    beforeInstall(): void {
+    }
 
     install(ctx: IContext): void {
         if (this.installed) {
@@ -29,11 +30,12 @@ export abstract class Plugin implements IPlugin {
         this.installed = true;
     }
 
-    afterInstall():void{}
+    afterInstall(): void {
+    }
 
     abstract dispose(): void
 
-    beforeUninstall(): void{
+    beforeUninstall(): void {
         this.dispose()
     }
 
@@ -46,7 +48,8 @@ export abstract class Plugin implements IPlugin {
         this.installed = false
     }
 
-    afterUninstall():void{}
+    afterUninstall(): void {
+    }
 }
 
 export default Plugin;

@@ -1,5 +1,5 @@
 import {Plugin} from "../../core/plugin";
-import type {Progress as ProgressModel,Duration} from "../../model/progress";
+import type {Progress as ProgressModel, Duration} from "../../model/progress";
 import {InfinityDuration} from "../../model/progress";
 import {formatDurationSeconds} from "../../shared-utils/time";
 import {IContext} from "../../core";
@@ -13,30 +13,31 @@ export class Progress extends Plugin {
     }
 
     dispose(): void {
-        this.context.audioElement.removeEventListener("timeupdate",this.onTimeUpdate)
-        this.context.audioElement.removeEventListener("durationchange",this.onDurationChange)
+        this.context.audioElement.removeEventListener("timeupdate", this.onTimeUpdate)
+        this.context.audioElement.removeEventListener("durationchange", this.onDurationChange)
     }
 
     install(ctx: IContext) {
         super.install(ctx);
-        this.context.audioElement.addEventListener("timeupdate",this.onTimeUpdate)
-        this.context.audioElement.addEventListener("durationchange",this.onDurationChange)
+        this.context.audioElement.addEventListener("timeupdate", this.onTimeUpdate)
+        this.context.audioElement.addEventListener("durationchange", this.onDurationChange)
     }
+
     afterInstall() {
         super.afterInstall();
         this.onDurationChange()
         this.onTimeUpdate()
     }
 
-    get current():ProgressModel {
+    get current(): ProgressModel {
         const rv = {} as ProgressModel
         rv.duration = this.context.audioElement.currentTime
         rv.durationFormatted = formatDurationSeconds(rv.duration)
-        rv.percent = Math.floor(rv.duration / this.context.audioElement.duration)*100
+        rv.percent = Math.floor(rv.duration / this.context.audioElement.duration) * 100
         return rv
     }
 
-    get duration():Duration {
+    get duration(): Duration {
         if (this.context.audioElement.duration == Infinity) {
             return InfinityDuration
         }
@@ -50,7 +51,7 @@ export class Progress extends Plugin {
 
     }
 
-    onDurationChange():void {
+    onDurationChange(): void {
 
     }
 

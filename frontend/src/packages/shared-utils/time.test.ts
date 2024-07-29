@@ -1,4 +1,4 @@
-import {sleep, Timer,formatDuration,formatDurationSeconds} from "./time";
+import {sleep, Timer, formatDuration, formatDurationSeconds} from "./time";
 
 test("sleep", async () => {
     console.log("start", new Date().getTime())
@@ -28,7 +28,7 @@ test("Timer", async () => {
     console.log(timer.isRunning)
 })
 
-test("formatDuration",()=>{
+test("formatDuration", () => {
     console.log(formatDurationSeconds(-1))
     console.log(formatDurationSeconds(1))
     console.log(formatDurationSeconds(1.2))
