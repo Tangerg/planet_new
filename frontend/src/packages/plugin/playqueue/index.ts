@@ -5,8 +5,9 @@ import {Track} from "../../model/track";
 import {shuffleArray} from "../../shared-utils/array";
 
 export class PlayQueue extends Plugin {
-    public static id: string = "playqueue"
-    private playMode: Playmode = Playmode.Sequence
+    public static readonly id = "PlayQueue"
+
+    private playMode: Playmode = Playmode.Sequential
     private readonly playQueue: Queue
     private readonly displayQueue: Queue
 
@@ -37,8 +38,8 @@ export class PlayQueue extends Plugin {
         } else if (this.playMode === Playmode.Shuffle) {
             playTracks = [...shuffleArray(tracks)]
         }
-        this.displayQueue.apply(tracks, playTrack)
-        this.playQueue.apply(playTracks, playTrack)
+        this.displayQueue.apply(tracks)
+        this.playQueue.apply(playTracks)
     }
 }
 

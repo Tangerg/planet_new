@@ -1,18 +1,18 @@
 import {Plugin} from "../../core";
 
 export enum Mode {
-    Sequence = "sequence",
-    Queue = "queue",
+    Sequential = "sequential",
+    Loop = "loop",
     Repeat = "repeat",
     Shuffle = "shuffle",
 }
 
 
 export class Playmode extends Plugin {
-    private _currentIndex: number = 0
-    private modes: Mode[] = [Mode.Sequence, Mode.Queue, Mode.Repeat, Mode.Shuffle];
+    private currentIndex: number = 0
+    private modes: Mode[] = [Mode.Sequential, Mode.Loop, Mode.Repeat, Mode.Shuffle];
 
-    public static id: string = "playmode"
+    public static readonly id: string = "Playmode"
     get id(): string {
         return Playmode.id
     }
@@ -21,15 +21,11 @@ export class Playmode extends Plugin {
     }
 
     get current(): Mode {
-        return this.modes[this._currentIndex]
+        return this.modes[this.currentIndex]
     }
 
     private next(): void {
-        if (this._currentIndex === this.modes.length - 1) {
-            this._currentIndex = 0
-        } else {
-            this._currentIndex++
-        }
+        this.currentIndex = (this.currentIndex + 1) % this.modes.length
     }
 }
 
