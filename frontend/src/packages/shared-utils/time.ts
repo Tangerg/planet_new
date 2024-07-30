@@ -83,3 +83,17 @@ export function formatDuration(duration: Duration): string {
 export function formatDurationSeconds(seconds: number): string {
     return formatDuration(seconds * Second)
 }
+
+/**
+ * 解析时间戳字符串并返回时间（以毫秒为单位）。
+ * @param minStr - 时间戳中的分钟部分
+ * @param secStr - 时间戳中的秒部分
+ * @param msStr - 可选的毫秒部分
+ * @returns 以毫秒表示的时间
+ */
+export function parseTimestamp(minStr: string, secStr: string, msStr?: string): Duration {
+    const min = parseInt(minStr, 10);
+    const sec = parseInt(secStr, 10);
+    const ms = msStr ? parseInt(msStr, 10) : 0;
+    return min * Minute + sec * Second + ms * Millisecond;
+}

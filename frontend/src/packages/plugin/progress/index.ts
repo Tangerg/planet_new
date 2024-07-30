@@ -1,6 +1,6 @@
 import {Plugin} from "../../core/plugin";
-import type {Progress as ProgressModel, Duration} from "../../model/progress";
-import {InfinityDuration} from "../../model/progress";
+import type {Progress as ProgressModel, Duration} from "../../model/duration";
+import {InfinityDuration} from "../../model/duration";
 import {formatDurationSeconds} from "../../shared-utils/time";
 import {IContext} from "../../core";
 import {getNumberInRange} from "../../shared-utils/math";

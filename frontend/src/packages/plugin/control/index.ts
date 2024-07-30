@@ -1,5 +1,4 @@
 import {Plugin} from "../../core";
-import {getNumberInRange} from "../../shared-utils/math";
 
 export class Control extends Plugin {
     public static id: string = "control";
