@@ -1,13 +1,9 @@
 import {Plugin} from "../../core";
 import {Timer, sleep} from "../../shared-utils/time";
-
-export type LyricModel = {
-    duration: number
-    content: string
-}
+import type {Lyric as LyricModel} from "../../model/lyric"
 
 class LyricIterator {
-    private  static readonly startIndex = -1
+    private static readonly startIndex = -1
     private currentIndex: number = LyricIterator.startIndex
     private dataSource: LyricModel[] = []
 
@@ -63,7 +59,7 @@ class LyricTimer extends Timer {
     }
 }
 
-class Lyric extends Plugin {
+export class Lyric extends Plugin {
     private state: "running" | "suspended" = "suspended"
     private lyricIterator: LyricIterator
     private lyricTimer: LyricTimer
@@ -93,7 +89,7 @@ class Lyric extends Plugin {
         return lyric.duration - this.lyricTimer.duration
     }
 
-    private apply(lyrics: LyricModel[]) {
+    public apply(lyrics: LyricModel[]) {
         this.dispose()
         this.lyricIterator.apply(lyrics)
         this.lyricTimer.reset()
@@ -102,11 +98,12 @@ class Lyric extends Plugin {
     private async keepPlay(): Promise<void> {
         while (this.state === "running" && this.lyricIterator.hasNext()) {
             this.lyricIterator.next();
+            console.log(this.lyricIterator.current()?.content)
             await sleep(this.sleepDuration);
         }
     }
 
-    private play() {
+    public play() {
         if (this.state === "running") {
             return
         }
@@ -115,7 +112,7 @@ class Lyric extends Plugin {
         this.keepPlay()
     }
 
-    private pause() {
+    public pause() {
         if (this.state === "suspended") {
             return
         }
@@ -123,7 +120,7 @@ class Lyric extends Plugin {
         this.state = "suspended"
     }
 
-    private seek(t: number) {
+    public seek(t: number) {
         this.lyricTimer.seek(t)
         const index = this.lyricIterator.findIndex((item) => {
             return this.lyricTimer.duration <= item.duration
