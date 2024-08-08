@@ -1,170 +1,212 @@
-import React, {FC} from "react";
-import {Listbox, ListboxItem} from "@nextui-org/react";
-import classnames from "classnames";
-import {NavLink,Link} from "react-router-dom";
+import {DrawerProps} from "@fluentui/react-components";
+import * as React from "react";
+import {
+    AppItem,
+    NavCategory,
+    NavCategoryItem,
+    NavDivider,
+    NavDrawer,
+    NavDrawerBody,
+    NavDrawerHeader,
+    NavDrawerProps,
+    NavItem,
+    NavSectionHeader,
+    NavSubItem,
+    NavSubItemGroup,
+} from "@fluentui/react-nav-preview";
+
+import {
+    makeStyles,
+    tokens,
+} from "@fluentui/react-components";
+import {
+    Board20Filled,
+    Board20Regular,
+    BoxMultiple20Filled,
+    BoxMultiple20Regular,
+    DataArea20Filled,
+    DataArea20Regular,
+    DocumentBulletListMultiple20Filled,
+    DocumentBulletListMultiple20Regular,
+    HeartPulse20Filled,
+    HeartPulse20Regular,
+    MegaphoneLoud20Filled,
+    MegaphoneLoud20Regular,
+    NotePin20Filled,
+    NotePin20Regular,
+    People20Filled,
+    People20Regular,
+    PeopleStar20Filled,
+    PeopleStar20Regular,
+    Person20Filled,
+    PersonLightbulb20Filled,
+    PersonLightbulb20Regular,
+    Person20Regular,
+    PersonSearch20Filled,
+    PersonSearch20Regular,
+    PreviewLink20Filled,
+    PreviewLink20Regular,
+    bundleIcon,
+    PersonCircle32Regular,
+} from "@fluentui/react-icons";
+
+const useStyles = makeStyles({
+    root: {
+        overflow: "hidden",
+        display: "flex",
+        height: "600px",
+    },
+    content: {
+        flex: "1",
+        padding: "16px",
+        display: "grid",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+    },
+    field: {
+        display: "flex",
+        marginTop: "4px",
+        marginLeft: "8px",
+        flexDirection: "column",
+        gridRowGap: tokens.spacingVerticalS,
+    },
+});
+
+const Person = bundleIcon(Person20Filled, Person20Regular);
+const Dashboard = bundleIcon(Board20Filled, Board20Regular);
+const Announcements = bundleIcon(MegaphoneLoud20Filled, MegaphoneLoud20Regular);
+const EmployeeSpotlight = bundleIcon(
+    PersonLightbulb20Filled,
+    PersonLightbulb20Regular
+);
+const Search = bundleIcon(PersonSearch20Filled, PersonSearch20Regular);
+const PerformanceReviews = bundleIcon(
+    PreviewLink20Filled,
+    PreviewLink20Regular
+);
+const JobPostings = bundleIcon(NotePin20Filled, NotePin20Regular);
+const Interviews = bundleIcon(People20Filled, People20Regular);
+const HealthPlans = bundleIcon(HeartPulse20Filled, HeartPulse20Regular);
+const TrainingPrograms = bundleIcon(BoxMultiple20Filled, BoxMultiple20Regular);
+const CareerDevelopment = bundleIcon(PeopleStar20Filled, PeopleStar20Regular);
+const Analytics = bundleIcon(DataArea20Filled, DataArea20Regular);
+const Reports = bundleIcon(
+    DocumentBulletListMultiple20Filled,
+    DocumentBulletListMultiple20Regular
+);
+
+type DrawerType = Required<DrawerProps>["type"];
+
+export const NavDrawerDefault = (props: Partial<NavDrawerProps>) => {
+    const styles = useStyles();
+
+    const [type, setType] = React.useState<DrawerType>("inline");
 
 
-const Body: FC = () => {
     return (
-        <div className={classnames("w-full max-w-[250px] px-1 py-2","menu-body")}>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
+        <div className={styles.root}>
+            <NavDrawer
+                defaultSelectedValue="2"
+                defaultSelectedCategoryValue="1"
+                open={true}
+                type={type}
+                reserveSelectedNavItemSpace={true}
+            >
+                <div>
+                    <NavDrawerHeader>{"Planet"}</NavDrawerHeader>
+                </div>
 
-                <ListboxItem
-                    key="new"
-                >
-                    <NavLink
-                        key="new"
-                        to="messages"
+
+                <NavDrawerBody>
+                    <AppItem
+                        icon={<PersonCircle32Regular/>}
+                        as="a"
                     >
-                        Messages
-                    </NavLink>
-                </ListboxItem>
+                        Contoso HR
+                    </AppItem>
+                    <NavItem  icon={<Dashboard/>} value="1">
+                        Dashboard
+                    </NavItem>
+                    <NavItem icon={<Announcements/>} value="2">
+                        Announcements
+                    </NavItem>
+                    <NavItem
+                        icon={<EmployeeSpotlight/>}
+                        value="3"
+                    >
+                        Employee Spotlight
+                    </NavItem>
+                    <NavItem icon={<Search/>} value="4">
+                        Profile Search
+                    </NavItem>
+                    <NavItem
+                        icon={<PerformanceReviews/>}
+                        value="5"
+                    >
+                        Performance Reviews
+                    </NavItem>
+                    <NavSectionHeader>Employee Management</NavSectionHeader>
+                    <NavCategory value="6">
+                        <NavCategoryItem icon={<JobPostings/>}>
+                            Job Postings
+                        </NavCategoryItem>
+                        <NavSubItemGroup>
+                            <NavSubItem value="7">
+                                Openings
+                            </NavSubItem>
+                            <NavSubItem value="8">
+                                Submissions
+                            </NavSubItem>
+                        </NavSubItemGroup>
+                    </NavCategory>
+                    <NavItem icon={<Interviews/>} value="9">
+                        Interviews
+                    </NavItem>
 
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
-                <ListboxItem
-                    key="new"
-                >
-                    New file
-                </ListboxItem>
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
-                <ListboxItem
-                    key="new"
-                >
-                    New file
-                </ListboxItem>
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
-                <ListboxItem
-                    key="new"
-                >
-                    New file
-                </ListboxItem>
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
-                <ListboxItem
-                    key="new"
-                >
-                    New file
-                </ListboxItem>
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
-            <Listbox variant="faded" aria-label="Listbox menu with icons">
-                <ListboxItem
-                    key="new"
-                >
-                    New file
-                </ListboxItem>
-                <ListboxItem
-                    key="copy"
-                >
-                    Copy link
-                </ListboxItem>
-                <ListboxItem
-                    key="edit"
-                    showDivider
-                >
-                    Edit file
-                </ListboxItem>
-                <ListboxItem
-                    key="delete"
-                    className="text-danger"
-                    color="danger"
-                >
-                    Delete file
-                </ListboxItem>
-            </Listbox>
+                    <NavSectionHeader>Benefits</NavSectionHeader>
+                    <NavItem icon={<HealthPlans/>} value="10">
+                        Health Plans
+                    </NavItem>
+                    <NavCategory value="11">
+                        <NavCategoryItem icon={<Person/>} value="12">
+                            Retirement
+                        </NavCategoryItem>
+                        <NavSubItemGroup>
+                            <NavSubItem value="13">
+                                Plan Information
+                            </NavSubItem>
+                            <NavSubItem value="14">
+                                Fund Performance
+                            </NavSubItem>
+                        </NavSubItemGroup>
+                    </NavCategory>
+
+                    <NavSectionHeader>Learning</NavSectionHeader>
+                    <NavItem icon={<TrainingPrograms/>} value="15">
+                        Training Programs
+                    </NavItem>
+                    <NavCategory value="16">
+                        <NavCategoryItem icon={<CareerDevelopment/>}>
+                            Career Development
+                        </NavCategoryItem>
+                        <NavSubItemGroup>
+                            <NavSubItem value="17">
+                                Career Paths
+                            </NavSubItem>
+                            <NavSubItem value="18">
+                                Planning
+                            </NavSubItem>
+                        </NavSubItemGroup>
+                    </NavCategory>
+                    <NavDivider/>
+                    <NavItem target="_blank" icon={<Analytics/>} value="19">
+                        Workforce Data
+                    </NavItem>
+                    <NavItem icon={<Reports/>} value="20">
+                        Reports
+                    </NavItem>
+                </NavDrawerBody>
+            </NavDrawer>
         </div>
     );
-}
-export default Body
+};

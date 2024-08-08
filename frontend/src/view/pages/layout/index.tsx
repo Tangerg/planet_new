@@ -1,8 +1,8 @@
 import {FC} from "react";
 import "./index.styl"
-import {Menu, Player,Content,Header} from "./components";
+import {Menu, Player, Content, Header} from "./components";
 
-const Layout:FC = ()=>{
+const Layout: FC = () => {
     return <main className={"planet"}>
         <div className={"planet-main"}>
             <Menu/>
@@ -11,6 +11,7 @@ const Layout:FC = ()=>{
                 <Content/>
             </div>
         </div>
+        <Player/>
         <Player/>
     </main>
 }

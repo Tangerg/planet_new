@@ -1,12 +1,12 @@
 import {FC} from "react";
 import "./index.styl"
 import Header from "./header";
-import Body from "./body";
+import {NavDrawerDefault} from "./body";
 
 const Menu: FC = () => {
     return <aside className={"menu"}>
         <Header/>
-        <Body/>
+        <NavDrawerDefault/>
     </aside>
 }
 export default Menu
