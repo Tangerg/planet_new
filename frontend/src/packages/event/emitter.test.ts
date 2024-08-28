@@ -1,4 +1,5 @@
 import EventEmitter from "./emitter";
+import {test} from "vitest";
 
 test('emitter', () => {
     const em = new EventEmitter();

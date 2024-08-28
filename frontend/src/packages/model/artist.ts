@@ -1,6 +1,6 @@
 export type Artist = {
     id: string
     name: string
-    alias: string[]
+    alias?: string[]
     image: string
 }

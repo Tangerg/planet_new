@@ -1,9 +1,10 @@
 import {makeStyles} from "@fluentui/react-components";
 
-export const    layoutStyle = makeStyles({
+export const layoutStyle = makeStyles({
     root: {
-        minHeight: "768px",
-        minWidth: "1366px",
+        height: "clamp(100vh,100vh,100vh)",
+        width: "clamp(100vw,100vw,100vw)",
+        overflow: "hidden",
         background: "transparent",
         display: "flex",
         flexDirection: "column"

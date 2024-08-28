@@ -8,8 +8,9 @@ export type Playlist = {
     description: string
     tags: string[]
     image: string
-    tracks: Track[]
+    tracks: Partial<Track>[]
     createTime: Duration
-    creator: User
+    creator: Partial<User>
     trackCount: number
+    durationCount: Duration
 }

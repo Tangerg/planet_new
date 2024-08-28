@@ -2,12 +2,18 @@ import {makeStyles} from "@fluentui/react-components";
 
 export const player = makeStyles({
     root: {
-        height: "72px",
+        userSelect: "none",
+        minWidth: "620px",
+        height: "auto",
+        display: "flex",
+        flexDirection: "column"
+    },
+    container: {
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         borderBottom: "1px solid black",
-        justifyContent:"space-between"
+        justifyContent: "space-between"
     },
     meta: {
         width: "30%",
@@ -66,8 +72,32 @@ export const control = makeStyles({
         alignItems: "center"
     },
     actions: {
+        width: "100%",
         display: "flex",
-        flexDirection: "row"
+        flexFlow: "row nowrap",
+        gap: "16px",
+    },
+    action_left: {
+        flex: 1,
+        display: "flex",
+        gap: "8px",
+        justifyContent: "flex-end"
+    },
+    action_right: {
+        flex: 1,
+        display: "flex",
+        gap: "8px",
+    },
+    progress: {
+        width: "100%",
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "8px"
+    },
+    progress_duration: {
+        fontSize: "12px"
     }
 })
 export const action = makeStyles({

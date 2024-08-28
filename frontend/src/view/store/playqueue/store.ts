@@ -1,29 +1,20 @@
 import {create} from "zustand";
 import {initState, State} from "./state";
-import {Track} from "../../../packages/planet/model/track";
-import {createStoreWithSelectors} from "../shared-utils/selector";
+import createSelectors from "../shared-utils/selector";
+import {Track} from "../../../packages/model/track";
+
 
 export interface Action {
-    changeCurrentTrack: (t: Track) => void
-    changeTracks: (ts: Track[]) => void
+    setTracks: (tracks: Track[]) => void;
+    setTrack: (track: Track) => void;
 }
 
 export type Store = State & Action
 
-const _useStore = create<Store>((set, get) => ({
+const _useStore = create<Store>((set) => ({
     ...initState,
-    changeCurrentTrack: (t: Track): void => {
-        set((store) => ({
-            ...store,
-            currentTrack: t
-        }))
-    },
-    changeTracks: (ts: Track[]): void => {
-        set((store) => ({
-            ...store,
-            tracks: ts
-        }))
-    }
+    setTracks: (tracks: Track[]) => set(state => ({...state, tracks: tracks})),
+    setTrack: (track: Track) => set(state => ({...state, track: track})),
 }))
 
-export const useStore = createStoreWithSelectors(_useStore)
+export const useStore = createSelectors(_useStore)

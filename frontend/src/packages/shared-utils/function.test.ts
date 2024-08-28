@@ -1,5 +1,5 @@
 import {debounce} from "./function";
-
+import { test } from 'vitest'
 test("debounce", () => {
     const fn = (value: number) => {
         console.log(value)

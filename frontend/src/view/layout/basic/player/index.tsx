@@ -6,10 +6,12 @@ import {player} from "./style"
 
 const Player: React.FC = () => {
     const classes = player()
-    return <footer className={classes.root}>
-        <Meta/>
-        <Control/>
-        <Action/>
-    </footer>
+    return <div className={classes.root}>
+        <div className={classes.container}>
+            <Meta/>
+            <Control/>
+            <Action/>
+        </div>
+    </div>
 }
 export default Player

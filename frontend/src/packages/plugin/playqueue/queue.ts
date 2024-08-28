@@ -11,6 +11,10 @@ export class Queue extends EventEmitter<QueueEventMap> {
     private _currentIndex = -1
     private _tracks: Track[] = []
 
+    constructor() {
+        super();
+    }
+
     get current(): Track | undefined {
         return this._tracks[this._currentIndex]
     }
@@ -23,6 +27,24 @@ export class Queue extends EventEmitter<QueueEventMap> {
         return this._tracks.length
     }
 
+    get isFirst(): boolean {
+        return this._currentIndex === 0
+    }
+
+    get isLast(): boolean {
+        return this._currentIndex === this.size - 1
+    }
+
+
+    private findIndex(track: Track): number {
+        return this._tracks.findIndex(value => track.id === value.id)
+    }
+
+    has(track: Track): boolean {
+        return this.findIndex(track) !== -1
+    }
+
+
     apply(tracks: Track[]): void {
         this.clear()
         this._tracks = [...tracks]
@@ -33,19 +55,6 @@ export class Queue extends EventEmitter<QueueEventMap> {
         this._tracks = []
         this._currentIndex = -1
         this.emit("tracks_cleaned")
-    }
-
-
-    currentIsLast(): boolean {
-        return this._currentIndex === this.size - 1
-    }
-
-    findIndex(track: Track): number {
-        return this._tracks.findIndex(value => track.id === value.id)
-    }
-
-    has(track: Track): boolean {
-        return this.findIndex(track) !== -1
     }
 
     add(track: Track): void {
@@ -97,10 +106,13 @@ export class Queue extends EventEmitter<QueueEventMap> {
 
     select(track: Track): void {
         const index = this.findIndex(track)
-        if (index !== -1) {
-            this._currentIndex = index
+        if (index === -1) {
             return
         }
+        if (index === this._currentIndex) {
+            return
+        }
+        this._currentIndex = index
         this.emit("current_track_changed", this.current)
     }
 }

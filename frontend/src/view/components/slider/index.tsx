@@ -1,30 +1,32 @@
 import React from "react";
-import {Slider as StdSlider, SliderProps} from "@fluentui/react-components";
-import {SliderOnChangeData} from "@fluentui/react-slider";
-import {debounce} from "../../../packages/shared-utils/function";
+import {makeStyles, mergeClasses, Slider as StdSlider, SliderProps, sliderClassNames} from "@fluentui/react-components";
 
 
 interface Props extends SliderProps {
-    // Todo 换一种实现
-    onChangeComplete?: (data: SliderOnChangeData) => void
+
 }
 
+const styles = makeStyles({
+    thumb: {
+        [`> .${sliderClassNames.thumb}`]: {
+            transition: 'opacity 0.3s ease',
+            opacity: 0,
+            width: "15px",
+            height: "15px",
+        },
+        ':hover': {
+            [`& .${sliderClassNames.thumb}`]: {
+                opacity: 1,
+            },
+        },
+    },
+})
+
 const Slider: React.FC<Props> = (props) => {
-    const {onChange, onChangeComplete} = props
-    const onChangeCompleteWrap = onChangeComplete ? debounce(onChangeComplete, 300) : undefined
-    const onChangeWrap = (ev: React.ChangeEvent<HTMLInputElement>, data: SliderOnChangeData) => {
-        onChange?.(ev, data)
-        onChangeCompleteWrap?.(data)
-    }
+    const classes = styles()
     const newProps = {
         ...props,
-        onChange: onChangeWrap
     }
-    return <>
-        <StdSlider
-            {
-                ...newProps
-            }/>
-    </>
+    return <StdSlider className={mergeClasses(sliderClassNames.thumb, classes.thumb)} {...newProps}/>
 }
 export default Slider

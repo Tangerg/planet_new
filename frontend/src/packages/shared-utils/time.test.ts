@@ -1,4 +1,14 @@
-import {sleep, Timer, formatDuration, formatDurationSeconds} from "./time";
+import {
+    sleep,
+    Timer,
+    formatDurationMillisecond,
+    formatDurationSeconds,
+    formatDuration,
+    Hour,
+    Minute,
+    Second
+} from "./time";
+import { test,expect } from 'vitest'
 
 test("sleep", async () => {
     console.log("start", new Date().getTime())
@@ -28,7 +38,7 @@ test("Timer", async () => {
     console.log(timer.isRunning)
 })
 
-test("formatDuration", () => {
+test("formatDurationSeconds", () => {
     console.log(formatDurationSeconds(-1))
     console.log(formatDurationSeconds(1))
     console.log(formatDurationSeconds(1.2))
@@ -44,14 +54,27 @@ test("formatDuration", () => {
     console.log(formatDurationSeconds(1008080808080808))
 })
 
+test("formatDuration", () => {
+    console.log(formatDuration(-1 * Second, [Hour, Minute, Second]))
+    console.log(formatDuration(1 * Second, [Hour, Minute, Second]))
+    console.log(formatDuration(1.2 * Minute, [Hour, Minute, Second]))
+    console.log(formatDuration(1.2 * Minute, [Minute, Second]))
+    console.log(formatDuration(1.2 * Minute, [Second]))
+    console.log(formatDuration(10 * Second, [Hour, Minute, Second]))
+    console.log(formatDuration(20 * Second, [Hour, Minute, Second]))
+    console.log(formatDuration(20 * Second, [Minute, Second]))
+    console.log(formatDuration(20 * Second, [Second]))
+    console.log(formatDuration(90 * Second, [Second]))
+})
+
 
 test('formatDuration works correctly', () => {
-    expect(formatDuration(0)).toBe("00:00:00");
-    expect(formatDuration(999)).toBe("00:00:00");
-    expect(formatDuration(1000)).toBe("00:00:01");
-    expect(formatDuration(60 * 1000)).toBe("00:01:00");
-    expect(formatDuration(3600 * 1000)).toBe("01:00:00");
-    expect(formatDuration(3661 * 1000)).toBe("01:01:01");
+    expect(formatDurationMillisecond(0)).toBe("00:00:00");
+    expect(formatDurationMillisecond(999)).toBe("00:00:00");
+    expect(formatDurationMillisecond(1000)).toBe("00:00:01");
+    expect(formatDurationMillisecond(60 * 1000)).toBe("00:01:00");
+    expect(formatDurationMillisecond(3600 * 1000)).toBe("01:00:00");
+    expect(formatDurationMillisecond(3661 * 1000)).toBe("01:01:01");
 });
 
 test('formatDurationSeconds works correctly', () => {

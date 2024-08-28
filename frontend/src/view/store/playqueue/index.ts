@@ -13,4 +13,4 @@ export type {
 export {
     useStore
 };
-
+export default useStore

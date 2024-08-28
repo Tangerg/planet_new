@@ -1,4 +1,0 @@
-export * from "./plugin"
-export * from "./play"
-export * from "./volume"
-export * from "./lyric"

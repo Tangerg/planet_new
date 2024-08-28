@@ -9,7 +9,8 @@ export type Album = {
     image: string
     trackCount: number
     publishTime: number
-    duration: Duration
-    tracks?: Track[]
-    artists?: Artist[]
+    durationCount: Duration
+    tracks?: Partial<Track>[]
+    artist?: Partial<Artist>
+    artists?: Partial<Artist>[]
 }

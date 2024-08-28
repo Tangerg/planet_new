@@ -59,20 +59,29 @@ export class Timer {
     }
 }
 
-
 /**
  * 格式化时间长度
  * @param duration 需要被格式化的时间长度，以毫秒为单位, 向下取整
- * @return 返回 “00:00:00” 的格式
+ * @param units 需要被格式化的梯度,只能传入Hour,Minute,Second
+ * @return 返回 “[units[0]]:[units[1]]:[units[2]]” 的格式,返回的格式化长度和传入的uints有关
  */
-export function formatDuration(duration: Duration): string {
+export function formatDuration(duration: Duration, units: Duration[]): string {
     duration = Math.max(duration, 0);
-    const uints = [Hour, Minute, Second];
-    return uints.map(uint => {
+    return units.map(uint => {
         const time = Math.floor(duration / uint).toString().padStart(2, "0")
         duration %= uint
         return time
     }).join(":");
+}
+
+/**
+ * 格式化毫秒级别时间长度
+ * @param duration 需要被格式化的时间长度，以毫秒为单位, 向下取整
+ * @return 返回 “00:00:00” 的格式
+ */
+export function formatDurationMillisecond(duration: Duration): string {
+    const units = [Hour, Minute, Second];
+    return formatDuration(duration, units)
 }
 
 /**
@@ -81,7 +90,7 @@ export function formatDuration(duration: Duration): string {
  * @return 返回 “00:00:00” 的格式
  */
 export function formatDurationSeconds(seconds: number): string {
-    return formatDuration(seconds * Second)
+    return formatDurationMillisecond(seconds * Second)
 }
 
 /**

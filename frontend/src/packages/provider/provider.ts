@@ -1,15 +1,23 @@
-import {Track} from "../planet/model/track";
-import {IProvider} from "../planet/core";
+import {IProvider} from "./types";
+import {Playlist} from "../model/playlist";
+import {Lyric} from "../model/lyric";
+import {Album} from "../model/album";
+import {TrackPlayUrl} from "../model/track";
+import {Personalized} from "../model/personalized";
 
-export abstract class AbstractProvider implements IProvider {
-    get id(): string {
-        return this.name()
-    }
+abstract class Provider implements IProvider {
 
-    abstract name(): string
+    abstract get name(): string
 
-    abstract playlist(id: string): Promise<Track[]>
+    abstract playlistDetail(id: string): Promise<Playlist>
 
+    abstract lyric(id: string): Promise<Lyric[]>
+
+    abstract albumDetail(id: string): Promise<Album>
+
+    abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>
+
+    abstract personalized(): Promise<Personalized>
 }
 
-export default AbstractProvider
+export default Provider

@@ -1,21 +1,31 @@
-import {Plugin} from "../../packages/planet/plugin";
-import {useStore} from "../store/playqueue"
-
+import {Plugin} from "../../packages/core";
+import {PlayQueue} from "../../packages/model/playqueue";
+import {useStore as useQueueStore} from "../store/playqueue";
 
 class Store extends Plugin {
-    constructor() {
-        super();
+    private static readonly id: string = "store-planet";
+    get id(): string {
+        return Store.id;
     }
 
-    name(): string {
-        return this.fullname("store")
+    dispose(): void {
+        throw new Error("Method not implemented.");
     }
 
-    init() {
-        this.planet.eventEmitter.on("ADDTRACK", (t) => {
-            useStore.selectors.changeCurrentTrack()(t)
-        })
+    afterInstall() {
+        super.afterInstall();
+        this.context.hooks.on("play_queue_changed", this.onPlayQueueChanged, this)
     }
+
+    private onPlayQueueChanged(queue: PlayQueue) {
+        useQueueStore.setState((state) => {
+            return {
+                ...state,
+                tracks: queue.tracks!,
+            }
+        });
+    }
+
 }
 
 export default Store

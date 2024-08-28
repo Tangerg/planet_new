@@ -1,5 +1,1 @@
-export * from "./provider"
-export * from "./NeteaseCloudMusic"
-export * from "./QQMusic"
-export * from "./Spotify"
-export * from "./YoutubeMusic"
+

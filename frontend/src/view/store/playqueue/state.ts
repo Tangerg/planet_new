@@ -1,11 +1,13 @@
-import {Track} from "../../../packages/planet/model/track";
+import {Track} from "../../../packages/model/track";
 
 export interface State {
-    currentTrack: Track | null
-    tracks: Array<Track>
+    key: string
+    tracks: Track[]
+    track: Track | undefined
 }
 
 export const initState: State = {
-    currentTrack: null,
-    tracks: []
+    key: "",
+    tracks: [],
+    track: undefined,
 }

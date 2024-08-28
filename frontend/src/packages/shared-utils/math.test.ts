@@ -1,5 +1,5 @@
 import {getNumberInRange, getRandomInt, getRandomIntExclude} from "./math";
-
+import { test } from 'vitest'
 test("getRandomInt", () => {
     const res = getRandomInt(0, 1)
     console.log(res)
