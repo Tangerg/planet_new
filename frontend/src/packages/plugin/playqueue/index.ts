@@ -55,9 +55,7 @@ export class PlayQueue extends Plugin {
         this.context.hooks.off("play_track_ended", this.autoNext)
     }
 
-    afterInstall() {
-        super.afterInstall();
-
+    protected onInit(): void {
         this.displayQueue.on("tracks_changed", this.tracksChanged, this)
         this.displayQueue.on("tracks_cleaned", this.tracksCleaned, this)
         this.displayQueue.on("current_track_changed", this.currentTrackChanged, this)

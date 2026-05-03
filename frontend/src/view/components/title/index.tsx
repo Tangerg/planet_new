@@ -1,33 +1,21 @@
 import React from "react";
-import {makeStyles, Text} from "@fluentui/react-components";
-
-const title = makeStyles({
-    root: {
-        height: "60px",
-        width: "100%",
-        paddingBlock: 0,
-        display: "flex",
-        justifyContent: "space-between"
-    },
-    title: {
-        justifyItems: "center",
-        alignItems: "center",
-        display: "flex"
-    }
-})
 
 interface TitleProps {
-    content: string
+  content: string;
+  action?: React.ReactNode;
 }
 
-const Title: React.FC<TitleProps> = (props) => {
-    const {content} = props
-    const classes = title()
-    return <div className={classes.root}>
-        <div className={classes.title}>
-            <Text size={600} weight={"semibold"}>{content}</Text>
-        </div>
-    </div>
-}
+const Title: React.FC<TitleProps> = ({ content, action }) => (
+  <div className="flex items-end justify-between px-1 pt-6 pb-3">
+    <h2 className="font-title text-2xl font-bold tracking-tight text-white">
+      {content}
+    </h2>
+    {action ? (
+      <div className="text-button-uppercase text-text-muted hover:text-white transition-colors cursor-pointer">
+        {action}
+      </div>
+    ) : null}
+  </div>
+);
 
-export default Title
+export default Title;

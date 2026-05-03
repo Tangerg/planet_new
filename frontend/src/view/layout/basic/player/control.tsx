@@ -1,232 +1,209 @@
-import React, {JSX, useEffect, useState} from "react";
-import type {Duration, Progress} from "../../../../packages/model/duration";
-import {control, player} from "./style";
+import React, { JSX, useEffect, useState } from "react";
 import {
-    ArrowRepeat124Filled,
-    ArrowRepeatAll24Filled,
-    ArrowRepeatAllOff24Filled,
-    ArrowShuffle24Filled,
-    Next24Filled,
-    PauseCircle24Filled,
-    PlayCircle24Filled,
-    Previous24Filled,
-    ArrowShuffleOff24Filled
-} from "@fluentui/react-icons";
-import Slider from "../../../components/slider";
-import {Button, Tooltip} from "@fluentui/react-components";
-import {usePlanet} from "../../../hooks/usePlanet";
-import {RepeatMode} from "../../../../packages/plugin/playqueue/repeat";
-import {PlayState} from "../../../../packages/plugin";
+  Pause,
+  Play,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
+import { motion } from "motion/react";
 
+import type { FormattedDuration } from "../../../../packages/model/duration";
+import { Slider } from "../../../ui/slider";
+import { Tooltip } from "../../../ui/tooltip";
+import { usePlanet } from "../../../hooks/usePlanet";
+import { RepeatMode } from "../../../../packages/plugin/playqueue/repeat";
+import { PlayState } from "../../../../packages/plugin";
+import { useStore as usePlayQueueStore } from "../../../store/playqueue";
+import { cn } from "../../../lib/cn";
 
-const Shuffle: React.FC = () => {
-    const [shuffleEnabled, setShuffleEnabled] = React.useState<boolean>(false);
-    const planet = usePlanet();
-    useEffect(() => {
-        planet.hooks.on("shuffle_enable_changed", setShuffleEnabled)
-        return () => {
-            planet.hooks.off("shuffle_enable_changed", setShuffleEnabled)
-        }
-    }, [])
-    const toolTipText = (): string => {
-        if (shuffleEnabled) {
-            return "Shuffle Enabled";
-        }
-        return "Shuffle Disabled";
-    }
-    const renderShuffleIcon = (): JSX.Element => {
-        if (shuffleEnabled) {
-            return <ArrowShuffle24Filled/>
-        }
-        return <ArrowShuffleOff24Filled/>
-    }
-    return <Tooltip
-        withArrow
-        appearance="inverted"
-        content={toolTipText()}
-        relationship="label"
-    >
-        <Button onClick={() => {
-            planet.hooks.emit("change_shuffle_enable")
-        }} appearance="transparent" shape={"circular"} icon={renderShuffleIcon()}/>
-    </Tooltip>
-}
-const Previous: React.FC = () => {
-    const planet = usePlanet();
-    return <Tooltip
-        withArrow
-        appearance="inverted"
-        content="Previous"
-        relationship="label"
-    >
-        <Button onClick={() => {
-            planet.hooks.emit("previous_track")
-        }} appearance="transparent" shape={"circular"} icon={<Previous24Filled/>}/>
-    </Tooltip>
-}
-const PlayPause: React.FC = () => {
-    const [playState, setPlayState] = useState<PlayState>(PlayState.STOPED)
-    const planet = usePlanet()
-    useEffect(() => {
-        planet.hooks.on("play_state_changed", setPlayState)
-        return () => {
-            planet.hooks.off("play_state_changed", setPlayState)
-        }
-    }, [])
-    const tooltipText = (): string => {
-        switch (playState) {
-            case PlayState.PLAYING:
-                return "Pause"
-            case PlayState.PAUSED:
-                return "Play"
-            case PlayState.STOPED:
-                return "Stoped"
-        }
-    }
-    const renderPlayIcon = (): JSX.Element => {
-        switch (playState) {
-            case PlayState.PLAYING:
-                return <PauseCircle24Filled/>
-            case PlayState.PAUSED:
-                return <PlayCircle24Filled/>
-            case PlayState.STOPED:
-                return <PlayCircle24Filled/>
-        }
-    }
-    const onClick = () => {
-        if (playState === PlayState.STOPED) {
-            planet.hooks.emit("play")
-        } else if (playState === PlayState.PLAYING) {
-            planet.hooks.emit("pause")
-        } else {
-            planet.hooks.emit("play")
-        }
-    }
-    return <Tooltip
-        withArrow
-        appearance="inverted"
-        content={tooltipText()}
-        relationship="label"
-    >
-        <Button onClick={onClick} appearance="transparent" size={"large"} shape={"circular"} icon={renderPlayIcon()}/>
-    </Tooltip>
-}
-const Next: React.FC = () => {
-    const planet = usePlanet();
-    return <Tooltip
-        withArrow
-        appearance="inverted"
-        content="Next"
-        relationship="label"
-    >
-        <Button onClick={() => {
-            planet.hooks.emit("next_track")
-        }} appearance="transparent" shape={"circular"} icon={<Next24Filled/>}/>
-    </Tooltip>
-}
-const Repeat: React.FC = () => {
-    const [repeatMode, setRepeatMode] = useState<RepeatMode>(RepeatMode.OFF)
-    const planet = usePlanet()
-    useEffect(() => {
-        planet.hooks.on("repeat_mode_changed", setRepeatMode)
-        return () => {
-            planet.hooks.off("repeat_mode_changed", setRepeatMode)
-        }
-    }, [])
-    const toolTipText = (): string => {
-        switch (repeatMode) {
-            case RepeatMode.OFF:
-                return "Repeat off"
-            case RepeatMode.ONE:
-                return "Repeat one"
-            case RepeatMode.ALL:
-                return "Repeat all"
-        }
-    }
-    const renderRepeatIcon = (): JSX.Element => {
-        switch (repeatMode) {
-            case RepeatMode.OFF:
-                return <ArrowRepeatAllOff24Filled/>
-            case RepeatMode.ONE:
-                return <ArrowRepeat124Filled/>
-            case RepeatMode.ALL:
-                return <ArrowRepeatAll24Filled/>
-        }
-    }
-    return <Tooltip
-        withArrow
-        appearance="inverted"
-        content={toolTipText()}
-        relationship="label"
-    >
-        <Button onClick={() => {
-            planet.hooks.emit("change_repeat_mode")
-        }} appearance="transparent" shape={"circular"} icon={renderRepeatIcon()}/>
-    </Tooltip>
-}
-const Actions: React.FC = () => {
-    const classes2 = control()
-    return <div className={classes2.actions}>
-        <div className={classes2.action_left}>
-            <Shuffle/>
-            <Previous/>
-        </div>
-        <PlayPause/>
-        <div className={classes2.action_right}>
-            <Next/>
-            <Repeat/>
-        </div>
+type IconBtnProps = {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+  className?: string;
+};
 
+const IconBtn: React.FC<IconBtnProps> = ({
+  label,
+  active,
+  onClick,
+  children,
+  className,
+}) => (
+  <Tooltip content={label}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+        active ? "text-accent" : "text-text-muted hover:text-white",
+        className,
+      )}
+    >
+      {children}
+      {active && (
+        <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent" />
+      )}
+    </button>
+  </Tooltip>
+);
+
+const ShuffleBtn: React.FC = () => {
+  const [enabled, setEnabled] = useState(false);
+  const planet = usePlanet();
+  useEffect(() => {
+    planet.hooks.on("shuffle_enable_changed", setEnabled);
+    return () => {
+      planet.hooks.off("shuffle_enable_changed", setEnabled);
+    };
+  }, []);
+  return (
+    <IconBtn
+      label={enabled ? "Shuffle on" : "Shuffle"}
+      active={enabled}
+      onClick={() => planet.hooks.emit("change_shuffle_enable")}
+    >
+      <Shuffle size={16} />
+    </IconBtn>
+  );
+};
+
+const PreviousBtn: React.FC = () => {
+  const planet = usePlanet();
+  return (
+    <IconBtn
+      label="Previous"
+      onClick={() => planet.hooks.emit("previous_track")}
+    >
+      <SkipBack size={18} />
+    </IconBtn>
+  );
+};
+
+const PlayPauseBtn: React.FC = () => {
+  const [playState, setPlayState] = useState<PlayState>(PlayState.STOPED);
+  const planet = usePlanet();
+  useEffect(() => {
+    planet.hooks.on("play_state_changed", setPlayState);
+    return () => {
+      planet.hooks.off("play_state_changed", setPlayState);
+    };
+  }, []);
+
+  const tooltip =
+    playState === PlayState.PLAYING ? "Pause" : "Play";
+  const renderIcon = (): JSX.Element => {
+    if (playState === PlayState.PLAYING) return <Pause size={18} fill="currentColor" />;
+    return <Play size={18} fill="currentColor" />;
+  };
+
+  const onClick = () => {
+    if (playState === PlayState.PLAYING) {
+      planet.hooks.emit("pause");
+    } else {
+      planet.hooks.emit("play");
+    }
+  };
+
+  return (
+    <Tooltip content={tooltip}>
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onClick}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-md hover:shadow-elevated"
+      >
+        {renderIcon()}
+      </motion.button>
+    </Tooltip>
+  );
+};
+
+const NextBtn: React.FC = () => {
+  const planet = usePlanet();
+  return (
+    <IconBtn label="Next" onClick={() => planet.hooks.emit("next_track")}>
+      <SkipForward size={18} />
+    </IconBtn>
+  );
+};
+
+const RepeatBtn: React.FC = () => {
+  const [mode, setMode] = useState<RepeatMode>(RepeatMode.OFF);
+  const planet = usePlanet();
+  useEffect(() => {
+    planet.hooks.on("repeat_mode_changed", setMode);
+    return () => {
+      planet.hooks.off("repeat_mode_changed", setMode);
+    };
+  }, []);
+
+  const tooltip =
+    mode === RepeatMode.OFF
+      ? "Repeat off"
+      : mode === RepeatMode.ONE
+      ? "Repeat one"
+      : "Repeat all";
+
+  const icon =
+    mode === RepeatMode.ONE ? <Repeat1 size={16} /> : <Repeat size={16} />;
+
+  return (
+    <IconBtn
+      label={tooltip}
+      active={mode !== RepeatMode.OFF}
+      onClick={() => planet.hooks.emit("change_repeat_mode")}
+    >
+      {icon}
+    </IconBtn>
+  );
+};
+
+const DurationLabel: React.FC<{ duration: FormattedDuration }> = ({
+  duration,
+}) => (
+  <span className="w-10 text-right text-[11px] tabular-nums text-text-muted">
+    {duration.durationFormatted}
+  </span>
+);
+
+const ProgressBar: React.FC = () => {
+  // 直接从 store 读取，避免组件 mount 时机晚于 track_duration_changed 事件
+  // （NowPlaying 内复用同一个 Control，按需挂载会错过早先的 duration 事件）
+  const progress = usePlayQueueStore.use.progress();
+  const duration = usePlayQueueStore.use.duration();
+  const planet = usePlanet();
+
+  return (
+    <div className="flex w-full items-center gap-2">
+      <DurationLabel duration={progress} />
+      <Slider
+        value={[progress.percent]}
+        max={100}
+        step={1}
+        onValueChange={(value) =>
+          planet.hooks.emit("play_time_seek", value[0])
+        }
+      />
+      <DurationLabel duration={duration} />
     </div>
-}
+  );
+};
 
-type DurationProps = {
-    duration: Duration
-}
-const Duration: React.FC<DurationProps> = ({duration}) => {
-    const classes2 = control()
-    return <div className={classes2.progress_duration}>
-        {duration.durationFormatted}
+const Control: React.FC = () => (
+  <div className="flex flex-col items-center gap-1.5">
+    <div className="flex items-center gap-3">
+      <ShuffleBtn />
+      <PreviousBtn />
+      <PlayPauseBtn />
+      <NextBtn />
+      <RepeatBtn />
     </div>
-}
+    <ProgressBar />
+  </div>
+);
 
-const Progress: React.FC = () => {
-    const [progress, setProgress] = useState<Progress>({
-        duration: 0,
-        durationFormatted: "00:00",
-        percent: 0
-    })
-    const [duration, setDuration] = useState<Duration>({
-        duration: 0,
-        durationFormatted: "00:00"
-    })
-    const classes2 = control()
-    const planet = usePlanet()
-    useEffect(() => {
-        planet.hooks.on("track_duration_changed", setDuration)
-        planet.hooks.on("play_time_changed", setProgress)
-        return () => {
-            planet.hooks.off("track_duration_changed", setDuration)
-            planet.hooks.off("play_time_changed", setProgress)
-        }
-    })
-    return <div className={classes2.progress}>
-        <Duration duration={progress}/>
-        <Slider value={progress.percent} onChange={(_, data) => {
-            planet.hooks.emit("play_time_seek", data.value)
-        }}/>
-        <Duration duration={duration}/>
-    </div>
-}
-
-const Control: React.FC = () => {
-    const classes = player()
-    const classes2 = control()
-    return <div className={classes.control}>
-        <div className={classes2.root}>
-            <Actions/>
-            <Progress/>
-        </div>
-    </div>
-}
-export default Control
+export default Control;

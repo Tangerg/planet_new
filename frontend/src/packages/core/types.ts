@@ -1,7 +1,7 @@
 import {IEventEmitter} from "../event";
 import {IManageable} from "../manager";
 import {PlanetEventMap} from "./event";
-import {IDisposeable} from "../types";
+import {IDisposable} from "../types";
 
 export interface IContext {
     get audioElement(): HTMLAudioElement;
@@ -11,20 +11,27 @@ export interface IContext {
     get hooks(): IEventEmitter<PlanetEventMap>
 }
 
-export interface IPlugin extends IManageable, IDisposeable {
-    beforeInstall(): void
+/**
+ * 插件接口。生命周期收敛为 init / dispose 两个钩子：
+ *   - init(ctx) 由 Planet 在挂载时调一次，注入 context；子类通过 onInit 订阅事件、监听 audio。
+ *   - dispose() 由 Planet 在卸载时调一次；子类清理订阅。
+ *
+ * 可选的 dependsOn 声明运行时依赖（按 plugin id 引用），Planet 会按拓扑序挂载，
+ * 卸载时反序进行；缺失依赖或循环依赖会在 Planet 构造时抛错。
+ */
+export interface IPlugin extends IManageable, IDisposable {
+    readonly dependsOn?: readonly string[]
 
-    install(ctx: IContext): void
+    init(ctx: IContext): void
 
-    afterInstall(): void
-
-    beforeUninstall(): void
-
-    uninstall(): void
-
-    afterUninstall(): void
+    dispose(): void
 }
 
-export interface IPlanet<> {
+export interface IPlanet extends IDisposable {
     get hooks(): IEventEmitter<PlanetEventMap>
+
+    getPlugin<T extends IPlugin = IPlugin>(id: string): T | null
+
+    /** 反序卸载所有插件、清空事件总线。可用于切换 provider 等场景。 */
+    dispose(): void
 }

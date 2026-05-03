@@ -1,9 +1,12 @@
 import React from "react";
-import {Avatar} from "@fluentui/react-components";
-import {hearderContent} from "./style";
+import { Avatar, AvatarFallback } from "../../../ui/avatar";
 
-const Profile: React.FC = () => {
-    const classes = hearderContent()
-    return <div className={classes.persion}><Avatar color="colorful" initials="唐"/></div>
-}
-export default Profile
+const Profile: React.FC = () => (
+  <div className="flex items-center gap-3">
+    <Avatar className="h-8 w-8 ring-2 ring-black/40">
+      <AvatarFallback>唐</AvatarFallback>
+    </Avatar>
+  </div>
+);
+
+export default Profile;

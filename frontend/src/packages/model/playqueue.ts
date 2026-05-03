@@ -2,6 +2,6 @@ import {Track} from "./track";
 
 export type PlayQueue = {
     key?: string;
-    tracks?: Track[];
+    tracks?: readonly Track[];
     track?: Track;
 }

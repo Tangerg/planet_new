@@ -18,6 +18,7 @@ declare module "../../core/event" {
 
 export class Control extends Plugin {
     public static id: string = "control";
+
     get id(): string {
         return Control.id;
     }
@@ -30,38 +31,41 @@ export class Control extends Plugin {
         this.context.hooks.off("current_track_changed", this.changePlayTrack)
     }
 
-    afterInstall() {
-        super.afterInstall();
-        this.context.audioElement.addEventListener("ended", this.onPlayEnd.bind(this))
+    protected onInit(): void {
+        this.context.audioElement.addEventListener("ended", this.onPlayEnd)
         this.context.hooks.on("play", this.play, this)
         this.context.hooks.on("pause", this.pause, this)
         this.context.hooks.on("current_track_changed", this.changePlayTrack, this)
     }
 
-
-    async play(): Promise<void> {
+    play = async (): Promise<void> => {
         await this.context.audioElement.play()
         this.context.hooks.emit("play_state_changed", PlayState.PLAYING)
     }
 
-    onPlayEnd(): void {
+    onPlayEnd = (): void => {
         this.context.hooks.emit("play_track_ended")
     }
 
-    pause(): void {
+    pause = (): void => {
         this.context.audioElement.pause()
         this.context.hooks.emit("play_state_changed", PlayState.PAUSED)
     }
 
-    stop(): void {
+    stop = (): void => {
         this.pause()
         this.context.audioElement.src = ""
         this.context.hooks.emit("play_state_changed", PlayState.STOPED)
     }
 
-    async changePlayTrack(track: Track): Promise<void> {
+    changePlayTrack = async (track: Track): Promise<void> => {
         this.stop()
-        this.context.audioElement.src = track.playUrl!
+        if (!track.playUrl) {
+            // 无可播放 URL（Mock provider 或 Spotify 没 preview 的曲目）
+            // 仍然 emit 状态以便 UI 更新当前曲目元数据
+            return
+        }
+        this.context.audioElement.src = track.playUrl
         await this.play()
     }
 }
