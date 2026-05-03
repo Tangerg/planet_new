@@ -1,7 +1,7 @@
 import {IClearable} from "../types";
 
 export interface IEventMap {
-    [key: string]: any;
+    readonly [key: string]: unknown;
 }
 
 export interface IEventListener<E extends IEventMap, K extends keyof E> extends Function {

@@ -18,11 +18,3 @@ export interface IManager<T extends IManageable> extends IClearable {
 
     get size(): number
 }
-
-export interface IUseableManager<T extends IManageable> extends IManager<T> {
-    apply(ts: T[], t?: T): void
-
-    get current(): Readonly<T> | null
-
-    use(id: string): void
-}

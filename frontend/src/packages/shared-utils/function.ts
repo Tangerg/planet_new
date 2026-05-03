@@ -7,16 +7,15 @@ export function createOnceFunction<T extends Function>(this: unknown, fn: T, fnD
         if (called) {
             return result;
         }
-
+        // 提前置位：保证 fn 抛错时再次调用直接走 cached return，
+        // 同时 fnDoneCallback 仅在首次调用后触发一次（含异常路径）。
+        called = true;
         try {
             result = fn.apply(_this, arguments);
+            return result;
         } finally {
-            fnDoneCallback && fnDoneCallback()
+            fnDoneCallback?.();
         }
-
-        called = true;
-        return result;
-
     } as unknown as T;
 }
 

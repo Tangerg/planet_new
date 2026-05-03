@@ -1,9 +1,9 @@
-import {Duration} from "./duration";
+import {FormattedDuration} from "./duration";
 import {parseTimestamp} from "../shared-utils/time";
 
 export type Lyric = {
     content: string
-} & Duration
+} & FormattedDuration
 
 /**  lyricDurationReg
  * 1、标准格式： [分钟:秒.毫秒] 歌词  [01:23.456]

@@ -6,7 +6,7 @@ export const Minute: Duration = 60 * Second
 export const Hour: Duration = 60 * Minute
 
 export function sleep(duration: Duration): Promise<void> {
-    if (Number.isNaN(duration) || Number.isFinite(duration) || duration < 0) {
+    if (!Number.isFinite(duration) || duration < 0) {
         duration = 0;
     }
     return new Promise<void>(resolve => {

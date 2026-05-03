@@ -1,96 +1,80 @@
 import IEventEmitter, {IEventListener, IEventMap} from "./types";
-import {createOnceFunction} from "../shared-utils/function";
 
-type EventListener = {
+type Listener = {
     fn: Function
-    ctx: Object
+    ctx: object
+    once: boolean
 }
-type EventListeners = Array<Readonly<EventListener>>
 
 export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
-    private readonly listeners: Map<keyof E, EventListeners>
+    private readonly listeners: Map<keyof E, Listener[]>
 
     constructor() {
-        this.listeners = new Map<keyof E, EventListeners>()
+        this.listeners = new Map<keyof E, Listener[]>()
     }
 
-
-    private assertGet(name: keyof E): EventListeners {
-        return this.listeners.get(name) as EventListeners
-    }
-
-    on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: Object = this): IEventEmitter<E> {
-        if (!this.listeners.has(name)) {
-            this.listeners.set(name, [])
+    private getOrCreate(name: keyof E): Listener[] {
+        let list = this.listeners.get(name)
+        if (!list) {
+            list = []
+            this.listeners.set(name, list)
         }
-        this.assertGet(name).push({fn, ctx})
+        return list
+    }
+
+    on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: object = this): IEventEmitter<E> {
+        this.getOrCreate(name).push({fn, ctx, once: false})
         return this
     }
 
-    once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: Object = this): IEventEmitter<E> {
-        const onceFn = createOnceFunction(fn, () => {
-            this.off(name, onceFn)
-        })
-        return this.on(name, onceFn, ctx)
+    once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: object = this): IEventEmitter<E> {
+        this.getOrCreate(name).push({fn, ctx, once: true})
+        return this
     }
 
     off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E> {
-        if (!this.listeners.has(name)) {
+        const list = this.listeners.get(name)
+        if (!list) {
             return this
         }
-
-        if (!Boolean(fn)) {
+        if (!fn) {
             this.listeners.set(name, [])
             return this
         }
-
-        const listeners = this.assertGet(name)
-
-        let count = listeners.length
-        while (count--) {
-            if (listeners[count].fn === fn) {
-                listeners.splice(count, 1)
-            }
-        }
-
+        // 用 filter 生成新数组，避免在 emit 期间被外部 off 影响 emit 的快照
+        this.listeners.set(name, list.filter(l => l.fn !== fn))
         return this
     }
 
-    private emitAll(arg?: any): void {
-        this.listeners.forEach(listeners => {
-            listeners.forEach(listener => {
-                if (Boolean(listener.fn)) {
-                    listener.fn.call(listener.ctx, arg)
-                }
-            })
-        })
-    }
-
     private emitByName<T extends keyof E>(name: T, arg?: E[T]): void {
-        if (!this.listeners.has(name)) {
-            return;
+        const list = this.listeners.get(name)
+        if (!list || list.length === 0) {
+            return
         }
-        const listeners = this.assertGet(name)
-
-        listeners.forEach(listener => {
-            if (Boolean(listener.fn)) {
-                listener.fn.call(listener.ctx, arg)
+        // emit 期间 listener 内若 on/off/once，影响的是新数组；本次派发用快照
+        const snapshot = list.slice()
+        for (const l of snapshot) {
+            l.fn.call(l.ctx, arg)
+            if (l.once) {
+                this.off(name, l.fn as IEventListener<E, T>)
             }
-        })
+        }
     }
 
     emit<T extends keyof E>(name: T, arg?: E[T]): void {
         if (name === "*") {
-            return this.emitAll(arg)
+            // wildcard 派发：把同一个 arg 派给每个事件名的所有监听者
+            for (const key of Array.from(this.listeners.keys())) {
+                this.emitByName(key, arg as E[typeof key])
+            }
+            return
         }
-        return this.emitByName(name, arg)
+        this.emitByName(name, arg)
     }
 
     clear(): void {
         this.listeners.clear()
     }
-
-
 }
 
 export default EventEmitter

@@ -1,108 +1,81 @@
-import {DrawerProps} from "@fluentui/react-components";
 import * as React from "react";
-import {
-    NavDrawer,
-    NavDrawerBody,
-    NavDrawerHeader,
-    NavItem,
-    NavSectionHeader,
-} from "@fluentui/react-nav-preview";
+import { Link } from "@tanstack/react-router";
+import { Disc3, ListMusic, Users } from "lucide-react";
 
-import {
-    makeStyles,
-} from "@fluentui/react-components";
-import {
-    Home20Filled,
-    CompassNorthwest20Filled,
-    Library20Filled,
-    Search20Filled,
-    List20Filled,
-    History20Filled,
-    People20Filled,
-    Album20Filled
-} from "@fluentui/react-icons";
-import {Link} from "@tanstack/react-router";
+import { cn } from "../../../lib/cn";
 
-const useStyles = makeStyles({
-    root: {
-        overflow: "hidden",
-        display: "flex",
-        height: "100%",
-        width: "100%"
-    },
-});
+interface CategoryRowProps {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}
 
-type DrawerType = Required<DrawerProps>["type"];
+const CategoryRow: React.FC<CategoryRowProps> = ({
+  icon,
+  label,
+  active,
+  onClick,
+}) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "group flex h-12 w-full items-center gap-3 rounded-md px-3 text-left transition-colors",
+      active
+        ? "bg-white/[0.06] text-white"
+        : "text-text-muted hover:bg-white/[0.04] hover:text-white",
+    )}
+  >
+    <span
+      className={cn(
+        "flex h-5 w-5 shrink-0 items-center justify-center transition-colors",
+        active ? "text-white" : "text-text-muted/80 group-hover:text-white",
+      )}
+    >
+      {icon}
+    </span>
+    <span className="text-[14px] tracking-tight">{label}</span>
+  </button>
+);
+
+type CategoryId = "playlists" | "albums" | "artists";
+
+const CATEGORIES: Array<{
+  id: CategoryId;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  { id: "playlists", label: "Playlists", icon: <ListMusic size={18} strokeWidth={2.2} /> },
+  { id: "albums",    label: "Albums",    icon: <Disc3 size={18} strokeWidth={2.2} /> },
+  { id: "artists",   label: "Artists",   icon: <Users size={18} strokeWidth={2.2} /> },
+];
 
 const Nav: React.FC = () => {
-    const styles = useStyles();
+  const [active, setActive] = React.useState<CategoryId>("playlists");
 
-    return (
-        <div className={styles.root}>
-            <NavDrawer
-                style={{
-                    width: "100%",
-                }}
-                defaultSelectedValue="2"
-                defaultSelectedCategoryValue="1"
-                open={true}
-                type={"inline"}
-                reserveSelectedNavItemSpace={true}
-            >
-                <div style={{
-                    height: "64px",
-                    lineHeight: "64px",
-                    alignContent: "center",
-                    textAlign: "center",
-                    justifyContent: "center",
-                    fontSize: "20px"
-                }}>
-                    <NavDrawerHeader>{"Planet"}</NavDrawerHeader>
-                </div>
-                <NavDrawerBody>
-                    <Link to={"/home"}>
-                        <NavItem icon={<Home20Filled/>} value="1">
-                            Home
-                        </NavItem>
-                    </Link>
-                    {/*<Link to={"/playlist"}>*/}
-                    {/*    <NavItem icon={<Home20Filled/>} value="10">*/}
-                    {/*        Playlist*/}
-                    {/*    </NavItem>*/}
-                    {/*</Link>*/}
-                    {/*<Link to={"/explore"}>*/}
-                    {/*    <NavItem icon={<CompassNorthwest20Filled/>} value="2">*/}
-                    {/*        Explore*/}
-                    {/*    </NavItem>*/}
-                    {/*</Link>*/}
-                    {/*<Link to={"/album"}>*/}
-                    {/*    <NavItem icon={<Library20Filled/>} value="4">*/}
-                    {/*        Library*/}
-                    {/*    </NavItem>*/}
-                    {/*</Link>*/}
-                    <NavItem
-                        icon={<Search20Filled/>}
-                        value="3"
-                    >
-                        Search
-                    </NavItem>
-                    <NavSectionHeader>Your Music</NavSectionHeader>
-                    <NavItem icon={<List20Filled/>} value="9">
-                        Playlists
-                    </NavItem>
-                    <NavItem icon={<People20Filled/>} value="10">
-                        Artists
-                    </NavItem>
-                    <NavItem icon={<Album20Filled/>} value="11">
-                        Albums
-                    </NavItem>
-                    <NavItem icon={<History20Filled/>} value="12">
-                        Recently
-                    </NavItem>
-                </NavDrawerBody>
-            </NavDrawer>
-        </div>
-    );
+  return (
+    <nav className="flex h-full w-full flex-col">
+      {/* 顶部 logo —— 点击回 home */}
+      <Link to="/home" className="block px-5 pt-6 pb-8">
+        <h1 className="font-title text-[28px] font-extrabold leading-none tracking-tight text-white">
+          planet<span className="text-accent">.</span>
+        </h1>
+      </Link>
+
+      {/* 分类列表 */}
+      <div className="scrollbar-spotify flex-1 overflow-y-auto px-2 pb-4">
+        {CATEGORIES.map((cat) => (
+          <CategoryRow
+            key={cat.id}
+            icon={cat.icon}
+            label={cat.label}
+            active={active === cat.id}
+            onClick={() => setActive(cat.id)}
+          />
+        ))}
+      </div>
+    </nav>
+  );
 };
 
-export default Nav
+export default Nav;

@@ -1,60 +1,41 @@
 import React from "react";
-import {
-    DrawerBody,
-    DrawerHeader,
-    DrawerHeaderTitle,
-    Drawer,
-    Button,
-} from "@fluentui/react-components";
-import {Dismiss24Regular} from "@fluentui/react-icons";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../../../ui/sheet";
+import { ScrollArea } from "../../../ui/scroll-area";
 import TrackItem from "../../../components/track-item";
-import {useStore} from "../../../store/playqueue";
-import useAppStore, {queueOpenSelector} from "../../../store/app";
+import { useStore } from "../../../store/playqueue";
+import useAppStore from "../../../store/app";
 
-const QueueHeader: React.FC = () => {
-    const setIsQueueOpen = useAppStore.use.setIsQueueOpen()
-    return <DrawerHeader>
-        <DrawerHeaderTitle
-            action={
-                <Button
-                    appearance="subtle"
-                    aria-label="Close"
-                    icon={<Dismiss24Regular/>}
-                    onClick={() => setIsQueueOpen(false)}
-                />
-            }
-        >
-            Queue
-        </DrawerHeaderTitle>
-    </DrawerHeader>
-}
-const QueueBody: React.FC = () => {
-    const tracks = useStore.use.tracks()
-    return <DrawerBody>
-        <ul>
-            {tracks?.map((track) => {
-                return <li key={track.id}>
-                    <TrackItem track={track}/>
-                </li>
-            })}
-        </ul>
-    </DrawerBody>
-}
+const Queue: React.FC = () => {
+  const isQueueOpen = useAppStore.use.isQueueOpen();
+  const setIsQueueOpen = useAppStore.use.setIsQueueOpen();
+  const tracks = useStore.use.tracks();
 
-const Queue = () => {
-    const [isQueueOpen, setIsQueueOpen] = useAppStore(queueOpenSelector)
-    return (
-        <Drawer
-            separator
-            position={"end"}
-            style={{width: "400px"}}
-            open={isQueueOpen}
-            onOpenChange={(_, {open}) => setIsQueueOpen(open)}
-        >
-            <QueueHeader/>
-            <QueueBody/>
-        </Drawer>
-    );
+  return (
+    <Sheet open={isQueueOpen} onOpenChange={setIsQueueOpen}>
+      <SheetContent
+        side="right"
+        className="flex w-full max-w-[420px] flex-col bg-surface text-white"
+      >
+        <SheetHeader>
+          <SheetTitle>Queue</SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="flex-1 px-3 pb-6">
+          <ul className="flex flex-col gap-1">
+            {tracks?.map((track) => (
+              <li key={track.id}>
+                <TrackItem track={track} />
+              </li>
+            ))}
+            {(!tracks || tracks.length === 0) && (
+              <li className="px-3 py-8 text-center text-sm text-text-muted">
+                Your queue is empty
+              </li>
+            )}
+          </ul>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  );
 };
 
-export default Queue
+export default Queue;

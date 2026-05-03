@@ -1,7 +1,7 @@
 import {Plugin} from "../../core";
 
 class Analyser extends Plugin {
-    private frequencyData!: Uint8Array
+    private frequencyData!: Uint8Array<ArrayBuffer>
     private analyserNode!: AnalyserNode
     private state: "running" | "suspended" = "suspended"
 
@@ -11,14 +11,13 @@ class Analyser extends Plugin {
         return Analyser.id
     }
 
-    afterInstall() {
-        super.afterInstall();
+    protected onInit(): void {
         this.analyserNode = new AnalyserNode(
             this.context.audioContext,
             {
                 fftSize: 256
             })
-        this.frequencyData = new Uint8Array(this.analyserNode.frequencyBinCount)
+        this.frequencyData = new Uint8Array(new ArrayBuffer(this.analyserNode.frequencyBinCount))
     }
 
     private resume(): void {

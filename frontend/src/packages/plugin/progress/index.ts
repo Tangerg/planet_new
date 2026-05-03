@@ -1,14 +1,14 @@
 import {Plugin} from "../../core/plugin";
-import type {Progress as ProgressModel, Duration} from "../../model/duration";
+import type {Progress as ProgressModel, FormattedDuration} from "../../model/duration";
 import {InfinityDuration} from "../../model/duration";
-import {formatDuration, Millisecond, Minute, Second} from "../../shared-utils/time";
+import {formatDuration, Minute, Second} from "../../shared-utils/time";
 import {getNumberInRange} from "../../shared-utils/math";
 
 
 declare module "../../core/event" {
     interface PlanetEventMap {
         play_time_seek: number;
-        track_duration_changed: Duration
+        track_duration_changed: FormattedDuration
         play_time_changed: ProgressModel
     }
 }
@@ -23,48 +23,55 @@ export class Progress extends Plugin {
     dispose(): void {
         this.context.audioElement.removeEventListener("timeupdate", this.onTimeUpdate)
         this.context.audioElement.removeEventListener("durationchange", this.onDurationChange)
+        this.context.hooks.off("play_time_seek", this.seek)
     }
 
-    afterInstall() {
-        super.afterInstall();
-        this.context.audioElement.addEventListener("timeupdate", this.onTimeUpdate.bind(this))
-        this.context.audioElement.addEventListener("durationchange", this.onDurationChange.bind(this))
+    protected onInit(): void {
+        this.context.audioElement.addEventListener("timeupdate", this.onTimeUpdate)
+        this.context.audioElement.addEventListener("durationchange", this.onDurationChange)
         this.context.hooks.on("play_time_seek", this.seek, this)
         this.onDurationChange()
         this.onTimeUpdate()
     }
 
     get current(): ProgressModel {
-        const rv = {} as ProgressModel
-        rv.duration = this.context.audioElement.currentTime
-        rv.durationFormatted = formatDuration(rv.duration * Second, [Minute, Second])
-        rv.percent = Math.floor(rv.duration / this.context.audioElement.duration * 100)
-        return rv
+        const duration = this.context.audioElement.currentTime
+        const total = this.context.audioElement.duration
+        const percent = Number.isFinite(total) && total > 0
+            ? Math.floor(duration / total * 100)
+            : 0
+        return {
+            duration,
+            durationFormatted: formatDuration(duration * Second, [Minute, Second]),
+            percent,
+        }
     }
 
-    get duration(): Duration {
-        if (this.context.audioElement.duration == Infinity) {
+    get duration(): FormattedDuration {
+        const total = this.context.audioElement.duration
+        if (!Number.isFinite(total)) {
             return InfinityDuration
         }
-        const rv = {} as Duration
-        rv.duration = this.context.audioElement.duration
-        rv.durationFormatted = formatDuration(rv.duration * Second, [Minute, Second])
-        return rv
+        return {
+            duration: total,
+            durationFormatted: formatDuration(total * Second, [Minute, Second]),
+        }
     }
 
-    onTimeUpdate() {
+    onTimeUpdate = (): void => {
         this.context.hooks.emit("play_time_changed", this.current)
     }
 
-    onDurationChange(): void {
+    onDurationChange = (): void => {
         this.context.hooks.emit("track_duration_changed", this.duration)
     }
 
-    seek(v: number): void {
-        const t = v / 100 * this.context.audioElement.duration
-        if (this.context.audioElement.duration == Infinity) {
+    seek = (v: number): void => {
+        const total = this.context.audioElement.duration
+        if (!Number.isFinite(total)) {
             return
         }
-        this.context.audioElement.currentTime = getNumberInRange(0, this.context.audioElement.duration, t)
+        const t = v / 100 * total
+        this.context.audioElement.currentTime = getNumberInRange(0, total, t)
     }
 }

@@ -1,33 +1,36 @@
 import React from "react";
-import {Tooltip} from "@fluentui/react-components";
-import {ChevronCircleLeft32Filled, ChevronCircleRight32Filled} from "@fluentui/react-icons";
-import {hearderContent} from "./style";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip } from "../../../ui/tooltip";
+
+const HistoryButton: React.FC<{
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}> = ({ onClick, label, children }) => (
+  <Tooltip content={label}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:scale-105 transition-transform"
+    >
+      {children}
+    </button>
+  </Tooltip>
+);
 
 const History: React.FC = () => {
-    const classes = hearderContent()
-    const goBack = () => {
-        window.history.back()
-    }
-    const goForward = () => {
-        window.history.forward()
-    }
-    return <div className={classes.history}>
-        <Tooltip
-            withArrow
-            appearance="inverted"
-            content="Go back"
-            relationship="label"
-        >
-            <ChevronCircleLeft32Filled onClick={goBack}/>
-        </Tooltip>
-        <Tooltip
-            withArrow
-            content="Go forward"
-            relationship="label"
-        >
-            <ChevronCircleRight32Filled onClick={goForward}/>
-        </Tooltip>
+  const goBack = () => window.history.back();
+  const goForward = () => window.history.forward();
+  return (
+    <div className="flex items-center gap-2">
+      <HistoryButton onClick={goBack} label="Go back">
+        <ChevronLeft size={18} />
+      </HistoryButton>
+      <HistoryButton onClick={goForward} label="Go forward">
+        <ChevronRight size={18} />
+      </HistoryButton>
     </div>
-}
+  );
+};
 
-export default History
+export default History;

@@ -2,11 +2,10 @@ export interface IIDable {
     get id(): string
 }
 
-export interface IDisposeable {
+export interface IDisposable {
     dispose(): void
 }
 
 export interface IClearable {
     clear(): void;
 }
-

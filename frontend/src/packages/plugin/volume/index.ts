@@ -1,7 +1,5 @@
 import {Plugin} from "../../core";
 import {getNumberInRange} from "../../shared-utils/math";
-import {as, aw} from "vitest/dist/chunks/reporters.C_zwCd4j";
-import {Track} from "../../model/track";
 
 
 declare module "../../core/event" {
@@ -28,10 +26,10 @@ export class Volume extends Plugin {
         this.context.hooks.off("mute_or_unmute", this.muteOrUnmute);
     }
 
-    afterInstall() {
-        super.afterInstall();
+    protected onInit(): void {
         this.preVolume = 0;
-        this.curVolume = this.context.audioElement.volume
+        // audioElement.volume 是 0..1，对外统一用 0..100
+        this.curVolume = Math.round(this.context.audioElement.volume * 100)
 
         this.context.hooks.on("change_volume", this.change, this);
         this.context.hooks.on("mute_or_unmute", this.muteOrUnmute, this);

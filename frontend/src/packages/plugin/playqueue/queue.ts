@@ -3,7 +3,7 @@ import {EventEmitter, IEventMap} from "../../event";
 
 export interface QueueEventMap extends IEventMap {
     current_track_changed: Track | undefined;
-    tracks_changed: Track[];
+    tracks_changed: readonly Track[];
     tracks_cleaned: never;
 }
 
@@ -19,7 +19,7 @@ export class Queue extends EventEmitter<QueueEventMap> {
         return this._tracks[this._currentIndex]
     }
 
-    get tracks(): Track[] {
+    get tracks(): readonly Track[] {
         return this._tracks
     }
 
@@ -45,7 +45,7 @@ export class Queue extends EventEmitter<QueueEventMap> {
     }
 
 
-    apply(tracks: Track[]): void {
+    apply(tracks: readonly Track[]): void {
         this.clear()
         this._tracks = [...tracks]
         this.emit("tracks_changed", this._tracks)
