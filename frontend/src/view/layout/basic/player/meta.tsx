@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Heart, Maximize2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { usePlanet } from "../../../hooks/usePlanet";
-import { Track } from "../../../../packages/model/track";
-import { Tooltip } from "../../../ui/tooltip";
-import { cn } from "../../../lib/cn";
-import useAppStore from "../../../store/app";
+
+import { Track } from "@kernel/model/track";
+
+import { usePlanet } from "@/hooks/usePlanet";
+import { cn } from "@/lib/cn";
+import useAppStore from "@/store/app";
+import { Tooltip } from "@/ui/tooltip";
 
 const Meta: React.FC = () => {
   const [track, setTrack] = useState<Partial<Track>>({

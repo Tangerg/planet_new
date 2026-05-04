@@ -1,15 +1,16 @@
-import { Planet } from "../packages/core";
-import { Control, Volume } from "../packages/plugin";
-import { PlayQueue } from "../packages/plugin/playqueue";
-import { Progress } from "../packages/plugin/progress";
+import { Planet } from "@kernel/core";
+import { Control, Volume } from "@kernel/plugin";
+import { PlayQueue } from "@kernel/plugin/playqueue";
+import { Progress } from "@kernel/plugin/progress";
 import {
   Mock,
   NeteaseCloudMusic,
   Provider,
   QQMusic,
   Spotify,
-} from "../packages/provider";
-import Store from "./store-planet";
+} from "@kernel/provider";
+
+import { StoreBridge } from "./store/bridge";
 
 const env = import.meta.env;
 
@@ -48,7 +49,7 @@ const planet = new Planet({
     new PlayQueue(),
     new Volume(),
     new Progress(),
-    new Store(),
+    new StoreBridge(),
   ],
 });
 

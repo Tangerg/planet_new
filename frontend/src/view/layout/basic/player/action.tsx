@@ -1,10 +1,10 @@
 import React from "react";
 import { ListMusic, Maximize2 } from "lucide-react";
 
-import { Tooltip } from "../../../ui/tooltip";
-import VolumeControl from "../../../components/volume-control";
-import useAppStore from "../../../store/app";
-import { cn } from "../../../lib/cn";
+import VolumeControl from "@/components/volume-control";
+import { cn } from "@/lib/cn";
+import useAppStore from "@/store/app";
+import { Tooltip } from "@/ui/tooltip";
 
 const IconBtn: React.FC<{
   label: string;

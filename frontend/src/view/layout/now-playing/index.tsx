@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, Heart, MoreHorizontal, Plus } from "lucide-react";
 
-import { PlayState } from "../../../packages/plugin";
-import { Tooltip } from "../../ui/tooltip";
-import { cn } from "../../lib/cn";
-import useAppStore from "../../store/app";
-import { useStore as usePlayQueueStore } from "../../store/playqueue";
-import LyricPanel from "../../components/lyric-panel";
-import CoverAmbientBg from "../../components/cover-ambient-bg";
-import VolumeControl from "../../components/volume-control";
+import { PlayState } from "@kernel/plugin";
+
+import CoverAmbientBg from "@/components/cover-ambient-bg";
+import LyricPanel from "@/components/lyric-panel";
+import VolumeControl from "@/components/volume-control";
+import { cn } from "@/lib/cn";
+import useAppStore from "@/store/app";
+import { usePlayQueueStore } from "@/store/playqueue";
+import { Tooltip } from "@/ui/tooltip";
+
 import Control from "../basic/player/control";
 import Vinyl from "./vinyl";
 

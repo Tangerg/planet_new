@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import useAppStore from "../store/app";
+
+import useAppStore from "@/store/app";
 
 /**
  * 页面用此 hook 声明自己的"主封面图"。

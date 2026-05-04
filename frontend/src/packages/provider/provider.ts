@@ -3,6 +3,7 @@ import { IProvider, ProviderCapability } from "./types";
 import { Playlist } from "../model/playlist";
 import { Lyric } from "../model/lyric";
 import { Album } from "../model/album";
+import { Artist } from "../model/artist";
 import { TrackPlayUrl } from "../model/track";
 import { Personalized } from "../model/personalized";
 
@@ -35,6 +36,8 @@ abstract class Provider extends Plugin implements IProvider {
     abstract lyric(id: string): Promise<Lyric[]>
 
     abstract albumDetail(id: string): Promise<Album>
+
+    abstract artistDetail(id: string): Promise<Artist>
 
     abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>
 

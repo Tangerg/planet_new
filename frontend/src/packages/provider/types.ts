@@ -1,6 +1,7 @@
 import {Playlist} from "../model/playlist";
 import {Lyric} from "../model/lyric";
 import {Album} from "../model/album";
+import {Artist} from "../model/artist";
 import {TrackPlayUrl} from "../model/track";
 import {Personalized} from "../model/personalized";
 
@@ -14,6 +15,7 @@ import {Personalized} from "../model/personalized";
 export type ProviderCapability =
     | "playlistDetail"
     | "albumDetail"
+    | "artistDetail"
     | "lyric"
     | "personalized"
     | "fullPlayback"      // 能给完整曲目可播放 URL
@@ -44,6 +46,12 @@ export interface IProvider {
      * @param id 专辑id
      */
     albumDetail(id: string): Promise<Album>
+
+    /**
+     * 获取艺术家详情（含基础信息 + 热门曲目）
+     * @param id 艺术家 id
+     */
+    artistDetail(id: string): Promise<Artist>
 
     /**
      * 获取歌曲播放地址

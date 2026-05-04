@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 
-import type { Lyric } from "../../../packages/model/lyric";
-import { usePlanet } from "../../hooks/usePlanet";
-import { useProvider } from "../../hooks/useProvider";
-import { useStore as usePlayQueueStore } from "../../store/playqueue";
-import { cn } from "../../lib/cn";
+import type { Lyric } from "@kernel/model/lyric";
+
+import { usePlanet } from "@/hooks/usePlanet";
+import { useProvider } from "@/hooks/useProvider";
+import { cn } from "@/lib/cn";
+import { usePlayQueueStore } from "@/store/playqueue";
 
 /**
  * 在已按 duration 升序的 lyrics 中找最后一个 duration <= currentMs 的索引。
