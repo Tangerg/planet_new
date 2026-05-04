@@ -28,6 +28,7 @@ export class NeteaseCloudMusic extends Provider {
         new Set<ProviderCapability>([
             "playlistDetail",
             "albumDetail",
+            "artistDetail",
             "lyric",
             "personalized",
             "fullPlayback",
@@ -69,6 +70,43 @@ export class NeteaseCloudMusic extends Provider {
             searchParams: { id },
         }).json<{ album: any; songs: any[] }>()
         return mapNcmAlbum(res.album, res.songs ?? [])
+    }
+
+    async artistDetail(id: string): Promise<Artist> {
+        type ArtistInfoRes = { artist: any; hotSongs: any[] }
+        type ArtistDescRes = {
+            briefDesc?: string
+            introduction?: { ti?: string; txt?: string }[]
+        }
+        // /artists 一次返回 artist 信息 + hotSongs；bio 走 /artist/desc
+        const [info, desc] = await Promise.all([
+            this.http
+                .get("artists", { searchParams: { id } })
+                .json<ArtistInfoRes>()
+                .catch(() => ({ artist: {}, hotSongs: [] }) as ArtistInfoRes),
+            this.http
+                .get("artist/desc", { searchParams: { id } })
+                .json<ArtistDescRes>()
+                .catch(() => ({}) as ArtistDescRes),
+        ])
+
+        const artist = info.artist ?? {}
+        const topTracks = (info.hotSongs ?? []).slice(0, 10).map((s, i) =>
+            mapNcmTrack(s, { index: i + 1 }),
+        )
+        const description =
+            desc.briefDesc ||
+            desc.introduction?.[0]?.txt ||
+            ""
+        return {
+            id: artist.id?.toString() ?? id,
+            name: artist.name ?? "",
+            image: artist.cover ?? artist.picUrl ?? "",
+            banner: artist.cover ?? "",
+            alias: artist.alias ?? [],
+            description,
+            topTracks,
+        }
     }
 
     async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {

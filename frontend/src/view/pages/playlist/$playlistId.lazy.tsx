@@ -13,36 +13,21 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import PageLoading from "../../components/page-loading";
-import TrackList from "../../components/track-list";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import { Tooltip } from "../../ui/tooltip";
-import { Track } from "../../../packages/model/track";
-import { Artist } from "../../../packages/model/artist";
-import { formatDurationMillisecond } from "../../../packages/shared-utils/time";
-import { usePlanet } from "../../hooks/usePlanet";
-import { useProvider } from "../../hooks/useProvider";
-import { usePageCover } from "../../hooks/usePageCover";
+import { Artist } from "@kernel/model/artist";
+import { Track } from "@kernel/model/track";
+
+import { ActionIcon, formatHumanDuration } from "@/components/detail-toolkit";
+import PageLoading from "@/components/page-loading";
+import TrackList from "@/components/track-list";
+import { usePageCover } from "@/hooks/usePageCover";
+import { usePlanet } from "@/hooks/usePlanet";
+import { useProvider } from "@/hooks/useProvider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/ui/avatar";
+import { Tooltip } from "@/ui/tooltip";
 
 /* -------------------------------------------------------------------------- */
-/*  小组件                                                                      */
+/*  右栏小组件                                                                  */
 /* -------------------------------------------------------------------------- */
-
-/** 主操作圆形 ghost 图标按钮 */
-const ActionIcon: React.FC<{
-  label: string;
-  onClick?: () => void;
-  children: React.ReactNode;
-}> = ({ label, onClick, children }) => (
-  <Tooltip content={label}>
-    <button
-      onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-white/10 hover:text-white"
-    >
-      {children}
-    </button>
-  </Tooltip>
-);
 
 /** 右栏 genre tag pill */
 const GenrePill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -52,10 +37,14 @@ const GenrePill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 /** 右栏 related artist 行 */
-const RelatedArtistRow: React.FC<{ artist: Partial<Artist> }> = ({ artist }) => (
+const RelatedArtistRow: React.FC<{ artist: Partial<Artist> }> = ({
+  artist,
+}) => (
   <div className="flex items-center gap-3 rounded-md p-1 hover:bg-white/5 cursor-pointer transition-colors">
     <Avatar className="h-12 w-12">
-      {artist.image ? <AvatarImage src={artist.image} alt={artist.name} /> : null}
+      {artist.image ? (
+        <AvatarImage src={artist.image} alt={artist.name} />
+      ) : null}
       <AvatarFallback>{artist.name?.[0] ?? "?"}</AvatarFallback>
     </Avatar>
     <span className="truncate text-[15px] font-medium text-white">
@@ -67,16 +56,6 @@ const RelatedArtistRow: React.FC<{ artist: Partial<Artist> }> = ({ artist }) => 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                     */
 /* -------------------------------------------------------------------------- */
-
-const formatHumanDuration = (durationMs: number): string => {
-  const dur = formatDurationMillisecond(durationMs);
-  const [h, m, s] = dur.split(":").map(Number);
-  const parts: string[] = [];
-  if (h > 0) parts.push(`${h} hr`);
-  if (m > 0) parts.push(`${m} min`);
-  if (h === 0) parts.push(`${s} sec`);
-  return parts.join(" ");
-};
 
 /** 从 tracks 提取前 N 个不重复艺术家 */
 function deriveRelatedArtists(

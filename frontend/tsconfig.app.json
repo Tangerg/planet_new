@@ -1,20 +1,42 @@
 {
   "compilerOptions": {
+    /* —— 输出目标 —— */
     "target": "ESNext",
-    "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+
+    /* —— 输入与互操作 —— */
+    "allowJs": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* —— 严格性 —— */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* —— React JSX —— */
+    "jsx": "react-jsx",
+
+    /* —— Vite 由打包器消费类型，自身不 emit —— */
     "noEmit": true,
-    "jsx": "react-jsx"
+
+    /* —— 路径别名 ——
+       约定：
+         @kernel/*   —— 框架无关内核（packages/*），UI 之外也可复用
+         @/*         —— UI 层（view/*），React 实现
+       说明：TS 6+ 起，paths 可不依赖 baseUrl，直接以 tsconfig 所在目录为锚点。 */
+    "paths": {
+      "@kernel/*": ["./src/packages/*"],
+      "@/*": ["./src/view/*"]
+    }
   },
   "include": [
     "src/**/*.ts",

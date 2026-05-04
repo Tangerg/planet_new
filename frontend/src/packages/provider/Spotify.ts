@@ -78,6 +78,7 @@ export class Spotify extends Provider {
     new Set<ProviderCapability>([
       "playlistDetail",
       "albumDetail",
+      "artistDetail",
       "personalized",
       "previewPlayback",
       // 无 lyric（Web API 不提供）；无 fullPlayback（仅 30s preview_url）
@@ -268,6 +269,49 @@ export class Spotify extends Provider {
       artists: res.artists.map(
         (a): Partial<Artist> => ({ id: a.id, name: a.name }),
       ),
+    };
+  }
+
+  async artistDetail(id: string): Promise<Artist> {
+    type ArtistInfo = {
+      id: string;
+      name: string;
+      images: SpotifyImage[];
+      genres?: string[];
+      followers?: { total?: number };
+    };
+    type TopTracksRes = { tracks?: SpotifyTrack[] };
+    // /artists/{id} 拿基础信息；/artists/{id}/top-tracks 拿热门曲目
+    const [info, top] = await Promise.all([
+      this.api
+        .get(`artists/${id}`)
+        .json<ArtistInfo>()
+        .catch(() => ({
+          id,
+          name: "",
+          images: [],
+        }) as ArtistInfo),
+      this.api
+        .get(`artists/${id}/top-tracks`, {
+          searchParams: this.withMarket({}),
+        })
+        .json<TopTracksRes>()
+        .catch(() => ({ tracks: [] }) as TopTracksRes),
+    ]);
+
+    const topTracks = (top.tracks ?? [])
+      .slice(0, 10)
+      .map((t, i) => this.toTrack(t, undefined, i + 1));
+
+    const heroImage = pickImage(info.images);
+    return {
+      id: info.id,
+      name: info.name,
+      image: heroImage,
+      banner: info.images?.[0]?.url ?? heroImage,
+      genres: info.genres ?? [],
+      followers: info.followers?.total,
+      topTracks,
     };
   }
 

@@ -16,6 +16,7 @@ const HomeIndexLazyRouteImport = createFileRoute('/home/')()
 const PlaylistPlaylistIdLazyRouteImport = createFileRoute(
   '/playlist/$playlistId',
 )()
+const ArtistArtistIdLazyRouteImport = createFileRoute('/artist/$artistId')()
 const AlbumAlbumIdLazyRouteImport = createFileRoute('/album/$albumId')()
 
 const HomeIndexLazyRoute = HomeIndexLazyRouteImport.update({
@@ -30,6 +31,13 @@ const PlaylistPlaylistIdLazyRoute = PlaylistPlaylistIdLazyRouteImport.update({
 } as any).lazy(() =>
   import('./pages/playlist/$playlistId.lazy').then((d) => d.Route),
 )
+const ArtistArtistIdLazyRoute = ArtistArtistIdLazyRouteImport.update({
+  id: '/artist/$artistId',
+  path: '/artist/$artistId',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./pages/artist/$artistId.lazy').then((d) => d.Route),
+)
 const AlbumAlbumIdLazyRoute = AlbumAlbumIdLazyRouteImport.update({
   id: '/album/$albumId',
   path: '/album/$albumId',
@@ -38,30 +46,47 @@ const AlbumAlbumIdLazyRoute = AlbumAlbumIdLazyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/album/$albumId': typeof AlbumAlbumIdLazyRoute
+  '/artist/$artistId': typeof ArtistArtistIdLazyRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdLazyRoute
   '/home/': typeof HomeIndexLazyRoute
 }
 export interface FileRoutesByTo {
   '/album/$albumId': typeof AlbumAlbumIdLazyRoute
+  '/artist/$artistId': typeof ArtistArtistIdLazyRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdLazyRoute
   '/home': typeof HomeIndexLazyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/album/$albumId': typeof AlbumAlbumIdLazyRoute
+  '/artist/$artistId': typeof ArtistArtistIdLazyRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdLazyRoute
   '/home/': typeof HomeIndexLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/album/$albumId' | '/playlist/$playlistId' | '/home/'
+  fullPaths:
+    | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/playlist/$playlistId'
+    | '/home/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/album/$albumId' | '/playlist/$playlistId' | '/home'
-  id: '__root__' | '/album/$albumId' | '/playlist/$playlistId' | '/home/'
+  to:
+    | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/playlist/$playlistId'
+    | '/home'
+  id:
+    | '__root__'
+    | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/playlist/$playlistId'
+    | '/home/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AlbumAlbumIdLazyRoute: typeof AlbumAlbumIdLazyRoute
+  ArtistArtistIdLazyRoute: typeof ArtistArtistIdLazyRoute
   PlaylistPlaylistIdLazyRoute: typeof PlaylistPlaylistIdLazyRoute
   HomeIndexLazyRoute: typeof HomeIndexLazyRoute
 }
@@ -82,6 +107,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlaylistPlaylistIdLazyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/artist/$artistId': {
+      id: '/artist/$artistId'
+      path: '/artist/$artistId'
+      fullPath: '/artist/$artistId'
+      preLoaderRoute: typeof ArtistArtistIdLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/album/$albumId': {
       id: '/album/$albumId'
       path: '/album/$albumId'
@@ -94,6 +126,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   AlbumAlbumIdLazyRoute: AlbumAlbumIdLazyRoute,
+  ArtistArtistIdLazyRoute: ArtistArtistIdLazyRoute,
   PlaylistPlaylistIdLazyRoute: PlaylistPlaylistIdLazyRoute,
   HomeIndexLazyRoute: HomeIndexLazyRoute,
 }

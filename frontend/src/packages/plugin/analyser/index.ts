@@ -20,7 +20,7 @@ class Analyser extends Plugin {
         this.frequencyData = new Uint8Array(new ArrayBuffer(this.analyserNode.frequencyBinCount))
     }
 
-    private resume(): void {
+    public resume(): void {
         if (this.state === "running") {
             return
         }

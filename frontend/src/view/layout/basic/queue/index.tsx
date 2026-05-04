@@ -1,14 +1,15 @@
 import React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../../../ui/sheet";
-import { ScrollArea } from "../../../ui/scroll-area";
-import TrackItem from "../../../components/track-item";
-import { useStore } from "../../../store/playqueue";
-import useAppStore from "../../../store/app";
+
+import TrackItem from "@/components/track-item";
+import useAppStore from "@/store/app";
+import { usePlayQueueStore } from "@/store/playqueue";
+import { ScrollArea } from "@/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/sheet";
 
 const Queue: React.FC = () => {
   const isQueueOpen = useAppStore.use.isQueueOpen();
   const setIsQueueOpen = useAppStore.use.setIsQueueOpen();
-  const tracks = useStore.use.tracks();
+  const tracks = usePlayQueueStore.use.tracks();
 
   return (
     <Sheet open={isQueueOpen} onOpenChange={setIsQueueOpen}>

@@ -1,7 +1,8 @@
 import React from "react";
 
-import CoverAmbientBg from "../../components/cover-ambient-bg";
-import useAppStore from "../../store/app";
+import CoverAmbientBg from "@/components/cover-ambient-bg";
+import useAppStore from "@/store/app";
+
 import Header from "./header";
 import Nav from "./nav";
 import Player from "./player";

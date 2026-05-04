@@ -10,14 +10,15 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import type { FormattedDuration } from "../../../../packages/model/duration";
-import { Slider } from "../../../ui/slider";
-import { Tooltip } from "../../../ui/tooltip";
-import { usePlanet } from "../../../hooks/usePlanet";
-import { RepeatMode } from "../../../../packages/plugin/playqueue/repeat";
-import { PlayState } from "../../../../packages/plugin";
-import { useStore as usePlayQueueStore } from "../../../store/playqueue";
-import { cn } from "../../../lib/cn";
+import type { FormattedDuration } from "@kernel/model/duration";
+import { PlayState } from "@kernel/plugin";
+import { RepeatMode } from "@kernel/plugin/playqueue/repeat";
+
+import { usePlanet } from "@/hooks/usePlanet";
+import { cn } from "@/lib/cn";
+import { usePlayQueueStore } from "@/store/playqueue";
+import { Slider } from "@/ui/slider";
+import { Tooltip } from "@/ui/tooltip";
 
 type IconBtnProps = {
   label: string;

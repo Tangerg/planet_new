@@ -132,13 +132,18 @@ const Home: React.FC = () => {
       <SectionHeader title="Your favorite artists" />
       <CardFlow>
         {data?.artists?.map((ar) => (
-          <Card
+          <Link
+            to="/artist/$artistId"
+            params={{ artistId: ar.id! }}
             key={ar.id}
-            shape="circular"
-            title={ar.name!}
-            subTitle={ar.alias?.[0]}
-            thumbnail={ar.image!}
-          />
+          >
+            <Card
+              shape="circular"
+              title={ar.name!}
+              subTitle={ar.alias?.[0]}
+              thumbnail={ar.image!}
+            />
+          </Link>
         ))}
       </CardFlow>
 

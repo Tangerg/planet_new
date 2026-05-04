@@ -278,6 +278,7 @@ export class Mock extends Provider {
     new Set<ProviderCapability>([
       "playlistDetail",
       "albumDetail",
+      "artistDetail",
       "lyric",
       "personalized",
       // 不含 fullPlayback / previewPlayback —— mock 不返回真实音频
@@ -355,6 +356,29 @@ export class Mock extends Provider {
       artists: [{ id: artist.id, name: artist.name, image: artist.image }],
     };
     return delay(album, this.latency);
+  }
+
+  async artistDetail(id: string): Promise<Artist> {
+    const r = makeRng(hash(`artist-detail:${id}`));
+    const stub = makeArtist(`detail:${id}`);
+    const trackCount = 8 + Math.floor(r() * 5); // 8-12 首热门
+    const topTracks = Array.from({ length: trackCount }).map((_, i) =>
+      makeTrack(`artist-top:${id}`, i),
+    );
+    const followers = 50_000 + Math.floor(r() * 9_500_000);
+    return delay(
+      {
+        id,
+        name: stub.name,
+        image: stub.image,
+        alias: stub.alias,
+        description: `${stub.name} 是一位 mock 演示用的艺术家。这里展示的描述、热门曲目与流派标签都来自前端确定性生成。`,
+        followers,
+        genres: stub.alias,
+        topTracks,
+      } satisfies Artist,
+      this.latency,
+    );
   }
 
   async lyric(_id: string): Promise<Lyric[]> {

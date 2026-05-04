@@ -14,6 +14,8 @@ import {
   mapQQNewAlbum,
   mapQQPlaylistDetail,
   mapQQPlaylistStub,
+  mapQQTrackFromSong,
+  singerImage,
 } from "./mappers/qqmusic";
 
 export type QQMusicOptions = {
@@ -27,6 +29,7 @@ export class QQMusic extends Provider {
     new Set<ProviderCapability>([
       "playlistDetail",
       "albumDetail",
+      "artistDetail",
       "lyric",
       "personalized",
       "fullPlayback",
@@ -61,6 +64,57 @@ export class QQMusic extends Provider {
       .json<{ response?: { data?: any } }>();
     const data = res.response?.data ?? {};
     return mapQQAlbumDetail(data);
+  }
+
+  async artistDetail(id: string): Promise<Artist> {
+    type HotsongRes = {
+      response?: {
+        songList?: Array<{ musicData?: any }>;
+        singerInfo?: { singer_name?: string };
+      };
+    };
+    type DescRes = {
+      response?: {
+        data?: {
+          info?: { desc?: string };
+          basic_info?: { name?: string };
+        };
+      };
+    };
+    // 并行：热门曲目 + 简介
+    const [hotsong, desc] = await Promise.all([
+      this.http
+        .get("getSingerHotsong", {
+          searchParams: { singermid: id, limit: 10, page: 1 },
+        })
+        .json<HotsongRes>()
+        .catch(() => ({}) as HotsongRes),
+      this.http
+        .get("getSingerDesc", { searchParams: { singermid: id } })
+        .json<DescRes>()
+        .catch(() => ({}) as DescRes),
+    ]);
+
+    const songs =
+      hotsong.response?.songList
+        ?.map((s) => s.musicData)
+        .filter(Boolean) ?? [];
+    const topTracks = songs.map((s: any, i: number) =>
+      mapQQTrackFromSong(s, i + 1),
+    );
+
+    const singerInfo = hotsong.response?.singerInfo ?? {};
+    const basicInfo = desc.response?.data?.basic_info ?? {};
+    const description = desc.response?.data?.info?.desc ?? "";
+
+    return {
+      id,
+      name: singerInfo.singer_name ?? basicInfo.name ?? "",
+      image: singerImage(id, 500),
+      banner: singerImage(id, 800),
+      description,
+      topTracks,
+    };
   }
 
   async lyric(id: string): Promise<Lyric[]> {

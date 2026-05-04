@@ -13,44 +13,16 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import PageLoading from "../../components/page-loading";
-import TrackList from "../../components/track-list";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import { Tooltip } from "../../ui/tooltip";
-import { Track } from "../../../packages/model/track";
-import { formatDurationMillisecond } from "../../../packages/shared-utils/time";
-import { usePlanet } from "../../hooks/usePlanet";
-import { useProvider } from "../../hooks/useProvider";
-import { usePageCover } from "../../hooks/usePageCover";
+import { Track } from "@kernel/model/track";
 
-/* -------------------------------------------------------------------------- */
-/*  Helpers                                                                     */
-/* -------------------------------------------------------------------------- */
-
-const ActionIcon: React.FC<{
-  label: string;
-  onClick?: () => void;
-  children: React.ReactNode;
-}> = ({ label, onClick, children }) => (
-  <Tooltip content={label}>
-    <button
-      onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-white/10 hover:text-white"
-    >
-      {children}
-    </button>
-  </Tooltip>
-);
-
-const formatHumanDuration = (durationMs: number): string => {
-  const dur = formatDurationMillisecond(durationMs);
-  const [h, m, s] = dur.split(":").map(Number);
-  const parts: string[] = [];
-  if (h > 0) parts.push(`${h} hr`);
-  if (m > 0) parts.push(`${m} min`);
-  if (h === 0) parts.push(`${s} sec`);
-  return parts.join(" ");
-};
+import { ActionIcon, formatHumanDuration } from "@/components/detail-toolkit";
+import PageLoading from "@/components/page-loading";
+import TrackList from "@/components/track-list";
+import { usePageCover } from "@/hooks/usePageCover";
+import { usePlanet } from "@/hooks/usePlanet";
+import { useProvider } from "@/hooks/useProvider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/ui/avatar";
+import { Tooltip } from "@/ui/tooltip";
 
 /* -------------------------------------------------------------------------- */
 /*  Page                                                                        */

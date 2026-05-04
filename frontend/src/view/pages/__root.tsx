@@ -1,16 +1,7 @@
 import { createRootRoute } from "@tanstack/react-router";
-import React from "react";
 
-import Basic from "../layout/basic";
-import NowPlaying from "../layout/now-playing";
-
-const TanStackRouterDevtools = import.meta.env.PROD
-  ? () => null
-  : React.lazy(() =>
-      import("@tanstack/router-devtools").then((res) => ({
-        default: res.TanStackRouterDevtools,
-      })),
-    );
+import Basic from "@/layout/basic";
+import NowPlaying from "@/layout/now-playing";
 
 export const Route = createRootRoute({
   component: () => (
@@ -19,7 +10,6 @@ export const Route = createRootRoute({
           NowPlaying 是全屏播放页，靠 isNowPlayingOpen 自管显隐。 */}
       <Basic />
       <NowPlaying />
-      {/*<TanStackRouterDevtools/>*/}
     </>
   ),
 });
