@@ -18,8 +18,9 @@
 
     /* —— 严格性 —— */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    /* vibe UI 层逐字移植自示例,保留原始未用变量/参数;关闭这两项避免大量噪声 */
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
     /* —— React JSX —— */
@@ -34,8 +35,15 @@
          @/*         —— UI 层（view/*），React 实现
        说明：TS 6+ 起，paths 可不依赖 baseUrl，直接以 tsconfig 所在目录为锚点。 */
     "paths": {
-      "@kernel/*": ["./src/packages/*"],
-      "@/*": ["./src/view/*"]
+      "@shared": ["./src/shared/index.ts"],
+      "@shared/*": ["./src/shared/*"],
+      "@domain": ["./src/domain/index.ts"],
+      "@domain/*": ["./src/domain/*"],
+      "@core": ["./src/core/index.ts"],
+      "@core/*": ["./src/core/*"],
+      "@providers": ["./src/providers/index.ts"],
+      "@providers/*": ["./src/providers/*"],
+      "@/*": ["./src/ui/*"]
     }
   },
   "include": [

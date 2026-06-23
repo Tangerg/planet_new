@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Sonance — Vibe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="vibe/vibe.css"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#0a0a0d">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#0a0a0d"/>
+      <circle cx="600" cy="360" r="150" fill="none" stroke="#1ed760" stroke-width="10"/>
+      <circle cx="600" cy="360" r="30" fill="#1ed760"/>
+      <path d="M520 540 h360 M520 590 h280 M520 640 h320" stroke="#2a2a32" stroke-width="14" stroke-linecap="round"/>
+    </svg>
+  </template>
+
+  <div id="root"></div>
+
+  <script src="vibe/image-slot.js"></script>
+  <script type="text/babel" src="src/data.jsx"></script>
+  <script type="text/babel" src="vibe/core.jsx"></script>
+  <script type="text/babel" src="vibe/PlayerBar.jsx"></script>
+  <script type="text/babel" src="vibe/Home.jsx"></script>
+  <script type="text/babel" src="vibe/ForYou.jsx"></script>
+  <script type="text/babel" src="vibe/NowPlaying.jsx"></script>
+  <script type="text/babel" src="vibe/Menu.jsx"></script>
+  <script type="text/babel" src="vibe/Browse.jsx"></script>
+  <script type="text/babel" src="vibe/CoverFlow.jsx"></script>
+  <script type="text/babel" src="vibe/Detail.jsx"></script>
+  <script type="text/babel" src="vibe/Pages.jsx"></script>
+  <script type="text/babel" src="vibe/XMB.jsx"></script>
+  <script type="text/babel" src="src/tweaks-panel.jsx"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // keyboard spatial focus: pick the nearest focusable in a direction (by geometry)
+    function nearestInDirection(current, dir, candidates) {
+      const c = current.getBoundingClientRect();
+      const cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+      let best = null, bestScore = Infinity;
+      for (const el of candidates) {
+        if (el === current) continue;
+        const r = el.getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const dx = x - cx, dy = y - cy;
+        let primary, secondary;
+        if (dir === "right") { if (dx <= 4) continue; primary = dx; secondary = Math.abs(dy); }
+        else if (dir === "left") { if (dx >= -4) continue; primary = -dx; secondary = Math.abs(dy); }
+        else if (dir === "down") { if (dy <= 4) continue; primary = dy; secondary = Math.abs(dx); }
+        else { if (dy >= -4) continue; primary = -dy; secondary = Math.abs(dx); }
+        const score = primary + secondary * 2.2;
+        if (score < bestScore) { bestScore = score; best = el; }
+      }
+      return best;
+    }
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "#0fff83",
+      "heroTreatment": "mono",
+      "glass": 30
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const accent = tweaks.accent;
+
+      useEffect(() => {
+        document.documentElement.style.setProperty("--accent", accent);
+        document.documentElement.style.setProperty("--glass-blur", tweaks.glass + "px");
+      }, [accent, tweaks.glass]);
+
+      const [view, setView] = useState("xmb");
+      const [xmbC, setXmbC] = useState(1);
+      const [xmbRows, setXmbRows] = useState({});
+      const [detail, setDetail] = useState(null);
+      const [artistObj, setArtistObj] = useState(MOCK.artists[0]);
+      const [seedQuery, setSeedQuery] = useState("");
+      const [libTab, setLibTab] = useState("playlists");
+      const [libView, setLibView] = useState("grid");
+      const [current, setCurrent] = useState(MOCK.data.allTracks[0]);
+      const [playing, setPlaying] = useState(true);
+      const [shuffle, setShuffle] = useState(false);
+      const [history, setHistory] = useState([]);
+      const [liked, setLiked] = useState(new Set(["t1", "t5", "t9"]));
+      const [settings, setSettings] = useState({
+        quality: "SQ", npMode: "COVER", crossfade: true, gapless: false,
+        waves: true, comments: true, reduceMotion: false,
+      });
+
+      const toggleLike = (id) => setLiked(prev => {
+        const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+      });
+      const isLiked = current && liked.has(current.id);
+
+      const onPlay = (track) => { setHistory(h => current ? [...h, current] : h); setCurrent(track); setPlaying(true); setUserQueue(q => q.filter(t => t.id !== track.id)); };
+      const setAccent = (v) => setTweak("accent", v);
+      const ACCENTS = ["#0fff83", "#ff2188", "#19d3c5", "#ff5a3c", "#7a5cff"];
+
+      const artist = useMemo(() =>
+        MOCK.artists.find(a => a.id === current?.artistId) || MOCK.artists[0], [current]);
+      const lyrics = MOCK.lyrics[current?.id] || MOCK.lyrics.t1;
+
+      const all = MOCK.data.allTracks;
+      const [userQueue, setUserQueue] = useState([]);   // explicitly enqueued, takes priority
+      const autoQueue = useMemo(() => {
+        const i = all.findIndex(t => t.id === current?.id);
+        return [...all.slice(i + 1), ...all.slice(0, Math.max(0, i))];
+      }, [current]);
+      const queue = useMemo(() => {
+        const seen = new Set([current?.id]); const out = [];
+        for (const t of [...userQueue, ...autoQueue]) {
+          if (!t || seen.has(t.id)) continue; seen.add(t.id); out.push(t);
+        }
+        return out.slice(0, 14);
+      }, [userQueue, autoQueue, current]);
+      const enqueue = (track, next) => setUserQueue(q => {
+        const without = q.filter(t => t.id !== track.id);
+        return next ? [track, ...without] : [...without, track];
+      });
+      const playNext = () => {
+        const pool = shuffle ? autoQueue : queue;
+        const nxt = userQueue[0] || (shuffle ? autoQueue[Math.floor(Math.random() * autoQueue.length)] : queue[0]);
+        if (nxt) onPlay(nxt);
+      };
+      const playPrev = () => {
+        setHistory(h => {
+          if (!h.length) { setCurrent(c => c); return h; }
+          const prev = h[h.length - 1];
+          setCurrent(prev); setPlaying(true);
+          return h.slice(0, -1);
+        });
+      };
+
+      // ---- right-click context menu ----
+      const [menu, setMenu] = useState(null);
+      const openMenu = (e, items) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY, items }); };
+      const goArtistById = (id) => { const ar = MOCK.artists.find(a => a.id === id); if (ar) { setArtistObj(ar); setView("artist"); } };
+      const trackMenu = (track) => [
+        { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
+        { label: "Play next", icon: "next", onClick: () => enqueue(track, true) },
+        { label: "Add to queue", icon: "list", onClick: () => enqueue(track) },
+        { sep: true },
+        { label: liked.has(track.id) ? "Remove from Liked" : "Add to Liked", icon: "heart", onClick: () => toggleLike(track.id) },
+        track.artistId && { label: "Go to artist", icon: "user", onClick: () => goArtistById(track.artistId) },
+        { sep: true },
+        { label: "Share", icon: "forward", onClick: () => {} },
+      ].filter(Boolean);
+      const collMenu = (item) => {
+        const tracks = item.tracks || [];
+        return [
+          { label: "Play", icon: "play", accent: true, onClick: () => tracks[0] && onPlay(tracks[0]) },
+          { label: "Add to queue", icon: "list", onClick: () => tracks.forEach(t => enqueue(t)) },
+          { sep: true },
+          item.artistId && { label: "Go to artist", icon: "user", onClick: () => goArtistById(item.artistId) },
+          { label: "Add to Library", icon: "download", onClick: () => {} },
+        ].filter(Boolean);
+      };
+      window.__TRACKMENU = (e, track) => openMenu(e, trackMenu(track));
+      window.__COLLMENU = (e, item) => openMenu(e, collMenu(item));
+      window.__ENQUEUE = (trackId, next) => { const t = all.find(x => x.id === trackId); if (t) enqueue(t, next); };
+
+      // ---- PS5-style dynamic ambient: page glow follows the focused card ----
+      const setAmbient = (seed, grad) => {
+        const el = document.getElementById("ambient"); if (!el) return;
+        el.style.background = artBg(seed, grad); el.style.opacity = ".5";
+      };
+      window.__AMBIENT = setAmbient;
+      useEffect(() => {   // reset when the screen changes
+        const el = document.getElementById("ambient"); if (el) el.style.opacity = "0";
+      }, [view]);
+
+      // ---- shared-element navigation: tile morphs onto the destination's real hero, and back ----
+      const viewRef = useRef(null);
+      const [trans, setTrans] = useState(null);
+      const lastTile = useRef(null);
+      const timers = useRef([]);
+      const EASE = "cubic-bezier(.16,1,.3,1)";   // expo-out: fast start, long gentle settle
+      const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+      const relRect = (r) => { const v = viewRef.current.getBoundingClientRect();
+        return { left: r.left - v.left, top: r.top - v.top, width: r.width, height: r.height, borderRadius: 0 }; };
+      const fullRect = () => { const v = viewRef.current.getBoundingClientRect();
+        return { left: 0, top: 0, width: v.width, height: v.height, borderRadius: 0 }; };
+      const heroRect = (sel) => {
+        const root = viewRef.current; if (!root) return null;
+        const el = root.querySelector(sel); if (!el) return null;
+        const r = relRect(el.getBoundingClientRect());
+        const br = getComputedStyle(el).borderTopLeftRadius;
+        r.borderRadius = (br && br !== "0px") ? br : 0;
+        return r;
+      };
+      const startForward = (item, rect) => {
+        if (!viewRef.current || reduceMo()) { item.run && item.run(); return; }
+        clearTimers();
+        const o = relRect(rect);
+        const origin = { ...o, borderRadius: 6 };
+        const vw = viewRef.current.getBoundingClientRect();
+        const px = o.left + o.width / 2, py = o.top + o.height / 2;
+        const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
+        lastTile.current = { origin, seed: item.seed, grad: item.grad };
+        item.run && item.run();   // mount destination (data + view) under the morph
+        setTrans({ from: view, to: item.dest, origin, target: fullRect(), point: { x: px, y: py }, clipR,
+          seed: item.seed, grad: item.grad, dir: "fwd", phase: "start", hero: null, measured: false });
+        timers.current.push(setTimeout(() => setTrans(t => t && { ...t, phase: "reveal" }), 620));
+        timers.current.push(setTimeout(() => setTrans(null), 1000));
+      };
+      const startReverse = () => {
+        const lt = lastTile.current, from = view;
+        if (!viewRef.current || !lt || reduceMo()) { setView("xmb"); return; }
+        clearTimers();
+        const src = heroRect(".t-base [data-hero]");
+        const o = lt.origin;
+        const vw = viewRef.current.getBoundingClientRect();
+        const px = o.left + o.width / 2, py = o.top + o.height / 2;
+        const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
+        setTrans({ from, to: "xmb", origin: lt.origin, target: src || fullRect(), point: { x: px, y: py }, clipR,
+          seed: lt.seed, grad: lt.grad, dir: "rev", phase: "start", hero: !!src });
+        setView("xmb");
+        requestAnimationFrame(() => requestAnimationFrame(() => setTrans(t => t && { ...t, phase: "morph" })));
+        timers.current.push(setTimeout(() => setTrans(null), 760));
+      };
+      // expose the shared-element morph so any page's cards can animate A -> B
+      const goMorph = (rect, seed, grad, run) => startForward({ seed, grad, dest: "_", run }, rect);
+      window.__MORPH = goMorph;
+      // outgoing screen: defocus + recede as it leaves (depth-of-field, native push feel)
+      const layerStyle = (t) => {
+        const begin = t.phase === "start" || t.hero === false;   // no-hero: freeze old screen as a static backdrop
+        return { position: "absolute", inset: 0, height: "100%", pointerEvents: "none", zIndex: 20,
+          opacity: begin ? 1 : 0,
+          transform: begin ? "scale(1)" : "scale(.985)",
+          filter: begin ? "blur(0px)" : "blur(3px)",
+          transformOrigin: "center",
+          transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}` };
+      };
+
+      // measure the destination's hero BEFORE paint, so the no-hero path never
+      // flashes a flying tile (it commits hero=false before the first frame).
+      React.useLayoutEffect(() => {
+        if (!trans || trans.dir !== "fwd" || trans.measured) return;
+        const hero = heroRect(".t-base [data-hero]");
+        setTrans(t => t && { ...t, target: hero || t.target, hero: !!hero, measured: true });
+      }, [trans]);
+      React.useEffect(() => {
+        if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
+        const id = requestAnimationFrame(() => requestAnimationFrame(() =>
+          setTrans(t => (t && t.phase === "start") ? { ...t, phase: "morph" } : t)));
+        return () => cancelAnimationFrame(id);
+      }, [trans]);
+
+      const openNP = () => setView("np");
+      const openDetail = (obj) => { setDetail(obj); setView("detail"); };
+      const albumDetail = (al) => openDetail({ ...al, kind: "Album", owner: al.artist,
+        description: `${al.year} · ${al.tracks.length} tracks` });
+      // Chart detail is driven by a real Chart entity (rank + trend per entry).
+      const chartDetail = (chart) => openDetail({
+        name: chart.title, kind: "Chart", variant: "chart", owner: "Sonance",
+        coverSeed: chart.seed, gradient: chart.gradient,
+        description: `${chart.type} · ${chart.period} · updated ${chart.updatedAt}`,
+        tracks: chart.entries.map(e => { const t = MOCK.trackById(e.trackId); return t ? { ...t, _rank: e.rank, _delta: e.delta, _peak: e.peak } : null; }).filter(Boolean) });
+      // Organization layer · Radio (endless seeded stream) and DailyMix (generated playlist) —
+      // both reuse the playlist detail screen; only the data/semantics differ.
+      const rotate = (arr, n) => { const k = ((n % arr.length) + arr.length) % arr.length; return [...arr.slice(k), ...arr.slice(0, k)]; };
+      const radioDetail = (name, sub, seed, grad) => openDetail({
+        name, kind: "Radio", owner: "Sonance", coverSeed: seed, gradient: grad,
+        description: sub, tracks: rotate(all, seed) });
+      const mixDetail = (name, sub, seed, grad) => openDetail({
+        name, kind: "Made For You", owner: "Sonance", coverSeed: seed, gradient: grad,
+        description: sub, tracks: rotate(all, seed + 3).slice(0, 12) });
+      const likedDetail = () => openDetail({ name: "Liked Songs", kind: "Playlist", owner: "Lily Tran",
+        coverSeed: 0, gradient: ["#2a0420", "#ff4fa3"], description: "Everything you've hearted, in one place.",
+        tracks: all.filter(t => liked.has(t.id)).length ? all.filter(t => liked.has(t.id)) : all.slice(0, 6) });
+      const openLib = (tab, vw) => { setLibTab(tab); setLibView(vw || "grid"); setView("library"); };
+      const openArtist = (ar) => { setArtistObj(ar); setView("artist"); };
+      const openGenre = (name) => { setSeedQuery(name || ""); setView("search"); };
+
+      // ---- XMB model ---- (organized by the Sonance domain model: Consumption ·
+      // Organization · User · Classification · Retrieval · Account · System)
+      const cats = useMemo(() => {
+        const genPls = MOCK.playlists.filter(p => p.kind === "Made For Lily");          // generated → DailyMix
+        const curPls = MOCK.playlists.filter(p => p.kind === "Playlist" && p.id !== "liked"); // user/editorial playlists
+        const followed = MOCK.artists.slice(0, 4);
+        return [
+        // 1 · CONSUMPTION — what's playing right now
+        { id: "np", icon: "play", label: "Now Playing", items: [
+          { key: "cover", label: current?.title || "Now Playing", sub: current?.artist, icon: "play", seed: current?.coverSeed || 0, grad: current?.gradient, dest: "np", run: openNP },
+          { key: "lyrics", label: "Lyrics", sub: "Synced lyrics", seed: (current?.coverSeed || 0) + 1, grad: current?.gradient, dest: "np", run: openNP },
+          { key: "queue", label: "Up Next", sub: queue.length + " tracks queued", icon: "list", seed: 5, dest: "queue", run: () => setView("queue") },
+          { key: "comments", label: "Hot Comments", sub: "On " + (current?.title || ""), icon: "comment", seed: 8, dest: "comments", run: () => setView("comments") },
+          { key: "history", label: "History", sub: "Recently played", icon: "clock", seed: 12, grad: ["#161320", "#8a7bff"], dest: "history", run: () => setView("history") },
+        ]},
+        // 2 · ORGANIZATION — generated playlists (DailyMix)
+        { id: "foryou", icon: "star", label: "For You", items: [
+          { key: "overview", label: "Overview", sub: "Your daily landing", icon: "note", seed: 7, grad: ["#1b1033", "#ff2188"], dest: "home", run: () => setView("home") },
+          ...genPls.map(p => ({ key: p.id, label: p.name, sub: "Made for you · refreshes daily", seed: p.coverSeed, grad: p.gradient, dest: "detail", run: () => openDetail(p) })),
+          { key: "radar", label: "Release Radar", sub: "New from artists you follow", seed: 6, grad: ["#0a3a2a", "#1ed760"], dest: "detail", run: () => mixDetail("Release Radar", "New music from artists you follow.", 6, ["#0a3a2a", "#1ed760"]) },
+          { key: "capsule", label: "Time Capsule", sub: "Songs from your past", seed: 8, grad: ["#0d1f3a", "#88ccff"], dest: "detail", run: () => mixDetail("Time Capsule", "Songs from your past, pulled forward.", 8, ["#0d1f3a", "#88ccff"]) },
+        ]},
+        // 3 · ORGANIZATION — ranked charts (metric + trend)
+        { id: "charts", icon: "bars", label: "Charts", items: [
+          ...MOCK.charts.slice(0, 3).map(c => ({ key: c.id, label: c.title, sub: "Updated " + c.updatedAt, icon: "bars", seed: c.seed, grad: c.gradient, dest: "detail", run: () => chartDetail(c) })),
+          { key: "all", label: "All charts", sub: "Browse grid", icon: "grid", seed: 10, grad: ["#240b04", "#ff8a3c"], dest: "charts", run: () => setView("charts") },
+        ]},
+        // 4 · ORGANIZATION — radio (endless seeded streams + podcasts)
+        { id: "radio", icon: "radio", label: "Radio", items: MOCK.radios.map(r => {
+          const isArtist = r.type === "artist";
+          const seed = isArtist ? (current?.coverSeed || 0) : r.seed;
+          const grad = isArtist ? (current?.gradient || r.gradient) : r.gradient;
+          const sub  = isArtist ? ("Based on " + (current?.artist || "this artist")) : r.sub;
+          return { key: r.id, label: r.title, sub, icon: r.type === "podcast" ? "volume" : r.type === "artist" ? "user" : "radio", seed, grad, dest: "detail",
+            run: () => radioDetail(r.title, isArtist ? ("Songs in the orbit of " + (current?.artist || "this artist") + ".") : r.sub, seed, grad) };
+        }) },
+        // 5 · USER — your saved collection across every type
+        { id: "library", icon: "stack", label: "Library", items: [
+          { key: "liked", label: "Liked Songs", sub: liked.size + " tracks", icon: "heart", seed: 0, grad: ["#2a0420", "#ff4fa3"], dest: "detail", run: likedDetail },
+          { key: "playlists", label: "Your Playlists", sub: curPls.length + " playlists", icon: "list", seed: 1, grad: ["#1a0d3a", "#7755ff"], dest: "library", run: () => openLib("playlists") },
+          { key: "albums", label: "Saved Albums", sub: MOCK.albums.length + " albums", icon: "stack", seed: 2, grad: ["#3a0d10", "#f3727f"], dest: "library", run: () => openLib("albums") },
+          { key: "following", label: "Following", sub: followed.length + " artists", icon: "user", seed: 4, grad: ["#06222b", "#19d3c5"], dest: "library", run: () => openLib("artists") },
+          { key: "flow", label: "Cover Flow", sub: "Flip through your albums", icon: "flow", seed: 6, grad: ["#06222b", "#19d3c5"], dest: "library", run: () => openLib("albums", "flow") },
+        ]},
+        // 6 · CLASSIFICATION — browse by facet (language × genre × scene × mood × theme)
+        { id: "browse", icon: "compass", label: "Browse", items: [
+          { key: "lang", label: "Languages", sub: "Mandarin · Western · J-Pop · K-Pop", icon: "grid", seed: 5, grad: ["#13031f", "#b15cff"], dest: "browse", run: () => setView("browse") },
+          { key: "genre", label: "Genres", sub: "Pop · Rock · Electronic · Jazz", seed: 2, grad: ["#0b1b3a", "#5b8cff"], dest: "browse", run: () => setView("browse") },
+          { key: "scene", label: "Scenes", sub: "Commute · Workout · Study · Sleep", seed: 6, grad: ["#240b04", "#ff8a3c"], dest: "browse", run: () => setView("browse") },
+          { key: "mood", label: "Moods", sub: "Calm · Happy · Melancholy · Hype", seed: 8, grad: ["#0a3a2a", "#1ed760"], dest: "browse", run: () => setView("browse") },
+          { key: "theme", label: "Themes", sub: "Soundtrack · ACG · Covers · Live", seed: 10, grad: ["#101012", "#8aa0b5"], dest: "browse", run: () => setView("browse") },
+        ]},
+        // 7 · RETRIEVAL — direct search
+        { id: "search", icon: "search", label: "Search", items: [
+          { key: "open", label: "Search music", sub: "Tracks, artists, albums", icon: "search", seed: 6, grad: ["#021e24", "#36c5e0"], dest: "search", run: () => { setSeedQuery(""); setView("search"); } },
+          { key: "r1", label: "North Lake", sub: "Recent search", seed: 0, grad: ["#1a0d3a", "#7755ff"], dest: "search", run: () => openGenre("North Lake") },
+          { key: "r2", label: "Mira Vant", sub: "Recent search", seed: 8, grad: ["#0d1f3a", "#88ccff"], dest: "search", run: () => openGenre("Mira Vant") },
+          { key: "r3", label: "Halfway", sub: "Recent search", seed: 4, grad: ["#4a3a0d", "#ffa42b"], dest: "search", run: () => openGenre("Halfway") },
+        ]},
+        // 8 · USER — account & identity
+        { id: "you", icon: "user", label: "You", items: [
+          { key: "profile", label: "Profile", sub: "Lily Tran", icon: "user", seed: 3, grad: ["#1b1033", "#ff2188"], dest: "profile", run: () => setView("profile") },
+          { key: "following", label: "Following", sub: followed.length + " artists", icon: "heart", seed: 5, grad: ["#06222b", "#19d3c5"], dest: "library", run: () => openLib("artists") },
+          { key: "stats", label: "Listening", sub: "Your top artists & minutes", icon: "bars", seed: 9, grad: ["#2a0420", "#ff4fa3"], dest: "profile", run: () => setView("profile") },
+        ]},
+        // 9 · SYSTEM — settings
+        { id: "settings", icon: "gear", label: "Settings", items: [
+          { key: "prefs", label: "Preferences", sub: "Audio, theme, interface", icon: "gear", seed: 9, grad: ["#13031f", "#b15cff"], dest: "settings", run: () => setView("settings") },
+          { key: "about", label: "About Sonance", sub: "Version 2.0", seed: 2, dest: "settings", run: () => setView("settings") },
+        ]},
+      ]; }, [current, queue, liked]);
+
+      // Esc returns to launcher from any screen
+      useEffect(() => {
+        const onKey = (e) => { if (e.key === "Escape" && view !== "xmb") startReverse(); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+      }, [view]);
+
+      // keyboard navigation inside any non-XMB screen: arrow keys move focus by
+      // geometry, focus lands on the first item on entry, Backspace goes back.
+      useEffect(() => {
+        if (view === "xmb") return;
+        const root = viewRef.current; if (!root) return;
+        const list = () => [...root.querySelectorAll('button:not([disabled]), input, [tabindex]:not([tabindex="-1"]), a[href]')]
+          .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+        const t = setTimeout(() => {
+          const f = list(); if (f.length && !root.contains(document.activeElement)) f[0].focus();
+        }, 90);
+        const onKey = (e) => {
+          const ae = document.activeElement;
+          const inInput = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
+          const arrows = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+          if (arrows[e.key]) {
+            if (inInput && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return; // let the caret move
+            const items = list(); if (!items.length) return;
+            const cur = (ae && root.contains(ae)) ? ae : items[0];
+            const next = nearestInDirection(cur, arrows[e.key], items);
+            if (next) { e.preventDefault(); next.focus(); }
+          } else if (e.key === "Backspace" && !inInput) {
+            e.preventDefault(); startReverse();
+          }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
+      }, [view]);
+
+      const lightView = false;
+      const npView = view === "np";
+      const homeView = view === "xmb";
+
+      const renderScreen = (v) => {
+        if (v === "xmb")
+          return <XMB cats={cats} accent={accent} playing={playing} showWaves={settings.waves} onOpen={startForward}
+            cState={xmbC} setCState={setXmbC} rowsState={xmbRows} setRowsState={setXmbRows}/>;
+        if (v === "home")
+          return <ForYouScreen data={MOCK.data} onPlay={onPlay} accent={accent}
+            openPlaylist={openDetail} openAlbum={albumDetail} openArtist={openArtist} onNav={setView}/>;
+        if (v === "search")
+          return <SearchScreen data={MOCK.data} onPlay={onPlay} current={current} playing={playing}
+            accent={accent} initialQuery={seedQuery} liked={liked} toggleLike={toggleLike}
+            openArtist={openArtist} openAlbum={albumDetail} openPlaylist={openDetail}/>;
+        if (v === "charts")
+          return <ChartsScreen data={MOCK.data} onOpenChart={(c) => chartDetail(c)}/>;
+        if (v === "library" || v === "made")
+          return <LibraryScreen key={libTab + libView} initialTab={libTab} initialView={libView} data={MOCK.data} onPlay={onPlay} current={current} playing={playing} accent={accent}
+            openPlaylist={openDetail} openAlbum={albumDetail} openArtist={openArtist}
+            liked={liked} toggleLike={toggleLike}/>;
+        if (v === "detail" && detail)
+          return <PlaylistDetailScreen playlist={detail} onPlay={onPlay} current={current}
+            playing={playing} liked={liked} toggleLike={toggleLike} accent={accent}/>;
+        if (v === "queue")
+          return <QueueScreen current={current} queue={queue} onPlay={onPlay} playing={playing}
+            liked={liked} toggleLike={toggleLike} accent={accent}/>;
+        if (v === "history")
+          return <HistoryScreen history={history} all={all} onPlay={onPlay} current={current}
+            playing={playing} liked={liked} toggleLike={toggleLike} accent={accent}/>;
+        if (v === "settings")
+          return <SettingsScreen accent={accent} setAccent={setAccent} accentOptions={ACCENTS}
+            settings={settings} setSettings={setSettings}/>;
+        if (v === "artist")
+          return <ArtistScreen artist={artistObj}
+            tracks={all.filter(t => t.artistId === artistObj.id)}
+            albums={MOCK.albums.filter(al => al.artistId === artistObj.id)}
+            similar={MOCK.artists.filter(a => a.id !== artistObj.id)}
+            onPlay={onPlay} current={current} playing={playing} liked={liked} toggleLike={toggleLike}
+            accent={accent} mono={tweaks.heroTreatment === "mono"}
+            onOpenAlbum={albumDetail} onOpenArtist={openArtist}/>;
+        if (v === "profile")
+          return <ProfileScreen accent={accent} playlists={MOCK.playlists} onOpenPlaylist={openDetail}
+            onPlay={onPlay} mono={tweaks.heroTreatment === "mono"}/>;
+        if (v === "browse")
+          return <BrowseScreen accent={accent} onOpenGenre={openGenre}/>;
+        if (v === "comments")
+          return <CommentsScreen track={current} accent={accent} liked={isLiked}
+            toggleLike={() => current && toggleLike(current.id)} mono={tweaks.heroTreatment === "mono"}/>;
+        if (v === "np")
+          return <NowPlaying track={current} accent={accent} liked={isLiked}
+            toggleLike={() => current && toggleLike(current.id)} lyrics={lyrics}
+            mono={tweaks.heroTreatment === "mono"}
+            queue={queue} onPlay={onPlay} current={current}
+            onNext={playNext} onPrev={playPrev}
+            initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
+            onClose={startReverse}/>;
+        return null;
+      };
+
+      return (
+        <div className="win-stage">
+          <div className="win">
+            <div className="traffic"><i className="r"/><i className="y"/><i className="g"/></div>
+
+            {!npView && (
+              <div className={"win-tools" + (lightView ? " dark" : "")}>
+                {!homeView && (
+                  <button onClick={startReverse} aria-label="Menu"><Icon.back size={20}/></button>
+                )}
+                <button onClick={() => setView("np")} aria-label="Now playing">
+                  <Equalizer playing={playing} color="currentColor" size={18}/>
+                </button>
+                <button aria-label="More"><Icon.kebab size={20}/></button>
+              </div>
+            )}
+
+            <div className="view" ref={viewRef} data-screen-label={
+              view === "xmb" ? "00 Menu" : view === "home" ? "01 For You" : view === "search" ? "02 Search" :
+              view === "charts" ? "03 Charts" : view === "detail" ? "06 Detail" : view === "queue" ? "07 Up Next" :
+              view === "settings" ? "08 Settings" : view === "artist" ? "09 Artist" : view === "profile" ? "10 Profile" :
+              view === "browse" ? "11 Browse" : view === "comments" ? "12 Comments" :
+              view === "history" ? "13 History" :
+              view === "np" ? "05 Now Playing" : "04 Library"}>
+              <div id="ambient" aria-hidden style={{ position: "absolute", inset: 0, zIndex: 7, pointerEvents: "none",
+                opacity: 0, mixBlendMode: "screen", filter: "blur(90px) saturate(1.35)", transform: "scale(1.25)",
+                transition: "opacity .55s ease, background .55s ease" }}></div>
+              {(() => {
+                const fwd = trans && trans.dir === "fwd" && trans.point;
+                const clipping = fwd && trans.hero !== true;   // start (unknown) or confirmed no-hero
+                const st = { height: "100%" };
+                if (clipping) {
+                  const started = trans.phase !== "start";
+                  const cp = `circle(${started ? trans.clipR : 0}px at ${trans.point.x}px ${trans.point.y}px)`;
+                  st.clipPath = cp; st.WebkitClipPath = cp;
+                  st.transition = started ? `clip-path .6s ${EASE}` : "none";
+                  st.position = "relative"; st.zIndex = 25;   // ride above the outgoing screen
+                }
+                return <div className="t-base" key={view} style={st}>{renderScreen(view)}</div>;
+              })()}
+              {trans && (
+                <React.Fragment>
+                  {(() => {
+                    const fromStyle = layerStyle(trans);
+                    // reverse + no hero: leaving screen collapses radially back to the origin point
+                    if (trans.dir === "rev" && trans.hero === false && trans.point) {
+                      const collapsed = trans.phase !== "start";
+                      const cp = `circle(${collapsed ? 0 : trans.clipR}px at ${trans.point.x}px ${trans.point.y}px)`;
+                      fromStyle.clipPath = cp; fromStyle.WebkitClipPath = cp; fromStyle.opacity = 1;
+                      fromStyle.transition = collapsed ? `clip-path .55s ${EASE}` : "none";
+                    }
+                    return <div className="t-layer t-from" style={fromStyle}>{renderScreen(trans.from)}</div>;
+                  })()}
+                  {trans.hero !== false && (() => {
+                    const t = trans;
+                    const geom = (t.dir === "fwd")
+                      ? (t.phase === "start" ? t.origin : t.target)
+                      : (t.phase === "start" ? t.target : t.origin);
+                    const op = (t.dir === "fwd") ? (t.phase === "reveal" ? 0 : 1)
+                                                 : (t.phase === "start" ? 1 : 0);
+                    const anim = t.phase !== "start";
+                    return <div className="grain" aria-hidden style={{
+                      position: "absolute", zIndex: 40, pointerEvents: "none", overflow: "hidden",
+                      left: geom.left, top: geom.top, width: geom.width, height: geom.height,
+                      borderRadius: geom.borderRadius, opacity: op,
+                      background: artBg(t.seed, t.grad),
+                      boxShadow: "0 30px 70px -26px rgba(0,0,0,.5)",
+                      transition: anim ? `left .58s ${EASE}, top .58s ${EASE}, width .58s ${EASE}, height .58s ${EASE}, border-radius .58s ${EASE}, opacity .34s ease` : "none",
+                    }}/>;
+                  })()}
+                </React.Fragment>
+              )}
+            </div>
+
+            {!npView && (
+              <PlayerBar track={current} playing={playing} setPlaying={setPlaying}
+                liked={isLiked} toggleLike={() => current && toggleLike(current.id)}
+                accent={accent} shuffle={shuffle} setShuffle={setShuffle}
+                onNext={playNext} onPrev={playPrev}
+                onOpenNowPlaying={() => setView("np")}
+                onOpenQueue={() => setView("queue")}
+                onOpenComments={() => setView("comments")}
+                onOpenLyrics={() => setView("np")}/>
+            )}
+          </div>
+
+          {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} accent={accent} onClose={() => setMenu(null)}/>}
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection label="Color">
+              <TweakColor label="Accent" value={tweaks.accent} onChange={(v) => setTweak("accent", v)}
+                options={["#ff2188", "#19d3c5", "#ff5a3c", "#7a5cff", "#1ed98a"]}/>
+            </TweakSection>
+            <TweakSection label="Imagery">
+              <TweakRadio label="Hero treatment" value={tweaks.heroTreatment}
+                options={[{ value: "mono", label: "Mono" }, { value: "color", label: "Color" }]}
+                onChange={(v) => setTweak("heroTreatment", v)}/>
+            </TweakSection>
+            <TweakSection label="Player bar">
+              <TweakSlider label="Glass blur" value={tweaks.glass} min={0} max={60} unit="px"
+                onChange={(v) => setTweak("glass", v)}/>
+            </TweakSection>
+          </TweaksPanel>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
