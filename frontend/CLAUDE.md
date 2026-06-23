@@ -43,16 +43,17 @@
      **绝不在 UI 里复制一份播放态**(current / playing / queue / progress 全来自内核 store + hooks)。
   2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `IProvider`(`packages/provider/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `types.ts` 加 capability + 给 `IProvider` 加方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
   3. **导航 = 单页状态机 + 共享元素切换引擎**(`view/vibe/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
-  4. **设计系统 = `view/vibe/vibe.css`**(逐字搬自示例):class + 内联样式驱动,自带字体 / token / 玻璃 / 全部动画 keyframes。**vibe 层不写 Tailwind**。
+  4. **设计系统主体 = `ui/vibe/vibe.css`**(逐字搬自示例):class + 内联样式驱动,自带字体 / token / 玻璃 / 全部动画 keyframes —— 仍是「切换效果原样」的根因,**不机械全量改写、不破坏 morph**。在此之上 **Tailwind v4 已启用(无 Preflight,只引 theme+utilities 层)**作为工具类补充,`@theme` 镜像了 vibe.css 的 token;复用型交互件(Radix + Tailwind,经 `ui/lib/cn`)放 `ui/components/`(已落地 `Slider`、`VirtualList`)。详见 §2 / §5。
 
 ---
 
 ## 2 · 技术栈(选择已定,别轻易换 —— 反向不变量见 §5)
 
 - **UI**:React 19 + TypeScript。**桌面壳**:Wails v2(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `window.runtime`)。
-- **样式**:`vibe.css`(class-based,逐字移植)。**不引 Tailwind / CSS-in-JS / UI Kit**,不为 vibe 层写新设计系统。
+- **样式**:`vibe.css`(class-based,逐字移植,设计系统主体)+ **Tailwind v4(无 Preflight,工具类补充)**。**不引 CSS-in-JS / 大型 UI Kit**;动态值(accent / 渐变 / 计算量)留内联 style,静态/重复模式可用 Tailwind 工具类(如 `truncate`)。
+- **交互件**:优先 **Radix** 替换手写(已用 `@radix-ui/react-slider`);新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
-- **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。
+- **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
 - **数据源**:provider 插件(QQMusic / NeteaseCloudMusic / Spotify / Mock),由 `VITE_PROVIDER` 选;QQ 对接本机 `Rain120/qq-music-api`(:3200)。
 
 ---
@@ -73,9 +74,9 @@
 - **取数走 provider**:任何外部数据都经 `IProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
 - **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
-- **vibe 层不写 Tailwind / 新 .css**:沿用 `vibe.css` 既有 class + 内联样式。
+- **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `hooks.ts` / `adapt.ts` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
-- **无后端能力的屏幕用 MOCK**(`vibe/data.ts`):Browse 分类 / Comments / Profile / Radio 等暂走 mock,**明确是 mock,不伪装成真实**;等 provider 有了对应 capability 再接真。
+- **无后端能力的屏幕用 MOCK**(`vibe/mockCatalog.ts`):Browse 分类 / Comments / Profile / Radio 等暂走 mock,**明确是 mock,不伪装成真实**;等 provider 有了对应 capability 再接真。
 - **加文档先问**:不主动建 `*.md`,除非用户明确要。
 
 ---
@@ -83,7 +84,7 @@
 ## 5 · 强反向不变量(已知错的方向,别再提)
 
 - ❌ **重新引入 TanStack Router / 任何「一屏一路由」**:会破坏共享元素 morph(新旧屏需在同一常驻容器共存测量),这正是当初去掉路由的原因。
-- ❌ **把 `vibe.css` 改写成 Tailwind / 重做设计系统**:逐字保真是「切换效果原样」的前提,改写必漂移。
+- ❌ **机械全量把 `vibe.css` / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Radix 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails dev` 里核对**,不盲目大面积重写。
 - ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `IProvider` 抽象 + mapper + React Query。
 - ❌ **在 UI 里复制播放态**(本地 `useState` 存 current / queue / progress):唯一源是内核 store + hooks。
 - ❌ **加回原生窗口标题栏 / 系统红绿灯**:窗口无边框,装饰由页面 `.win` + 伪装红绿灯承担。
@@ -94,5 +95,5 @@
 ## 6 · 工作流
 
 - **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 QQ API:`~/Desktop/qq-music-api` 跑 `yarn dev`(:3200);后端没起时 provider 取数失败,UI 自动回退 MOCK,仍可浏览。
-- **质量门禁**(在 `frontend/` 跑):`yarn typecheck` + `yarn build`(tsc + vite)+ `yarn test`(vitest);全绿才往下走。会漂的数字(测试数 / 文件数)直接跑命令查,不在本文件硬编码。
+- **质量门禁**(在 `frontend/` 跑):`yarn typecheck` + `yarn build`(tsc + vite)+ `yarn test`(vitest)+ `yarn lint`(oxlint `--deny-warnings`)+ `yarn knip` + `yarn check:layers` + `yarn check:circular`(聚合:`yarn check`);全绿才往下走。会漂的数字直接跑命令查,不硬编码。**husky + lint-staged 预提交**会对暂存的 `.ts/.tsx` 跑 prettier + oxlint `--deny-warnings` —— 所以**碰任何一屏(哪怕只改一行)都会触发该文件全量 lint**,需连带消化它的告警;vibe 屏(尤以 `Shell.tsx` morph 引擎、`XMB.tsx` 方向键导航)仍有成片 jsx-a11y / exhaustive-deps 旧债,逐屏迁移时一并清(exhaustive-deps 用带说明的局部 disable,不盲改依赖)。
 - **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。
