@@ -4,6 +4,7 @@
 
 import React, { useState, useRef } from "react";
 import { VirtualList } from "../components/VirtualList";
+import { VirtualGrid } from "../components/VirtualGrid";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
 import { CoverFlow } from "./CoverFlow";
 
@@ -665,17 +666,17 @@ export function PlaylistDetailScreen({
               />
             )}
             {view === "grid" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
-                  gap: 26,
-                }}
-              >
-                {p.tracks.map((t: any) => (
-                  <TrackCard key={t.id} track={t} onPlay={onPlay} accent={accent} />
-                ))}
-              </div>
+              <VirtualGrid
+                scrollRef={scrollRef}
+                count={p.tracks.length}
+                minColumnWidth={168}
+                gap={26}
+                estimateRowHeight={232}
+                itemKey={(i) => p.tracks[i].id}
+                renderItem={(i) => (
+                  <TrackCard track={p.tracks[i]} onPlay={onPlay} accent={accent} />
+                )}
+              />
             )}
             {view === "flow" && (
               <div style={{ height: 520, margin: "0 -48px" }}>
