@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
 import { MOCK } from "./mockCatalog";
 
@@ -68,20 +69,29 @@ export function NowPlaying({
   initialMode = "cover",
   queue = [],
   onPlay,
-  current,
   onNext,
   onPrev,
 }: Props) {
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const lines = lyrics && lyrics.length ? lyrics : [{ line: "No lyrics for this track." }];
+  const queueScrollRef = useRef<HTMLDivElement>(null);
+  // Memoized so the lyric auto-advance effect below depends on a stable value
+  // (the fallback array literal would otherwise be new every render).
+  const lines = useMemo(
+    () => (lyrics && lyrics.length ? lyrics : [{ line: "No lyrics for this track." }]),
+    [lyrics],
+  );
   const [active, setActive] = useState(2);
   const [likedC, setLikedC] = useState<Set<string>>(new Set());
   const toggleC = (id: string) =>
     setLikedC((p) => {
       const n = new Set(p);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
       return n;
     });
   const comments = (typeof MOCK !== "undefined" && MOCK.comments) || [];
@@ -156,6 +166,36 @@ export function NowPlaying({
     </div>
   );
 
+  // A clickable pill tag (mode toggle), keyboard-accessible. Rich pill styling
+  // lives in the `.tag`/`.pill-accent` classes, so role="button" on a <span>
+  // is the right pattern here.
+  const ModeTag = ({
+    cls = "tag",
+    onClick,
+    children,
+  }: {
+    cls?: string;
+    onClick: () => void;
+    children: React.ReactNode;
+  }) => (
+    <span
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="button"
+      tabIndex={0}
+      className={cls}
+      style={{ cursor: "pointer" }}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
+      {children}
+    </span>
+  );
+
   return (
     <div
       className="fade-in"
@@ -174,7 +214,8 @@ export function NowPlaying({
         touch.current = null;
         if (Math.max(ax, ay) < 40) return;
         if (ax > ay) {
-          dx < 0 ? onNext && onNext() : onPrev && onPrev();
+          if (dx < 0) onNext?.();
+          else onPrev?.();
         } // left=next, right=prev
         else if (dy < 0) {
           if (queueOpen) setQueueOpen(false);
@@ -231,37 +272,17 @@ export function NowPlaying({
                   </span>
                 )}
                 {track?.vipOnly && <span className="pill-accent">VIP</span>}
-                <span
-                  className="tag"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setMode("lyrics")}
-                >
-                  Lyrics
-                </span>
-                <span
-                  className="tag"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setMode("comments")}
-                >
-                  Comments
-                </span>
+                <ModeTag onClick={() => setMode("lyrics")}>Lyrics</ModeTag>
+                <ModeTag onClick={() => setMode("comments")}>Comments</ModeTag>
               </>
             ) : (
               <>
-                <span
-                  className="pill-accent"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setMode("cover")}
-                >
+                <ModeTag cls="pill-accent" onClick={() => setMode("cover")}>
                   Cover
-                </span>
-                <span
-                  className="tag"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setMode(lyricsMode ? "comments" : "lyrics")}
-                >
+                </ModeTag>
+                <ModeTag onClick={() => setMode(lyricsMode ? "comments" : "lyrics")}>
                   {lyricsMode ? "Comments" : "Lyrics"}
-                </span>
+                </ModeTag>
               </>
             )
           }
@@ -505,6 +526,7 @@ export function NowPlaying({
 
       {/* queue sheet — slides up from the bottom */}
       <div
+        ref={queueScrollRef}
         className="scroll"
         style={{
           position: "absolute",
@@ -523,7 +545,17 @@ export function NowPlaying({
         }}
       >
         <div
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+          role="button"
+          tabIndex={0}
+          aria-label="Collapse queue"
           onClick={() => setQueueOpen(false)}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setQueueOpen(false);
+            }
+          }}
           style={{
             display: "grid",
             placeItems: "center",
@@ -582,70 +614,89 @@ export function NowPlaying({
               Now
             </span>
           </div>
-          {queue.map((t: any, i: number) => (
-            <div
-              key={t.id + i}
-              onClick={() => onPlay && onPlay(t)}
-              onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU?.(e, t)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                padding: "9px 0",
-                cursor: "pointer",
+          {queue.length > 0 ? (
+            <VirtualList
+              scrollRef={queueScrollRef}
+              count={queue.length}
+              estimateSize={58}
+              itemKey={(vi) => queue[vi].id + vi}
+              renderItem={(vi) => {
+                const t = queue[vi];
+                return (
+                  <div
+                    // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t.title}
+                    onClick={() => onPlay && onPlay(t)}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (onPlay) onPlay(t);
+                      }
+                    }}
+                    onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU?.(e, t)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      padding: "9px 0",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span
+                      className="mlabel"
+                      style={{
+                        width: 18,
+                        textAlign: "center",
+                        color: "rgba(255,255,255,.32)",
+                        fontSize: 11,
+                        flex: "0 0 auto",
+                      }}
+                    >
+                      {vi + 1}
+                    </span>
+                    <Art
+                      seed={t.coverSeed}
+                      grad={t.gradient}
+                      image={t.image}
+                      style={{ width: 40, height: 40, flex: "0 0 auto" }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {t.title}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 300,
+                          color: "rgba(255,255,255,.45)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {t.artist}
+                      </div>
+                    </div>
+                    <span
+                      className="mlabel"
+                      style={{ color: "rgba(255,255,255,.32)", fontSize: 10, flex: "0 0 auto" }}
+                    >
+                      {t.duration}
+                    </span>
+                  </div>
+                );
               }}
-            >
-              <span
-                className="mlabel"
-                style={{
-                  width: 18,
-                  textAlign: "center",
-                  color: "rgba(255,255,255,.32)",
-                  fontSize: 11,
-                  flex: "0 0 auto",
-                }}
-              >
-                {i + 1}
-              </span>
-              <Art
-                seed={t.coverSeed}
-                grad={t.gradient}
-                image={t.image}
-                style={{ width: 40, height: 40, flex: "0 0 auto" }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {t.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 300,
-                    color: "rgba(255,255,255,.45)",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {t.artist}
-                </div>
-              </div>
-              <span
-                className="mlabel"
-                style={{ color: "rgba(255,255,255,.32)", fontSize: 10, flex: "0 0 auto" }}
-              >
-                {t.duration}
-              </span>
-            </div>
-          ))}
-          {!queue.length && (
+            />
+          ) : (
             <div style={{ padding: 30, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
               Queue is empty.
             </div>
