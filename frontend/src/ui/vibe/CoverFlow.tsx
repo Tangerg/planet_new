@@ -30,6 +30,14 @@ export function CoverFlow({
   onPlayTrack,
 }: Props) {
   const COVER = 280;
+  // Only the center ±4 are ever visible (tf() sets op:0 beyond), so mount a
+  // ±6 window (2-card margin → entering cards mount invisibly, then fade in as
+  // they cross into ±4). Keyed on `center`, this is the carousel's analogue of
+  // scroll virtualization: ~13 cards in the DOM instead of all N.
+  const COVER_WINDOW = 6;
+  // Progress dots are cheap but N of them overflow the bar and waste transitions
+  // at scale; window them too. Small lists (≤ 2*win+1) still render every dot.
+  const COVER_DOT_WINDOW = 20;
   const drag = useRef<any>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -39,6 +47,10 @@ export function CoverFlow({
   // background follows the centered cover
   useEffect(() => {
     if (cur && window.__AMBIENT) window.__AMBIENT(cur.seed, cur.grad);
+    // Intentionally keyed on `center`: re-sync the ambient background when the
+    // centered index changes. `cur`/`cur.grad` are derived and `items` is
+    // recreated upstream each render, so depending on them would re-fire every frame.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center]);
 
   useEffect(() => {
@@ -149,14 +161,33 @@ export function CoverFlow({
           style={{ position: "absolute", left: "50%", top: "44%", transformStyle: "preserve-3d" }}
         >
           {items.map((it, i) => {
+            // Windowed: skip cards outside the visible fan (+margin) — see COVER_WINDOW.
+            if (Math.abs(i - center) > COVER_WINDOW) return null;
             const o = tf(i - center);
             const isC = i === center;
             return (
               <div
                 key={it.id}
+                // 3D card surface (cover art + reflection), not valid <button>
+                // content — role="button" + keyboard is the right pattern.
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+                role="button"
+                tabIndex={0}
+                aria-label={it.name}
                 onClick={() =>
                   isC ? (tracksFor ? setExpanded((e) => !e) : onOpen(it)) : setCenter(i)
                 }
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key !== "Enter" && e.key !== " ") return;
+                  e.preventDefault();
+                  if (!isC) {
+                    setCenter(i);
+                  } else if (tracksFor) {
+                    setExpanded((x) => !x);
+                  } else {
+                    onOpen(it);
+                  }
+                }}
                 onDoubleClick={() => isC && onOpen(it)}
                 onContextMenu={
                   isC && it.obj
@@ -279,23 +310,26 @@ export function CoverFlow({
         <div
           style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 22, zIndex: 400 }}
         >
-          {items.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCenter(i)}
-              aria-label={"Go to " + (i + 1)}
-              style={{
-                width: i === center ? 22 : 7,
-                height: 7,
-                borderRadius: 99,
-                border: 0,
-                cursor: "pointer",
-                background: i === center ? accent : "rgba(255,255,255,.25)",
-                transition: "all .3s",
-                padding: 0,
-              }}
-            />
-          ))}
+          {items.map((_, i) => {
+            if (Math.abs(i - center) > COVER_DOT_WINDOW) return null;
+            return (
+              <button
+                key={i}
+                onClick={() => setCenter(i)}
+                aria-label={"Go to " + (i + 1)}
+                style={{
+                  width: i === center ? 22 : 7,
+                  height: 7,
+                  borderRadius: 99,
+                  border: 0,
+                  cursor: "pointer",
+                  background: i === center ? accent : "rgba(255,255,255,.25)",
+                  transition: "all .3s",
+                  padding: 0,
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -320,7 +354,17 @@ export function CoverFlow({
           }}
         >
           <div
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+            role="button"
+            tabIndex={0}
+            aria-label="Collapse"
             onClick={() => setExpanded(false)}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpanded(false);
+              }
+            }}
             style={{
               display: "grid",
               placeItems: "center",
@@ -366,7 +410,17 @@ export function CoverFlow({
             {sheetTracks.map((t, i) => (
               <div
                 key={t.id + i}
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+                role="button"
+                tabIndex={0}
+                aria-label={t.title}
                 onClick={() => onPlayTrack && onPlayTrack(t)}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (onPlayTrack) onPlayTrack(t);
+                  }
+                }}
                 onContextMenu={(e) => window.__TRACKMENU && window.__TRACKMENU(e, t)}
                 style={{
                   display: "flex",
