@@ -2,6 +2,7 @@
 // PlayerBar — frosted glass transport bar (owns its own ticking)
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
+import { Slider } from "../components/Slider";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
 type Props = {
@@ -39,20 +40,12 @@ export function PlayerBar({
 }: Props) {
   const dur = track?.durSec || 222;
   const [pos, setPos] = useState(0);
-  const barRef = useRef<HTMLDivElement | null>(null);
+  const barRef = useRef<HTMLSpanElement | null>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
   const [vol, setVol] = useState(0.8);
   const [volOpen, setVolOpen] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const volTrackRef = useRef<HTMLDivElement | null>(null);
-  const volDrag = useRef(false);
-  const setVolFromY = (clientY: number) => {
-    const el = volTrackRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setVol(Math.max(0, Math.min(1, 1 - (clientY - r.top) / r.height)));
-  };
 
   useEffect(() => {
     setPos(Math.round(dur * 0.32));
@@ -74,12 +67,6 @@ export function PlayerBar({
   }, [playing, dur, repeat, onNext]);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
-  const pct = Math.min(100, (pos / dur) * 100);
-
-  const seek = (e: React.MouseEvent) => {
-    const r = barRef.current!.getBoundingClientRect();
-    setPos(Math.round(((e.clientX - r.left) / r.width) * dur));
-  };
 
   const txtBtn: React.CSSProperties = {
     fontFamily: "var(--mono)",
@@ -104,6 +91,18 @@ export function PlayerBar({
     placeItems: "center",
   });
 
+  // Open the full-screen now-playing view, measuring the cover art as the morph
+  // origin so the shared-element transition flies from the bar's artwork.
+  const openNowPlaying = (el: HTMLElement) => {
+    const art = el.querySelector(".grain");
+    const rect = (art ?? el).getBoundingClientRect();
+    if (window.__MORPH) {
+      window.__MORPH(rect, track?.coverSeed || 0, track?.gradient, onOpenNowPlaying, track?.image);
+    } else {
+      onOpenNowPlaying();
+    }
+  };
+
   return (
     <div className="glassbar" style={{ color: "#141418" }}>
       {/* bounded frosted backdrop — blur lives here so it can't flicker */}
@@ -115,62 +114,54 @@ export function PlayerBar({
           borderTop: "0.5px solid rgba(255,255,255,.5)",
         }}
       />
-      {/* progress line + scrubber */}
-      <div
+      {/* progress line + scrubber (Radix slider: click / drag / keyboard) */}
+      <Slider
         ref={barRef}
-        onClick={seek}
+        min={0}
+        max={dur}
+        step={1}
+        value={[Math.min(pos, dur)]}
+        onValueChange={([v]) => setPos(v)}
         onMouseMove={(e) => {
           const r = barRef.current!.getBoundingClientRect();
           setHoverX(e.clientX - r.left);
         }}
         onMouseLeave={() => setHoverX(null)}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 14,
-          cursor: "pointer",
-          zIndex: 4,
+        thumbLabel="Seek"
+        style={{ position: "absolute", top: 0, left: 0, right: 0, height: 14, zIndex: 4 }}
+        parts={{
+          track: {
+            style: {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: "rgba(20,20,24,.12)",
+            },
+          },
+          range: {
+            style: {
+              position: "absolute",
+              height: "100%",
+              background: `linear-gradient(90deg, ${accent}, ${b})`,
+            },
+          },
+          thumb: {
+            style: {
+              display: "block",
+              top: -2.5,
+              width: 9,
+              height: 9,
+              borderRadius: "50%",
+              background: "#fff",
+              boxShadow: `0 0 0 2px ${accent}, 0 2px 6px rgba(0,0,0,.45)`,
+              opacity: hoverX != null ? 1 : 0,
+              transition: "opacity .16s",
+            },
+          },
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: "rgba(20,20,24,.12)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: pct + "%",
-            height: 3,
-            background: `linear-gradient(90deg, ${accent}, ${b})`,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: -2.5,
-            left: pct + "%",
-            transform: "translateX(-50%)",
-            width: 9,
-            height: 9,
-            borderRadius: "50%",
-            background: "#fff",
-            boxShadow: `0 0 0 2px ${accent}, 0 2px 6px rgba(0,0,0,.45)`,
-            opacity: hoverX != null ? 1 : 0,
-            transition: "opacity .16s",
-            pointerEvents: "none",
-            zIndex: 5,
-          }}
-        />
         {hoverX != null && (
           <div
             style={{
@@ -204,22 +195,23 @@ export function PlayerBar({
             / {fmt(dur)}
           </div>
         )}
-      </div>
+      </Slider>
 
       {/* left: cover + meta */}
       <div
-        onClick={(e) => {
-          const art = e.currentTarget.querySelector(".grain");
-          const r = (art || e.currentTarget).getBoundingClientRect();
-          window.__MORPH
-            ? window.__MORPH(
-                r,
-                track?.coverSeed || 0,
-                track?.gradient,
-                onOpenNowPlaying,
-                track?.image,
-              )
-            : onOpenNowPlaying();
+        // A rich flex container (cover art + meta), not a native control: its
+        // children are <div>s, invalid inside <button>, so role="button" +
+        // keyboard handling is the correct accessible pattern here.
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+        role="button"
+        tabIndex={0}
+        aria-label="Open now playing"
+        onClick={(e) => openNowPlaying(e.currentTarget)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openNowPlaying(e.currentTarget);
+          }
         }}
         style={{
           display: "flex",
@@ -379,54 +371,53 @@ export function PlayerBar({
             >
               {Math.round(vol * 100)}
             </span>
-            <div
-              ref={volTrackRef}
-              onPointerDown={(e) => {
-                volDrag.current = true;
-                e.currentTarget.setPointerCapture(e.pointerId);
-                setVolFromY(e.clientY);
-              }}
-              onPointerMove={(e) => {
-                if (volDrag.current) setVolFromY(e.clientY);
-              }}
-              onPointerUp={() => {
-                volDrag.current = false;
-              }}
+            <Slider
+              orientation="vertical"
+              min={0}
+              max={1}
+              step={0.01}
+              value={[vol]}
+              onValueChange={([v]) => setVol(v)}
+              thumbLabel="Volume"
               style={{
                 position: "relative",
                 width: 5,
                 height: 96,
-                borderRadius: 999,
-                background: "rgba(20,20,24,.16)",
                 cursor: "pointer",
                 touchAction: "none",
               }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: vol * 100 + "%",
-                  background: accent,
-                  borderRadius: 999,
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: (1 - vol) * 100 + "%",
-                  transform: "translate(-50%,-50%)",
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
-                }}
-              />
-            </div>
+              parts={{
+                track: {
+                  style: {
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 999,
+                    background: "rgba(20,20,24,.16)",
+                  },
+                },
+                range: {
+                  style: {
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    background: accent,
+                    borderRadius: 999,
+                  },
+                },
+                thumb: {
+                  style: {
+                    display: "block",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
+                  },
+                },
+              }}
+            />
           </div>
         </div>
         {/* divider: utilities | transport */}
