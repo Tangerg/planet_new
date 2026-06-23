@@ -1,0 +1,98 @@
+# CLAUDE.md — project context for Claude Code
+
+> **PLANET** — Wails 桌面音乐播放器（Go 壳 + React/TS 前端）。**单包 + 文件夹分层(整洁架构 / DDD 方向)**,`src/` 按层划分,别名即层:
+> - `@shared`(`src/shared`)框架无关纯工具 —— 零依赖,最内。
+> - `@domain`(`src/domain`)领域层:实体/值对象(`model/`)+ 端口契约(`ports/`,如 MusicProvider 能力)—— 只依赖 `@shared`。
+> - `@core`(`src/core`)应用/运行时:planet 内核(插件系统/事件总线/manager)+ 播放插件(control/playqueue/progress/volume/lyric/analyser)—— 依赖 domain。
+> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify/Mock 适配器 + mappers,实现 domain 端口 —— 依赖 core+domain。
+> - `@/`(`src/ui`)表现层:逐字移植自示例 **Sonance Vibe**(XMB 启动器 + 共享元素切换)的播放器界面。
+> - `src/app`(组合根 `planet.ts`)+ `src/main.tsx`(入口)在最外,装配具体 provider + 插件进内核。
+>
+> 依赖规则(单向):`@shared ← @domain ← @core ← @providers ← @/(ui) ← app`。先单包文件夹分层;待规模/团队增长再升级 workspace monorepo。
+>
+> 本文件只放**法则 —— 只宏观、不写具体**（具体文件名 / 符号 / 行数会随演化漂移,活在代码 / git 里,不进本则）。读法:先「两条法则」→ §1 架构心智 → §2-§4 技术栈 / 判断 / 硬约定 → §5 别走的方向 → §6 怎么干活。
+
+---
+
+## 第一法则 —— 绝不为一时方便留历史债务
+
+> **最高优先级,凌驾于本文件其余所有约定之上。**
+
+项目处于快速开发阶段,没有外部兼容包袱 —— store shape / 暴露类型 / 命名 / provider 契约,全可调整。正因如此:
+
+- ❌ **绝不为「少改几处 / 赶进度」留债** —— 兼容字段、推测性 shim、"以后再清"的 TODO,一律不留。
+- ✅ **发现设计不对,在源头改对**,不在错的设计上叠补丁。**现在改成本最低,往后只会更贵。**
+- 命名 / shape 按**本质第一性**决定;参考业界只取思想,不作命名锚。
+
+## 第二法则 —— 修理问题必须治本,绝不治标
+
+> **与第一法则并列的最高优先级。**
+
+修任何 bug,都在它的**根因和正确的层**上修,绝不在症状点打补丁、绝不 hacky。判据一句话:问「根因消除了吗,还是只是这个现象不出现了?」—— 只让现象消失的是治标,打回重修。根因常在更底层(组件 / store / provider mapper / 内核事件),治本往往要动公开形状 —— 先算爆炸半径再动,但默认倾向治本。
+
+---
+
+## 1 · 架构心智模型
+
+- **一句话定位**:**内核与 UI 严格分层,数据只经 provider,导航就是一台单页状态机。**
+- **四大支柱**:
+  1. **内核 / UI 分层(硬边界)**:`@kernel/*` 永不 import React;UI 只通过三条通道碰内核 ——
+     ① `planet.hooks`(事件总线,`emit` 下命令 / `on` 收状态);
+     ② provider 插件(取数据);
+     ③ zustand store(`StoreBridge` 把内核事件固化进 `usePlayQueueStore`,任何时刻 mount 的组件都读得到当前播放态)。
+     **绝不在 UI 里复制一份播放态**(current / playing / queue / progress 全来自内核 store + hooks)。
+  2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `IProvider`(`packages/provider/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `types.ts` 加 capability + 给 `IProvider` 加方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
+  3. **导航 = 单页状态机 + 共享元素切换引擎**(`view/vibe/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
+  4. **设计系统 = `view/vibe/vibe.css`**(逐字搬自示例):class + 内联样式驱动,自带字体 / token / 玻璃 / 全部动画 keyframes。**vibe 层不写 Tailwind**。
+
+---
+
+## 2 · 技术栈(选择已定,别轻易换 —— 反向不变量见 §5)
+
+- **UI**:React 19 + TypeScript。**桌面壳**:Wails v2(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `window.runtime`)。
+- **样式**:`vibe.css`(class-based,逐字移植)。**不引 Tailwind / CSS-in-JS / UI Kit**,不为 vibe 层写新设计系统。
+- **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
+- **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。
+- **数据源**:provider 插件(QQMusic / NeteaseCloudMusic / Spotify / Mock),由 `VITE_PROVIDER` 选;QQ 对接本机 `Rain120/qq-music-api`(:3200)。
+
+---
+
+## 3 · 设计原则(怎么判断)
+
+- **KISS / SOLID / YAGNI / DRY**;**抽象只在 3+ 重复时引入**;模块经最小接口(provider / store selector / `planet.hooks`)通信。
+- **用户体验细节是一等公民**。功能正确只是底线;拉开观感的是不影响功能、却天天硌用户的细节。做 UI 按**打磨后的终态**交付:尺寸稳定(不随内容跳动,长文本截断兜底)、间距 / 字号 / 字重层级一致、对齐、空态 / hover、**动画流畅不卡顿**(热路径别放大量重排 / 大图重复 decode)。改完自己当用户走一遍。
+- **morph 与数据解耦**:详情屏的 **Hero 容器必须立即渲染骨架**(尺寸 / 位置与最终一致),不要把整屏 gate 在 `isLoading` 后面 —— 否则切换引擎量不到目标矩形。数据(<1s)到了只填封面 / 标题。
+- **封面**:有真实 `image` 就渲 `<img>`,无则 seed 派生的渐变兜底(示例本就是渐变美学)。morph 飞行图块也带 `image`,避免渐变→真图的颜色跳变。
+- **零 legacy**:store shape 变了直接改,不留迁移 / 兼容字段;注释不写 "Legacy …"。
+- **注释纪律**:只写 _why_ 与_约束_,不写 _what_ / _how_;公开契约 / 特殊约定 / 反直觉实现才写;改代码同步改注释,宁删不留过期。
+
+---
+
+## 4 · 硬约定(违反 = 回归)
+
+- **取数走 provider**:任何外部数据都经 `IProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
+- **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
+- **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
+- **vibe 层不写 Tailwind / 新 .css**:沿用 `vibe.css` 既有 class + 内联样式。
+- **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `hooks.ts` / `adapt.ts` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
+- **无后端能力的屏幕用 MOCK**(`vibe/data.ts`):Browse 分类 / Comments / Profile / Radio 等暂走 mock,**明确是 mock,不伪装成真实**;等 provider 有了对应 capability 再接真。
+- **加文档先问**:不主动建 `*.md`,除非用户明确要。
+
+---
+
+## 5 · 强反向不变量(已知错的方向,别再提)
+
+- ❌ **重新引入 TanStack Router / 任何「一屏一路由」**:会破坏共享元素 morph(新旧屏需在同一常驻容器共存测量),这正是当初去掉路由的原因。
+- ❌ **把 `vibe.css` 改写成 Tailwind / 重做设计系统**:逐字保真是「切换效果原样」的前提,改写必漂移。
+- ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `IProvider` 抽象 + mapper + React Query。
+- ❌ **在 UI 里复制播放态**(本地 `useState` 存 current / queue / progress):唯一源是内核 store + hooks。
+- ❌ **加回原生窗口标题栏 / 系统红绿灯**:窗口无边框,装饰由页面 `.win` + 伪装红绿灯承担。
+- ❌ **换栈**(Zustand→Redux、React Query→SWR、Wails→Tauri、引 UI Kit / CSS-in-JS)—— 无收益。
+
+---
+
+## 6 · 工作流
+
+- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 QQ API:`~/Desktop/qq-music-api` 跑 `yarn dev`(:3200);后端没起时 provider 取数失败,UI 自动回退 MOCK,仍可浏览。
+- **质量门禁**(在 `frontend/` 跑):`yarn typecheck` + `yarn build`(tsc + vite)+ `yarn test`(vitest);全绿才往下走。会漂的数字(测试数 / 文件数)直接跑命令查,不在本文件硬编码。
+- **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。

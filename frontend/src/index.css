@@ -1,0 +1,9 @@
+/* Sonance Vibe — global style entry.
+   The whole design system comes from vibe.css (ported verbatim from the example):
+   fonts, tokens, glass, grid, transition keyframes, etc. This file only adds the
+   color scheme. */
+@import "./ui/vibe/vibe.css";
+
+:root {
+  color-scheme: dark;
+}
