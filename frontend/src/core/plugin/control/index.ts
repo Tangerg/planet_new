@@ -70,5 +70,3 @@ export class Control extends Plugin {
     await this.play();
   };
 }
-
-export default Control;

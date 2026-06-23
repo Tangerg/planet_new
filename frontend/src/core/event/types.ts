@@ -12,13 +12,11 @@ export interface IEventListener<E extends IEventMap, K extends keyof E> extends 
 
 /** Standard pub/sub emitter; clear() removes all listeners at once. */
 export interface IEventEmitter<E extends IEventMap> extends Clearable {
-  on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: Object): IEventEmitter<E>;
+  on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: object): IEventEmitter<E>;
 
-  once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: Object): IEventEmitter<E>;
+  once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx?: object): IEventEmitter<E>;
 
   off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E>;
 
   emit<K extends keyof E>(name: K, arg?: E[K]): void;
 }
-
-export default IEventEmitter;

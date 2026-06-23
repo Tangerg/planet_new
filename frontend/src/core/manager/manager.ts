@@ -55,5 +55,3 @@ export class Manager<T extends IManageable> implements IManager<T> {
     this.store.clear();
   }
 }
-
-export default Manager;

@@ -2,9 +2,9 @@
    Sonance — Vibe edition
    Editorial / photographic music player
    Type: Jost (geometric display + body) · JetBrains Mono (labels)
+   The Google Fonts @import lives in index.css so all @import rules group at
+   the top of the bundle (a CSS rule: @import must precede other rules).
    ============================================================ */
-@import url("https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
-
 :root {
   --accent: #ff2188; /* hot magenta */
   --accent-soft: #ff62a8;

@@ -34,7 +34,7 @@ function createProvider(): Provider {
   }
 }
 
-const planet = new Planet({
+export const planet = new Planet({
   plugins: [
     createProvider(),
     new Control(),
@@ -44,5 +44,3 @@ const planet = new Planet({
     new PlayQueueStoreBridge(),
   ],
 });
-
-export default planet;
