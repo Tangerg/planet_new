@@ -175,14 +175,8 @@ export function TrackRow({
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <span
-            style={{
-              fontSize: 15,
-              fontWeight: 400,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              color: isCur ? accent : col,
-            }}
+            className="truncate"
+            style={{ fontSize: 15, fontWeight: 400, color: isCur ? accent : col }}
           >
             {track.title}
           </span>
@@ -208,16 +202,7 @@ export function TrackRow({
             </span>
           )}
         </div>
-        <div
-          style={{
-            fontSize: 12.5,
-            fontWeight: 300,
-            color: sub,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
+        <div className="truncate" style={{ fontSize: 12.5, fontWeight: 300, color: sub }}>
           {track.artist}
         </div>
       </div>
@@ -315,27 +300,12 @@ export function TrackCard({ track, onPlay, accent }: TrackCardProps) {
           <Icon.play size={18} />
         </button>
       </div>
-      <div
-        style={{
-          marginTop: 11,
-          fontSize: 14.5,
-          fontWeight: 400,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
+      <div className="truncate" style={{ marginTop: 11, fontSize: 14.5, fontWeight: 400 }}>
         {track.title}
       </div>
       <div
-        style={{
-          fontSize: 12.5,
-          fontWeight: 300,
-          color: "rgba(255,255,255,.5)",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
+        className="truncate"
+        style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}
       >
         {track.artist}
       </div>
