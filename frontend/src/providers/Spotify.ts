@@ -1,6 +1,6 @@
 import ky, { KyInstance } from "ky";
 
-import Provider from "./provider";
+import { Provider } from "./provider";
 import { ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Track, TrackPlayUrl } from "@domain/model/track";
@@ -411,5 +411,3 @@ export class Spotify extends Provider {
     };
   }
 }
-
-export default Spotify;

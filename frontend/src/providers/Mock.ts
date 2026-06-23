@@ -1,4 +1,4 @@
-import Provider from "./provider";
+import { Provider } from "./provider";
 import { ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Track, TrackPlayUrl } from "@domain/model/track";
@@ -528,5 +528,3 @@ export class Mock extends Provider {
     return delay({ playlists, albums, artists, tracks: [] }, this.latency);
   }
 }
-
-export default Mock;

@@ -121,5 +121,3 @@ export class Planet implements IPlanet {
     this.context.hooks.clear();
   }
 }
-
-export default Planet;

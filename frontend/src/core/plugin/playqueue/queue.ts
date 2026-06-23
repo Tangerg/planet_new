@@ -114,5 +114,3 @@ export class Queue extends EventEmitter<QueueEventMap> {
     this.emit("current_track_changed", this.current);
   }
 }
-
-export default Queue;

@@ -56,5 +56,3 @@ export class PlayQueueStoreBridge extends Plugin {
     usePlayQueueStore.setState((s) => ({ ...s, progress }));
   }
 }
-
-export default PlayQueueStoreBridge;

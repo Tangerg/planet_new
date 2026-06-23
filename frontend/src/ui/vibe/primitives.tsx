@@ -342,48 +342,6 @@ export function Art({
   );
 }
 
-/* ---- transport cluster (used in bar + fullscreen) ---- */
-export function Transport({
-  playing,
-  onToggle,
-  onPrev,
-  onNext,
-  size = 22,
-  color = "#fff",
-}: {
-  playing?: boolean;
-  onToggle?: () => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-  size?: number;
-  color?: string;
-  accent?: string;
-}) {
-  const btn: React.CSSProperties = {
-    appearance: "none",
-    border: 0,
-    background: "none",
-    color,
-    cursor: "pointer",
-    display: "grid",
-    placeItems: "center",
-    padding: 4,
-  };
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-      <button style={btn} onClick={onPrev} aria-label="Previous">
-        <Icon.rewind size={size} />
-      </button>
-      <button style={btn} onClick={onToggle} aria-label="Play/Pause">
-        {playing ? <Icon.pause size={size + 6} /> : <Icon.play size={size + 6} />}
-      </button>
-      <button style={btn} onClick={onNext} aria-label="Next">
-        <Icon.forward size={size} />
-      </button>
-    </div>
-  );
-}
-
 export function fmt(sec: number): string {
   sec = Math.max(0, Math.floor(sec));
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;

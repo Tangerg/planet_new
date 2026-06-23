@@ -25,5 +25,3 @@ export class Context implements IContext {
     return this.eventEmitter;
   }
 }
-
-export default Context;

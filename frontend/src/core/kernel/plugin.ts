@@ -72,5 +72,3 @@ export abstract class Plugin implements IPlugin {
     }
   }
 }
-
-export default Plugin;

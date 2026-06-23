@@ -15,7 +15,7 @@ import { Chart } from "@domain/model/chart";
  * extending Provider. Exactly one provider is mounted at a time, so they share
  * a fixed plugin id (PLUGIN_ID); concrete providers differ by `name` and `capabilities`.
  */
-abstract class Provider extends Plugin implements IProvider {
+export abstract class Provider extends Plugin implements IProvider {
   public static readonly PLUGIN_ID = PROVIDER_PLUGIN_ID;
 
   get id(): string {
@@ -61,5 +61,3 @@ abstract class Provider extends Plugin implements IProvider {
     return { id: "", name: "", images: [], tracks: [], totalTracks: 0 };
   }
 }
-
-export default Provider;

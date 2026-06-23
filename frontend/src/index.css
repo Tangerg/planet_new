@@ -8,6 +8,7 @@
    its tokens so Tailwind classes (bg-surf-1, text-tx-2, rounded-lg, ...) map to
    the exact same values during the migration. */
 @layer theme, base, components, utilities;
+@import url("https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 

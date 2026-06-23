@@ -59,5 +59,3 @@ export class Volume extends Plugin {
     await this.change(v);
   }
 }
-
-export default Volume;

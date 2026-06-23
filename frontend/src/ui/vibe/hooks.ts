@@ -144,8 +144,6 @@ function buildCatalog(p?: Personalized) {
   };
 }
 
-export type VibeCatalog = ReturnType<typeof buildCatalog>;
-
 export function useCatalog() {
   const provider = useActiveProvider();
   const { data, isLoading } = useQuery({

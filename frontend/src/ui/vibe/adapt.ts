@@ -11,7 +11,6 @@ import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
-import { Second } from "@shared/time";
 
 /** Loose entity shape shared by the vibe screens (mock and real data alike). */
 export type VibeTrack = {
@@ -65,19 +64,6 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
 }
 
 export const toVibeTracks = (xs?: Partial<Track>[]) => (xs ?? []).map((t, i) => toVibeTrack(t, i));
-
-/** Vibe track → a kernel-playable Track (carrying playUrl). */
-export function toRealTrack(v: VibeTrack): Track {
-  if (v._real) return { ...v._real, playUrl: v.playUrl ?? v._real.playUrl };
-  // Mock tracks have no `_real`; build a minimal Track (kernel uses id/playUrl/name).
-  return {
-    id: v.id,
-    name: v.title ?? v.name,
-    durationMs: (v.durSec ?? 0) * Second,
-    artists: [],
-    playUrl: v.playUrl,
-  } as Track;
-}
 
 export type VibeCollection = {
   id: string;

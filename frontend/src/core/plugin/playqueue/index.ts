@@ -1,5 +1,5 @@
 import { Plugin } from "../../kernel";
-import Queue from "./queue";
+import { Queue } from "./queue";
 import { Track } from "@domain/model/track";
 import { PlayQueue as PlayQueueModel } from "@domain/model/playqueue";
 import { shuffleArray } from "@shared/array";

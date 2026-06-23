@@ -1,6 +1,6 @@
 import ky, { KyInstance } from "ky";
 
-import Provider from "./provider";
+import { Provider } from "./provider";
 import { ProviderCapability } from "@domain";
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
@@ -239,5 +239,3 @@ export class QQMusic extends Provider {
     };
   }
 }
-
-export default QQMusic;

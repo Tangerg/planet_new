@@ -1,4 +1,4 @@
-import IEventEmitter, { IEventListener, IEventMap } from "./types";
+import type { IEventEmitter, IEventListener, IEventMap } from "./types";
 
 type Listener = {
   fn: Function;
@@ -79,5 +79,3 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
     this.listeners.clear();
   }
 }
-
-export default EventEmitter;
