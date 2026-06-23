@@ -3,6 +3,7 @@
 // ============================================================
 
 import React, { useState, useRef } from "react";
+import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
 import { CoverFlow } from "./CoverFlow";
 
@@ -99,6 +100,12 @@ export function TrackRow({
   };
   return (
     <div
+      // A rich flex row (art + meta + inline actions), not valid <button>
+      // content — role="button" + keyboard handling is the right pattern.
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="button"
+      tabIndex={unavailable ? -1 : 0}
+      aria-label={track.title}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       draggable={!unavailable}
@@ -114,6 +121,12 @@ export function TrackRow({
           return;
         }
         onPlay(track);
+      }}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (!unavailable && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onPlay(track);
+        }
       }}
       style={{
         display: "flex",
@@ -250,9 +263,19 @@ export function TrackCard({ track, onPlay, accent }: TrackCardProps) {
   const [hover, setHover] = useState(false);
   return (
     <div
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="button"
+      tabIndex={0}
+      aria-label={track.title}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={() => onPlay(track)}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPlay(track);
+        }
+      }}
       onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU && window.__TRACKMENU(e, track)}
       style={{ cursor: "pointer" }}
     >
@@ -357,8 +380,10 @@ export function PlaylistDetailScreen({
           const [lo, hi] = a < b ? [a, b] : [b, a];
           for (let k = lo; k <= hi; k++) n.add(ids[k]);
         }
+      } else if (n.has(track.id)) {
+        n.delete(track.id);
       } else {
-        n.has(track.id) ? n.delete(track.id) : n.add(track.id);
+        n.add(track.id);
       }
       return n;
     });
@@ -642,24 +667,33 @@ export function PlaylistDetailScreen({
           </div>
 
           <div key={view} className="xfade">
-            {view === "list" &&
-              sorted.map(({ t, i }: { t: any; i: number }) => (
-                <TrackRow
-                  key={t.id}
-                  track={t}
-                  index={i + 1}
-                  rank={p.variant === "chart" ? (t._rank ?? i + 1) : undefined}
-                  delta={p.variant === "chart" ? t._delta : undefined}
-                  onPlay={onPlay}
-                  current={current}
-                  selected={sel.has(t.id)}
-                  onSelect={toggleSel}
-                  playing={playing}
-                  liked={liked}
-                  toggleLike={toggleLike}
-                  accent={accent}
-                />
-              ))}
+            {view === "list" && (
+              <VirtualList
+                scrollRef={scrollRef}
+                count={sorted.length}
+                estimateSize={66}
+                itemKey={(vi) => sorted[vi].t.id}
+                renderItem={(vi) => {
+                  const { t, i } = sorted[vi];
+                  return (
+                    <TrackRow
+                      track={t}
+                      index={i + 1}
+                      rank={p.variant === "chart" ? (t._rank ?? i + 1) : undefined}
+                      delta={p.variant === "chart" ? t._delta : undefined}
+                      onPlay={onPlay}
+                      current={current}
+                      selected={sel.has(t.id)}
+                      onSelect={toggleSel}
+                      playing={playing}
+                      liked={liked}
+                      toggleLike={toggleLike}
+                      accent={accent}
+                    />
+                  );
+                }}
+              />
+            )}
             {view === "grid" && (
               <div
                 style={{
@@ -801,6 +835,7 @@ export function QueueScreen({
   liked,
   toggleLike,
 }: QueueScreenProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   return (
     <div
       className="fade-in"
@@ -840,24 +875,33 @@ export function QueueScreen({
           {current?.artist}
         </div>
       </div>
-      <div className="scroll" style={{ padding: "64px 24px 30px" }}>
+      <div className="scroll" ref={scrollRef} style={{ padding: "64px 24px 30px" }}>
         <div className="mlabel" style={{ color: "rgba(255,255,255,.5)", padding: "0 14px 14px" }}>
           Up Next · {queue.length}
         </div>
-        {queue.map((t, i) => (
-          <TrackRow
-            key={t.id + i}
-            track={t}
-            index={i + 1}
-            onPlay={onPlay}
-            current={current}
-            playing={playing}
-            liked={liked}
-            toggleLike={toggleLike}
-            accent={accent}
+        {queue.length > 0 ? (
+          <VirtualList
+            scrollRef={scrollRef}
+            count={queue.length}
+            estimateSize={66}
+            itemKey={(vi) => queue[vi].id + vi}
+            renderItem={(vi) => {
+              const t = queue[vi];
+              return (
+                <TrackRow
+                  track={t}
+                  index={vi + 1}
+                  onPlay={onPlay}
+                  current={current}
+                  playing={playing}
+                  liked={liked}
+                  toggleLike={toggleLike}
+                  accent={accent}
+                />
+              );
+            }}
           />
-        ))}
-        {!queue.length && (
+        ) : (
           <div style={{ padding: 40, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
             Queue is empty.
           </div>
@@ -1031,7 +1075,17 @@ type SetToggleProps = {
 function SetToggle({ label, sub, on, onClick }: SetToggleProps) {
   return (
     <div
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{
         display: "flex",
         alignItems: "center",
