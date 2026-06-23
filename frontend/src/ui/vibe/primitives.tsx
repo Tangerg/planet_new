@@ -315,6 +315,12 @@ export function Art({
           src={image}
           alt=""
           draggable={false}
+          // Defer off-screen covers and decode off the main thread — covers in
+          // long lists/grids no longer load+decode all at once. In-viewport art
+          // (heroes, the morph tile) still loads immediately, so transitions and
+          // the gradient→image fill are unaffected.
+          loading="lazy"
+          decoding="async"
           style={{
             position: "absolute",
             inset: 0,
