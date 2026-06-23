@@ -98,7 +98,7 @@ export function useVibePlayback() {
   const upNext = useMemo(() => {
     if (!current) return tracks ?? [];
     const i = (tracks ?? []).findIndex((t) => t.id === current.id);
-    return i >= 0 ? (tracks ?? []).slice(i + 1) : tracks ?? [];
+    return i >= 0 ? (tracks ?? []).slice(i + 1) : (tracks ?? []);
   }, [tracks, current]);
 
   return {
@@ -182,10 +182,7 @@ export function useLyric(id: string | undefined) {
     queryFn: () => provider.lyric(id as string),
     enabled: !!id,
   });
-  return useMemo(
-    () => (data ?? []).map((l) => ({ line: l.content, t: l.duration })),
-    [data],
-  );
+  return useMemo(() => (data ?? []).map((l) => ({ line: l.content, t: l.duration })), [data]);
 }
 
 /** Chart list in vibe shape, for the Charts grid. */

@@ -17,8 +17,7 @@ export function withSelectors<S extends UseBoundStore<StoreApi<object>>>(
   const store = base as WithSelectors<S>;
   store.use = {} as WithSelectors<S>["use"];
   for (const key of Object.keys(store.getState())) {
-    (store.use as Record<string, unknown>)[key] = () =>
-      store((s) => s[key as keyof typeof s]);
+    (store.use as Record<string, unknown>)[key] = () => store((s) => s[key as keyof typeof s]);
   }
   return store;
 }

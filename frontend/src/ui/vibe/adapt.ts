@@ -64,8 +64,7 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
   };
 }
 
-export const toVibeTracks = (xs?: Partial<Track>[]) =>
-  (xs ?? []).map((t, i) => toVibeTrack(t, i));
+export const toVibeTracks = (xs?: Partial<Track>[]) => (xs ?? []).map((t, i) => toVibeTrack(t, i));
 
 /** Vibe track → a kernel-playable Track (carrying playUrl). */
 export function toRealTrack(v: VibeTrack): Track {

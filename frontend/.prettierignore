@@ -1,0 +1,7 @@
+dist
+node_modules
+coverage
+.tanstack
+example
+wailsjs
+*.md

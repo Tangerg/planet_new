@@ -13,13 +13,7 @@ import { useActiveProvider } from "@/hooks/useActiveProvider";
 import { artBg, Equalizer, Icon } from "./primitives";
 import { MOCK } from "./mockCatalog";
 import { useCatalog, useLyric, useProviderSearch, useToplists, useVibePlayback } from "./hooks";
-import {
-  toVibeAlbum,
-  toVibeArtist,
-  toVibePlaylist,
-  toVibeTracks,
-  type VibeTrack,
-} from "./adapt";
+import { toVibeAlbum, toVibeArtist, toVibePlaylist, toVibeTracks, type VibeTrack } from "./adapt";
 
 import { PlayerBar } from "./PlayerBar";
 import { XMB } from "./XMB";
@@ -27,12 +21,7 @@ import { ForYouScreen } from "./ForYou";
 import { NowPlaying } from "./NowPlaying";
 import { ContextMenu } from "./Menu";
 import { SearchScreen, ChartsScreen, LibraryScreen } from "./Browse";
-import {
-  PlaylistDetailScreen,
-  QueueScreen,
-  HistoryScreen,
-  SettingsScreen,
-} from "./Detail";
+import { PlaylistDetailScreen, QueueScreen, HistoryScreen, SettingsScreen } from "./Detail";
 import { ArtistScreen, ProfileScreen, BrowseScreen, CommentsScreen } from "./Pages";
 
 /* ---- keyboard spatial focus: pick the nearest focusable in a direction (by geometry) ---- */
@@ -149,9 +138,7 @@ export default function Shell() {
       playlists: catalog.playlists.length ? catalog.playlists : MOCK.playlists,
       albums: catalog.albums.length ? catalog.albums : MOCK.albums,
       artists: catalog.artists.length ? catalog.artists : MOCK.artists,
-      allTracks: catalog.data.allTracks.length
-        ? catalog.data.allTracks
-        : MOCK.data.allTracks,
+      allTracks: catalog.data.allTracks.length ? catalog.data.allTracks : MOCK.data.allTracks,
     }),
     [catalog],
   );
@@ -329,8 +316,7 @@ export default function Shell() {
   const lastTile = useRef<any>(null);
   const timers = useRef<any[]>([]);
   const EASE = "cubic-bezier(.16,1,.3,1)";
-  const reduceMo = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clearTimers = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
@@ -370,10 +356,7 @@ export default function Shell() {
     const vw = viewRef.current.getBoundingClientRect();
     const px = o.left + o.width / 2,
       py = o.top + o.height / 2;
-    const clipR = Math.hypot(
-      Math.max(px, vw.width - px),
-      Math.max(py, vw.height - py),
-    );
+    const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
     lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
     item.run && item.run();
     setTrans({
@@ -409,10 +392,7 @@ export default function Shell() {
     const vw = viewRef.current.getBoundingClientRect();
     const px = o.left + o.width / 2,
       py = o.top + o.height / 2;
-    const clipR = Math.hypot(
-      Math.max(px, vw.width - px),
-      Math.max(py, vw.height - py),
-    );
+    const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
     setTrans({
       from,
       to: "xmb",
@@ -453,9 +433,7 @@ export default function Shell() {
       transform: begin ? "scale(1)" : "scale(.985)",
       filter: begin ? "blur(0px)" : "blur(3px)",
       transformOrigin: "center",
-      transition: begin
-        ? "none"
-        : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
+      transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
     };
   };
 
@@ -465,8 +443,7 @@ export default function Shell() {
     setTrans((t: any) => t && { ...t, target: hero || t.target, hero: !!hero, measured: true });
   }, [trans]);
   React.useEffect(() => {
-    if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start")
-      return;
+    if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
     const id = requestAnimationFrame(() =>
       requestAnimationFrame(() =>
         setTrans((t: any) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
@@ -492,9 +469,13 @@ export default function Shell() {
     const root = viewRef.current;
     if (!root) return;
     const list = () =>
-      ([...root.querySelectorAll(
-        'button:not([disabled]), input, [tabindex]:not([tabindex="-1"]), a[href]',
-      )] as HTMLElement[]).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
+      (
+        [
+          ...root.querySelectorAll(
+            'button:not([disabled]), input, [tabindex]:not([tabindex="-1"]), a[href]',
+          ),
+        ] as HTMLElement[]
+      ).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
     const t = setTimeout(() => {
       const f = list();
       if (f.length && !root.contains(document.activeElement)) f[0].focus();
@@ -547,11 +528,54 @@ export default function Shell() {
         icon: "play",
         label: "Now Playing",
         items: [
-          { key: "cover", label: current?.title || "Now Playing", sub: current?.artist, icon: "play", seed: current?.coverSeed || 0, grad: current?.gradient, image: current?.image, dest: "np", run: openNP },
-          { key: "lyrics", label: "Lyrics", sub: "Synced lyrics", seed: (current?.coverSeed || 0) + 1, grad: current?.gradient, dest: "np", run: openNP },
-          { key: "queue", label: "Up Next", sub: queue.length + " tracks queued", icon: "list", seed: 5, dest: "queue", run: () => setView("queue") },
-          { key: "comments", label: "Hot Comments", sub: "On " + (current?.title || ""), icon: "comment", seed: 8, dest: "comments", run: () => setView("comments") },
-          { key: "history", label: "History", sub: "Recently played", icon: "clock", seed: 12, grad: ["#161320", "#8a7bff"], dest: "history", run: () => setView("history") },
+          {
+            key: "cover",
+            label: current?.title || "Now Playing",
+            sub: current?.artist,
+            icon: "play",
+            seed: current?.coverSeed || 0,
+            grad: current?.gradient,
+            image: current?.image,
+            dest: "np",
+            run: openNP,
+          },
+          {
+            key: "lyrics",
+            label: "Lyrics",
+            sub: "Synced lyrics",
+            seed: (current?.coverSeed || 0) + 1,
+            grad: current?.gradient,
+            dest: "np",
+            run: openNP,
+          },
+          {
+            key: "queue",
+            label: "Up Next",
+            sub: queue.length + " tracks queued",
+            icon: "list",
+            seed: 5,
+            dest: "queue",
+            run: () => setView("queue"),
+          },
+          {
+            key: "comments",
+            label: "Hot Comments",
+            sub: "On " + (current?.title || ""),
+            icon: "comment",
+            seed: 8,
+            dest: "comments",
+            run: () => setView("comments"),
+          },
+          {
+            key: "history",
+            label: "History",
+            sub: "Recently played",
+            icon: "clock",
+            seed: 12,
+            grad: ["#161320", "#8a7bff"],
+            dest: "history",
+            run: () => setView("history"),
+          },
         ],
       },
       // 2 · ORGANIZATION — playlists
@@ -560,8 +584,28 @@ export default function Shell() {
         icon: "star",
         label: "For You",
         items: [
-          { key: "overview", label: "Overview", sub: "Your daily landing", icon: "note", seed: 7, grad: ["#1b1033", "#ff2188"], dest: "home", run: () => setView("home") },
-          ...pls.slice(0, 6).map((p: any) => ({ key: p.id, label: p.name, sub: "Made for you", seed: p.coverSeed, grad: p.gradient, image: p.image, dest: "detail", run: () => openDetail(p) })),
+          {
+            key: "overview",
+            label: "Overview",
+            sub: "Your daily landing",
+            icon: "note",
+            seed: 7,
+            grad: ["#1b1033", "#ff2188"],
+            dest: "home",
+            run: () => setView("home"),
+          },
+          ...pls
+            .slice(0, 6)
+            .map((p: any) => ({
+              key: p.id,
+              label: p.name,
+              sub: "Made for you",
+              seed: p.coverSeed,
+              grad: p.gradient,
+              image: p.image,
+              dest: "detail",
+              run: () => openDetail(p),
+            })),
         ],
       },
       // 3 · ORGANIZATION — charts (real charts)
@@ -570,8 +614,29 @@ export default function Shell() {
         icon: "bars",
         label: "Charts",
         items: [
-          ...(toplists.length ? toplists : MOCK.charts).slice(0, 4).map((c: any) => ({ key: c.id, label: c.title, sub: c.updatedAt ? "Updated " + c.updatedAt : "Top chart", icon: "bars", seed: c.coverSeed ?? c.seed, grad: c.gradient, image: c.image, dest: "detail", run: () => (c.coverSeed != null ? openChart(c) : setView("charts")) })),
-          { key: "all", label: "All charts", sub: "Browse grid", icon: "grid", seed: 10, grad: ["#240b04", "#ff8a3c"], dest: "charts", run: () => setView("charts") },
+          ...(toplists.length ? toplists : MOCK.charts)
+            .slice(0, 4)
+            .map((c: any) => ({
+              key: c.id,
+              label: c.title,
+              sub: c.updatedAt ? "Updated " + c.updatedAt : "Top chart",
+              icon: "bars",
+              seed: c.coverSeed ?? c.seed,
+              grad: c.gradient,
+              image: c.image,
+              dest: "detail",
+              run: () => (c.coverSeed != null ? openChart(c) : setView("charts")),
+            })),
+          {
+            key: "all",
+            label: "All charts",
+            sub: "Browse grid",
+            icon: "grid",
+            seed: 10,
+            grad: ["#240b04", "#ff8a3c"],
+            dest: "charts",
+            run: () => setView("charts"),
+          },
         ],
       },
       // 4 · ORGANIZATION — radio (static)
@@ -579,7 +644,16 @@ export default function Shell() {
         id: "radio",
         icon: "radio",
         label: "Radio",
-        items: MOCK.radios.map((r: any) => ({ key: r.id, label: r.title, sub: r.sub, icon: r.type === "podcast" ? "volume" : "radio", seed: r.seed, grad: r.gradient, dest: "browse", run: () => setView("browse") })),
+        items: MOCK.radios.map((r: any) => ({
+          key: r.id,
+          label: r.title,
+          sub: r.sub,
+          icon: r.type === "podcast" ? "volume" : "radio",
+          seed: r.seed,
+          grad: r.gradient,
+          dest: "browse",
+          run: () => setView("browse"),
+        })),
       },
       // 5 · USER — library
       {
@@ -587,11 +661,56 @@ export default function Shell() {
         icon: "stack",
         label: "Library",
         items: [
-          { key: "liked", label: "Liked Songs", sub: liked.size + " tracks", icon: "heart", seed: 0, grad: ["#2a0420", "#ff4fa3"], dest: "detail", run: likedDetail },
-          { key: "playlists", label: "Your Playlists", sub: pls.length + " playlists", icon: "list", seed: 1, grad: ["#1a0d3a", "#7755ff"], dest: "library", run: () => openLib("playlists") },
-          { key: "albums", label: "Saved Albums", sub: als.length + " albums", icon: "stack", seed: 2, grad: ["#3a0d10", "#f3727f"], dest: "library", run: () => openLib("albums") },
-          { key: "following", label: "Following", sub: ars.length + " artists", icon: "user", seed: 4, grad: ["#06222b", "#19d3c5"], dest: "library", run: () => openLib("artists") },
-          { key: "flow", label: "Cover Flow", sub: "Flip through your albums", icon: "flow", seed: 6, grad: ["#06222b", "#19d3c5"], dest: "library", run: () => openLib("albums", "flow") },
+          {
+            key: "liked",
+            label: "Liked Songs",
+            sub: liked.size + " tracks",
+            icon: "heart",
+            seed: 0,
+            grad: ["#2a0420", "#ff4fa3"],
+            dest: "detail",
+            run: likedDetail,
+          },
+          {
+            key: "playlists",
+            label: "Your Playlists",
+            sub: pls.length + " playlists",
+            icon: "list",
+            seed: 1,
+            grad: ["#1a0d3a", "#7755ff"],
+            dest: "library",
+            run: () => openLib("playlists"),
+          },
+          {
+            key: "albums",
+            label: "Saved Albums",
+            sub: als.length + " albums",
+            icon: "stack",
+            seed: 2,
+            grad: ["#3a0d10", "#f3727f"],
+            dest: "library",
+            run: () => openLib("albums"),
+          },
+          {
+            key: "following",
+            label: "Following",
+            sub: ars.length + " artists",
+            icon: "user",
+            seed: 4,
+            grad: ["#06222b", "#19d3c5"],
+            dest: "library",
+            run: () => openLib("artists"),
+          },
+          {
+            key: "flow",
+            label: "Cover Flow",
+            sub: "Flip through your albums",
+            icon: "flow",
+            seed: 6,
+            grad: ["#06222b", "#19d3c5"],
+            dest: "library",
+            run: () => openLib("albums", "flow"),
+          },
         ],
       },
       // 6 · CLASSIFICATION — browse facets (static)
@@ -600,10 +719,43 @@ export default function Shell() {
         icon: "compass",
         label: "Browse",
         items: [
-          { key: "lang", label: "Languages", sub: "Mandarin · Western · J-Pop · K-Pop", icon: "grid", seed: 5, grad: ["#13031f", "#b15cff"], dest: "browse", run: () => setView("browse") },
-          { key: "genre", label: "Genres", sub: "Pop · Rock · Electronic · Jazz", seed: 2, grad: ["#0b1b3a", "#5b8cff"], dest: "browse", run: () => setView("browse") },
-          { key: "scene", label: "Scenes", sub: "Commute · Workout · Study · Sleep", seed: 6, grad: ["#240b04", "#ff8a3c"], dest: "browse", run: () => setView("browse") },
-          { key: "mood", label: "Moods", sub: "Calm · Happy · Melancholy · Hype", seed: 8, grad: ["#0a3a2a", "#1ed760"], dest: "browse", run: () => setView("browse") },
+          {
+            key: "lang",
+            label: "Languages",
+            sub: "Mandarin · Western · J-Pop · K-Pop",
+            icon: "grid",
+            seed: 5,
+            grad: ["#13031f", "#b15cff"],
+            dest: "browse",
+            run: () => setView("browse"),
+          },
+          {
+            key: "genre",
+            label: "Genres",
+            sub: "Pop · Rock · Electronic · Jazz",
+            seed: 2,
+            grad: ["#0b1b3a", "#5b8cff"],
+            dest: "browse",
+            run: () => setView("browse"),
+          },
+          {
+            key: "scene",
+            label: "Scenes",
+            sub: "Commute · Workout · Study · Sleep",
+            seed: 6,
+            grad: ["#240b04", "#ff8a3c"],
+            dest: "browse",
+            run: () => setView("browse"),
+          },
+          {
+            key: "mood",
+            label: "Moods",
+            sub: "Calm · Happy · Melancholy · Hype",
+            seed: 8,
+            grad: ["#0a3a2a", "#1ed760"],
+            dest: "browse",
+            run: () => setView("browse"),
+          },
         ],
       },
       // 7 · RETRIEVAL — search
@@ -612,7 +764,19 @@ export default function Shell() {
         icon: "search",
         label: "Search",
         items: [
-          { key: "open", label: "Search music", sub: "Tracks, artists, albums", icon: "search", seed: 6, grad: ["#021e24", "#36c5e0"], dest: "search", run: () => { setSeedQuery(""); setView("search"); } },
+          {
+            key: "open",
+            label: "Search music",
+            sub: "Tracks, artists, albums",
+            icon: "search",
+            seed: 6,
+            grad: ["#021e24", "#36c5e0"],
+            dest: "search",
+            run: () => {
+              setSeedQuery("");
+              setView("search");
+            },
+          },
         ],
       },
       // 8 · USER — account
@@ -621,8 +785,26 @@ export default function Shell() {
         icon: "user",
         label: "You",
         items: [
-          { key: "profile", label: "Profile", sub: "You", icon: "user", seed: 3, grad: ["#1b1033", "#ff2188"], dest: "profile", run: () => setView("profile") },
-          { key: "stats", label: "Listening", sub: "Your top artists & minutes", icon: "bars", seed: 9, grad: ["#2a0420", "#ff4fa3"], dest: "profile", run: () => setView("profile") },
+          {
+            key: "profile",
+            label: "Profile",
+            sub: "You",
+            icon: "user",
+            seed: 3,
+            grad: ["#1b1033", "#ff2188"],
+            dest: "profile",
+            run: () => setView("profile"),
+          },
+          {
+            key: "stats",
+            label: "Listening",
+            sub: "Your top artists & minutes",
+            icon: "bars",
+            seed: 9,
+            grad: ["#2a0420", "#ff4fa3"],
+            dest: "profile",
+            run: () => setView("profile"),
+          },
         ],
       },
       // 9 · SYSTEM — settings
@@ -631,8 +813,24 @@ export default function Shell() {
         icon: "gear",
         label: "Settings",
         items: [
-          { key: "prefs", label: "Preferences", sub: "Audio, theme, interface", icon: "gear", seed: 9, grad: ["#13031f", "#b15cff"], dest: "settings", run: () => setView("settings") },
-          { key: "about", label: "About Sonance", sub: "Version 2.0", seed: 2, dest: "settings", run: () => setView("settings") },
+          {
+            key: "prefs",
+            label: "Preferences",
+            sub: "Audio, theme, interface",
+            icon: "gear",
+            seed: 9,
+            grad: ["#13031f", "#b15cff"],
+            dest: "settings",
+            run: () => setView("settings"),
+          },
+          {
+            key: "about",
+            label: "About Sonance",
+            sub: "Version 2.0",
+            seed: 2,
+            dest: "settings",
+            run: () => setView("settings"),
+          },
         ],
       },
     ];
@@ -644,78 +842,169 @@ export default function Shell() {
   const renderScreen = (v: string) => {
     if (v === "xmb")
       return (
-        <XMB cats={cats} accent={accent} playing={playing} showWaves={settings.waves}
-          onOpen={startForward} cState={xmbCategory} setCState={setXmbCategory} rowsState={xmbRowByCategory} setRowsState={setXmbRowByCategory} />
+        <XMB
+          cats={cats}
+          accent={accent}
+          playing={playing}
+          showWaves={settings.waves}
+          onOpen={startForward}
+          cState={xmbCategory}
+          setCState={setXmbCategory}
+          rowsState={xmbRowByCategory}
+          setRowsState={setXmbRowByCategory}
+        />
       );
     if (v === "home")
       return (
-        <ForYouScreen data={screenData} onPlay={onPlay} accent={accent}
-          openPlaylist={openDetail} openAlbum={albumDetail} openArtist={openArtist} onNav={setView} />
+        <ForYouScreen
+          data={screenData}
+          onPlay={onPlay}
+          accent={accent}
+          openPlaylist={openDetail}
+          openAlbum={albumDetail}
+          openArtist={openArtist}
+          onNav={setView}
+        />
       );
     if (v === "search")
       return (
-        <SearchScreen data={screenData} onPlay={onPlay} current={current} playing={playing}
-          accent={accent} initialQuery={searchQuery} liked={liked} toggleLike={toggleLike}
-          openArtist={openArtist} openAlbum={albumDetail} openPlaylist={openDetail} search={search} />
+        <SearchScreen
+          data={screenData}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          accent={accent}
+          initialQuery={searchQuery}
+          liked={liked}
+          toggleLike={toggleLike}
+          openArtist={openArtist}
+          openAlbum={albumDetail}
+          openPlaylist={openDetail}
+          search={search}
+        />
       );
-    if (v === "charts")
-      return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
+    if (v === "charts") return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
     if (v === "library" || v === "made")
       return (
-        <LibraryScreen key={libraryTab + libraryView} initialTab={libraryTab} initialView={libraryView}
-          data={screenData} onPlay={onPlay} current={current} playing={playing} accent={accent}
-          openPlaylist={openDetail} openAlbum={albumDetail} openArtist={openArtist}
-          liked={liked} toggleLike={toggleLike} />
+        <LibraryScreen
+          key={libraryTab + libraryView}
+          initialTab={libraryTab}
+          initialView={libraryView}
+          data={screenData}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          accent={accent}
+          openPlaylist={openDetail}
+          openAlbum={albumDetail}
+          openArtist={openArtist}
+          liked={liked}
+          toggleLike={toggleLike}
+        />
       );
     if (v === "detail" && detail)
       return (
-        <PlaylistDetailScreen playlist={detail} onPlay={onPlay} current={current}
-          playing={playing} liked={liked} toggleLike={toggleLike} accent={accent} />
+        <PlaylistDetailScreen
+          playlist={detail}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+        />
       );
     if (v === "queue")
       return (
-        <QueueScreen current={current} queue={queue} onPlay={onPlay} playing={playing}
-          liked={liked} toggleLike={toggleLike} accent={accent} />
+        <QueueScreen
+          current={current}
+          queue={queue}
+          onPlay={onPlay}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+        />
       );
     if (v === "history")
       return (
-        <HistoryScreen history={history} all={screenData.allTracks} onPlay={onPlay} current={current}
-          playing={playing} liked={liked} toggleLike={toggleLike} accent={accent} />
+        <HistoryScreen
+          history={history}
+          all={screenData.allTracks}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+        />
       );
     if (v === "settings")
       return (
-        <SettingsScreen accent={accent} setAccent={setAccent} accentOptions={ACCENTS}
-          settings={settings} setSettings={setSettings} />
+        <SettingsScreen
+          accent={accent}
+          setAccent={setAccent}
+          accentOptions={ACCENTS}
+          settings={settings}
+          setSettings={setSettings}
+        />
       );
     if (v === "artist")
       return (
-        <ArtistScreen artist={artistObj}
+        <ArtistScreen
+          artist={artistObj}
           tracks={artistObj?.tracks ?? []}
           albums={[]}
           similar={screenData.artists.filter((a: any) => a.id !== artistObj?.id)}
-          onPlay={onPlay} current={current} playing={playing} liked={liked} toggleLike={toggleLike}
-          accent={accent} mono={heroTreatment === "mono"}
-          onOpenAlbum={albumDetail} onOpenArtist={openArtist} />
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          mono={heroTreatment === "mono"}
+          onOpenAlbum={albumDetail}
+          onOpenArtist={openArtist}
+        />
       );
     if (v === "profile")
       return (
-        <ProfileScreen accent={accent} playlists={screenData.playlists} onOpenPlaylist={openDetail}
-          onPlay={onPlay} mono={heroTreatment === "mono"} />
+        <ProfileScreen
+          accent={accent}
+          playlists={screenData.playlists}
+          onOpenPlaylist={openDetail}
+          onPlay={onPlay}
+          mono={heroTreatment === "mono"}
+        />
       );
     if (v === "browse") return <BrowseScreen accent={accent} onOpenGenre={openGenre} />;
     if (v === "comments")
       return (
-        <CommentsScreen track={current} accent={accent} liked={isLiked}
-          toggleLike={() => current && toggleLike(current.id)} mono={heroTreatment === "mono"} />
+        <CommentsScreen
+          track={current}
+          accent={accent}
+          liked={isLiked}
+          toggleLike={() => current && toggleLike(current.id)}
+          mono={heroTreatment === "mono"}
+        />
       );
     if (v === "np")
       return (
-        <NowPlaying track={current} accent={accent} liked={isLiked}
-          toggleLike={() => current && toggleLike(current.id)} lyrics={lyrics}
-          mono={heroTreatment === "mono"} queue={queue} onPlay={onPlay} current={current}
-          onNext={playNext} onPrev={playPrev}
+        <NowPlaying
+          track={current}
+          accent={accent}
+          liked={isLiked}
+          toggleLike={() => current && toggleLike(current.id)}
+          lyrics={lyrics}
+          mono={heroTreatment === "mono"}
+          queue={queue}
+          onPlay={onPlay}
+          current={current}
+          onNext={playNext}
+          onPrev={playPrev}
           initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
-          onClose={startReverse} />
+          onClose={startReverse}
+        />
       );
     return null;
   };
@@ -729,12 +1018,38 @@ export default function Shell() {
     <div className="win-stage">
       <div className="win">
         {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
-        <div aria-hidden style={{ position: "absolute", top: 0, left: 0, right: 0, height: 30, zIndex: 55, ...dragStyle }} />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 30,
+            zIndex: 55,
+            ...dragStyle,
+          }}
+        />
 
         <div className="traffic" style={noDragStyle}>
-          <i className="r" style={{ cursor: "pointer" }} onClick={() => wails()?.Quit?.()} title="Close" />
-          <i className="y" style={{ cursor: "pointer" }} onClick={() => wails()?.WindowMinimise?.()} title="Minimise" />
-          <i className="g" style={{ cursor: "pointer" }} onClick={() => wails()?.WindowToggleMaximise?.()} title="Maximise" />
+          <i
+            className="r"
+            style={{ cursor: "pointer" }}
+            onClick={() => wails()?.Quit?.()}
+            title="Close"
+          />
+          <i
+            className="y"
+            style={{ cursor: "pointer" }}
+            onClick={() => wails()?.WindowMinimise?.()}
+            title="Minimise"
+          />
+          <i
+            className="g"
+            style={{ cursor: "pointer" }}
+            onClick={() => wails()?.WindowToggleMaximise?.()}
+            title="Maximise"
+          />
         </div>
 
         {!npView && (
@@ -818,13 +1133,7 @@ export default function Shell() {
                         ? t.target
                         : t.origin;
                   const op =
-                    t.dir === "fwd"
-                      ? t.phase === "reveal"
-                        ? 0
-                        : 1
-                      : t.phase === "start"
-                        ? 1
-                        : 0;
+                    t.dir === "fwd" ? (t.phase === "reveal" ? 0 : 1) : t.phase === "start" ? 1 : 0;
                   const anim = t.phase !== "start";
                   return (
                     <div
@@ -853,7 +1162,13 @@ export default function Shell() {
                           src={t.image}
                           alt=""
                           draggable={false}
-                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
                         />
                       )}
                     </div>
@@ -864,19 +1179,33 @@ export default function Shell() {
         </div>
 
         {!npView && (
-          <PlayerBar track={current} playing={playing} setPlaying={setPlaying}
-            liked={isLiked} toggleLike={() => current && toggleLike(current.id)}
-            accent={accent} shuffle={shuffle} setShuffle={setShuffle}
-            onNext={playNext} onPrev={playPrev}
+          <PlayerBar
+            track={current}
+            playing={playing}
+            setPlaying={setPlaying}
+            liked={isLiked}
+            toggleLike={() => current && toggleLike(current.id)}
+            accent={accent}
+            shuffle={shuffle}
+            setShuffle={setShuffle}
+            onNext={playNext}
+            onPrev={playPrev}
             onOpenNowPlaying={() => setView("np")}
             onOpenQueue={() => setView("queue")}
             onOpenComments={() => setView("comments")}
-            onOpenLyrics={() => setView("np")} />
+            onOpenLyrics={() => setView("np")}
+          />
         )}
       </div>
 
       {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menu.items} accent={accent} onClose={() => setMenu(null)} />
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={menu.items}
+          accent={accent}
+          onClose={() => setMenu(null)}
+        />
       )}
     </div>
   );

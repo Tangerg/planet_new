@@ -21,9 +21,7 @@ const I_HOST = "https://y.gtimg.cn/music/photo_new";
 /** Some Tencent image URLs are http://; an HTTPS webview blocks them, so upgrade to https. */
 function ensureHttps(url: string | undefined): string {
   if (!url) return "";
-  return url.startsWith("http://")
-    ? "https://" + url.slice("http://".length)
-    : url;
+  return url.startsWith("http://") ? "https://" + url.slice("http://".length) : url;
 }
 
 export function albumImage(albumMidOrPmid: string, size = 300): string {
@@ -103,9 +101,7 @@ export function mapQQTrackFromAlbumList(
 }
 
 export function mapQQPlaylistDetail(cd: any): Playlist {
-  const tracks = (cd.songlist ?? []).map((s: any, i: number) =>
-    mapQQTrackFromSong(s, i + 1),
-  );
+  const tracks = (cd.songlist ?? []).map((s: any, i: number) => mapQQTrackFromSong(s, i + 1));
   const ownerImage = cd.headurl ?? "";
   const owner: Partial<User> = {
     id: cd.encrypt_uin?.toString() ?? "",
@@ -143,9 +139,7 @@ export function mapQQAlbumDetail(data: any): Album {
     alias: [],
     images,
     totalTracks: data.total_song_num ?? data.total ?? tracks.length,
-    releaseDate: publishTime
-      ? new Date(publishTime).toISOString().slice(0, 10)
-      : undefined,
+    releaseDate: publishTime ? new Date(publishTime).toISOString().slice(0, 10) : undefined,
     tracks,
     artists: data.singermid
       ? [
@@ -210,7 +204,12 @@ export function mapQQSmartboxAlbum(raw: any): Partial<Album> {
 }
 
 /** Chart list item (/getTopLists -> response.data.topList[]). */
-export function mapQQChart(raw: any): { id: string; title: string; image: string; period?: string } {
+export function mapQQChart(raw: any): {
+  id: string;
+  title: string;
+  image: string;
+  period?: string;
+} {
   return {
     id: (raw.id ?? raw.topId ?? raw.topid ?? "").toString(),
     title: raw.title ?? raw.topTitle ?? "",

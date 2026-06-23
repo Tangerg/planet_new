@@ -8,8 +8,8 @@ import { Track } from "./track";
  * unsupported ones return empty arrays (not errors), so callers need no if/try.
  */
 export type SearchResult = {
-    tracks: Partial<Track>[];
-    artists: Partial<Artist>[];
-    albums: Partial<Album>[];
-    playlists: Partial<Playlist>[];
+  tracks: Partial<Track>[];
+  artists: Partial<Artist>[];
+  albums: Partial<Album>[];
+  playlists: Partial<Playlist>[];
 };

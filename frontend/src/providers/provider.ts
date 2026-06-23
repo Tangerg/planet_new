@@ -1,5 +1,5 @@
 import { Plugin } from "@core";
-import { IProvider, ProviderCapability } from "@domain";
+import { IProvider, PROVIDER_PLUGIN_ID, ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Lyric } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
@@ -16,50 +16,50 @@ import { Chart } from "@domain/model/chart";
  * a fixed plugin id (PLUGIN_ID); concrete providers differ by `name` and `capabilities`.
  */
 abstract class Provider extends Plugin implements IProvider {
-    public static readonly PLUGIN_ID = "provider";
+  public static readonly PLUGIN_ID = PROVIDER_PLUGIN_ID;
 
-    get id(): string {
-        return Provider.PLUGIN_ID;
-    }
+  get id(): string {
+    return Provider.PLUGIN_ID;
+  }
 
-    dispose(): void {
-        // No side effects by default; subclasses override as needed.
-    }
+  dispose(): void {
+    // No side effects by default; subclasses override as needed.
+  }
 
-    abstract get name(): string
+  abstract get name(): string;
 
-    abstract get capabilities(): ReadonlySet<ProviderCapability>
+  abstract get capabilities(): ReadonlySet<ProviderCapability>;
 
-    supports(cap: ProviderCapability): boolean {
-        return this.capabilities.has(cap);
-    }
+  supports(cap: ProviderCapability): boolean {
+    return this.capabilities.has(cap);
+  }
 
-    abstract playlistDetail(id: string): Promise<Playlist>
+  abstract playlistDetail(id: string): Promise<Playlist>;
 
-    abstract lyric(id: string): Promise<Lyric[]>
+  abstract lyric(id: string): Promise<Lyric[]>;
 
-    abstract albumDetail(id: string): Promise<Album>
+  abstract albumDetail(id: string): Promise<Album>;
 
-    abstract artistDetail(id: string): Promise<Artist>
+  abstract artistDetail(id: string): Promise<Artist>;
 
-    abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>
+  abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>;
 
-    abstract personalized(): Promise<Personalized>
+  abstract personalized(): Promise<Personalized>;
 
-    /* Optional capabilities: the base returns empty defaults; supporting
+  /* Optional capabilities: the base returns empty defaults; supporting
        providers override these and declare them in `capabilities`. */
 
-    async search(_query: string): Promise<SearchResult> {
-        return { tracks: [], artists: [], albums: [], playlists: [] };
-    }
+  async search(_query: string): Promise<SearchResult> {
+    return { tracks: [], artists: [], albums: [], playlists: [] };
+  }
 
-    async toplists(): Promise<Chart[]> {
-        return [];
-    }
+  async toplists(): Promise<Chart[]> {
+    return [];
+  }
 
-    async toplistDetail(_id: string): Promise<Playlist> {
-        return { id: "", name: "", images: [], tracks: [], totalTracks: 0 };
-    }
+  async toplistDetail(_id: string): Promise<Playlist> {
+    return { id: "", name: "", images: [], tracks: [], totalTracks: 0 };
+  }
 }
 
-export default Provider
+export default Provider;

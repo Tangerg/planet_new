@@ -14,10 +14,10 @@ import { Personalized } from "@domain/model/personalized";
  * Spotify Web API provider.
  *
  * Limitations (vs NeteaseCloudMusic):
- *   - No full playback URL: each track has at most a 30s `+"`preview_url`"+`, and many
+ *   - No full playback URL: each track has at most a 30s `preview_url`, and many
  *     are null. Full playback needs Spotify Premium + the Web Playback SDK,
  *     which this provider does not implement.
- *   - No lyrics: the Web API has no lyric endpoint, so `+"`lyric()`"+` returns [].
+ *   - No lyrics: the Web API has no lyric endpoint, so `lyric()` returns [].
  *   - Recommendations via Client Credentials: new-releases / search are stitched
  *     into playlists + albums + artists; featured-playlists is unavailable to
  *     apps created after 2024-11, so we do not rely on it.
@@ -87,8 +87,7 @@ export class Spotify extends Provider {
       // No lyric (Web API has none); no fullPlayback (only a 30s preview_url).
     ]);
 
-  private readonly opts: Required<Omit<SpotifyOptions, "market">> &
-    Pick<SpotifyOptions, "market">;
+  private readonly opts: Required<Omit<SpotifyOptions, "market">> & Pick<SpotifyOptions, "market">;
   private readonly accounts: KyInstance;
   private readonly api: KyInstance;
   private accessToken: string | null = null;
@@ -158,9 +157,7 @@ export class Spotify extends Provider {
   }
 
   private withMarket(params: Record<string, string>): Record<string, string> {
-    return this.opts.market
-      ? { ...params, market: this.opts.market }
-      : params;
+    return this.opts.market ? { ...params, market: this.opts.market } : params;
   }
 
   private toTrack = (
@@ -176,9 +173,7 @@ export class Spotify extends Provider {
       durationMs: t.duration_ms,
       explicit: t.explicit,
       trackNumber: t.track_number,
-      artists: t.artists.map(
-        (a): Partial<Artist> => ({ id: a.id, name: a.name }),
-      ),
+      artists: t.artists.map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
       album: album
         ? {
             id: album.id,
@@ -192,16 +187,14 @@ export class Spotify extends Provider {
   };
 
   async playlistDetail(id: string): Promise<Playlist> {
-    const res = await this.api
-      .get(`playlists/${id}`, { searchParams: this.withMarket({}) })
-      .json<{
-        id: string;
-        name: string;
-        description: string | null;
-        images: SpotifyImage[];
-        owner: { id: string; display_name: string | null };
-        tracks: SpotifyPaging<{ track: SpotifyTrack | null }>;
-      }>();
+    const res = await this.api.get(`playlists/${id}`, { searchParams: this.withMarket({}) }).json<{
+      id: string;
+      name: string;
+      description: string | null;
+      images: SpotifyImage[];
+      owner: { id: string; display_name: string | null };
+      tracks: SpotifyPaging<{ track: SpotifyTrack | null }>;
+    }>();
 
     const items = (res.tracks.items ?? [])
       .map((it) => it.track)
@@ -224,26 +217,22 @@ export class Spotify extends Provider {
   }
 
   async albumDetail(id: string): Promise<Album> {
-    const res = await this.api
-      .get(`albums/${id}`, { searchParams: this.withMarket({}) })
-      .json<{
-        id: string;
-        name: string;
-        release_date: string;
-        images: SpotifyImage[];
-        artists: SpotifySimplifiedArtist[];
-        total_tracks: number;
-        tracks: SpotifyPaging<SpotifyTrack>;
-      }>();
+    const res = await this.api.get(`albums/${id}`, { searchParams: this.withMarket({}) }).json<{
+      id: string;
+      name: string;
+      release_date: string;
+      images: SpotifyImage[];
+      artists: SpotifySimplifiedArtist[];
+      total_tracks: number;
+      tracks: SpotifyPaging<SpotifyTrack>;
+    }>();
 
     const albumStub: SpotifySimplifiedAlbum = {
       id: res.id,
       name: res.name,
       images: res.images,
     };
-    const tracks = (res.tracks.items ?? []).map((t, i) =>
-      this.toTrack(t, albumStub, i + 1),
-    );
+    const tracks = (res.tracks.items ?? []).map((t, i) => this.toTrack(t, albumStub, i + 1));
 
     return {
       id: res.id,
@@ -253,9 +242,7 @@ export class Spotify extends Provider {
       totalTracks: res.total_tracks,
       releaseDate: res.release_date,
       tracks,
-      artists: res.artists.map(
-        (a): Partial<Artist> => ({ id: a.id, name: a.name }),
-      ),
+      artists: res.artists.map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
     };
   }
 
@@ -273,11 +260,14 @@ export class Spotify extends Provider {
       this.api
         .get(`artists/${id}`)
         .json<ArtistInfo>()
-        .catch(() => ({
-          id,
-          name: "",
-          images: [],
-        }) as ArtistInfo),
+        .catch(
+          () =>
+            ({
+              id,
+              name: "",
+              images: [],
+            }) as ArtistInfo,
+        ),
       this.api
         .get(`artists/${id}/top-tracks`, {
           searchParams: this.withMarket({}),
@@ -391,9 +381,7 @@ export class Spotify extends Provider {
         name: al.name,
         images: toImages(al.images),
         totalTracks: al.total_tracks ?? 0,
-        artists: (al.artists ?? []).map(
-          (a): Partial<Artist> => ({ id: a.id, name: a.name }),
-        ),
+        artists: (al.artists ?? []).map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
       }),
     );
 

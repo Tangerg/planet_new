@@ -1,8 +1,5 @@
 import { Plugin } from "@core";
-import type {
-  FormattedDuration,
-  Progress,
-} from "@domain/model/duration";
+import type { FormattedDuration, Progress } from "@domain/model/duration";
 import type { PlayQueue } from "@domain/model/playqueue";
 import type { Track } from "@domain/model/track";
 import type { PlayState } from "@core/plugin";

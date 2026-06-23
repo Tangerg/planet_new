@@ -1,9 +1,6 @@
 import { create } from "zustand";
 
-import type {
-  FormattedDuration,
-  Progress,
-} from "@domain/model/duration";
+import type { FormattedDuration, Progress } from "@domain/model/duration";
 import type { Track } from "@domain/model/track";
 import { PlayState } from "@core/plugin";
 

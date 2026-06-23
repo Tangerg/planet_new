@@ -1,12 +1,6 @@
 import { Planet } from "@core";
 import { Control, Volume, PlayQueue, Progress } from "@core/plugin";
-import {
-  Mock,
-  NeteaseCloudMusic,
-  Provider,
-  QQMusic,
-  Spotify,
-} from "@providers";
+import { Mock, NeteaseCloudMusic, Provider, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
