@@ -189,27 +189,123 @@ function pickN<T>(arr: T[], n: number, r: () => number): T[] {
 // Dota 2 hero internal names, used to demo card hover art.
 // Source: Steam CDN https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/<name>.png
 const DOTA_HEROES = [
-  "antimage", "axe", "bane", "bloodseeker", "crystal_maiden", "drow_ranger",
-  "earthshaker", "juggernaut", "mirana", "morphling", "phantom_lancer", "puck",
-  "pudge", "razor", "sand_king", "storm_spirit", "sven", "tiny", "vengefulspirit",
-  "windrunner", "zuus", "kunkka", "lina", "lion", "shadow_shaman", "slardar",
-  "tidehunter", "witch_doctor", "riki", "enigma", "tinker", "sniper",
-  "warlock", "beastmaster", "queenofpain", "venomancer", "faceless_void",
-  "death_prophet", "phantom_assassin", "pugna", "templar_assassin", "viper",
-  "luna", "dragon_knight", "dazzle", "rattletrap", "leshrac", "furion",
-  "life_stealer", "dark_seer", "clinkz", "omniknight", "enchantress", "huskar",
-  "night_stalker", "broodmother", "bounty_hunter", "weaver", "jakiro", "batrider",
-  "chen", "spectre", "ancient_apparition", "ursa", "spirit_breaker",
-  "gyrocopter", "alchemist", "invoker", "silencer", "obsidian_destroyer",
-  "lycan", "brewmaster", "shadow_demon", "lone_druid", "chaos_knight", "meepo",
-  "treant", "ogre_magi", "undying", "rubick", "disruptor", "nyx_assassin",
-  "naga_siren", "keeper_of_the_light", "wisp", "visage", "slark", "medusa",
-  "troll_warlord", "centaur", "magnataur", "shredder", "bristleback", "tusk",
-  "skywrath_mage", "abaddon", "elder_titan", "legion_commander",
-  "ember_spirit", "earth_spirit", "abyssal_underlord", "terrorblade", "phoenix",
-  "oracle", "winter_wyvern", "arc_warden", "monkey_king", "dark_willow",
-  "pangolier", "grimstroke", "hoodwink", "void_spirit", "snapfire", "mars",
-  "primal_beast", "muerta", "nevermore",
+  "antimage",
+  "axe",
+  "bane",
+  "bloodseeker",
+  "crystal_maiden",
+  "drow_ranger",
+  "earthshaker",
+  "juggernaut",
+  "mirana",
+  "morphling",
+  "phantom_lancer",
+  "puck",
+  "pudge",
+  "razor",
+  "sand_king",
+  "storm_spirit",
+  "sven",
+  "tiny",
+  "vengefulspirit",
+  "windrunner",
+  "zuus",
+  "kunkka",
+  "lina",
+  "lion",
+  "shadow_shaman",
+  "slardar",
+  "tidehunter",
+  "witch_doctor",
+  "riki",
+  "enigma",
+  "tinker",
+  "sniper",
+  "warlock",
+  "beastmaster",
+  "queenofpain",
+  "venomancer",
+  "faceless_void",
+  "death_prophet",
+  "phantom_assassin",
+  "pugna",
+  "templar_assassin",
+  "viper",
+  "luna",
+  "dragon_knight",
+  "dazzle",
+  "rattletrap",
+  "leshrac",
+  "furion",
+  "life_stealer",
+  "dark_seer",
+  "clinkz",
+  "omniknight",
+  "enchantress",
+  "huskar",
+  "night_stalker",
+  "broodmother",
+  "bounty_hunter",
+  "weaver",
+  "jakiro",
+  "batrider",
+  "chen",
+  "spectre",
+  "ancient_apparition",
+  "ursa",
+  "spirit_breaker",
+  "gyrocopter",
+  "alchemist",
+  "invoker",
+  "silencer",
+  "obsidian_destroyer",
+  "lycan",
+  "brewmaster",
+  "shadow_demon",
+  "lone_druid",
+  "chaos_knight",
+  "meepo",
+  "treant",
+  "ogre_magi",
+  "undying",
+  "rubick",
+  "disruptor",
+  "nyx_assassin",
+  "naga_siren",
+  "keeper_of_the_light",
+  "wisp",
+  "visage",
+  "slark",
+  "medusa",
+  "troll_warlord",
+  "centaur",
+  "magnataur",
+  "shredder",
+  "bristleback",
+  "tusk",
+  "skywrath_mage",
+  "abaddon",
+  "elder_titan",
+  "legion_commander",
+  "ember_spirit",
+  "earth_spirit",
+  "abyssal_underlord",
+  "terrorblade",
+  "phoenix",
+  "oracle",
+  "winter_wyvern",
+  "arc_warden",
+  "monkey_king",
+  "dark_willow",
+  "pangolier",
+  "grimstroke",
+  "hoodwink",
+  "void_spirit",
+  "snapfire",
+  "mars",
+  "primal_beast",
+  "muerta",
+  "nevermore",
 ];
 
 function coverArt(seed: string): string {
@@ -244,10 +340,15 @@ function makeAlbumStub(seed: string): {
   };
 }
 
-function makeTrack(seed: string, index: number, albumStub?: { id: string; name: string; images: Image[] }): Partial<Track> {
+function makeTrack(
+  seed: string,
+  index: number,
+  albumStub?: { id: string; name: string; images: Image[] },
+): Partial<Track> {
   const r = makeRng(hash(`track:${seed}:${index}`));
   const title = pick(TRACK_TITLES, r);
-  const variation = r() < 0.3 ? ` (${pick(["Reprise", "Live", "Acoustic", "Edit", "Demo"], r)})` : "";
+  const variation =
+    r() < 0.3 ? ` (${pick(["Reprise", "Live", "Acoustic", "Edit", "Demo"], r)})` : "";
   const durationMs = 180_000 + Math.floor(r() * 180_000); // 3-6 minutes
   const album = albumStub ?? makeAlbumStub(`${seed}:${index}`);
   const numArtists = r() < 0.2 ? 2 : 1;
@@ -305,9 +406,7 @@ export class Mock extends Provider {
     const r = makeRng(hash(`playlist:${id}`));
     const name = pick(PLAYLIST_TITLES, r);
     const trackCount = 12 + Math.floor(r() * 14); // 12-25 tracks
-    const tracks = Array.from({ length: trackCount }).map((_, i) =>
-      makeTrack(`playlist:${id}`, i),
-    );
+    const tracks = Array.from({ length: trackCount }).map((_, i) => makeTrack(`playlist:${id}`, i));
     const creator = makeArtist(`creator:${id}`);
     const playlistUrl = coverArt(`playlist:${id}`);
     const playlist: Playlist = {
@@ -344,9 +443,7 @@ export class Mock extends Provider {
       alias: r() < 0.3 ? [pick(["Deluxe Edition", "Anniversary Mix"], r)] : [],
       images: albumImages,
       totalTracks: trackCount,
-      releaseDate: publishTime
-        ? new Date(publishTime).toISOString().slice(0, 10)
-        : undefined,
+      releaseDate: publishTime ? new Date(publishTime).toISOString().slice(0, 10) : undefined,
       tracks,
       artists: [{ id: artist.id, name: artist.name, images: artist.images }],
     };
@@ -391,19 +488,17 @@ export class Mock extends Provider {
 
   async personalized(): Promise<Personalized> {
     const r = makeRng(hash("personalized:home"));
-    const playlists: Partial<Playlist>[] = Array.from({ length: 10 }).map(
-      (_, i) => {
-        const seed = `home-pl-${i}`;
-        const name = pick(PLAYLIST_TITLES, makeRng(hash(seed)));
-        const url = coverArt(seed);
-        return {
-          id: `mock-pl-${hash(seed)}`,
-          name,
-          images: url ? [{ url }] : [],
-          totalTracks: 12 + Math.floor(r() * 30),
-        };
-      },
-    );
+    const playlists: Partial<Playlist>[] = Array.from({ length: 10 }).map((_, i) => {
+      const seed = `home-pl-${i}`;
+      const name = pick(PLAYLIST_TITLES, makeRng(hash(seed)));
+      const url = coverArt(seed);
+      return {
+        id: `mock-pl-${hash(seed)}`,
+        name,
+        images: url ? [{ url }] : [],
+        totalTracks: 12 + Math.floor(r() * 30),
+      };
+    });
 
     const albums: Partial<Album>[] = Array.from({ length: 10 }).map((_, i) => {
       const seed = `home-al-${i}`;
@@ -430,10 +525,7 @@ export class Mock extends Provider {
       };
     });
 
-    return delay(
-      { playlists, albums, artists, tracks: [] },
-      this.latency,
-    );
+    return delay({ playlists, albums, artists, tracks: [] }, this.latency);
   }
 }
 

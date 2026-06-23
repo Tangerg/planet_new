@@ -3,15 +3,15 @@
  * milliseconds. Distinct from the bare numeric duration used elsewhere.
  */
 export type FormattedDuration = {
-    duration: number
-    durationFormatted?: string
-}
+  duration: number;
+  durationFormatted?: string;
+};
 
 export type Progress = FormattedDuration & {
-    percent: number
-}
+  percent: number;
+};
 
 export const InfinityDuration: FormattedDuration = {
-    duration: Infinity,
-    durationFormatted: "--:--:--",
-}
+  duration: Infinity,
+  durationFormatted: "--:--:--",
+};

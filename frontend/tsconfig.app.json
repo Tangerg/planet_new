@@ -46,10 +46,5 @@
       "@/*": ["./src/ui/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "test-setup.ts",
-    "vite.config.ts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test-setup.ts", "vite.config.ts"]
 }

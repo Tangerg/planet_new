@@ -16,7 +16,13 @@ declare global {
      * screen, `image`=real cover (so the flying tile shows the real art and
      * avoids a gradient→image color jump).
      */
-    __MORPH?: (rect: DOMRect, seed?: number, grad?: string[], run?: MorphRun, image?: string) => void;
+    __MORPH?: (
+      rect: DOMRect,
+      seed?: number,
+      grad?: string[],
+      run?: MorphRun,
+      image?: string,
+    ) => void;
     /** Ambient glow: page background follows the focused card. */
     __AMBIENT?: (seed?: number, grad?: string[]) => void;
     /** Context menu for a track. */

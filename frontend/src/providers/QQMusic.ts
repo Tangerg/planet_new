@@ -104,13 +104,8 @@ export class QQMusic extends Provider {
         .catch(() => ({}) as DescRes),
     ]);
 
-    const songs =
-      hotsong.response?.songList
-        ?.map((s) => s.musicData)
-        .filter(Boolean) ?? [];
-    const topTracks = songs.map((s: any, i: number) =>
-      mapQQTrackFromSong(s, i + 1),
-    );
+    const songs = hotsong.response?.songList?.map((s) => s.musicData).filter(Boolean) ?? [];
+    const topTracks = songs.map((s: any, i: number) => mapQQTrackFromSong(s, i + 1));
 
     const singerInfo = hotsong.response?.singerInfo ?? {};
     const basicInfo = desc.response?.data?.basic_info ?? {};
@@ -181,21 +176,15 @@ export class QQMusic extends Provider {
         })),
     ]);
 
-    const playlists: Partial<Playlist>[] = (
-      popularPlaylists.response?.data?.list ?? []
-    )
+    const playlists: Partial<Playlist>[] = (popularPlaylists.response?.data?.list ?? [])
       .slice(0, 10)
       .map(mapQQPlaylistStub);
 
-    const albums: Partial<Album>[] = (
-      newAlbums.response?.new_album?.data?.albums ?? []
-    )
+    const albums: Partial<Album>[] = (newAlbums.response?.new_album?.data?.albums ?? [])
       .slice(0, 10)
       .map(mapQQNewAlbum);
 
-    const artists: Partial<Artist>[] = (
-      hotSingers.response?.singerList?.data?.singerlist ?? []
-    )
+    const artists: Partial<Artist>[] = (hotSingers.response?.singerList?.data?.singerlist ?? [])
       .slice(0, 10)
       .map(mapQQArtistFromList);
 
@@ -229,9 +218,7 @@ export class QQMusic extends Provider {
       .get("getTopLists")
       .json<{ response?: { data?: { topList?: any[] } } }>()
       .catch(() => ({}) as { response?: { data?: { topList?: any[] } } });
-    return (res.response?.data?.topList ?? [])
-      .map(mapQQChart)
-      .filter((c) => c.id && c.title);
+    return (res.response?.data?.topList ?? []).map(mapQQChart).filter((c) => c.id && c.title);
   }
 
   async toplistDetail(id: string): Promise<Playlist> {

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "entry": ["src/main.tsx", "vite.config.ts", "scripts/*.mjs"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["example/**"],
+  "ignoreDependencies": ["husky", "lint-staged"],
+  "ignoreBinaries": ["husky"]
+}

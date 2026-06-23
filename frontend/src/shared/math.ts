@@ -3,10 +3,10 @@
  * @throws if min >= max
  */
 export function getRandomInt(min: number, max: number): number {
-    if (min >= max) {
-        throw new Error("min must be less than max")
-    }
-    return Math.floor(Math.random() * (max - min)) + min
+  if (min >= max) {
+    throw new Error("min must be less than max");
+  }
+  return Math.floor(Math.random() * (max - min)) + min;
 }
 
 /**
@@ -14,14 +14,14 @@ export function getRandomInt(min: number, max: number): number {
  * @throws if `exclude` is the only remaining candidate in the range
  */
 export function getRandomIntExclude(min: number, max: number, exclude: number): number {
-    if (max - min <= 1 && Math.floor(exclude) === Math.floor(min)) {
-        throw new Error("no candidate available after exclusion")
-    }
-    let random = getRandomInt(min, max)
-    while (random === exclude) {
-        random = getRandomInt(min, max)
-    }
-    return random
+  if (max - min <= 1 && Math.floor(exclude) === Math.floor(min)) {
+    throw new Error("no candidate available after exclusion");
+  }
+  let random = getRandomInt(min, max);
+  while (random === exclude) {
+    random = getRandomInt(min, max);
+  }
+  return random;
 }
 
 /**
@@ -31,14 +31,14 @@ export function getRandomIntExclude(min: number, max: number, exclude: number): 
  * @param expect the desired value within the range
  */
 export function getNumberInRange(min: number, max: number, expect: number): number {
-    if (min > max) {
-        throw new Error("min must be less than or equal to max")
-    }
-    if (expect < min) {
-        return min
-    }
-    if (expect > max) {
-        return max
-    }
-    return expect
+  if (min > max) {
+    throw new Error("min must be less than or equal to max");
+  }
+  if (expect < min) {
+    return min;
+  }
+  if (expect > max) {
+    return max;
+  }
+  return expect;
 }

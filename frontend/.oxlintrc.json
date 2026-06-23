@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "unicorn", "oxc", "import", "jsx-a11y", "promise", "vitest"],
+  "rules": {
+    "unicorn/no-useless-spread": "off",
+    "typescript/no-this-alias": "off",
+    "react-hooks/exhaustive-deps": "error",
+    "react-hooks/rules-of-hooks": "error"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "coverage/**", "example/**", "scripts/**"]
+}
