@@ -238,26 +238,12 @@ export function PlayerBar({
           }}
         />
         <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div className="truncate" style={{ fontSize: 16, fontWeight: 400 }}>
             {track?.title || "—"}
           </div>
           <div
-            style={{
-              fontSize: 13,
-              color: "rgba(20,20,24,.55)",
-              fontWeight: 300,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            className="truncate"
+            style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
           >
             {track?.artist || ""}
           </div>
