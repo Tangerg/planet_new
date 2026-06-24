@@ -152,6 +152,12 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             lineHeight: 1.04,
             letterSpacing: ".005em",
             margin: "16px 0 14px",
+            // Real playlist names run long; clamp so the fixed-height banner holds.
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
           }}
         >
           {playlist.name}
@@ -163,6 +169,10 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             color: "rgba(255,255,255,.72)",
             maxWidth: 460,
             lineHeight: 1.55,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
           {playlist.description}

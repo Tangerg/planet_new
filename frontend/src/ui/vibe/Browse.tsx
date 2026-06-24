@@ -231,7 +231,20 @@ export function SearchScreen({
                     }}
                     mono
                   />
-                  <div style={{ fontSize: 30, fontWeight: 300, marginTop: 20 }}>{top.name}</div>
+                  <div
+                    style={{
+                      fontSize: 30,
+                      fontWeight: 300,
+                      marginTop: 20,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {top.name}
+                  </div>
                   <span className="tag" style={{ marginTop: 14, display: "inline-block" }}>
                     Artist
                   </span>
@@ -383,6 +396,11 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
             fontWeight: 300,
             letterSpacing: ".02em",
             textShadow: "0 2px 16px rgba(0,0,0,.5)",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
           }}
         >
           {title}
@@ -543,7 +561,18 @@ export function CollectionRow({
         >
           {name}
         </div>
-        <div style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}>{sub}</div>
+        <div
+          style={{
+            fontSize: 12.5,
+            fontWeight: 300,
+            color: "rgba(255,255,255,.5)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {sub}
+        </div>
       </div>
       {meta && (
         <span

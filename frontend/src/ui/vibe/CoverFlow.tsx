@@ -322,8 +322,35 @@ export function CoverFlow({
           transition: `margin-top .5s ${NP_EASE}`,
         }}
       >
-        <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: ".01em" }}>{cur?.name}</div>
-        <div className="mlabel" style={{ color: "var(--tx-3)", marginTop: 8 }}>
+        <div
+          style={{
+            fontSize: 30,
+            fontWeight: 300,
+            letterSpacing: ".01em",
+            maxWidth: 560,
+            margin: "0 auto",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {cur?.name}
+        </div>
+        <div
+          className="mlabel"
+          style={{
+            color: "var(--tx-3)",
+            marginTop: 8,
+            maxWidth: 460,
+            marginLeft: "auto",
+            marginRight: "auto",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {cur?.sub}
         </div>
       </div>
@@ -405,14 +432,36 @@ export function CoverFlow({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                gap: 14,
                 marginBottom: 12,
               }}
             >
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-                <span style={{ fontSize: 21, fontWeight: 200, letterSpacing: ".03em" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 12,
+                  flex: "1 1 auto",
+                  minWidth: 0,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 21,
+                    fontWeight: 200,
+                    letterSpacing: ".03em",
+                    minWidth: 0,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {cur?.name}
                 </span>
-                <span className="mlabel" style={{ color: "rgba(255,255,255,.4)" }}>
+                <span
+                  className="mlabel"
+                  style={{ color: "rgba(255,255,255,.4)", flex: "0 0 auto", whiteSpace: "nowrap" }}
+                >
                   {sheetTracks.length} tracks
                 </span>
               </div>
@@ -424,6 +473,7 @@ export function CoverFlow({
                   display: "inline-flex",
                   gap: 8,
                   alignItems: "center",
+                  flex: "0 0 auto",
                 }}
                 onClick={() => onOpen(cur)}
               >
@@ -477,7 +527,16 @@ export function CoverFlow({
                   >
                     {t.title}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 300, color: "rgba(255,255,255,.45)" }}>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 300,
+                      color: "rgba(255,255,255,.45)",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {t.artist}
                   </div>
                 </div>

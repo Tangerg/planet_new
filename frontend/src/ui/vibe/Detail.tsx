@@ -938,8 +938,32 @@ export function QueueScreen({
           }}
           glow={artPair(current?.coverSeed || 0, current?.gradient)[1]}
         />
-        <div style={{ fontSize: 30, fontWeight: 300, marginTop: 26 }}>{current?.title}</div>
-        <div style={{ fontSize: 15, fontWeight: 300, color: "rgba(255,255,255,.55)" }}>
+        <div
+          style={{
+            fontSize: 30,
+            fontWeight: 300,
+            marginTop: 26,
+            maxWidth: "100%",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {current?.title}
+        </div>
+        <div
+          style={{
+            fontSize: 15,
+            fontWeight: 300,
+            color: "rgba(255,255,255,.55)",
+            maxWidth: "100%",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {current?.artist}
         </div>
       </div>
