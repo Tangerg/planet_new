@@ -910,7 +910,7 @@ export function QueueScreen({
       style={{
         height: "100%",
         display: "grid",
-        gridTemplateColumns: "0.9fr 1.1fr",
+        gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
         background: "radial-gradient(120% 90% at 20% 0%, #1a1320, #0a0a0d)",
       }}
     >

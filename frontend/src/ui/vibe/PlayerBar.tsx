@@ -294,6 +294,7 @@ export const PlayerBar = React.memo(function PlayerBar({
       <div
         style={{
           flex: 1,
+          minWidth: 0,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
