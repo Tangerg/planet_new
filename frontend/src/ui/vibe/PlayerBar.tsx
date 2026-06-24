@@ -243,6 +243,7 @@ export const PlayerBar = React.memo(function PlayerBar({
           seed={track?.coverSeed || 0}
           grad={track?.gradient}
           image={track?.image}
+          images={track?.images}
           style={{
             width: 56,
             height: 56,

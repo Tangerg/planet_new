@@ -3,6 +3,7 @@
 // All dark + cohesive with the editorial system.
 // ============================================================
 import React, { useState, useEffect } from "react";
+import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg } from "./primitives";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
@@ -223,6 +224,7 @@ export function SearchScreen({
                     seed={top.coverSeed}
                     grad={top.gradient}
                     image={top.image}
+                    images={top.images}
                     style={{
                       width: 96,
                       height: 96,
@@ -289,6 +291,7 @@ export function SearchScreen({
                   seed={a.coverSeed}
                   grad={a.gradient}
                   image={a.image}
+                  images={a.images}
                   onClick={() => openArtist(a)}
                 />
               ))}
@@ -309,6 +312,7 @@ export function SearchScreen({
                   seed={al.coverSeed}
                   grad={al.gradient}
                   image={al.image}
+                  images={al.images}
                   onClick={() => openAlbum(al)}
                   onPlay={() => openAlbum(al)}
                 />
@@ -463,6 +467,7 @@ type CollectionRowProps = {
   seed: any;
   grad: any;
   image?: string;
+  images?: Image[];
   round?: boolean;
   onOpen: (...args: any[]) => void;
   onPlay?: (...args: any[]) => void;
@@ -476,6 +481,7 @@ export function CollectionRow({
   seed,
   grad,
   image,
+  images,
   round,
   onOpen,
   onPlay,
@@ -523,6 +529,7 @@ export function CollectionRow({
           seed={seed}
           grad={grad}
           image={image}
+          images={images}
           mono={round}
           style={{ width: 48, height: 48, borderRadius: round ? "50%" : 4 }}
         />
@@ -667,6 +674,7 @@ export function LibraryScreen({
     seed: o.coverSeed,
     grad: o.gradient,
     image: o.image,
+    images: o.images,
     obj: o,
   }));
 
@@ -789,6 +797,7 @@ export function LibraryScreen({
                   seed={o.coverSeed}
                   grad={o.gradient}
                   image={o.image}
+                  images={o.images}
                   item={o}
                   onOpen={() => openOf(o)}
                   onPlay={() => openOf(o)}

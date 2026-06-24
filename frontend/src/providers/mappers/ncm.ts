@@ -1,6 +1,7 @@
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
 import { Chart } from "@domain/model/chart";
+import { Image } from "@domain/model/image";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 import { User } from "@domain/model/user";
@@ -26,6 +27,20 @@ export function resizeImage(url: string | undefined, size: number): string {
   return `${toHttps(url)}?param=${size}y${size}`;
 }
 
+/** Square cover variant widths, largest-first (matches the Image[] contract). */
+const COVER_WIDTHS = [1024, 512, 256, 96] as const;
+
+/**
+ * Multi-resolution variant set for a resizable NCM cover URL. NCM resizes via
+ * `?param=WyH`, so one base URL yields every size; <Art> then picks the variant
+ * matching its render box (small thumb → small file, hero → large, crisp file).
+ */
+export function coverSet(url: string | undefined): Image[] {
+  if (!url) return [];
+  const base = toHttps(url);
+  return COVER_WIDTHS.map((w) => ({ url: `${base}?param=${w}y${w}`, width: w, height: w }));
+}
+
 export function mapNcmArtist(raw: any): Partial<Artist> {
   return {
     id: raw.id?.toString() ?? "",
@@ -34,22 +49,20 @@ export function mapNcmArtist(raw: any): Partial<Artist> {
 }
 
 export function mapNcmFeaturedArtist(raw: any): Partial<Artist> {
-  const img = resizeImage(raw.img1v1Url, 200);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
-    images: img ? [{ url: img }] : [],
+    images: coverSet(raw.img1v1Url),
     alias: raw.alias ?? [],
   };
 }
 
 /** Slim album (used when embedded in a track). */
-export function mapNcmAlbumStub(raw: any, imageSize = 40): Partial<Album> {
-  const img = resizeImage(raw.picUrl, imageSize);
+export function mapNcmAlbumStub(raw: any): Partial<Album> {
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
-    images: img ? [{ url: img }] : [],
+    images: coverSet(raw.picUrl),
   };
 }
 
@@ -58,8 +71,6 @@ export type MapTrackOptions = {
   index?: number;
   /** Fallback when the raw row has no album (e.g. album-detail tracks missing the al field). */
   fallbackAlbum?: Partial<Album>;
-  /** Album cover size (NCM controls it via a query param). */
-  albumImageSize?: number;
 };
 
 /**
@@ -69,9 +80,7 @@ export type MapTrackOptions = {
 export function mapNcmTrack(raw: any, opts: MapTrackOptions = {}): Partial<Track> {
   const albumRaw = raw.al ?? raw.album;
   const artistsRaw = raw.ar ?? raw.artists ?? [];
-  const album = albumRaw
-    ? mapNcmAlbumStub(albumRaw, opts.albumImageSize ?? 40)
-    : opts.fallbackAlbum;
+  const album = albumRaw ? mapNcmAlbumStub(albumRaw) : opts.fallbackAlbum;
   return {
     index: opts.index,
     id: raw.id?.toString() ?? "",
@@ -83,24 +92,20 @@ export function mapNcmTrack(raw: any, opts: MapTrackOptions = {}): Partial<Track
 }
 
 export function mapNcmCreator(raw: any): Partial<User> {
-  const avatar = resizeImage(raw.avatarUrl, 40);
   return {
     id: raw.userId?.toString() ?? raw.id?.toString() ?? "",
     displayName: raw.nickname,
-    images: avatar ? [{ url: avatar }] : [],
+    images: coverSet(raw.avatarUrl),
   };
 }
 
 export function mapNcmPlaylist(raw: any): Playlist {
-  const tracks = (raw.tracks ?? []).map((tr: any, i: number) =>
-    mapNcmTrack(tr, { index: i + 1, albumImageSize: 40 }),
-  );
-  const cover = resizeImage(raw.coverImgUrl, 100);
+  const tracks = (raw.tracks ?? []).map((tr: any, i: number) => mapNcmTrack(tr, { index: i + 1 }));
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
     description: raw.description ?? "",
-    images: cover ? [{ url: cover }] : [],
+    images: coverSet(raw.coverImgUrl),
     totalTracks: raw.trackCount ?? tracks.length,
     owner: mapNcmCreator(raw.creator ?? {}),
     tracks: tracks as Partial<Track>[],
@@ -109,42 +114,40 @@ export function mapNcmPlaylist(raw: any): Playlist {
 
 /** Playlist thumbnail. `picUrl` on /personalized rows, `coverImgUrl` on search rows. */
 export function mapNcmPlaylistStub(raw: any): Partial<Playlist> {
-  const cover = resizeImage(raw.picUrl ?? raw.coverImgUrl, 200);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
-    images: cover ? [{ url: cover }] : [],
+    images: coverSet(raw.picUrl ?? raw.coverImgUrl),
     totalTracks: raw.trackCount,
   };
 }
 
 /** Chart list item (/toplist -> list[]): each chart is a playlist, so toplistDetail reuses playlistDetail. */
 export function mapNcmChart(raw: any): Chart {
-  const img = resizeImage(raw.coverImgUrl, 200);
   return {
     id: raw.id?.toString() ?? "",
     title: raw.name ?? "",
-    image: img,
+    // Chart cards render large (full-width tiles); take a high-res single size.
+    image: resizeImage(raw.coverImgUrl, 512),
     period: raw.updateFrequency ?? "",
   };
 }
 
 export function mapNcmAlbum(raw: any, songs: any[]): Album {
-  const cover = toHttps(raw.picUrl);
+  const cover = coverSet(raw.picUrl);
   const albumStub: Partial<Album> = {
     id: raw.id?.toString() ?? "",
     name: raw.name,
-    images: cover ? [{ url: cover }] : [],
+    images: cover,
   };
   const tracks = songs.map((tr: any, i: number) =>
     mapNcmTrack(tr, { index: i + 1, fallbackAlbum: albumStub }),
   );
-  const artistImg = toHttps(raw.artist?.picUrl);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
     alias: raw.alias ?? [],
-    images: cover ? [{ url: cover }] : [],
+    images: cover,
     totalTracks: raw.size ?? tracks.length,
     releaseDate: raw.publishTime ? new Date(raw.publishTime).toISOString().slice(0, 10) : undefined,
     artists: raw.artist
@@ -152,7 +155,7 @@ export function mapNcmAlbum(raw: any, songs: any[]): Album {
           {
             id: raw.artist.id?.toString() ?? "",
             name: raw.artist.name,
-            images: artistImg ? [{ url: artistImg }] : [],
+            images: coverSet(raw.artist.picUrl),
           },
         ]
       : [],
@@ -161,12 +164,11 @@ export function mapNcmAlbum(raw: any, songs: any[]): Album {
 }
 
 export function mapNcmAlbumNewest(raw: any): Partial<Album> {
-  const cover = resizeImage(raw.picUrl, 200);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
     totalTracks: raw.size,
-    images: cover ? [{ url: cover }] : [],
+    images: coverSet(raw.picUrl),
     artists: raw.artist
       ? [
           {

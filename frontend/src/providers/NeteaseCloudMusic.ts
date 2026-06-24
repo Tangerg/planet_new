@@ -18,6 +18,7 @@ import {
   mapNcmPlaylist,
   mapNcmPlaylistStub,
   mapNcmTrack,
+  coverSet,
   toHttps,
 } from "./mappers/ncm";
 
@@ -107,11 +108,11 @@ export class NeteaseCloudMusic extends Provider {
       .slice(0, 10)
       .map((s, i) => mapNcmTrack(s, { index: i + 1 }));
     const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
-    const cover = toHttps(artist.cover ?? artist.picUrl);
     return {
       id: artist.id?.toString() ?? id,
       name: artist.name ?? "",
-      images: cover ? [{ url: cover }] : [],
+      images: coverSet(artist.cover ?? artist.picUrl),
+      // Banner spans full width; keep the original (full-res) asset.
       banner: toHttps(artist.cover),
       alias: artist.alias ?? [],
       description,
@@ -151,7 +152,7 @@ export class NeteaseCloudMusic extends Provider {
     const res = await this.http
       .get("personalized/newsong")
       .json<{ result: Array<{ song: any }> }>();
-    return res.result.map((item) => mapNcmTrack(item.song, { albumImageSize: 100 }));
+    return res.result.map((item) => mapNcmTrack(item.song));
   }
 
   private async personalizedAlbums(): Promise<Partial<Album>[]> {

@@ -3,6 +3,7 @@
 // (the structured browsing layer, in the Vibe visual language)
 // ============================================================
 import React, { useState } from "react";
+import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg, artPair } from "./primitives";
 import { MOCK } from "./mockCatalog";
 
@@ -12,6 +13,7 @@ type MediaCardProps = {
   seed?: number;
   grad?: string[];
   image?: string;
+  images?: Image[];
   round?: boolean;
   onClick?: (...args: any[]) => void;
   onPlay?: (...args: any[]) => void;
@@ -24,6 +26,7 @@ export function MediaCard({
   seed,
   grad,
   image,
+  images,
   round,
   onClick,
   onPlay,
@@ -56,6 +59,8 @@ export function MediaCard({
         seed={seed}
         grad={grad}
         image={image}
+        images={images ?? item?.images}
+        px={176}
         className="art"
         glow={(round ? null : artPair(seed, grad)[1]) as any}
       >
@@ -330,7 +335,14 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 else run();
               }}
             >
-              <Art seed={t.coverSeed} grad={t.gradient} image={t.image} className="tart" />
+              <Art
+                seed={t.coverSeed}
+                grad={t.gradient}
+                image={t.image}
+                images={t.images}
+                px={72}
+                className="tart"
+              />
               <span className="tname">{t.name}</span>
               <button
                 className="tfab"
