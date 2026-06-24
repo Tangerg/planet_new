@@ -14,9 +14,16 @@ import { User } from "@domain/model/user";
  *   pl.picUrl / coverImgUrl, ar.img1v1Url
  */
 
+/** NCM serves many image URLs over http; the app runs in a secure-context
+ *  webview where http subresources are blocked as mixed content, so upgrade to
+ *  https (the CDN serves both). Mirrors the QQ mapper's ensureHttps. */
+export function toHttps(url: string | undefined): string {
+  return (url ?? "").replace(/^http:\/\//, "https://");
+}
+
 export function resizeImage(url: string | undefined, size: number): string {
   if (!url) return "";
-  return `${url}?param=${size}y${size}`;
+  return `${toHttps(url)}?param=${size}y${size}`;
 }
 
 export function mapNcmArtist(raw: any): Partial<Artist> {
@@ -123,7 +130,7 @@ export function mapNcmChart(raw: any): Chart {
 }
 
 export function mapNcmAlbum(raw: any, songs: any[]): Album {
-  const cover: string = raw.picUrl ?? "";
+  const cover = toHttps(raw.picUrl);
   const albumStub: Partial<Album> = {
     id: raw.id?.toString() ?? "",
     name: raw.name,
@@ -132,7 +139,7 @@ export function mapNcmAlbum(raw: any, songs: any[]): Album {
   const tracks = songs.map((tr: any, i: number) =>
     mapNcmTrack(tr, { index: i + 1, fallbackAlbum: albumStub }),
   );
-  const artistImg: string = raw.artist?.picUrl ?? "";
+  const artistImg = toHttps(raw.artist?.picUrl);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
