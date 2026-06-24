@@ -542,7 +542,9 @@ export function PlaylistDetailScreen({
             boxShadow: "0 4px 12px rgba(0,0,0,.4)",
           }}
         />
-        <span style={{ fontSize: 20, fontWeight: 300 }}>{p.name}</span>
+        <span className="truncate" style={{ fontSize: 20, fontWeight: 300, flex: 1, minWidth: 0 }}>
+          {p.name}
+        </span>
       </div>
 
       <div
@@ -551,13 +553,16 @@ export function PlaylistDetailScreen({
         className="scroll"
         style={{ position: "relative", zIndex: 2, height: "100%" }}
       >
-        {/* HERO banner — full width, cover + meta side by side, like Spotify */}
+        {/* HERO banner — full width, cover + meta side by side, like Spotify.
+            minHeight (not height): real-world titles/descriptions run far longer
+            than the example's curated copy, so the bottom-aligned column must be
+            free to grow DOWN instead of overflowing UP into the window chrome. */}
         <div
           style={{
             display: "flex",
             alignItems: "flex-end",
             gap: 34,
-            height: HERO,
+            minHeight: HERO,
             padding: "0 48px 32px",
             maxWidth: 1320,
             margin: "0 auto",
@@ -590,6 +595,12 @@ export function PlaylistDetailScreen({
                 lineHeight: 1.02,
                 margin: "12px 0 16px",
                 textWrap: "balance",
+                // Long real-world names clamp to 2 lines so the hero stays bounded.
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                overflowWrap: "anywhere",
               }}
             >
               {p.name}
@@ -602,6 +613,11 @@ export function PlaylistDetailScreen({
                   color: "rgba(255,255,255,.7)",
                   maxWidth: 560,
                   lineHeight: 1.5,
+                  // Descriptions can be paragraphs; clamp to 3 lines.
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
                 {p.description}
