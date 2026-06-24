@@ -1,5 +1,6 @@
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
+import { Chart } from "@domain/model/chart";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 import { User } from "@domain/model/user";
@@ -99,13 +100,25 @@ export function mapNcmPlaylist(raw: any): Playlist {
   } as Playlist;
 }
 
+/** Playlist thumbnail. `picUrl` on /personalized rows, `coverImgUrl` on search rows. */
 export function mapNcmPlaylistStub(raw: any): Partial<Playlist> {
-  const cover = resizeImage(raw.picUrl, 200);
+  const cover = resizeImage(raw.picUrl ?? raw.coverImgUrl, 200);
   return {
     id: raw.id?.toString() ?? "",
     name: raw.name,
     images: cover ? [{ url: cover }] : [],
     totalTracks: raw.trackCount,
+  };
+}
+
+/** Chart list item (/toplist -> list[]): each chart is a playlist, so toplistDetail reuses playlistDetail. */
+export function mapNcmChart(raw: any): Chart {
+  const img = resizeImage(raw.coverImgUrl, 200);
+  return {
+    id: raw.id?.toString() ?? "",
+    title: raw.name ?? "",
+    image: img,
+    period: raw.updateFrequency ?? "",
   };
 }
 
