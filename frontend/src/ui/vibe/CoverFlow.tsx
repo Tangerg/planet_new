@@ -274,26 +274,27 @@ export function CoverFlow({
                     </button>
                   )}
                 </Art>
-                {/* reflection — mirrored off a glossy floor: small gap below the
-                    cover, blurred, and fading out quickly; the centred card
-                    reflects a touch brighter than the angled side cards. */}
+                {/* reflection — classic Cover Flow mirror on the floor below the
+                    cover. scaleY(-1) about CENTER keeps the mirror below (origin
+                    "top" would flip it up over the cover, hiding it); since the
+                    flip also mirrors the mask, the gradient is `to top` so the
+                    edge touching the cover stays brightest and fades downward. */}
                 <div
                   className="grain"
                   aria-hidden
                   style={{
                     width: COVER,
                     height: COVER,
-                    marginTop: 3,
+                    marginTop: 2,
                     background: artBg(it.seed, it.grad),
                     transform: "scaleY(-1)",
-                    transformOrigin: "top",
+                    transformOrigin: "center",
                     overflow: "hidden",
-                    filter: "blur(2px)",
                     WebkitMaskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,.14) 30%, transparent 50%)",
+                      "linear-gradient(to top, rgba(0,0,0,.62) 0%, rgba(0,0,0,.14) 30%, transparent 55%)",
                     maskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,.14) 30%, transparent 50%)",
-                    opacity: isC ? 0.45 : 0.28,
+                      "linear-gradient(to top, rgba(0,0,0,.62) 0%, rgba(0,0,0,.14) 30%, transparent 55%)",
+                    opacity: isC ? 0.5 : 0.32,
                     transition: "opacity .45s",
                   }}
                 >
