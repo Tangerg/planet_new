@@ -34,8 +34,8 @@ export type VibeTrack = {
   duration: string;
   playUrl?: string;
   available?: boolean;
-  /** The original domain track; used when handing playback back to the kernel. */
-  _real?: Track;
+  /** The original partial domain track (may be incomplete in mock data); used when handing playback back to the kernel. */
+  _real?: Partial<Track>;
 };
 
 /** Display shape for a collection (playlist / album / chart). */
@@ -107,7 +107,7 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
     duration: Track.durationFormatted(real),
     playUrl: real.playUrl,
     available: true,
-    _real: real as Track,
+    _real: real,
   };
 }
 
@@ -169,13 +169,16 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
  * synthesises a minimal Track from the display fields (mock / fallback).
  */
 export function toTrack(vt: VibeTrack): Track {
-  if (vt._real) return vt._real;
+  if (vt._real && vt._real.id) return vt._real as Track;
   return {
     id: vt.id,
     name: vt.name,
     durationMs: vt.durSec * 1000,
-    artists: vt.artistId ? [{ id: vt.artistId, name: vt.artist }] : [],
-    album: vt.albumId ? { id: vt.albumId, name: vt.album } : undefined,
+    trackNumber: 0,
+    discNumber: 1,
+    explicit: false,
+    artists: vt.artist ? [{ id: vt.artistId || vt.artist, name: vt.artist }] : [],
+    album: vt.albumId ? { id: vt.albumId, name: vt.album || "" } : undefined,
     playUrl: vt.playUrl,
   };
 }

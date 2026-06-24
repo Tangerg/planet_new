@@ -11,8 +11,6 @@ import { withSelectors } from "./selector";
 /* -------------------------------------------------------------------------- */
 
 export interface PlayQueueState {
-  /** Current play-queue key (per playback context; distinguishes one queue from another). */
-  key: string;
   /** Current track list (from the latest change_play_queue). */
   tracks: readonly Track[];
   /** The currently playing track. */
@@ -36,7 +34,6 @@ export interface PlayQueueActions {
 export type PlayQueueStore = PlayQueueState & PlayQueueActions;
 
 const INITIAL_STATE: PlayQueueState = {
-  key: "",
   tracks: [],
   track: undefined,
   playState: PlayState.STOPPED,

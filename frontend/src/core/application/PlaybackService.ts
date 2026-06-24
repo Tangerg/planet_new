@@ -34,14 +34,17 @@ export class PlaybackService {
   /**
    * Set the play queue and start at the given track.
    * Resolves playable URLs via the provider before emitting to the kernel.
-   * Tracks are mutated in place to carry the resolved `playUrl`.
+   * Tracks are cloned internally so the original domain objects are never
+   * mutated — the kernel holds its own copies.
    *
    * A generation counter guards against a stale `playUrls()` resolve
    * overwriting the queue when `play()` is called twice rapidly.
    */
   async play(tracks: Track[], track: Track, key = "vibe"): Promise<void> {
     const gen = ++this.playGeneration;
-    const queue = tracks.length ? tracks : [track];
+    const items = tracks.length ? tracks : [track];
+    const queue = items.map((t) => ({ ...t }));
+    const current = queue.find((t) => t.id === track.id) ?? queue[0];
     const ids = queue.map((t) => t.id).filter(Boolean);
 
     let urls: Array<{ id: string | number; playUrl: string }> = [];
@@ -62,7 +65,7 @@ export class PlaybackService {
       if (t) t.playUrl = u.playUrl;
     }
 
-    this.planet.hooks.emit("change_play_queue", { key, tracks: queue, track });
+    this.planet.hooks.emit("change_play_queue", { key, tracks: queue, track: current });
   }
 
   // ── Transport ─────────────────────────────────────────────────────

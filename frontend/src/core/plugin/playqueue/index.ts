@@ -74,11 +74,15 @@ export class PlayQueue extends Plugin {
 
   changeShuffleEnable(): void {
     this.shuffleEnable = !this.shuffleEnable;
+    if (!this.displayQueue.size || !this.displayQueue.current) {
+      this.context.hooks.emit("shuffle_enable_changed", this.shuffleEnable);
+      return;
+    }
     const playTracks = this.shuffleEnable
       ? shuffleArray(this.displayQueue.tracks)
       : this.displayQueue.tracks;
     this.playQueue.apply(playTracks);
-    this.playQueue.select(this.displayQueue.current!);
+    this.playQueue.select(this.displayQueue.current);
     this.context.hooks.emit("shuffle_enable_changed", this.shuffleEnable);
   }
 
@@ -106,16 +110,17 @@ export class PlayQueue extends Plugin {
     this.clear();
 
     this.playQueueKey = queue.key ? queue.key : this.playQueueKey;
-    const playTracks = this.shuffleEnable ? shuffleArray(queue.tracks!) : queue.tracks!;
+    const tracks = queue.tracks ?? [];
+    const playTracks = this.shuffleEnable ? shuffleArray(tracks) : tracks;
     this.playQueue.apply(playTracks);
 
-    let playTrack = queue.tracks![0];
+    let playTrack = tracks[0];
     if (queue.track && this.playQueue.has(queue.track)) {
       playTrack = queue.track;
     }
 
     this.playQueue.select(playTrack);
-    this.displayQueue.apply(queue.tracks!);
+    this.displayQueue.apply(tracks);
     this.displayQueue.select(this.playQueue.current!);
   }
 
