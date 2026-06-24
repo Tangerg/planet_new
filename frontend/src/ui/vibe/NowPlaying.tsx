@@ -170,6 +170,7 @@ type Props = {
   onPrev?: () => void;
   /** Current playback position in seconds (from the kernel). */
   progressSec?: number;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export const NowPlaying = React.memo(function NowPlaying({
@@ -186,6 +187,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   onNext,
   onPrev,
   progressSec = 0,
+  onOpenArtist,
 }: Props) {
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
@@ -354,7 +356,31 @@ export const NowPlaying = React.memo(function NowPlaying({
             {track?.title}
           </div>
           <div style={{ fontSize: 16, fontWeight: 300, color: "rgba(255,255,255,.6)" }}>
-            {track?.artist}
+            {onOpenArtist && track?.artistId ? (
+              <button
+                style={{
+                  cursor: "pointer",
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  font: "inherit",
+                  color: "inherit",
+                  textAlign: "left",
+                }}
+                onClick={() => onOpenArtist({ id: track.artistId, name: track.artist })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onOpenArtist({ id: track.artistId, name: track.artist });
+                  }
+                }}
+              >
+                {track?.artist}
+              </button>
+            ) : (
+              track?.artist
+            )}
           </div>
           {track?.credits && (
             <div
@@ -680,7 +706,34 @@ export const NowPlaying = React.memo(function NowPlaying({
                 {track?.title}
               </div>
               <div style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}>
-                {track?.artist}
+                {onOpenArtist && track?.artistId ? (
+                  <button
+                    style={{
+                      cursor: "pointer",
+                      background: "none",
+                      border: 0,
+                      padding: 0,
+                      font: "inherit",
+                      color: "inherit",
+                      textAlign: "left",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenArtist({ id: track.artistId, name: track.artist });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onOpenArtist({ id: track.artistId, name: track.artist });
+                      }
+                    }}
+                  >
+                    {track?.artist}
+                  </button>
+                ) : (
+                  track?.artist
+                )}
               </div>
             </div>
             <span className="mlabel" style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>

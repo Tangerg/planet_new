@@ -632,6 +632,7 @@ export default function Shell() {
           liked={liked}
           toggleLike={toggleLike}
           accent={accent}
+          onOpenArtist={openArtist}
         />
       );
     if (v === "queue")
@@ -644,6 +645,7 @@ export default function Shell() {
           liked={liked}
           toggleLike={toggleLike}
           accent={accent}
+          onOpenArtist={openArtist}
         />
       );
     if (v === "history")
@@ -657,6 +659,7 @@ export default function Shell() {
           liked={liked}
           toggleLike={toggleLike}
           accent={accent}
+          onOpenArtist={openArtist}
         />
       );
     if (v === "settings")
@@ -725,6 +728,7 @@ export default function Shell() {
           progressSec={playback.progress.duration}
           initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
           onClose={startReverse}
+          onOpenArtist={openArtist}
         />
       );
     return null;
@@ -929,6 +933,7 @@ export default function Shell() {
             onOpenQueue={() => setView("queue")}
             onOpenComments={() => setView("comments")}
             onOpenLyrics={() => setView("np")}
+            onOpenArtist={openArtist}
           />
         )}
       </div>

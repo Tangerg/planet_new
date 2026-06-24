@@ -22,6 +22,7 @@ type TrackRowProps = {
   delta?: number;
   selected?: boolean;
   onSelect?: (track: any, e: React.MouseEvent) => void;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export function TrackRow({
@@ -38,6 +39,7 @@ export function TrackRow({
   delta,
   selected,
   onSelect,
+  onOpenArtist,
 }: TrackRowProps) {
   const isCur = current?.id === track.id;
   const [hover, setHover] = useState(false);
@@ -204,7 +206,41 @@ export function TrackRow({
           )}
         </div>
         <div className="truncate" style={{ fontSize: 12.5, fontWeight: 300, color: sub }}>
-          {track.artist}
+          {onOpenArtist && track.artistId ? (
+            <button
+              style={{
+                cursor: "pointer",
+                transition: "color .2s",
+                background: "none",
+                border: 0,
+                padding: 0,
+                font: "inherit",
+                color: "inherit",
+                textAlign: "left",
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenArtist({ id: track.artistId, name: track.artist });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenArtist({ id: track.artistId, name: track.artist });
+                }
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = accent;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = sub;
+              }}
+            >
+              {track.artist}
+            </button>
+          ) : (
+            track.artist
+          )}
         </div>
       </div>
       {isChart && (
@@ -243,9 +279,10 @@ type TrackCardProps = {
   track: any;
   onPlay: (track: any) => void;
   accent: string;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
-export function TrackCard({ track, onPlay, accent }: TrackCardProps) {
+export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {
   const [hover, setHover] = useState(false);
   return (
     <div
@@ -308,7 +345,41 @@ export function TrackCard({ track, onPlay, accent }: TrackCardProps) {
         className="truncate"
         style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}
       >
-        {track.artist}
+        {onOpenArtist && track.artistId ? (
+          <button
+            style={{
+              cursor: "pointer",
+              transition: "color .2s",
+              background: "none",
+              border: 0,
+              padding: 0,
+              font: "inherit",
+              color: "inherit",
+              textAlign: "left",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenArtist({ id: track.artistId, name: track.artist });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenArtist({ id: track.artistId, name: track.artist });
+              }
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = accent;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,.5)";
+            }}
+          >
+            {track.artist}
+          </button>
+        ) : (
+          track.artist
+        )}
       </div>
     </div>
   );
@@ -322,6 +393,7 @@ type PlaylistDetailScreenProps = {
   liked: Set<string>;
   toggleLike: (id: string) => void;
   accent: string;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export function PlaylistDetailScreen({
@@ -332,6 +404,7 @@ export function PlaylistDetailScreen({
   liked,
   toggleLike,
   accent,
+  onOpenArtist,
 }: PlaylistDetailScreenProps) {
   const p = playlist;
   const total = p.tracks.length;
@@ -660,6 +733,7 @@ export function PlaylistDetailScreen({
                       liked={liked}
                       toggleLike={toggleLike}
                       accent={accent}
+                      onOpenArtist={onOpenArtist}
                     />
                   );
                 }}
@@ -674,7 +748,12 @@ export function PlaylistDetailScreen({
                 estimateRowHeight={232}
                 itemKey={(i) => p.tracks[i].id}
                 renderItem={(i) => (
-                  <TrackCard track={p.tracks[i]} onPlay={onPlay} accent={accent} />
+                  <TrackCard
+                    track={p.tracks[i]}
+                    onPlay={onPlay}
+                    accent={accent}
+                    onOpenArtist={onOpenArtist}
+                  />
                 )}
               />
             )}
@@ -795,6 +874,7 @@ type QueueScreenProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (id: string) => void;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export function QueueScreen({
@@ -805,6 +885,7 @@ export function QueueScreen({
   playing,
   liked,
   toggleLike,
+  onOpenArtist,
 }: QueueScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   return (
@@ -868,6 +949,7 @@ export function QueueScreen({
                   liked={liked}
                   toggleLike={toggleLike}
                   accent={accent}
+                  onOpenArtist={onOpenArtist}
                 />
               );
             }}
@@ -892,6 +974,7 @@ type HistoryScreenProps = {
   liked: Set<string>;
   toggleLike: (id: string) => void;
   accent: string;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export function HistoryScreen({
@@ -903,6 +986,7 @@ export function HistoryScreen({
   liked,
   toggleLike,
   accent,
+  onOpenArtist,
 }: HistoryScreenProps) {
   // most-recent first, drop consecutive repeats
   const recent: any[] = [];
@@ -951,6 +1035,7 @@ export function HistoryScreen({
             liked={liked}
             toggleLike={toggleLike}
             accent={accent}
+            onOpenArtist={onOpenArtist}
           />
         ))}
       </div>

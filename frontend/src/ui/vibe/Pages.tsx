@@ -231,6 +231,7 @@ function ArtistScreen({
                   liked={liked}
                   toggleLike={toggleLike}
                   accent={accent}
+                  onOpenArtist={onOpenArtist}
                 />
               ))}
             </div>
@@ -244,7 +245,13 @@ function ArtistScreen({
               }}
             >
               {tracks.map((t: any) => (
-                <TrackCard key={t.id} track={t} onPlay={onPlay} accent={accent} />
+                <TrackCard
+                  key={t.id}
+                  track={t}
+                  onPlay={onPlay}
+                  accent={accent}
+                  onOpenArtist={onOpenArtist}
+                />
               ))}
             </div>
           )}

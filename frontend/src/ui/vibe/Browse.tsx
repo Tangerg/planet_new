@@ -254,6 +254,7 @@ export function SearchScreen({
                   liked={liked}
                   toggleLike={toggleLike}
                   accent={accent}
+                  onOpenArtist={openArtist}
                 />
               ))}
             </div>
@@ -780,6 +781,7 @@ export function LibraryScreen({
                     liked={liked}
                     toggleLike={toggleLike}
                     accent={accent}
+                    onOpenArtist={openArtist}
                   />
                 ))}
               </div>
@@ -795,6 +797,7 @@ export function LibraryScreen({
                     liked={liked}
                     toggleLike={toggleLike}
                     accent={accent}
+                    onOpenArtist={openArtist}
                   />
                 ))}
               </div>
