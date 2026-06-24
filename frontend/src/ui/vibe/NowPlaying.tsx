@@ -6,7 +6,27 @@ import { MOCK } from "./mockCatalog";
 // ============================================================
 // NowPlaying — full-bleed cover  ·  Lyrics  (toggle)
 // ============================================================
-function LyricLines({ lines, accent, active }: { lines: any[]; accent: string; active: number }) {
+function LyricLines({
+  lines,
+  accent,
+  active,
+  scrollRef,
+}: {
+  lines: any[];
+  accent: string;
+  active: number;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  // Auto-scroll the active line into view (centered) inside the fixed-height container.
+  useEffect(() => {
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);
+    if (el && scrollRef.current) {
+      const container = scrollRef.current;
+      const top = el.offsetTop - container.clientHeight / 2 + el.offsetHeight / 2;
+      container.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [active, scrollRef]);
+
   return (
     <div
       style={{
@@ -14,7 +34,7 @@ function LyricLines({ lines, accent, active }: { lines: any[]; accent: string; a
         flexDirection: "column",
         gap: 26,
         textAlign: "center",
-        padding: "8% 12%",
+        padding: "40% 12% 60%",
       }}
     >
       {lines.map((l, i) => {
@@ -23,6 +43,7 @@ function LyricLines({ lines, accent, active }: { lines: any[]; accent: string; a
         return (
           <div
             key={i}
+            data-lyric-idx={i}
             style={{
               fontSize: on ? 26 : 21,
               fontWeight: 300,
@@ -56,6 +77,8 @@ type Props = {
   current?: any;
   onNext?: () => void;
   onPrev?: () => void;
+  /** Current playback position in seconds (from the kernel). */
+  progressSec?: number;
 };
 
 export function NowPlaying({
@@ -71,6 +94,7 @@ export function NowPlaying({
   onPlay,
   onNext,
   onPrev,
+  progressSec = 0,
 }: Props) {
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
@@ -82,7 +106,7 @@ export function NowPlaying({
     () => (lyrics && lyrics.length ? lyrics : [{ line: "No lyrics for this track." }]),
     [lyrics],
   );
-  const [active, setActive] = useState(2);
+  const [active, setActive] = useState(0);
   const [likedC, setLikedC] = useState<Set<string>>(new Set());
   const toggleC = (id: string) =>
     setLikedC((p) => {
@@ -95,18 +119,21 @@ export function NowPlaying({
       return n;
     });
   const comments = (typeof MOCK !== "undefined" && MOCK.comments) || [];
+
+  // Sync active lyric line to real playback progress.
+  // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
+  const lyricScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const id = setInterval(
-      () =>
-        setActive((a) => {
-          let n = a + 1;
-          while (n < lines.length && !lines[n].line) n++;
-          return n >= lines.length ? 0 : n;
-        }),
-      3200,
-    );
-    return () => clearInterval(id);
-  }, [lines]);
+    if (!lines.length || !lines[0].t) return;
+    const posMs = progressSec * 1000;
+    // Find the last line whose timestamp <= current position.
+    let idx = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].t <= posMs) idx = i;
+      else break;
+    }
+    setActive(idx);
+  }, [progressSec, lines]);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const coverSeed = track?.coverSeed || 0;
@@ -387,7 +414,6 @@ export function NowPlaying({
 
       {/* side panel — lyrics or comments — slides in from the right over a blurred tint */}
       <div
-        className="scroll"
         style={{
           position: "absolute",
           top: 0,
@@ -395,6 +421,7 @@ export function NowPlaying({
           height: "100%",
           width: "58%",
           zIndex: 5,
+          overflow: "hidden",
           transform: panelOpen ? "translateX(0)" : "translateX(100%)",
           opacity: panelOpen ? 1 : 0,
           pointerEvents: panelOpen ? "auto" : "none",
@@ -413,9 +440,13 @@ export function NowPlaying({
             background: "rgba(10,12,18,.35)",
           }}
         />
-        <div key={mode} className="np-swap" style={{ position: "relative", zIndex: 2 }}>
+        <div
+          key={mode}
+          className="np-swap"
+          style={{ position: "relative", zIndex: 2, height: "100%" }}
+        >
           {commentsMode ? (
-            <div style={{ padding: "58px 48px 40px" }}>
+            <div className="scroll" style={{ height: "100%", padding: "58px 48px 40px" }}>
               <div
                 style={{
                   fontSize: 26,
@@ -485,7 +516,14 @@ export function NowPlaying({
               ))}
             </div>
           ) : (
-            <LyricLines lines={lines} accent={accent} active={active} />
+            <div ref={lyricScrollRef} className="scroll" style={{ height: "100%" }}>
+              <LyricLines
+                lines={lines}
+                accent={accent}
+                active={active}
+                scrollRef={lyricScrollRef}
+              />
+            </div>
           )}
         </div>
       </div>
