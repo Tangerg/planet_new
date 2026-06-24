@@ -29,7 +29,15 @@ function LyricLines({
       (elRect.top - containerRect.top) -
       containerRect.height / 2 +
       elRect.height / 2;
+    // Interrupt any in-flight smooth scroll before starting a new one
+    // eslint-disable-next-line no-self-assign — reading scrollTop interrupts smooth scroll
+    container.scrollTop = container.scrollTop;
     container.scrollTo({ top, behavior: "smooth" });
+    return () => {
+      // Halt scroll on unmount
+      // eslint-disable-next-line no-self-assign — reading scrollTop interrupts smooth scroll
+      container.scrollTop = container.scrollTop;
+    };
   }, [active, scrollRef]);
 
   return (
@@ -138,7 +146,7 @@ export function NowPlaying({
       if (lines[i].t <= posMs) idx = i;
       else break;
     }
-    setActive(idx);
+    setActive((prev) => (prev === idx ? prev : idx));
   }, [progressSec, lines]);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);

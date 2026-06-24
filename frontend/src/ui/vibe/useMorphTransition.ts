@@ -12,7 +12,7 @@
    arrays. The referenced callbacks are recreated each render by design;
    adding them would re-run the morph effects every frame and break the
    transition. This is a verbatim port whose exact dep arrays ARE the contract. */
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 
 const EASE = "cubic-bezier(.16,1,.3,1)";
@@ -49,12 +49,26 @@ export function useMorphTransition(
   const [trans, setTrans] = useState<Transition | null>(null);
   const lastTile = useRef<any>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const rafIds = useRef<number[]>([]);
 
   const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clearTimers = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
   };
+
+  const clearAll = useCallback(() => {
+    clearTimers();
+    rafIds.current.forEach((id) => cancelAnimationFrame(id));
+    rafIds.current = [];
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimers();
+      rafIds.current.forEach((id) => cancelAnimationFrame(id));
+    };
+  }, []);
 
   const relRect = (r: DOMRect): Rect => {
     const v = viewRef.current!.getBoundingClientRect();
@@ -83,47 +97,50 @@ export function useMorphTransition(
     return r;
   };
 
-  const startForward = (item: any, rect: DOMRect) => {
-    if (!viewRef.current || reduceMo()) {
+  const startForward = useCallback(
+    (item: any, rect: DOMRect) => {
+      if (!viewRef.current || reduceMo()) {
+        if (item.run) item.run();
+        return;
+      }
+      clearAll();
+      const o = relRect(rect);
+      const origin = { ...o, borderRadius: 6 };
+      const vw = viewRef.current.getBoundingClientRect();
+      const px = o.left + o.width / 2,
+        py = o.top + o.height / 2;
+      const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
+      lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
       if (item.run) item.run();
-      return;
-    }
-    clearTimers();
-    const o = relRect(rect);
-    const origin = { ...o, borderRadius: 6 };
-    const vw = viewRef.current.getBoundingClientRect();
-    const px = o.left + o.width / 2,
-      py = o.top + o.height / 2;
-    const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
-    lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
-    if (item.run) item.run();
-    setTrans({
-      from: view,
-      to: item.dest,
-      origin,
-      target: fullRect(),
-      point: { x: px, y: py },
-      clipR,
-      seed: item.seed,
-      grad: item.grad,
-      image: item.image,
-      dir: "fwd",
-      phase: "start",
-      hero: null,
-      measured: false,
-    });
-    timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 620));
-    timers.current.push(setTimeout(() => setTrans(null), 1000));
-  };
+      setTrans({
+        from: view,
+        to: item.dest,
+        origin,
+        target: fullRect(),
+        point: { x: px, y: py },
+        clipR,
+        seed: item.seed,
+        grad: item.grad,
+        image: item.image,
+        dir: "fwd",
+        phase: "start",
+        hero: null,
+        measured: false,
+      });
+      timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 620));
+      timers.current.push(setTimeout(() => setTrans(null), 1000));
+    },
+    [view],
+  );
 
-  const startReverse = () => {
+  const startReverse = useCallback(() => {
     const lt = lastTile.current;
     const from = view;
     if (!viewRef.current || !lt || reduceMo()) {
       setView("xmb");
       return;
     }
-    clearTimers();
+    clearAll();
     const src = heroRect(".t-base [data-hero]");
     const o = lt.origin;
     const vw = viewRef.current.getBoundingClientRect();
@@ -146,11 +163,15 @@ export function useMorphTransition(
       measured: true,
     });
     setView("xmb");
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => setTrans((t) => t && { ...t, phase: "morph" })),
-    );
+    const revId1 = requestAnimationFrame(() => {
+      const revId2 = requestAnimationFrame(() =>
+        setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
+      );
+      rafIds.current.push(revId2);
+    });
+    rafIds.current.push(revId1);
     timers.current.push(setTimeout(() => setTrans(null), 760));
-  };
+  }, [view]);
 
   const goMorph = (
     rect: DOMRect,
@@ -160,12 +181,15 @@ export function useMorphTransition(
     image?: string,
   ) => startForward({ seed, grad, dest: "_", run, image }, rect);
 
+  const goMorphRef = useRef(goMorph);
+  goMorphRef.current = goMorph;
+
   useEffect(() => {
-    window.__MORPH = goMorph as any;
+    window.__MORPH = ((...args: any[]) => (goMorphRef.current as any)(...args)) as any;
     return () => {
       window.__MORPH = undefined;
     };
-  });
+  }, []);
 
   const layerStyle = (t: Transition): React.CSSProperties => {
     const begin = t.phase === "start" || t.hero === false;
@@ -193,12 +217,20 @@ export function useMorphTransition(
   // Advance the forward transition to the morph phase.
   useEffect(() => {
     if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
-    const id = requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
+    const outer = requestAnimationFrame(() => {
+      const inner = requestAnimationFrame(() =>
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
-      ),
-    );
-    return () => cancelAnimationFrame(id);
+      );
+      rafIds.current.push(inner);
+    });
+    rafIds.current.push(outer);
+    return () => {
+      cancelAnimationFrame(outer);
+      rafIds.current = rafIds.current.filter((id) => id !== outer);
+      // Cancel any inner rAFs that may have already been scheduled
+      rafIds.current.forEach((id) => cancelAnimationFrame(id));
+      rafIds.current = [];
+    };
   }, [trans]);
 
   // Esc returns to launcher.

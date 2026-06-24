@@ -35,13 +35,24 @@ export function VirtualGrid({
   const [scrollMargin, setScrollMargin] = useState(0);
   const [columns, setColumns] = useState(1);
 
+  // Keep mutable refs so the ResizeObserver callback always reads the latest
+  // gap/minColumnWidth without needing them in deps (observer stays stable).
+  const gapRef = useRef(gap);
+  gapRef.current = gap;
+  const minColumnWidthRef = useRef(minColumnWidth);
+  minColumnWidthRef.current = minColumnWidth;
+
+  // Stable ResizeObserver — never recreated when count/gap/minColumnWidth
+  // change, since the callback always reads the latest DOM dimensions from refs.
   useLayoutEffect(() => {
     const measure = () => {
       const el = containerRef.current;
       const scroller = scrollRef.current;
       if (!el || !scroller) return;
       const width = el.clientWidth;
-      setColumns(Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap))));
+      const _gap = gapRef.current;
+      const _minW = minColumnWidthRef.current;
+      setColumns(Math.max(1, Math.floor((width + _gap) / (_minW + _gap))));
       setScrollMargin(
         el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
       );
@@ -51,7 +62,23 @@ export function VirtualGrid({
     if (scrollRef.current) ro.observe(scrollRef.current);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, [scrollRef, count, gap, minColumnWidth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps — gap/minColumnWidth
+    // are read through stable refs; scrollRef is a stable RefObject
+  }, [scrollRef]);
+
+  // Re-measure when dependent values change (avoids stale columns/scrollMargin
+  // without touching the observer).
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    const scroller = scrollRef.current;
+    if (!el || !scroller) return;
+    const width = el.clientWidth;
+    setColumns(Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap))));
+    setScrollMargin(
+      el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps — scrollRef is a stable RefObject
+  }, [count, gap, minColumnWidth]);
 
   const rowCount = Math.ceil(count / columns);
   const virtualizer = useVirtualizer({

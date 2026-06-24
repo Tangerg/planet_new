@@ -19,7 +19,7 @@ export function useAmbient(view: string) {
     return () => {
       window.__AMBIENT = undefined;
     };
-  });
+  }, [setAmbient]);
 
   useEffect(() => {
     const el = document.getElementById("ambient");

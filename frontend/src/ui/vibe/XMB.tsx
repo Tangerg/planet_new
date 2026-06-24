@@ -281,26 +281,46 @@ export function XMB({
   };
 
   const wheelRef = useRef(0);
+  // refs capture latest values for the stable effect below
+  const cRef = useRef(c);
+  const itRef = useRef(it);
+  const itemRef = useRef(item);
+  const catsRef = useRef(cats);
+  const catRef = useRef(cat);
+  const onOpenRef = useRef(onOpen);
+  const moveRef = useRef(move);
+  const setItemRef = useRef(setItem);
+  // sync refs every render so the stable event handlers always read latest values
+  cRef.current = c;
+  itRef.current = it;
+  itemRef.current = item;
+  catsRef.current = cats;
+  catRef.current = cat;
+  onOpenRef.current = onOpen;
+  moveRef.current = move;
+  setItemRef.current = setItem;
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        move(-1);
+        moveRef.current(-1);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        move(1);
+        moveRef.current(1);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setItem(it - 1);
+        setItemRef.current(itRef.current - 1);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        setItem(it + 1);
+        setItemRef.current(itRef.current + 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (item) {
+        if (itemRef.current) {
           const node = document.querySelector("[data-xmb-active-art]");
-          if (onOpen && node) onOpen(item, node.getBoundingClientRect());
-          else if (item.run) item.run();
+          if (onOpenRef.current && node)
+            onOpenRef.current(itemRef.current, node.getBoundingClientRect());
+          else if (itemRef.current.run) itemRef.current.run();
         }
       }
     };
@@ -311,8 +331,8 @@ export function XMB({
       const ax = Math.abs(e.deltaX),
         ay = Math.abs(e.deltaY);
       if (Math.max(ax, ay) < 6) return;
-      if (ax > ay + 2) move(e.deltaX > 0 ? 1 : -1);
-      else setItem(it + (e.deltaY > 0 ? 1 : -1));
+      if (ax > ay + 2) moveRef.current(e.deltaX > 0 ? 1 : -1);
+      else setItemRef.current(itRef.current + (e.deltaY > 0 ? 1 : -1));
       wheelRef.current = now + 250;
     };
     window.addEventListener("keydown", onKey);
@@ -321,7 +341,7 @@ export function XMB({
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("wheel", onWheel);
     };
-  });
+  }, []);
 
   return (
     <div

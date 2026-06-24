@@ -9,7 +9,7 @@
 // Shell remains the composition root: it owns navigation state, data fetching
 // (openDetail / openArtist), the XMB category model, and screen rendering.
 // ============================================================
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useActiveProvider } from "@/hooks/useActiveProvider";
@@ -85,13 +85,16 @@ export default function Shell() {
 
   /* Current playable context (filled once a detail/artist loads); onPlay(track) plays within this list. */
   const playContext = useRef<VibeTrack[]>([]);
-  const onPlay = (track: VibeTrack | undefined) => {
-    if (!track) return;
-    const ctx = playContext.current;
-    // Use the context list as the queue only when it actually contains this track; otherwise play the single track (e.g. a search result).
-    const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
-    playback.play(list, track);
-  };
+  const onPlay = useCallback(
+    (track: VibeTrack | undefined) => {
+      if (!track) return;
+      const ctx = playContext.current;
+      // Use the context list as the queue only when it actually contains this track; otherwise play the single track (e.g. a search result).
+      const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
+      playback.play(list, track);
+    },
+    [playback],
+  );
 
   /* ---- catalog / charts / search (real provider) ---- */
   const { catalog } = useCatalog();

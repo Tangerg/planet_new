@@ -32,8 +32,8 @@ export function VirtualList({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  // Measure the list's top offset inside the scroll container before paint, so
-  // the first frame is already aligned (no jump as the hero pushes it down).
+  // Stable ResizeObserver — never recreated when count changes, since the
+  // callback always reads the latest DOM dimensions from refs.
   useLayoutEffect(() => {
     const measure = () => {
       const el = containerRef.current;
@@ -48,7 +48,19 @@ export function VirtualList({
     if (scrollRef.current) ro.observe(scrollRef.current);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, [scrollRef, count]);
+  }, [scrollRef]);
+
+  // Re-measure when count changes (avoids stale scrollMargin during virtualizer
+  // updates without touching the observer).
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    const scroller = scrollRef.current;
+    if (!el || !scroller) return;
+    setScrollMargin(
+      el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps — scrollRef is a stable RefObject
+  }, [count]);
 
   const virtualizer = useVirtualizer({
     count,
