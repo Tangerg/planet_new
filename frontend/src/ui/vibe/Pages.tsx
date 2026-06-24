@@ -86,94 +86,104 @@ function ArtistScreen({
               "linear-gradient(180deg, rgba(8,8,11,.42) 0%, rgba(8,8,11,.5) 58%, var(--surf-0) 100%)",
           }}
         />
+        {/* Bottom-anchored via flow (flex-end column), not absolute: text stays
+            in flow so it can't overflow the banner. */}
         <div
           style={{
-            position: "absolute",
-            left: 48,
-            right: 48,
-            bottom: 30,
+            position: "relative",
             zIndex: 4,
+            height: "100%",
             display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: 24,
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            padding: "0 48px 30px",
+            boxSizing: "border-box",
           }}
         >
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 48,
-                fontWeight: 200,
-                letterSpacing: ".01em",
-                lineHeight: 1.04,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                overflowWrap: "anywhere",
-              }}
-            >
-              {artist.name}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                marginTop: 20,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              <button
-                onClick={() => setFollowed((f) => !f)}
-                className="tag"
-                style={{
-                  cursor: "pointer",
-                  borderRadius: 999,
-                  border: 0,
-                  background: followed
-                    ? `linear-gradient(90deg, ${accent}, ${b})`
-                    : "rgba(255,255,255,.14)",
-                  color: followed ? "#06060a" : "#fff",
-                }}
-              >
-                {followed ? "Following" : "Follow"}
-              </button>
-              <StatPill>
-                {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
-              </StatPill>
-              <StatPill>
-                {albums.length} {albums.length === 1 ? "Album" : "Albums"}
-              </StatPill>
-              <StatPill>{artist.listeners} Listeners</StatPill>
-              {(artist.genres || []).map((g: any) => (
-                <StatPill key={g}>{g}</StatPill>
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={() => onPlay(tracks[0])}
-            aria-label="Play"
+          <div
             style={{
-              flex: "0 0 auto",
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              border: 0,
-              cursor: "pointer",
-              background: accent,
-              color: "#06060a",
-              display: "grid",
-              placeItems: "center",
-              boxShadow: `0 10px 30px -6px ${accent}`,
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
             }}
           >
-            {playing && tracks.some((t: any) => t.id === current?.id) ? (
-              <Icon.pause size={26} />
-            ) : (
-              <Icon.play size={26} />
-            )}
-          </button>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 48,
+                  fontWeight: 200,
+                  letterSpacing: ".01em",
+                  lineHeight: 1.04,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {artist.name}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  marginTop: 20,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <button
+                  onClick={() => setFollowed((f) => !f)}
+                  className="tag"
+                  style={{
+                    cursor: "pointer",
+                    borderRadius: 999,
+                    border: 0,
+                    background: followed
+                      ? `linear-gradient(90deg, ${accent}, ${b})`
+                      : "rgba(255,255,255,.14)",
+                    color: followed ? "#06060a" : "#fff",
+                  }}
+                >
+                  {followed ? "Following" : "Follow"}
+                </button>
+                <StatPill>
+                  {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
+                </StatPill>
+                <StatPill>
+                  {albums.length} {albums.length === 1 ? "Album" : "Albums"}
+                </StatPill>
+                <StatPill>{artist.listeners} Listeners</StatPill>
+                {(artist.genres || []).map((g: any) => (
+                  <StatPill key={g}>{g}</StatPill>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => onPlay(tracks[0])}
+              aria-label="Play"
+              style={{
+                flex: "0 0 auto",
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                border: 0,
+                cursor: "pointer",
+                background: accent,
+                color: "#06060a",
+                display: "grid",
+                placeItems: "center",
+                boxShadow: `0 10px 30px -6px ${accent}`,
+              }}
+            >
+              {playing && tracks.some((t: any) => t.id === current?.id) ? (
+                <Icon.pause size={26} />
+              ) : (
+                <Icon.play size={26} />
+              )}
+            </button>
+          </div>
         </div>
       </Art>
 
@@ -677,70 +687,73 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
             background: "linear-gradient(180deg, rgba(8,8,11,.25), rgba(8,8,11,.6))",
           }}
         />
+        {/* Top tags + bottom title via flow (space-between column), not absolute. */}
         <div
           style={{
-            position: "absolute",
-            top: 60,
-            left: 48,
+            position: "relative",
             zIndex: 4,
+            height: "100%",
             display: "flex",
             flexDirection: "column",
-            gap: 14,
+            justifyContent: "space-between",
             alignItems: "flex-start",
-          }}
-        >
-          <button
-            onClick={toggleLike}
-            style={{
-              background: "none",
-              border: 0,
-              cursor: "pointer",
-              color: accent,
-              padding: 0,
-              filter: `drop-shadow(0 4px 12px ${accent}88)`,
-            }}
-          >
-            <Icon.heart size={30} filled={liked} />
-          </button>
-          <span className="pill-accent">{track?.quality || "SQ"}</span>
-          <span className="tag">30.88K Comments</span>
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            left: 48,
-            bottom: 44,
-            zIndex: 4,
-            maxWidth: "calc(100% - 96px)",
+            padding: "60px 48px 44px",
+            boxSizing: "border-box",
           }}
         >
           <div
             style={{
-              fontSize: 28,
-              fontWeight: 300,
-              borderBottom: "1px solid rgba(255,255,255,.3)",
-              paddingBottom: 10,
-              maxWidth: "100%",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "inline-block",
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              alignItems: "flex-start",
             }}
           >
-            {track?.title}
+            <button
+              onClick={toggleLike}
+              style={{
+                background: "none",
+                border: 0,
+                cursor: "pointer",
+                color: accent,
+                padding: 0,
+                filter: `drop-shadow(0 4px 12px ${accent}88)`,
+              }}
+            >
+              <Icon.heart size={30} filled={liked} />
+            </button>
+            <span className="pill-accent">{track?.quality || "SQ"}</span>
+            <span className="tag">30.88K Comments</span>
           </div>
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 300,
-              color: "var(--tx-3)",
-              marginTop: 10,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {track?.artist}
+          <div style={{ maxWidth: "100%" }}>
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 300,
+                borderBottom: "1px solid rgba(255,255,255,.3)",
+                paddingBottom: 10,
+                maxWidth: "100%",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "inline-block",
+              }}
+            >
+              {track?.title}
+            </div>
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 300,
+                color: "var(--tx-3)",
+                marginTop: 10,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {track?.artist}
+            </div>
           </div>
         </div>
       </Art>
