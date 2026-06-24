@@ -42,7 +42,9 @@ export function useVibePlayback() {
 
   const [shuffle, setShuffleState] = useState(false);
   const [repeat, setRepeatState] = useState<RepeatMode>(RepeatMode.OFF);
-  const [volume, setVolumeState] = useState(0);
+  // Audio elements default to volume 1.0 (=100 on the kernel scale) and the
+  // Volume plugin doesn't broadcast that initial value, so seed it here.
+  const [volume, setVolumeState] = useState(100);
 
   useEffect(() => {
     planet.hooks.on("shuffle_enable_changed", setShuffleState);
