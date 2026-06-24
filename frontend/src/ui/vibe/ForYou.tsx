@@ -212,7 +212,7 @@ type ForYouScreenProps = {
   accent: string;
 };
 
-export function ForYouScreen({
+export const ForYouScreen = React.memo(function ForYouScreen({
   data,
   onPlay: _onPlay,
   openPlaylist,
@@ -385,4 +385,4 @@ export function ForYouScreen({
       </div>
     </div>
   );
-}
+});

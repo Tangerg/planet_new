@@ -245,7 +245,7 @@ type Props = {
   setRowsState?: (r: any) => void;
 };
 
-export function XMB({
+export const XMB = React.memo(function XMB({
   cats,
   accent,
   playing: _playing,
@@ -524,4 +524,4 @@ export function XMB({
       </div>
     </div>
   );
-}
+});
