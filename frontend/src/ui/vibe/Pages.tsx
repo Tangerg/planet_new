@@ -100,7 +100,19 @@ function ArtistScreen({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 48, fontWeight: 200, letterSpacing: ".01em", lineHeight: 1 }}>
+            <div
+              style={{
+                fontSize: 48,
+                fontWeight: 200,
+                letterSpacing: ".01em",
+                lineHeight: 1.04,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                overflowWrap: "anywhere",
+              }}
+            >
               {artist.name}
             </div>
             <div
@@ -472,7 +484,17 @@ function ProfileScreen({
                   color: "#fff",
                 }}
               >
-                <div style={{ fontSize: 19, fontWeight: 300 }}>{p.name}</div>
+                <div
+                  style={{
+                    fontSize: 19,
+                    fontWeight: 300,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {p.name}
+                </div>
                 <div
                   className="mlabel"
                   style={{
@@ -681,19 +703,41 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
           <span className="pill-accent">{track?.quality || "SQ"}</span>
           <span className="tag">30.88K Comments</span>
         </div>
-        <div style={{ position: "absolute", left: 48, bottom: 44, zIndex: 4 }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 48,
+            bottom: 44,
+            zIndex: 4,
+            maxWidth: "calc(100% - 96px)",
+          }}
+        >
           <div
             style={{
               fontSize: 28,
               fontWeight: 300,
               borderBottom: "1px solid rgba(255,255,255,.3)",
               paddingBottom: 10,
+              maxWidth: "100%",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
               display: "inline-block",
             }}
           >
             {track?.title}
           </div>
-          <div style={{ fontSize: 15, fontWeight: 300, color: "var(--tx-3)", marginTop: 10 }}>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 300,
+              color: "var(--tx-3)",
+              marginTop: 10,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {track?.artist}
           </div>
         </div>

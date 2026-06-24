@@ -351,11 +351,39 @@ export const NowPlaying = React.memo(function NowPlaying({
             )
           }
         />
-        <div style={{ position: "absolute", left: 48, bottom: 44, zIndex: 6 }}>
-          <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: ".02em" }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 48,
+            bottom: 44,
+            zIndex: 6,
+            maxWidth: "min(46%, 540px)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 30,
+              fontWeight: 300,
+              letterSpacing: ".02em",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              overflowWrap: "anywhere",
+            }}
+          >
             {track?.title}
           </div>
-          <div style={{ fontSize: 16, fontWeight: 300, color: "rgba(255,255,255,.6)" }}>
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 300,
+              color: "rgba(255,255,255,.6)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {onOpenArtist && track?.artistId ? (
               <button
                 style={{
@@ -366,6 +394,10 @@ export const NowPlaying = React.memo(function NowPlaying({
                   font: "inherit",
                   color: "inherit",
                   textAlign: "left",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
                 onClick={() => onOpenArtist({ id: track.artistId, name: track.artist })}
                 onKeyDown={(e) => {
@@ -705,7 +737,16 @@ export const NowPlaying = React.memo(function NowPlaying({
               >
                 {track?.title}
               </div>
-              <div style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}>
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 300,
+                  color: "rgba(255,255,255,.5)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {onOpenArtist && track?.artistId ? (
                   <button
                     style={{
@@ -716,6 +757,10 @@ export const NowPlaying = React.memo(function NowPlaying({
                       font: "inherit",
                       color: "inherit",
                       textAlign: "left",
+                      maxWidth: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
