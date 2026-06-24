@@ -906,7 +906,7 @@ export default function Shell() {
           )}
         </div>
 
-        {!npView && (
+        {!npView && playback.current && (
           <PlayerBar
             track={current}
             playing={playing}
