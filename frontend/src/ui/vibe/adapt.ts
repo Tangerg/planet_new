@@ -1,18 +1,23 @@
 /**
- * Presentation projection: domain entities → the loose shapes the vibe screens
+ * Presentation projection: domain entities → the typed shapes the vibe screens
  * consume. The screens are a verbatim port of the example and read display
  * fields (title/artist/coverSeed/durSec/...); this layer maps real
  * Track/Playlist/Album/Artist onto them, delegating every domain derivation
  * (artist names, cover URL, duration, year, counts) to the entity companions.
  * What stays here is genuinely presentational: `coverSeed`/`gradient` (the
  * example's generative-gradient fallback) and the "Sonance" owner default.
+ *
+ * `toTrack` is the reverse adapter: presentation → domain, used when handing
+ * playback back to the kernel (PlaybackService expects domain Track[]).
  */
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 
-/** Loose entity shape shared by the vibe screens (mock and real data alike). */
+// ── Presentation models ─────────────────────────────────────────────
+
+/** Display shape for a track, shared by mock and real data alike. */
 export type VibeTrack = {
   id: string;
   index?: number;
@@ -31,8 +36,49 @@ export type VibeTrack = {
   available?: boolean;
   /** The original domain track; used when handing playback back to the kernel. */
   _real?: Track;
-  [k: string]: any;
 };
+
+/** Display shape for a collection (playlist / album / chart). */
+export type VibeCollection = {
+  id: string;
+  name: string;
+  kind: string;
+  owner?: string;
+  artist?: string;
+  artistId?: string;
+  coverSeed: number;
+  gradient?: string[];
+  image?: string;
+  description?: string;
+  tracks: VibeTrack[];
+  trackCount?: number;
+  year?: number;
+  /** Chart subtitle (e.g. "today"). */
+  sub?: string;
+  /** Chart update period label. */
+  updatedAt?: string;
+  /** Chart title alias (some screens read `title` instead of `name`). */
+  title?: string;
+  /** Whether the detail should be fetched from the provider (false = mock-only). */
+  _real?: boolean;
+};
+
+/** Display shape for an artist. */
+export type VibeArtist = {
+  id: string;
+  name: string;
+  coverSeed: number;
+  gradient?: string[];
+  image?: string;
+  banner?: string;
+  listeners?: number;
+  genres?: string[];
+  bio?: string;
+  /** Top tracks (filled after artistDetail resolves). */
+  tracks?: VibeTrack[];
+};
+
+// ── Helpers ─────────────────────────────────────────────────────────
 
 /** Stable string id → non-negative int, seeding a fixed gradient per entity. */
 export function seedOf(id: string | number | undefined): number {
@@ -41,6 +87,8 @@ export function seedOf(id: string | number | undefined): number {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
+
+// ── Domain → Presentation ────────────────────────────────────────────
 
 export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
   return {
@@ -64,22 +112,6 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
 }
 
 export const toVibeTracks = (xs?: Partial<Track>[]) => (xs ?? []).map((t, i) => toVibeTrack(t, i));
-
-export type VibeCollection = {
-  id: string;
-  name: string;
-  kind: string;
-  owner?: string;
-  artist?: string;
-  artistId?: string;
-  coverSeed: number;
-  gradient?: string[];
-  image?: string;
-  description?: string;
-  tracks: VibeTrack[];
-  trackCount?: number;
-  [k: string]: any;
-};
 
 export function toVibePlaylist(p: Partial<Playlist>): VibeCollection {
   return {
@@ -115,19 +147,6 @@ export function toVibeAlbum(a: Partial<Album>): VibeCollection {
   };
 }
 
-export type VibeArtist = {
-  id: string;
-  name: string;
-  coverSeed: number;
-  gradient?: string[];
-  image?: string;
-  banner?: string;
-  listeners?: number;
-  genres?: string[];
-  bio?: string;
-  [k: string]: any;
-};
-
 export function toVibeArtist(a: Partial<Artist>): VibeArtist {
   return {
     id: String(a.id ?? ""),
@@ -139,5 +158,24 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
     listeners: a.followers,
     genres: a.genres ?? [],
     bio: a.description ?? "",
+  };
+}
+
+// ── Presentation → Domain (reverse adapter for playback) ─────────────
+
+/**
+ * Recover the domain Track from a VibeTrack, for handing playback back to
+ * the kernel. Uses `_real` when available (real provider data); otherwise
+ * synthesises a minimal Track from the display fields (mock / fallback).
+ */
+export function toTrack(vt: VibeTrack): Track {
+  if (vt._real) return vt._real;
+  return {
+    id: vt.id,
+    name: vt.name,
+    durationMs: vt.durSec * 1000,
+    artists: vt.artistId ? [{ id: vt.artistId, name: vt.artist }] : [],
+    album: vt.albumId ? { id: vt.albumId, name: vt.album } : undefined,
+    playUrl: vt.playUrl,
   };
 }

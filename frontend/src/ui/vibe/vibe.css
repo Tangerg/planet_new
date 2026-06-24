@@ -969,7 +969,8 @@ textarea:focus-visible {
   color: #fff;
   transition: background 0.12s;
 }
-.ctxitem:hover {
+.ctxitem:hover,
+.ctxitem[data-highlighted] {
   background: rgba(255, 255, 255, 0.09);
 }
 .ctxico {
@@ -990,6 +991,22 @@ textarea:focus-visible {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
   margin: 5px 8px;
+}
+@keyframes ctxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ctxScaleIn {
+  from {
+    transform: scale(0.96);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* ---- grid / list view toggle (Library) ---- */

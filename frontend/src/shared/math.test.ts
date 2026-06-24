@@ -11,7 +11,7 @@ describe("getRandomInt", () => {
   });
 
   test("throws when min >= max", () => {
-    expect(() => getRandomInt(5, 5)).toThrow();
+    expect(() => getRandomInt(5, 5)).toThrow("min must be less than max");
   });
 });
 
@@ -23,7 +23,7 @@ describe("getRandomIntExclude", () => {
   });
 
   test("throws when no candidate remains after exclusion", () => {
-    expect(() => getRandomIntExclude(0, 1, 0)).toThrow();
+    expect(() => getRandomIntExclude(0, 1, 0)).toThrow("no candidate available after exclusion");
   });
 });
 
@@ -40,6 +40,6 @@ describe("getNumberInRange", () => {
   });
 
   test("throws when min > max", () => {
-    expect(() => getNumberInRange(1, 0, 1)).toThrow();
+    expect(() => getNumberInRange(1, 0, 1)).toThrow("min must be less than or equal to max");
   });
 });

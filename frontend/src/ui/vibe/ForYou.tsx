@@ -40,6 +40,15 @@ export function MediaCard({
     <div
       className={"mcard rise" + (round ? " round" : "")}
       onClick={handle}
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive card container
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handle(e as any);
+        }
+      }}
       onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(seed, grad)}
       onContextMenu={item ? (e) => window.__COLLMENU && window.__COLLMENU(e, item) : undefined}
     >
@@ -97,7 +106,7 @@ type HeroBannerProps = {
 };
 
 export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps) {
-  const [a, b] = artPair(playlist.coverSeed, playlist.gradient);
+  const [_a, _b] = artPair(playlist.coverSeed, playlist.gradient);
   return (
     <div
       className="grain rise"
@@ -176,9 +185,9 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             onClick={(e) => {
               const banner = e.currentTarget.closest("[data-hero]");
               const r = (banner || e.currentTarget).getBoundingClientRect();
-              window.__MORPH
-                ? window.__MORPH(r, playlist.coverSeed, playlist.gradient, onOpen, playlist.image)
-                : onOpen();
+              if (window.__MORPH)
+                window.__MORPH(r, playlist.coverSeed, playlist.gradient, onOpen, playlist.image);
+              else onOpen();
             }}
             className="pill-ghost"
           >
@@ -205,7 +214,7 @@ type ForYouScreenProps = {
 
 export function ForYouScreen({
   data,
-  onPlay,
+  onPlay: _onPlay,
   openPlaylist,
   openAlbum,
   openArtist,
@@ -290,15 +299,23 @@ export function ForYouScreen({
               key={t.id}
               className="tile rise"
               style={{ animationDelay: i * 0.03 + "s" }}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive tile container
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openTile(t);
+                }
+              }}
               onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(t.coverSeed, t.gradient)}
               onContextMenu={(e) => window.__COLLMENU && window.__COLLMENU(e, t)}
               onClick={(e) => {
                 const art = e.currentTarget.querySelector(".tart");
                 const rect = (art || e.currentTarget).getBoundingClientRect();
                 const run = () => openTile(t);
-                window.__MORPH
-                  ? window.__MORPH(rect, t.coverSeed, t.gradient, run, t.image)
-                  : run();
+                if (window.__MORPH) window.__MORPH(rect, t.coverSeed, t.gradient, run, t.image);
+                else run();
               }}
             >
               <Art seed={t.coverSeed} grad={t.gradient} image={t.image} className="tart" />

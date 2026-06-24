@@ -1,10 +1,13 @@
 /**
- * Bridge hooks between the vibe UI and the real kernel.
- *   - useVibePlayback wraps kernel playback state (usePlayQueueStore +
- *     planet.hooks) into the current/playing/queue/controls the screens expect.
- *     The queue holds vibe-shaped tracks (the kernel only reads id + playUrl),
- *     so reads need no remapping.
+ * Bridge hooks between the vibe UI and the application/kernel layers.
+ *   - useVibePlayback wraps playback state (usePlayQueueStore + planet.hooks
+ *     for state subscriptions) and delegates all commands to PlaybackService.
+ *     The queue holds domain Tracks (the kernel only reads id + playUrl);
+ *     reads adapt domain → VibeTrack for display, writes adapt VibeTrack →
+ *     domain Track for playback.
  *   - useCatalog projects provider.personalized() into the vibe catalog (home / XMB).
+ *   - useProviderSearch / useLyric / useToplists are data-fetching hooks that
+ *     read through the IProvider port + React Query.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,31 +18,42 @@ import { RepeatMode } from "@core/plugin/playqueue/repeat";
 
 import { usePlanet } from "@/hooks/usePlanet";
 import { useActiveProvider } from "@/hooks/useActiveProvider";
+import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
 
 import {
   seedOf,
+  toTrack,
   toVibeAlbum,
   toVibeArtist,
   toVibePlaylist,
+  toVibeTrack,
   toVibeTracks,
   type VibeTrack,
 } from "./adapt";
 
-// Playback
+// ── Playback ────────────────────────────────────────────────────────
 
 export function useVibePlayback() {
   const planet = usePlanet();
-  const provider = useActiveProvider();
+  const playbackService = usePlaybackService();
 
-  // The queue holds vibe-shaped tracks (cast on the way in), so reads are VibeTrack directly.
-  const current = usePlayQueueStore.use.track() as unknown as VibeTrack | undefined;
-  const tracks = usePlayQueueStore.use.tracks() as unknown as VibeTrack[];
+  // Read domain Track from the store and adapt to VibeTrack for display.
+  const domainTrack = usePlayQueueStore.use.track();
+  const domainTracks = usePlayQueueStore.use.tracks();
   const playState = usePlayQueueStore.use.playState();
   const progress = usePlayQueueStore.use.progress();
   const duration = usePlayQueueStore.use.duration();
   const playing = playState === PlayState.PLAYING;
 
+  const current = useMemo(
+    () => (domainTrack ? toVibeTrack(domainTrack) : undefined),
+    [domainTrack],
+  );
+  const tracks = useMemo(() => (domainTracks ?? []).map((t) => toVibeTrack(t)), [domainTracks]);
+
+  // State subscriptions (shuffle / repeat / volume) — these are state reads,
+  // not business logic. The kernel broadcasts changes; the UI mirrors them.
   const [shuffle, setShuffleState] = useState(false);
   const [repeat, setRepeatState] = useState<RepeatMode>(RepeatMode.OFF);
   // Audio elements default to volume 1.0 (=100 on the kernel scale) and the
@@ -57,55 +71,39 @@ export function useVibePlayback() {
     };
   }, [planet]);
 
-  /** Set vibe tracks as the play queue and start at the given track, resolving real
-   *  play URLs first. The kernel queue holds the vibe shapes (deduped by id, playUrl
-   *  read on play), so current_track_changed echoes vibe shapes back and screens stay consistent. */
+  // ── Commands (delegated to PlaybackService — no business logic in UI) ──
+
+  /** Set vibe tracks as the play queue and start at the given track. */
   const play = useCallback(
     async (list: VibeTrack[], track: VibeTrack, key = "vibe") => {
-      const queue = list?.length ? list : [track];
-      const ids = queue.map((t) => t.id).filter(Boolean);
-      try {
-        const urls = await provider.playUrls(ids);
-        for (const u of urls) {
-          const t = queue.find((x) => x.id === u.id);
-          if (t) {
-            t.playUrl = u.playUrl;
-            if (t._real) t._real.playUrl = u.playUrl;
-          }
-        }
-      } catch {
-        /* Provider has no play-URL support: stay silent; the UI still switches track. */
-      }
-      planet.hooks.emit("change_play_queue", {
-        key,
-        tracks: queue as any,
-        track: track as any,
-      });
+      const domainList = (list?.length ? list : [track]).map(toTrack);
+      const domainTrack = toTrack(track);
+      await playbackService.play(domainList, domainTrack, key);
     },
-    [planet, provider],
+    [playbackService],
   );
 
-  const togglePlay = useCallback(() => {
-    planet.hooks.emit(playing ? "pause" : "play");
-  }, [planet, playing]);
-
-  const next = useCallback(() => planet.hooks.emit("next_track"), [planet]);
-  const prev = useCallback(() => planet.hooks.emit("previous_track"), [planet]);
-  const toggleShuffle = useCallback(() => planet.hooks.emit("change_shuffle_enable"), [planet]);
-  const toggleRepeat = useCallback(() => planet.hooks.emit("change_repeat_mode"), [planet]);
-  const seek = useCallback((pct: number) => planet.hooks.emit("play_time_seek", pct), [planet]);
-  const setVolume = useCallback((v: number) => planet.hooks.emit("change_volume", v), [planet]);
+  const togglePlay = useCallback(
+    () => playbackService.togglePlay(playing),
+    [playbackService, playing],
+  );
+  const next = useCallback(() => playbackService.next(), [playbackService]);
+  const prev = useCallback(() => playbackService.previous(), [playbackService]);
+  const toggleShuffle = useCallback(() => playbackService.toggleShuffle(), [playbackService]);
+  const toggleRepeat = useCallback(() => playbackService.toggleRepeat(), [playbackService]);
+  const seek = useCallback((pct: number) => playbackService.seek(pct), [playbackService]);
+  const setVolume = useCallback((v: number) => playbackService.setVolume(v), [playbackService]);
 
   // Up-next: the queue after the current track; used by NowPlaying / Queue.
   const upNext = useMemo(() => {
-    if (!current) return tracks ?? [];
-    const i = (tracks ?? []).findIndex((t) => t.id === current.id);
-    return i >= 0 ? (tracks ?? []).slice(i + 1) : (tracks ?? []);
+    if (!current) return tracks;
+    const i = tracks.findIndex((t) => t.id === current.id);
+    return i >= 0 ? tracks.slice(i + 1) : tracks;
   }, [tracks, current]);
 
   return {
     current,
-    tracks: tracks ?? [],
+    tracks,
     upNext,
     playing,
     progress,
@@ -124,7 +122,7 @@ export function useVibePlayback() {
   };
 }
 
-// Catalog (home / XMB)
+// ── Catalog (home / XMB) ─────────────────────────────────────────────
 
 function buildCatalog(p?: Personalized) {
   const playlists = (p?.playlists ?? []).map(toVibePlaylist);
@@ -156,7 +154,7 @@ export function useCatalog() {
   return { catalog, isLoading };
 }
 
-// Search / charts
+// ── Search / charts ──────────────────────────────────────────────────
 
 /** Returns a search(query) that calls provider.search and projects to vibe shapes. */
 export function useProviderSearch() {

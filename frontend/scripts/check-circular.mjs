@@ -14,6 +14,7 @@ const ALLOWED = [
   // it flags them. Breaking the cycle would mean weakening the domain model.
   ["domain/model/album.ts", "domain/model/artist.ts", "domain/model/track.ts"],
   ["domain/model/album.ts", "domain/model/track.ts"],
+  ["domain/model/artist.ts", "domain/model/track.ts"],
 ];
 
 const allowedKeys = new Set(ALLOWED.map((cycle) => [...cycle].sort().join("|")));

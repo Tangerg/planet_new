@@ -3,14 +3,12 @@
 // Resident shell + shared-element transition engine, ported verbatim from the
 // example Sonance Vibe.html App. The phase machine (trans / startForward /
 // startReverse / morph layers) is unchanged; only MOCK playback became the real kernel.
+//
+// The morph engine, spatial navigation, ambient glow, context menu, and
+// likes/history state have been extracted into dedicated hooks for clarity.
+// Shell remains the composition root: it owns navigation state, data fetching
+// (openDetail / openArtist), the XMB category model, and screen rendering.
 // ============================================================
-/* eslint-disable react-hooks/exhaustive-deps --
-   The shared-element transition engine + spatial-nav effects here use
-   intentionally curated dependency arrays (keyed on `view` / `current.id`).
-   The referenced callbacks (startReverse, openDetail, openChart, likedDetail)
-   are recreated each render by design; adding them would re-run the morph
-   effects every frame and break the transition. This is a verbatim port whose
-   exact dep arrays ARE the contract, so the rule is disabled file-wide here. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -20,60 +18,23 @@ import { artBg, Equalizer, Icon } from "./primitives";
 import { MOCK } from "./mockCatalog";
 import { useCatalog, useLyric, useProviderSearch, useToplists, useVibePlayback } from "./hooks";
 import { toVibeAlbum, toVibeArtist, toVibePlaylist, toVibeTracks, type VibeTrack } from "./adapt";
+import { useAmbient } from "./useAmbient";
+import { useLikes } from "./useLikes";
+import { useMorphTransition } from "./useMorphTransition";
+import { useSpatialNavigation } from "./useSpatialNavigation";
+import { useContextMenu } from "./useContextMenu";
 
 import { PlayerBar } from "./PlayerBar";
 import { XMB } from "./XMB";
 import { ForYouScreen } from "./ForYou";
 import { NowPlaying } from "./NowPlaying";
-import { ContextMenu } from "./Menu";
+// ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
+const LazyContextMenu = React.lazy(() =>
+  import("./Menu").then((m) => ({ default: m.ContextMenu })),
+);
 import { SearchScreen, ChartsScreen, LibraryScreen } from "./Browse";
 import { PlaylistDetailScreen, QueueScreen, HistoryScreen, SettingsScreen } from "./Detail";
 import { ArtistScreen, ProfileScreen, BrowseScreen, CommentsScreen } from "./Pages";
-
-/* ---- keyboard spatial focus: pick the nearest focusable in a direction (by geometry) ---- */
-function nearestInDirection(
-  current: HTMLElement,
-  dir: string,
-  candidates: HTMLElement[],
-): HTMLElement | null {
-  const c = current.getBoundingClientRect();
-  const cx = c.left + c.width / 2,
-    cy = c.top + c.height / 2;
-  let best: HTMLElement | null = null,
-    bestScore = Infinity;
-  for (const el of candidates) {
-    if (el === current) continue;
-    const r = el.getBoundingClientRect();
-    const x = r.left + r.width / 2,
-      y = r.top + r.height / 2;
-    const dx = x - cx,
-      dy = y - cy;
-    let primary: number, secondary: number;
-    if (dir === "right") {
-      if (dx <= 4) continue;
-      primary = dx;
-      secondary = Math.abs(dy);
-    } else if (dir === "left") {
-      if (dx >= -4) continue;
-      primary = -dx;
-      secondary = Math.abs(dy);
-    } else if (dir === "down") {
-      if (dy <= 4) continue;
-      primary = dy;
-      secondary = Math.abs(dx);
-    } else {
-      if (dy >= -4) continue;
-      primary = -dy;
-      secondary = Math.abs(dx);
-    }
-    const score = primary + secondary * 2.2;
-    if (score < bestScore) {
-      bestScore = score;
-      best = el;
-    }
-  }
-  return best;
-}
 
 const ACCENTS = ["#0fff83", "#ff2188", "#19d3c5", "#ff5a3c", "#7a5cff"];
 
@@ -86,7 +47,6 @@ const PLACEHOLDER_TRACK: VibeTrack = {
   coverSeed: 0,
   durSec: 0,
   duration: "0:00",
-  tracks: [] as any,
 };
 
 export default function Shell() {
@@ -148,35 +108,8 @@ export default function Shell() {
     [catalog],
   );
 
-  /* ---- likes / settings / history (local state, as in the example) ---- */
-  const [liked, setLiked] = useState<Set<string>>(new Set());
-  const [history, setHistory] = useState<VibeTrack[]>([]);
-  const [settings, setSettings] = useState({
-    quality: "SQ",
-    npMode: "COVER",
-    crossfade: true,
-    gapless: false,
-    waves: true,
-    comments: true,
-    reduceMotion: false,
-  });
-  const toggleLike = (id: string) =>
-    setLiked((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) {
-        n.delete(id);
-      } else {
-        n.add(id);
-      }
-      return n;
-    });
-  const isLiked = !!(current?.id && liked.has(current.id));
-
-  // Record play history (dropping consecutive duplicates).
-  useEffect(() => {
-    if (!current?.id) return;
-    setHistory((h) => (h[h.length - 1]?.id === current.id ? h : [...h, current]));
-  }, [current?.id]);
+  /* ---- likes / settings / history (extracted hook) ---- */
+  const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
 
   // Real lyrics ([] when none; NowPlaying shows "No lyrics" on its own).
   const realLyrics = useLyric(playback.current?.id);
@@ -256,269 +189,22 @@ export default function Shell() {
       tracks: screenData.allTracks.filter((t: any) => liked.has(t.id)),
     });
 
-  /* ---- right-click context menu ---- */
-  const [menu, setMenu] = useState<any>(null);
-  const openMenu = (e: any, items: any[]) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setMenu({ x: e.clientX, y: e.clientY, items });
-  };
-  const trackMenu = (track: any) =>
-    [
-      { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
-      { sep: true },
-      {
-        label: liked.has(track.id) ? "Remove from Liked" : "Add to Liked",
-        icon: "heart",
-        onClick: () => toggleLike(track.id),
-      },
-      track.artistId && {
-        label: "Go to artist",
-        icon: "user",
-        onClick: () => openArtist({ id: track.artistId, name: track.artist }),
-      },
-    ].filter(Boolean) as any[];
-  const collMenu = (item: any) =>
-    [
-      { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
-      item.artistId && {
-        label: "Go to artist",
-        icon: "user",
-        onClick: () => openArtist({ id: item.artistId, name: item.artist }),
-      },
-    ].filter(Boolean) as any[];
-  useEffect(() => {
-    window.__TRACKMENU = (e, track) => openMenu(e, trackMenu(track));
-    window.__COLLMENU = (e, item) => openMenu(e, collMenu(item));
-    window.__ENQUEUE = () => {};
-    return () => {
-      window.__TRACKMENU = undefined;
-      window.__COLLMENU = undefined;
-      window.__ENQUEUE = undefined;
-    };
-  });
+  /* ---- right-click context menu (extracted hook) ---- */
+  const { menu, setMenu } = useContextMenu({ onPlay, openDetail, openArtist, toggleLike, liked });
 
-  /* ---- PS5-style dynamic ambient: page glow follows the focused card ---- */
-  const setAmbient = (seed?: number, grad?: string[]) => {
-    const el = document.getElementById("ambient");
-    if (!el) return;
-    el.style.background = artBg(seed, grad);
-    el.style.opacity = ".5";
-  };
-  useEffect(() => {
-    window.__AMBIENT = setAmbient;
-    return () => {
-      window.__AMBIENT = undefined;
-    };
-  });
-  useEffect(() => {
-    const el = document.getElementById("ambient");
-    if (el) el.style.opacity = "0";
-  }, [view]);
+  /* ---- PS5-style dynamic ambient (extracted hook) ---- */
+  useAmbient(view);
 
-  /* ==========================================================================
-     shared-element navigation: tile morphs onto destination hero, and back
-     -- the entire block below is a verbatim port of the example transition engine --
-     ========================================================================== */
+  /* ---- shared-element transition engine (extracted hook) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
-  const [trans, setTrans] = useState<any>(null);
-  const lastTile = useRef<any>(null);
-  const timers = useRef<any[]>([]);
-  const EASE = "cubic-bezier(.16,1,.3,1)";
-  const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const clearTimers = () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-  };
-  const relRect = (r: any) => {
-    const v = viewRef.current!.getBoundingClientRect();
-    return {
-      left: r.left - v.left,
-      top: r.top - v.top,
-      width: r.width,
-      height: r.height,
-      borderRadius: 0,
-    };
-  };
-  const fullRect = () => {
-    const v = viewRef.current!.getBoundingClientRect();
-    return { left: 0, top: 0, width: v.width, height: v.height, borderRadius: 0 };
-  };
-  const heroRect = (sel: string) => {
-    const root = viewRef.current;
-    if (!root) return null;
-    const el = root.querySelector(sel);
-    if (!el) return null;
-    const r: any = relRect(el.getBoundingClientRect());
-    const br = getComputedStyle(el).borderTopLeftRadius;
-    r.borderRadius = br && br !== "0px" ? br : 0;
-    return r;
-  };
-  const startForward = (item: any, rect: any) => {
-    if (!viewRef.current || reduceMo()) {
-      if (item.run) item.run();
-      return;
-    }
-    clearTimers();
-    const o = relRect(rect);
-    const origin = { ...o, borderRadius: 6 };
-    const vw = viewRef.current.getBoundingClientRect();
-    const px = o.left + o.width / 2,
-      py = o.top + o.height / 2;
-    const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
-    lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
-    if (item.run) item.run();
-    setTrans({
-      from: view,
-      to: item.dest,
-      origin,
-      target: fullRect(),
-      point: { x: px, y: py },
-      clipR,
-      seed: item.seed,
-      grad: item.grad,
-      image: item.image,
-      dir: "fwd",
-      phase: "start",
-      hero: null,
-      measured: false,
-    });
-    timers.current.push(
-      setTimeout(() => setTrans((t: any) => t && { ...t, phase: "reveal" }), 620),
-    );
-    timers.current.push(setTimeout(() => setTrans(null), 1000));
-  };
-  const startReverse = () => {
-    const lt = lastTile.current;
-    const from = view;
-    if (!viewRef.current || !lt || reduceMo()) {
-      setView("xmb");
-      return;
-    }
-    clearTimers();
-    const src = heroRect(".t-base [data-hero]");
-    const o = lt.origin;
-    const vw = viewRef.current.getBoundingClientRect();
-    const px = o.left + o.width / 2,
-      py = o.top + o.height / 2;
-    const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
-    setTrans({
-      from,
-      to: "xmb",
-      origin: lt.origin,
-      target: src || fullRect(),
-      point: { x: px, y: py },
-      clipR,
-      seed: lt.seed,
-      grad: lt.grad,
-      image: lt.image,
-      dir: "rev",
-      phase: "start",
-      hero: !!src,
-    });
-    setView("xmb");
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => setTrans((t: any) => t && { ...t, phase: "morph" })),
-    );
-    timers.current.push(setTimeout(() => setTrans(null), 760));
-  };
-  const goMorph = (rect: any, seed?: number, grad?: string[], run?: () => void, image?: string) =>
-    startForward({ seed, grad, dest: "_", run, image }, rect);
-  useEffect(() => {
-    window.__MORPH = goMorph as any;
-    return () => {
-      window.__MORPH = undefined;
-    };
-  });
-  const layerStyle = (t: any): React.CSSProperties => {
-    const begin = t.phase === "start" || t.hero === false;
-    return {
-      position: "absolute",
-      inset: 0,
-      height: "100%",
-      pointerEvents: "none",
-      zIndex: 20,
-      opacity: begin ? 1 : 0,
-      transform: begin ? "scale(1)" : "scale(.985)",
-      filter: begin ? "blur(0px)" : "blur(3px)",
-      transformOrigin: "center",
-      transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
-    };
-  };
+  const { trans, startForward, startReverse, layerStyle, EASE } = useMorphTransition(
+    viewRef,
+    view,
+    setView,
+  );
 
-  React.useLayoutEffect(() => {
-    if (!trans || trans.dir !== "fwd" || trans.measured) return;
-    const hero = heroRect(".t-base [data-hero]");
-    setTrans((t: any) => t && { ...t, target: hero || t.target, hero: !!hero, measured: true });
-  }, [trans]);
-  React.useEffect(() => {
-    if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
-    const id = requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        setTrans((t: any) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
-      ),
-    );
-    return () => cancelAnimationFrame(id);
-  }, [trans]);
-
-  const openNP = () => setView("np");
-
-  /* ---- Esc returns to launcher ---- */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && view !== "xmb") startReverse();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [view]);
-
-  /* ---- arrow-key spatial navigation inside non-XMB screens ---- */
-  useEffect(() => {
-    if (view === "xmb") return;
-    const root = viewRef.current;
-    if (!root) return;
-    const list = () =>
-      (
-        [
-          ...root.querySelectorAll(
-            'button:not([disabled]), input, [tabindex]:not([tabindex="-1"]), a[href]',
-          ),
-        ] as HTMLElement[]
-      ).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
-    const t = setTimeout(() => {
-      const f = list();
-      if (f.length && !root.contains(document.activeElement)) f[0].focus();
-    }, 90);
-    const onKey = (e: KeyboardEvent) => {
-      const ae = document.activeElement as HTMLElement | null;
-      const inInput = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
-      const arrows: Record<string, string> = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-      };
-      if (arrows[e.key]) {
-        if (inInput && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return;
-        const items = list();
-        if (!items.length) return;
-        const cur = ae && root.contains(ae) ? ae : items[0];
-        const next = nearestInDirection(cur, arrows[e.key], items);
-        if (next) {
-          e.preventDefault();
-          next.focus();
-        }
-      } else if (e.key === "Backspace" && !inInput) {
-        e.preventDefault();
-        startReverse();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [view]);
+  /* ---- arrow-key spatial navigation (extracted hook) ---- */
+  useSpatialNavigation(viewRef, view, startReverse);
 
   const npView = view === "np";
   const homeView = view === "xmb";
@@ -546,7 +232,7 @@ export default function Shell() {
             grad: current?.gradient,
             image: current?.image,
             dest: "np",
-            run: openNP,
+            run: () => setView("np"),
           },
           {
             key: "lyrics",
@@ -555,7 +241,7 @@ export default function Shell() {
             seed: (current?.coverSeed || 0) + 1,
             grad: current?.gradient,
             dest: "np",
-            run: openNP,
+            run: () => setView("np"),
           },
           {
             key: "queue",
@@ -839,6 +525,7 @@ export default function Shell() {
         ],
       },
     ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats intentionally curates deps; the referenced callbacks (openDetail, openChart, openLib, likedDetail) are recreated each render by design.
   }, [current, queue, liked, screenData, toplists]);
 
   /* ==========================================================================
@@ -1156,11 +843,11 @@ export default function Shell() {
                         zIndex: 40,
                         pointerEvents: "none",
                         overflow: "hidden",
-                        left: geom.left,
-                        top: geom.top,
-                        width: geom.width,
-                        height: geom.height,
-                        borderRadius: geom.borderRadius,
+                        left: geom!.left,
+                        top: geom!.top,
+                        width: geom!.width,
+                        height: geom!.height,
+                        borderRadius: geom!.borderRadius,
                         opacity: op,
                         background: artBg(t.seed, t.grad),
                         boxShadow: "0 30px 70px -26px rgba(0,0,0,.5)",
@@ -1216,13 +903,15 @@ export default function Shell() {
       </div>
 
       {menu && (
-        <ContextMenu
-          x={menu.x}
-          y={menu.y}
-          items={menu.items}
-          accent={accent}
-          onClose={() => setMenu(null)}
-        />
+        <React.Suspense fallback={null}>
+          <LazyContextMenu
+            x={menu.x}
+            y={menu.y}
+            items={menu.items}
+            accent={accent}
+            onClose={() => setMenu(null)}
+          />
+        </React.Suspense>
       )}
     </div>
   );

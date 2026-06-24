@@ -1,0 +1,85 @@
+import type { IPlanet } from "../kernel";
+import type { IProvider } from "@domain";
+import type { Track } from "@domain/model/track";
+
+/**
+ * Application service for playback use cases.
+ *
+ * Encapsulates play-URL resolution and kernel command emission so that UI
+ * components never touch the provider or the event bus directly. The service
+ * is constructed with a Planet (kernel) and a provider getter (domain port);
+ * it never imports concrete providers or React.
+ *
+ * Dependency direction: core/application → core/kernel + domain (inner layers).
+ */
+export class PlaybackService {
+  constructor(
+    private readonly planet: IPlanet,
+    private readonly getProvider: () => IProvider,
+  ) {}
+
+  // ── Queue + play ──────────────────────────────────────────────────
+
+  /**
+   * Set the play queue and start at the given track.
+   * Resolves playable URLs via the provider before emitting to the kernel.
+   * Tracks are mutated in place to carry the resolved `playUrl`.
+   */
+  async play(tracks: Track[], track: Track, key = "vibe"): Promise<void> {
+    const queue = tracks.length ? tracks : [track];
+    const ids = queue.map((t) => t.id).filter(Boolean);
+    try {
+      const urls = await this.getProvider().playUrls(ids);
+      for (const u of urls) {
+        const t = queue.find((x) => x.id === u.id);
+        if (t) t.playUrl = u.playUrl;
+      }
+    } catch {
+      // Provider has no play-URL support: stay silent; the UI still switches track.
+    }
+    this.planet.hooks.emit("change_play_queue", { key, tracks: queue, track });
+  }
+
+  // ── Transport ─────────────────────────────────────────────────────
+
+  /** Toggle play/pause. Pass the current playing state to determine direction. */
+  togglePlay(isPlaying: boolean): void {
+    this.planet.hooks.emit(isPlaying ? "pause" : "play");
+  }
+
+  /** Skip to the next track in the queue. */
+  next(): void {
+    this.planet.hooks.emit("next_track");
+  }
+
+  /** Skip to the previous track in the queue. */
+  previous(): void {
+    this.planet.hooks.emit("previous_track");
+  }
+
+  // ── Progress ──────────────────────────────────────────────────────
+
+  /** Seek to a position (0..100 percent of the track duration). */
+  seek(percent: number): void {
+    this.planet.hooks.emit("play_time_seek", percent);
+  }
+
+  // ── Volume ────────────────────────────────────────────────────────
+
+  /** Set the volume (0..100 on the kernel scale). */
+  setVolume(volume: number): void {
+    this.planet.hooks.emit("change_volume", volume);
+  }
+
+  // ── Shuffle / Repeat ──────────────────────────────────────────────
+
+  /** Toggle shuffle mode. */
+  toggleShuffle(): void {
+    this.planet.hooks.emit("change_shuffle_enable");
+  }
+
+  /** Cycle through repeat modes (OFF → ALL → ONE → OFF). */
+  toggleRepeat(): void {
+    this.planet.hooks.emit("change_repeat_mode");
+  }
+}
