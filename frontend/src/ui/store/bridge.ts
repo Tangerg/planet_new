@@ -52,7 +52,11 @@ export class PlayQueueStoreBridge extends Plugin {
     usePlayQueueStore.setState((s) => ({ ...s, duration }));
   }
 
+  private lastProgressSecond = -1;
   private onProgressChanged(progress: Progress): void {
+    const sec = Math.floor(progress.duration);
+    if (sec === this.lastProgressSecond) return;
+    this.lastProgressSecond = sec;
     usePlayQueueStore.setState((s) => ({ ...s, progress }));
   }
 }

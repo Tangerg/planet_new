@@ -44,6 +44,23 @@ export function CoverFlow({
   const clamp = (n: number) => Math.max(0, Math.min(items.length - 1, n));
   const cur = items[center];
 
+  // refs capture latest values for the stable effect below
+  const centerRef = useRef(center);
+  const expandedRef = useRef(expanded);
+  const itemsRef = useRef(items);
+  const tracksForRef = useRef(tracksFor);
+  const onOpenRef = useRef(onOpen);
+  const setExpandedRef = useRef(setExpanded);
+  const setCenterRef = useRef(setCenter);
+  // sync refs every render so the stable event handler always reads latest values
+  centerRef.current = center;
+  expandedRef.current = expanded;
+  itemsRef.current = items;
+  tracksForRef.current = tracksFor;
+  onOpenRef.current = onOpen;
+  setExpandedRef.current = setExpanded;
+  setCenterRef.current = setCenter;
+
   // background follows the centered cover
   useEffect(() => {
     if (cur && window.__AMBIENT) window.__AMBIENT(cur.seed, cur.grad);
@@ -65,30 +82,34 @@ export function CoverFlow({
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         e.stopPropagation();
-        setCenter((c) => clamp(c - 1));
+        setCenterRef.current((c: number) =>
+          Math.max(0, Math.min(itemsRef.current.length - 1, c - 1)),
+        );
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         e.stopPropagation();
-        setCenter((c) => clamp(c + 1));
+        setCenterRef.current((c: number) =>
+          Math.max(0, Math.min(itemsRef.current.length - 1, c + 1)),
+        );
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         e.stopPropagation();
-        if (tracksFor) setExpanded(true);
+        if (tracksForRef.current) setExpandedRef.current(true);
       } else if (e.key === "ArrowUp") {
-        if (expanded) {
+        if (expandedRef.current) {
           e.preventDefault();
           e.stopPropagation();
-          setExpanded(false);
+          setExpandedRef.current(false);
         }
       } else if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
-        onOpen(items[center]);
+        onOpenRef.current(itemsRef.current[centerRef.current]);
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  });
+  }, []);
 
   const onWheel = (e: React.WheelEvent) => {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
@@ -103,6 +124,7 @@ export function CoverFlow({
     }
   };
   const onDown = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     drag.current = { x: e.clientX, start: center };
   };
   const onMove = (e: React.PointerEvent) => {
@@ -110,7 +132,8 @@ export function CoverFlow({
     const d = e.clientX - drag.current.x;
     setCenter(clamp(drag.current.start - Math.round(d / 120)));
   };
-  const onUp = () => {
+  const onUp = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
     drag.current = null;
   };
 

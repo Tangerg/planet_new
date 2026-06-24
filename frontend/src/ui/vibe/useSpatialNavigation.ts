@@ -3,7 +3,7 @@
  * focusable element in the pressed direction by geometry. Extracted from
  * Shell.tsx.
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 
 /** Pick the nearest focusable in a direction (by geometry). */
@@ -56,6 +56,9 @@ export function useSpatialNavigation(
   view: string,
   startReverse: () => void,
 ) {
+  const startReverseRef = useRef(startReverse);
+  startReverseRef.current = startReverse;
+
   useEffect(() => {
     if (view === "xmb") return;
     const root = viewRef.current;
@@ -93,7 +96,7 @@ export function useSpatialNavigation(
         }
       } else if (e.key === "Backspace" && !inInput) {
         e.preventDefault();
-        startReverse();
+        startReverseRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -101,5 +104,5 @@ export function useSpatialNavigation(
       clearTimeout(t);
       window.removeEventListener("keydown", onKey);
     };
-  }, [view, viewRef, startReverse]);
+  }, [view, viewRef]);
 }
