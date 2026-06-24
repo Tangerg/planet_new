@@ -694,6 +694,7 @@ export default function Shell() {
           current={current}
           onNext={playNext}
           onPrev={playPrev}
+          progressSec={playback.progress.duration}
           initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
           onClose={startReverse}
         />
