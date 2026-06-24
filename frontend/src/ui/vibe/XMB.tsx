@@ -189,7 +189,6 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
             letterSpacing: active ? ".02em" : ".005em",
             lineHeight: 1.1,
             color: active ? "#fff" : "rgba(255,255,255,.8)",
-            textShadow: "0 2px 18px rgba(0,0,0,.6)",
             transition: `all .55s ${XMB_EASE}`,
             whiteSpace: "nowrap",
             overflow: "hidden",
