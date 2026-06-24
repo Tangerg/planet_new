@@ -103,6 +103,7 @@ export class Queue extends EventEmitter<QueueEventMap> {
   }
 
   select(track: Track): void {
+    if (!track) return;
     const index = this.findIndex(track);
     if (index === -1) {
       return;
