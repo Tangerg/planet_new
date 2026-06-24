@@ -70,7 +70,9 @@ body {
 
 /* refined finishing: selection, focus, tactile press */
 ::selection {
-  background: var(--accent);
+  /* accent-tinted wash (not a solid block) so selected text stays readable on
+     any accent — solid neon green/cyan + white was low-contrast. */
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
   color: #fff;
 }
 button,
@@ -78,11 +80,16 @@ input,
 [tabindex] {
   outline: none;
 }
+/* premium haloed focus ring: a dark gap ring then the accent, instead of a flat
+   offset outline. Box-shadow only — no layout reflow. Transparent outline kept
+   so forced-colors / high-contrast mode still shows focus. */
 button:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid transparent;
+  box-shadow:
+    0 0 0 2px var(--surf-0),
+    0 0 0 4px var(--accent);
 }
 @media (prefers-reduced-motion: no-preference) {
   .pill-accent,
@@ -281,11 +288,16 @@ input:focus-visible,
   width: 8px;
 }
 .scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  /* floating thumb: transparent border + padding-box clip insets the fill so the
+     thumb reads as a slim pill with breathing room, not an edge-to-edge bar. */
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 .scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.32);
+  background-clip: padding-box;
 }
 .scroll-d {
   overflow-y: auto;
@@ -299,6 +311,8 @@ input:focus-visible,
 .scroll-d::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.18);
   border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 /* frosted glass player bar */
