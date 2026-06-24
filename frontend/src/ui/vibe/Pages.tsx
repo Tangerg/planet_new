@@ -418,7 +418,9 @@ function ProfileScreen({
           zIndex: 4,
           height: "100%",
           display: "grid",
-          gridTemplateColumns: "300px 280px 1fr",
+          // minmax(0,…) so the panels shrink on a narrow window instead of the
+          // fixed 300+280 px summing past the viewport and clipping.
+          gridTemplateColumns: "minmax(0, 300px) minmax(0, 280px) minmax(0, 1fr)",
           gap: 0,
           padding: "70px 56px 40px",
           alignItems: "start",
@@ -655,7 +657,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
       style={{
         height: "100%",
         display: "grid",
-        gridTemplateColumns: "0.78fr 1.22fr",
+        gridTemplateColumns: "minmax(0, 0.78fr) minmax(0, 1.22fr)",
         background: "var(--surf-0)",
       }}
     >

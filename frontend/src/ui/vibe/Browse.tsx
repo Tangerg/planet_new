@@ -187,7 +187,7 @@ export function SearchScreen({
             style={{
               marginTop: 40,
               display: "grid",
-              gridTemplateColumns: "minmax(280px, 0.9fr) 1.1fr",
+              gridTemplateColumns: "minmax(280px, 0.9fr) minmax(0, 1.1fr)",
               gap: 48,
             }}
           >
@@ -435,7 +435,7 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
         <div className="mlabel" style={{ color: "var(--tx-3)", marginBottom: 26 }}>
           Ranked by plays · refreshed daily
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
           {((data.charts?.length ? data.charts : MOCK.charts) as any[]).map((c: any, i: number) => (
             <div key={c.id} className="rise" style={{ animationDelay: i * 0.05 + "s" }}>
               <ChartCard
@@ -797,7 +797,13 @@ export function LibraryScreen({
             </div>
           )}
           {tab === "songs" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 40 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+                columnGap: 40,
+              }}
+            >
               <div>
                 {tracks.slice(0, half).map((t: any, i: number) => (
                   <TrackRow

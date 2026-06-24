@@ -299,7 +299,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            // minmax(0,1fr) (not bare 1fr): a long tile name must not blow the
+            // track past its share and push the grid wider than the viewport.
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
             gap: 10,
             marginBottom: 44,
           }}
