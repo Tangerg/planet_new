@@ -311,6 +311,7 @@ export const NowPlaying = React.memo(function NowPlaying({
         seed={coverSeed}
         grad={grad}
         image={track?.image}
+        images={track?.images}
         mono={mono}
         style={{ position: "absolute", inset: 0, height: "100%" }}
       >
@@ -723,6 +724,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               seed={track?.coverSeed}
               grad={grad}
               image={track?.image}
+              images={track?.images}
               style={{ width: 44, height: 44, flex: "0 0 auto" }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -831,6 +833,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                       seed={t.coverSeed}
                       grad={t.gradient}
                       image={t.image}
+                      images={t.images}
                       style={{ width: 40, height: 40, flex: "0 0 auto" }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>

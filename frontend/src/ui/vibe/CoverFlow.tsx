@@ -236,6 +236,7 @@ export function CoverFlow({
                   seed={it.seed}
                   grad={it.grad}
                   image={it.image}
+                  images={it.images}
                   className="grain"
                   style={{
                     width: COVER,

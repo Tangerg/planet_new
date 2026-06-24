@@ -287,6 +287,7 @@ function ArtistScreen({
                   seed: t.coverSeed,
                   grad: t.gradient,
                   image: t.image,
+                  images: t.images,
                   obj: t,
                 }))}
                 center={Math.min(flowCenter, tracks.length - 1)}
@@ -332,6 +333,7 @@ function ArtistScreen({
                   seed={al.coverSeed}
                   grad={al.gradient}
                   image={al.image}
+                  images={al.images}
                   item={al}
                   onOpen={() => onOpenAlbum(al)}
                   onPlay={() => onOpenAlbum(al)}
@@ -349,6 +351,7 @@ function ArtistScreen({
                   seed: al.coverSeed,
                   grad: al.gradient,
                   image: al.image,
+                  images: al.images,
                   obj: al,
                 }))}
                 center={Math.min(flowCenter, albums.length - 1)}
@@ -675,6 +678,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
         seed={track?.coverSeed || 0}
         grad={track?.gradient}
         image={track?.image}
+        images={track?.images}
         mono={mono}
         data-hero="1"
         style={{ height: "100%" }}

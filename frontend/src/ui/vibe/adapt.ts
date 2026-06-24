@@ -12,6 +12,7 @@
  */
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
+import { Image } from "@domain/model/image";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 
@@ -28,6 +29,8 @@ export type VibeTrack = {
   album?: string;
   albumId?: string;
   image?: string;
+  /** Size variants (largest-first); <Art> picks the one matching its render box. */
+  images?: Image[];
   coverSeed: number;
   gradient?: string[];
   durSec: number;
@@ -49,6 +52,7 @@ export type VibeCollection = {
   coverSeed: number;
   gradient?: string[];
   image?: string;
+  images?: Image[];
   description?: string;
   tracks: VibeTrack[];
   trackCount?: number;
@@ -70,6 +74,7 @@ export type VibeArtist = {
   coverSeed: number;
   gradient?: string[];
   image?: string;
+  images?: Image[];
   banner?: string;
   listeners?: number;
   genres?: string[];
@@ -101,6 +106,7 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
     album: real.album?.name,
     albumId: real.album?.id,
     image: Track.coverUrl(real),
+    images: real.album?.images,
     coverSeed: seedOf(real.id),
     gradient: undefined,
     durSec: Track.durationSeconds(real),
@@ -122,6 +128,7 @@ export function toVibePlaylist(p: Partial<Playlist>): VibeCollection {
     coverSeed: seedOf(p.id),
     gradient: undefined,
     image: Playlist.coverUrl(p),
+    images: p.images,
     description: p.description,
     tracks: toVibeTracks(p.tracks),
     trackCount: Playlist.trackCount(p),
@@ -140,6 +147,7 @@ export function toVibeAlbum(a: Partial<Album>): VibeCollection {
     coverSeed: seedOf(a.id),
     gradient: undefined,
     image: Album.coverUrl(a),
+    images: a.images,
     year: Album.year(a),
     description: artistName,
     tracks: toVibeTracks(a.tracks),
@@ -154,6 +162,7 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
     coverSeed: seedOf(a.id),
     gradient: undefined,
     image: Artist.coverUrl(a),
+    images: a.images,
     banner: a.banner,
     listeners: a.followers,
     genres: a.genres ?? [],

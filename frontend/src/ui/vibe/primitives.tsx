@@ -7,6 +7,8 @@
 // ============================================================
 import React from "react";
 
+import { pickImageUrl, type Image } from "@domain/model/image";
+
 /* ---- icons (clean geometric, stroke-based) ---- */
 export type IconProps = React.SVGProps<SVGSVGElement> & {
   size?: number;
@@ -288,6 +290,12 @@ export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   seed?: number;
   grad?: string[];
   image?: string;
+  /** Size variants (largest-first). When given, the one matching this box's
+   *  render width is chosen — small thumbs fetch small files, heroes large. */
+  images?: Image[];
+  /** Render width in CSS px for image selection, when the box is sized by a CSS
+   *  class rather than an inline numeric width (cards, tiles). */
+  px?: number;
   mono?: boolean;
   glow?: string;
 };
@@ -296,6 +304,8 @@ export function Art({
   seed = 0,
   grad,
   image,
+  images,
+  px,
   mono = false,
   className = "",
   style = {},
@@ -304,15 +314,23 @@ export function Art({
   ...rest
 }: ArtProps) {
   const bg = artBg(seed, grad);
+  // Resolve the cover: pick the variant matching this box. The render width is
+  // `px` (for CSS-sized boxes) or an inline numeric style.width; scale by DPR
+  // (capped at 2) so retina is crisp without over-fetching. Unknown width
+  // (%/full-bleed) takes the largest.
+  const dpr = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
+  const renderW = px ?? (typeof style.width === "number" ? style.width : undefined);
+  const target = renderW != null ? renderW * dpr : "large";
+  const src = images && images.length ? pickImageUrl(images, target) : image;
   return (
     <div
       className={"grain " + className}
       {...rest}
       style={{ position: "relative", overflow: "hidden", background: bg, ...style }}
     >
-      {image && (
+      {src && (
         <img
-          src={image}
+          src={src}
           alt=""
           draggable={false}
           // Defer off-screen covers and decode off the main thread — covers in
@@ -335,7 +353,7 @@ export function Art({
       {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real
          cover it tints the photo (a coloured film that reads as haze), so skip
          it once an image is present. */}
-      {glow && !image && (
+      {glow && !src && (
         <div
           style={{
             position: "absolute",

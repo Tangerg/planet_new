@@ -173,6 +173,7 @@ export function TrackRow({
         seed={track.coverSeed}
         grad={track.gradient}
         image={track.image}
+        images={track.images}
         style={{ width: 44, height: 44, flex: "0 0 auto" }}
       />
       <div style={{ minWidth: 0, flex: 1 }}>
@@ -308,6 +309,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           seed={track.coverSeed}
           grad={track.gradient}
           image={track.image}
+          images={track.images}
           style={{ width: "100%", aspectRatio: "1", borderRadius: 6 }}
         />
         <button
@@ -573,6 +575,7 @@ export function PlaylistDetailScreen({
             seed={p.coverSeed}
             grad={p.gradient}
             image={p.image}
+            images={p.images}
             data-hero="1"
             style={{
               width: 248,
@@ -783,6 +786,7 @@ export function PlaylistDetailScreen({
                     seed: t.coverSeed,
                     grad: t.gradient,
                     image: t.image,
+                    images: t.images,
                     obj: t,
                   }))}
                   center={Math.min(flowCenter, total - 1)}
@@ -929,6 +933,7 @@ export function QueueScreen({
           seed={current?.coverSeed || 0}
           grad={current?.gradient}
           image={current?.image}
+          images={current?.images}
           data-hero="1"
           style={{
             width: 220,
