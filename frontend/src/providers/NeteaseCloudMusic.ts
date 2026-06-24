@@ -18,6 +18,7 @@ import {
   mapNcmPlaylist,
   mapNcmPlaylistStub,
   mapNcmTrack,
+  toHttps,
 } from "./mappers/ncm";
 
 export type Options = {
@@ -105,12 +106,12 @@ export class NeteaseCloudMusic extends Provider {
       .slice(0, 10)
       .map((s, i) => mapNcmTrack(s, { index: i + 1 }));
     const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
-    const cover: string = artist.cover ?? artist.picUrl ?? "";
+    const cover = toHttps(artist.cover ?? artist.picUrl);
     return {
       id: artist.id?.toString() ?? id,
       name: artist.name ?? "",
       images: cover ? [{ url: cover }] : [],
-      banner: artist.cover ?? "",
+      banner: toHttps(artist.cover),
       alias: artist.alias ?? [],
       description,
       topTracks,
