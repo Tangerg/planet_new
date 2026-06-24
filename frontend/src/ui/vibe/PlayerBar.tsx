@@ -30,6 +30,7 @@ type Props = {
   /** Volume on the kernel's 0..100 scale, with its setter. */
   volume: number;
   onVolume: (v: number) => void;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
 };
 
 export const PlayerBar = React.memo(function PlayerBar({
@@ -54,6 +55,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   onSeek,
   volume,
   onVolume,
+  onOpenArtist,
 }: Props) {
   // Real duration from the kernel (the loaded audio); track metadata is the
   // pre-load fallback so the bar has a sane scale before `durationchange`.
@@ -256,7 +258,34 @@ export const PlayerBar = React.memo(function PlayerBar({
             className="truncate"
             style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
           >
-            {track?.artist || ""}
+            {onOpenArtist && track?.artistId ? (
+              <button
+                style={{
+                  cursor: "pointer",
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  font: "inherit",
+                  color: "inherit",
+                  textAlign: "left",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenArtist({ id: track.artistId, name: track.artist });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onOpenArtist({ id: track.artistId, name: track.artist });
+                  }
+                }}
+              >
+                {track?.artist || ""}
+              </button>
+            ) : (
+              track?.artist || ""
+            )}
           </div>
         </div>
       </div>
