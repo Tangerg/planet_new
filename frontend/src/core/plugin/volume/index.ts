@@ -32,6 +32,8 @@ export class Volume extends Plugin {
 
     this.context.hooks.on("change_volume", this.change, this);
     this.context.hooks.on("mute_or_unmute", this.muteOrUnmute, this);
+
+    this.context.hooks.emit("volume_changed", this.curVolume);
   }
 
   private async change(v: number): Promise<void> {

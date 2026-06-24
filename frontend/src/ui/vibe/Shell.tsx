@@ -16,6 +16,7 @@ import { useActiveProvider } from "@/hooks/useActiveProvider";
 
 import { artBg, Equalizer, Icon } from "./primitives";
 import { MOCK } from "./mockCatalog";
+import { RepeatMode } from "@core/plugin/playqueue/repeat";
 import { useCatalog, useLyric, useProviderSearch, useToplists, useVibePlayback } from "./hooks";
 import { toVibeAlbum, toVibeArtist, toVibePlaylist, toVibeTracks, type VibeTrack } from "./adapt";
 import { useAmbient } from "./useAmbient";
@@ -77,9 +78,11 @@ export default function Shell() {
   const current = playback.current ?? PLACEHOLDER_TRACK;
   const playing = playback.playing;
   const shuffle = playback.shuffle;
+  const repeat = playback.repeat !== RepeatMode.OFF;
   const queue = playback.upNext;
   const setPlaying = () => playback.togglePlay();
   const setShuffle = () => playback.toggleShuffle();
+  const onToggleRepeat = () => playback.toggleRepeat();
   const playNext = () => playback.next();
   const playPrev = () => playback.prev();
 
@@ -891,6 +894,8 @@ export default function Shell() {
             accent={accent}
             shuffle={shuffle}
             setShuffle={setShuffle}
+            repeat={repeat}
+            onToggleRepeat={onToggleRepeat}
             onNext={playNext}
             onPrev={playPrev}
             positionSec={playback.progress.duration}

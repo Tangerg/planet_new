@@ -9,7 +9,14 @@ import Shell from "@/vibe/Shell";
 
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 root.render(
   <React.StrictMode>
