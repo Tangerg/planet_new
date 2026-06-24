@@ -29,7 +29,7 @@ type SearchScreenProps = {
 };
 
 export function SearchScreen({
-  data,
+  data: _data,
   onPlay,
   current,
   playing,
@@ -37,7 +37,7 @@ export function SearchScreen({
   initialQuery = "",
   openArtist,
   openAlbum,
-  openPlaylist,
+  openPlaylist: _openPlaylist,
   liked,
   toggleLike,
   search,
@@ -108,6 +108,7 @@ export function SearchScreen({
             <Icon.search size={26} />
           </span>
           <input
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: search input should focus on mount
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -201,9 +202,9 @@ export function SearchScreen({
                     const a = e.currentTarget.querySelector(".grain");
                     const r = (a || e.currentTarget).getBoundingClientRect();
                     const run = () => openArtist(top);
-                    window.__MORPH
-                      ? window.__MORPH(r, top.coverSeed, top.gradient, run, top.image)
-                      : run();
+                    if (window.__MORPH)
+                      window.__MORPH(r, top.coverSeed, top.gradient, run, top.image);
+                    else run();
                   }}
                   className="grain rise"
                   style={{
@@ -319,7 +320,8 @@ type ChartCardProps = {
 function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) {
   const handle = (e: React.MouseEvent<HTMLButtonElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    window.__MORPH ? window.__MORPH(r, seed, grad, onClick, image) : onClick();
+    if (window.__MORPH) window.__MORPH(r, seed, grad, onClick, image);
+    else onClick();
   };
   return (
     <button
@@ -464,7 +466,8 @@ export function CollectionRow({
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     const a = e.currentTarget.querySelector(".clrt");
     const r = (a || e.currentTarget).getBoundingClientRect();
-    window.__MORPH ? window.__MORPH(r, seed, grad, onOpen, image) : onOpen();
+    if (window.__MORPH) window.__MORPH(r, seed, grad, onOpen, image);
+    else onOpen();
   };
   return (
     <div
@@ -474,6 +477,15 @@ export function CollectionRow({
       }}
       onMouseLeave={() => setHover(false)}
       onClick={handle}
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive row container
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handle(e as any);
+        }
+      }}
       onContextMenu={item ? (e) => window.__COLLMENU?.(e, item) : undefined}
       style={{
         display: "flex",
@@ -710,7 +722,7 @@ export function LibraryScreen({
                 onOpen={(it: any) => openOf(it.obj)}
                 onPlay={(it: any) => {
                   const ts = tracksOf(it.obj);
-                  ts[0] && onPlay(ts[0]);
+                  if (ts[0]) onPlay(ts[0]);
                 }}
                 tracksFor={(it: any) => tracksOf(it.obj)}
                 onPlayTrack={onPlay}

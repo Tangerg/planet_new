@@ -248,7 +248,7 @@ type Props = {
 export function XMB({
   cats,
   accent,
-  playing,
+  playing: _playing,
   showWaves = true,
   onOpen,
   cState,
@@ -268,7 +268,7 @@ export function XMB({
 
   const setItem = (n: number) =>
     setRows((r: any) => ({ ...r, [c]: Math.max(0, Math.min(cat.items.length - 1, n)) }));
-  const glow = artPair(item.seed, item.grad)[1]; // stage-light colour from the active cover
+  const _glow = artPair(item.seed, item.grad)[1]; // stage-light colour from the active cover
   const move = (dc: number) => {
     const nc = Math.max(0, Math.min(cats.length - 1, c + dc));
     setC(nc);
@@ -394,6 +394,16 @@ export function XMB({
             <div
               key={m.key}
               onClick={(e) => (o === 0 ? openItem(m, e) : setItem(i))}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div is a visual layout container in XMB column
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (o === 0) openItem(m, e as any);
+                  else setItem(i);
+                }
+              }}
               style={{
                 position: "absolute",
                 left: 0,

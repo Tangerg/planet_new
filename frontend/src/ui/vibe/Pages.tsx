@@ -63,9 +63,9 @@ function ArtistScreen({
   useEffect(() => {
     setFlowCenter(0);
   }, [tab]);
-  const [a, b] = artPair(artist.coverSeed, artist.gradient);
+  const [_a, b] = artPair(artist.coverSeed, artist.gradient);
   const [followed, setFollowed] = useState(true);
-  const half = Math.ceil(tracks.length / 2);
+  const _half = Math.ceil(tracks.length / 2);
 
   return (
     <div className="fade-in scroll" style={{ height: "100%", background: "var(--surf-0)" }}>
@@ -364,14 +364,18 @@ type ProfileScreenProps = {
   mono: boolean;
 };
 
-function ProfileScreen({ accent, playlists, onOpenPlaylist, onPlay, mono }: ProfileScreenProps) {
-  const [a, b] = ["#1b1033", accent];
-  const items = playlists
-    .slice(0, 6)
-    .map((p: any, i: number) => ({
-      ...p,
-      plays: ["8.40K", "4", "69", "127", "2.3K", "910"][i] || "12",
-    }));
+function ProfileScreen({
+  accent,
+  playlists,
+  onOpenPlaylist,
+  onPlay: _onPlay,
+  mono,
+}: ProfileScreenProps) {
+  const [_a, b] = ["#1b1033", accent];
+  const items = playlists.slice(0, 6).map((p: any, i: number) => ({
+    ...p,
+    plays: ["8.40K", "4", "69", "127", "2.3K", "910"][i] || "12",
+  }));
   const [active, setActive] = useState(1);
   return (
     <div className="fade-in" style={{ height: "100%", position: "relative" }}>
@@ -448,7 +452,8 @@ function ProfileScreen({ accent, playlists, onOpenPlaylist, onPlay, mono }: Prof
                     setActive(i);
                     onOpenPlaylist(p);
                   };
-                  window.__MORPH ? window.__MORPH(r, p.coverSeed, p.gradient, run, p.image) : run();
+                  if (window.__MORPH) window.__MORPH(r, p.coverSeed, p.gradient, run, p.image);
+                  else run();
                 }}
                 style={{
                   background:
@@ -486,7 +491,7 @@ type BrowseScreenProps = {
   accent: string;
 };
 
-function BrowseScreen({ onOpenGenre, accent }: BrowseScreenProps) {
+function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
   const C = MOCK.classification;
   const sections = [
     ["Languages", "languages"],
@@ -532,7 +537,8 @@ function BrowseScreen({ onOpenGenre, accent }: BrowseScreenProps) {
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                       const r = e.currentTarget.getBoundingClientRect();
                       const run = () => onOpenGenre(name);
-                      window.__MORPH ? window.__MORPH(r, i, [color, "#06060a"], run) : run();
+                      if (window.__MORPH) window.__MORPH(r, i, [color, "#06060a"], run);
+                      else run();
                     }}
                   >
                     <h3>{name}</h3>
@@ -610,7 +616,8 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
   const tl = (i: number) =>
     setLikedC((p) => {
       const n = new Set(p);
-      n.has(i) ? n.delete(i) : n.add(i);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
       return n;
     });
   return (
