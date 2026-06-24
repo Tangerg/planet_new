@@ -332,7 +332,10 @@ export function Art({
           }}
         />
       )}
-      {glow && (
+      {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real
+         cover it tints the photo (a coloured film that reads as haze), so skip
+         it once an image is present. */}
+      {glow && !image && (
         <div
           style={{
             position: "absolute",
