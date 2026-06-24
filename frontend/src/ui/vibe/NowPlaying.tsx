@@ -19,12 +19,17 @@ function LyricLines({
 }) {
   // Auto-scroll the active line into view (centered) inside the fixed-height container.
   useEffect(() => {
-    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);
-    if (el && scrollRef.current) {
-      const container = scrollRef.current;
-      const top = el.offsetTop - container.clientHeight / 2 + el.offsetHeight / 2;
-      container.scrollTo({ top, behavior: "smooth" });
-    }
+    const container = scrollRef.current;
+    const el = container?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);
+    if (!el || !container) return;
+    const elRect = el.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const top =
+      container.scrollTop +
+      (elRect.top - containerRect.top) -
+      containerRect.height / 2 +
+      elRect.height / 2;
+    container.scrollTo({ top, behavior: "smooth" });
   }, [active, scrollRef]);
 
   return (
@@ -124,7 +129,8 @@ export function NowPlaying({
   // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
   const lyricScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!lines.length || !lines[0].t) return;
+    // Skip when there are no timestamps (fallback "No lyrics" line has no `t`).
+    if (!lines.length || typeof lines[0].t !== "number") return;
     const posMs = progressSec * 1000;
     // Find the last line whose timestamp <= current position.
     let idx = 0;
