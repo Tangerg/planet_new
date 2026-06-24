@@ -1,7 +1,7 @@
 // ============================================================
-// PlayerBar — frosted glass transport bar (owns its own ticking)
+// PlayerBar — frosted glass transport bar (driven by kernel playback state)
 // ============================================================
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Slider } from "../components/Slider";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
@@ -20,6 +20,14 @@ type Props = {
   setShuffle: (v: boolean) => void;
   onNext?: () => void;
   onPrev?: () => void;
+  /** Real playback progress / total, in seconds (from the kernel). */
+  positionSec: number;
+  durationSec: number;
+  /** Seek to a 0..100 percent of the track. */
+  onSeek: (pct: number) => void;
+  /** Volume on the kernel's 0..100 scale, with its setter. */
+  volume: number;
+  onVolume: (v: number) => void;
 };
 
 export function PlayerBar({
@@ -37,36 +45,26 @@ export function PlayerBar({
   setShuffle,
   onNext,
   onPrev,
+  positionSec,
+  durationSec,
+  onSeek,
+  volume,
+  onVolume,
 }: Props) {
-  const dur = track?.durSec || 222;
-  const [pos, setPos] = useState(0);
+  // Real duration from the kernel (the loaded audio); track metadata is the
+  // pre-load fallback so the bar has a sane scale before `durationchange`.
+  const dur = durationSec > 0 ? durationSec : track?.durSec || 1;
   const barRef = useRef<HTMLSpanElement | null>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
-  const [vol, setVol] = useState(0.8);
+  // While scrubbing, show the dragged seconds; commit the seek on release so
+  // the audio isn't hammered every frame of the drag.
+  const [scrub, setScrub] = useState<number | null>(null);
   const [volOpen, setVolOpen] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  useEffect(() => {
-    setPos(Math.round(dur * 0.32));
-  }, [track?.id, dur]);
-  useEffect(() => {
-    if (!playing) return;
-    const id = setInterval(
-      () =>
-        setPos((p) => {
-          if (p >= dur) {
-            if (!repeat) setTimeout(() => onNext && onNext(), 0);
-            return 0;
-          }
-          return p + 1;
-        }),
-      1000,
-    );
-    return () => clearInterval(id);
-  }, [playing, dur, repeat, onNext]);
-
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
+  const pos = scrub ?? Math.min(positionSec, dur);
 
   const txtBtn: React.CSSProperties = {
     fontFamily: "var(--mono)",
@@ -120,8 +118,12 @@ export function PlayerBar({
         min={0}
         max={dur}
         step={1}
-        value={[Math.min(pos, dur)]}
-        onValueChange={([v]) => setPos(v)}
+        value={[pos]}
+        onValueChange={([v]) => setScrub(v)}
+        onValueCommit={([v]) => {
+          onSeek(dur > 0 ? (v / dur) * 100 : 0);
+          setScrub(null);
+        }}
         onMouseMove={(e) => {
           const r = barRef.current!.getBoundingClientRect();
           setHoverX(e.clientX - r.left);
@@ -318,9 +320,9 @@ export function PlayerBar({
           onMouseLeave={() => setVolOpen(false)}
         >
           <button
-            style={{ ...ctlBtn(false), opacity: vol === 0 ? 0.4 : 1 }}
+            style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
             aria-label="Volume"
-            onClick={() => setVol((v) => (v > 0 ? 0 : 0.8))}
+            onClick={() => onVolume(volume > 0 ? 0 : 80)}
           >
             <Icon.volume size={18} />
           </button>
@@ -355,15 +357,15 @@ export function PlayerBar({
                 color: "rgba(20,20,24,.5)",
               }}
             >
-              {Math.round(vol * 100)}
+              {Math.round(volume)}
             </span>
             <Slider
               orientation="vertical"
               min={0}
               max={1}
               step={0.01}
-              value={[vol]}
-              onValueChange={([v]) => setVol(v)}
+              value={[volume / 100]}
+              onValueChange={([v]) => onVolume(Math.round(v * 100))}
               thumbLabel="Volume"
               style={{
                 position: "relative",

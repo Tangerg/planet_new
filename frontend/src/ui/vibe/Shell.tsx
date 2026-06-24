@@ -4,10 +4,16 @@
 // example Sonance Vibe.html App. The phase machine (trans / startForward /
 // startReverse / morph layers) is unchanged; only MOCK playback became the real kernel.
 // ============================================================
+/* eslint-disable react-hooks/exhaustive-deps --
+   The shared-element transition engine + spatial-nav effects here use
+   intentionally curated dependency arrays (keyed on `view` / `current.id`).
+   The referenced callbacks (startReverse, openDetail, openChart, likedDetail)
+   are recreated each render by design; adding them would re-run the morph
+   effects every frame and break the transition. This is a verbatim port whose
+   exact dep arrays ARE the contract, so the rule is disabled file-wide here. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { usePlanet } from "@/hooks/usePlanet";
 import { useActiveProvider } from "@/hooks/useActiveProvider";
 
 import { artBg, Equalizer, Icon } from "./primitives";
@@ -84,7 +90,6 @@ const PLACEHOLDER_TRACK: VibeTrack = {
 };
 
 export default function Shell() {
-  const planet = usePlanet();
   const provider = useActiveProvider();
   const queryClient = useQueryClient();
 
@@ -158,7 +163,11 @@ export default function Shell() {
   const toggleLike = (id: string) =>
     setLiked((prev) => {
       const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
       return n;
     });
   const isLiked = !!(current?.id && liked.has(current.id));
@@ -347,7 +356,7 @@ export default function Shell() {
   };
   const startForward = (item: any, rect: any) => {
     if (!viewRef.current || reduceMo()) {
-      item.run && item.run();
+      if (item.run) item.run();
       return;
     }
     clearTimers();
@@ -358,7 +367,7 @@ export default function Shell() {
       py = o.top + o.height / 2;
     const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
     lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
-    item.run && item.run();
+    if (item.run) item.run();
     setTrans({
       from: view,
       to: item.dest,
@@ -594,18 +603,16 @@ export default function Shell() {
             dest: "home",
             run: () => setView("home"),
           },
-          ...pls
-            .slice(0, 6)
-            .map((p: any) => ({
-              key: p.id,
-              label: p.name,
-              sub: "Made for you",
-              seed: p.coverSeed,
-              grad: p.gradient,
-              image: p.image,
-              dest: "detail",
-              run: () => openDetail(p),
-            })),
+          ...pls.slice(0, 6).map((p: any) => ({
+            key: p.id,
+            label: p.name,
+            sub: "Made for you",
+            seed: p.coverSeed,
+            grad: p.gradient,
+            image: p.image,
+            dest: "detail",
+            run: () => openDetail(p),
+          })),
         ],
       },
       // 3 · ORGANIZATION — charts (real charts)
@@ -614,19 +621,17 @@ export default function Shell() {
         icon: "bars",
         label: "Charts",
         items: [
-          ...(toplists.length ? toplists : MOCK.charts)
-            .slice(0, 4)
-            .map((c: any) => ({
-              key: c.id,
-              label: c.title,
-              sub: c.updatedAt ? "Updated " + c.updatedAt : "Top chart",
-              icon: "bars",
-              seed: c.coverSeed ?? c.seed,
-              grad: c.gradient,
-              image: c.image,
-              dest: "detail",
-              run: () => (c.coverSeed != null ? openChart(c) : setView("charts")),
-            })),
+          ...(toplists.length ? toplists : MOCK.charts).slice(0, 4).map((c: any) => ({
+            key: c.id,
+            label: c.title,
+            sub: c.updatedAt ? "Updated " + c.updatedAt : "Top chart",
+            icon: "bars",
+            seed: c.coverSeed ?? c.seed,
+            grad: c.gradient,
+            image: c.image,
+            dest: "detail",
+            run: () => (c.coverSeed != null ? openChart(c) : setView("charts")),
+          })),
           {
             key: "all",
             label: "All charts",
@@ -1032,24 +1037,31 @@ export default function Shell() {
         />
 
         <div className="traffic" style={noDragStyle}>
-          <i
-            className="r"
-            style={{ cursor: "pointer" }}
-            onClick={() => wails()?.Quit?.()}
-            title="Close"
-          />
-          <i
-            className="y"
-            style={{ cursor: "pointer" }}
-            onClick={() => wails()?.WindowMinimise?.()}
-            title="Minimise"
-          />
-          <i
-            className="g"
-            style={{ cursor: "pointer" }}
-            onClick={() => wails()?.WindowToggleMaximise?.()}
-            title="Maximise"
-          />
+          {(
+            [
+              ["r", "Close", () => wails()?.Quit?.()],
+              ["y", "Minimise", () => wails()?.WindowMinimise?.()],
+              ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
+            ] as const
+          ).map(([cls, label, action]) => (
+            <i
+              key={cls}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+              role="button"
+              tabIndex={0}
+              aria-label={label}
+              className={cls}
+              style={{ cursor: "pointer" }}
+              onClick={action}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  action();
+                }
+              }}
+              title={label}
+            />
+          ))}
         </div>
 
         {!npView && (
@@ -1190,6 +1202,11 @@ export default function Shell() {
             setShuffle={setShuffle}
             onNext={playNext}
             onPrev={playPrev}
+            positionSec={playback.progress.duration}
+            durationSec={playback.duration.duration}
+            onSeek={playback.seek}
+            volume={playback.volume}
+            onVolume={playback.setVolume}
             onOpenNowPlaying={() => setView("np")}
             onOpenQueue={() => setView("queue")}
             onOpenComments={() => setView("comments")}
