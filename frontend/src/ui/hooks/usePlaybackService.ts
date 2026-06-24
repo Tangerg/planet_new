@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import { PlaybackService } from "@core/application";
 import { usePlanet } from "./usePlanet";
@@ -15,5 +15,9 @@ import { useActiveProvider } from "./useActiveProvider";
 export function usePlaybackService(): PlaybackService {
   const planet = usePlanet();
   const provider = useActiveProvider();
-  return useMemo(() => new PlaybackService(planet, () => provider), [planet, provider]);
+  // Use a ref to track the latest provider so the useMemo doesn't recreate
+  // the service on every provider change — the factory function reads the ref.
+  const providerRef = useRef(provider);
+  providerRef.current = provider;
+  return useMemo(() => new PlaybackService(planet, () => providerRef.current), [planet]);
 }

@@ -75,16 +75,26 @@ export default function Shell() {
 
   /* ---- real kernel playback state (replaces the example MOCK + local useState) ---- */
   const playback = useVibePlayback();
+  // Destructure stable callbacks from playback (they are useCallback-ed in hooks.ts)
+  const {
+    play: playFn,
+    togglePlay,
+    toggleShuffle,
+    toggleRepeat,
+    next: playNextFn,
+    prev: playPrevFn,
+  } = playback;
+
   const current = playback.current ?? PLACEHOLDER_TRACK;
   const playing = playback.playing;
   const shuffle = playback.shuffle;
   const repeat = playback.repeat !== RepeatMode.OFF;
   const queue = playback.upNext;
-  const setPlaying = () => playback.togglePlay();
-  const setShuffle = () => playback.toggleShuffle();
-  const onToggleRepeat = () => playback.toggleRepeat();
-  const playNext = () => playback.next();
-  const playPrev = () => playback.prev();
+  const setPlaying = useCallback(() => togglePlay(), [togglePlay]);
+  const setShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
+  const onToggleRepeat = useCallback(() => toggleRepeat(), [toggleRepeat]);
+  const playNext = useCallback(() => playNextFn(), [playNextFn]);
+  const playPrev = useCallback(() => playPrevFn(), [playPrevFn]);
 
   /* Current playable context (filled once a detail/artist loads); onPlay(track) plays within this list. */
   const playContext = useRef<VibeTrack[]>([]);
@@ -94,9 +104,9 @@ export default function Shell() {
       const ctx = playContext.current;
       // Use the context list as the queue only when it actually contains this track; otherwise play the single track (e.g. a search result).
       const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
-      playback.play(list, track);
+      playFn(list, track);
     },
-    [playback],
+    [playFn],
   );
 
   /* ---- catalog / charts / search (real provider) ---- */
@@ -122,78 +132,90 @@ export default function Shell() {
   const lyrics = realLyrics.length ? realLyrics : [];
 
   /* ---- open detail: fetch the real collection async (switch screen + skeleton now, backfill tracks when data lands) ---- */
-  const openDetail = (obj: any) => {
-    // Detail screens assume tracks is always an array (they read p.tracks.length); a summary (charts especially) may lack it, so default it.
-    obj = { ...obj, tracks: obj?.tracks ?? [] };
-    setDetail(obj);
-    playContext.current = obj.tracks;
-    setView("detail");
-    // Real playlist/collection summaries carry no tracks -> fetch detail to backfill.
-    if (obj?.id && obj?._real !== false && (!obj.tracks || obj.tracks.length === 0)) {
-      const kind = obj.kind;
-      const fetcher =
-        kind === "Album"
-          ? () => provider.albumDetail(obj.id).then(toVibeAlbum)
-          : kind === "Chart"
-            ? () => provider.toplistDetail(obj.id).then(toVibePlaylist)
-            : () => provider.playlistDetail(obj.id).then(toVibePlaylist);
-      queryClient
-        .fetchQuery({ queryKey: ["detail", kind, provider.name, obj.id], queryFn: fetcher })
-        .then((full: any) => {
-          // full (detail) is the base; keep summary name/image/coverSeed/kind when detail lacks them (charts especially).
-          const merged: any = { ...obj, ...full };
-          if (!merged.name) merged.name = obj.name;
-          if (!merged.image) merged.image = obj.image;
-          merged.coverSeed = obj.coverSeed ?? merged.coverSeed;
-          merged.kind = obj.kind ?? merged.kind;
-          if (!merged.tracks?.length) merged.tracks = obj.tracks ?? [];
-          playContext.current = merged.tracks ?? [];
-          setDetail(merged);
-        })
-        .catch(() => {});
-    }
-  };
-  const albumDetail = (al: any) => openDetail({ ...al, kind: "Album" });
-  const openChart = (c: any) => openDetail({ ...c, kind: "Chart", _real: true });
-  const openArtist = (ar: any) => {
-    setArtistObj(ar);
-    playContext.current = ar?.tracks ?? [];
-    setView("artist");
-    if (ar?.id && (!ar.tracks || ar.tracks.length === 0)) {
-      queryClient
-        .fetchQuery({
-          queryKey: ["artist", provider.name, ar.id],
-          queryFn: () => provider.artistDetail(ar.id),
-        })
-        .then((full) => {
-          const mapped: any = toVibeArtist(full);
-          mapped.tracks = toVibeTracks(full.topTracks);
-          playContext.current = mapped.tracks;
-          setArtistObj(mapped);
-        })
-        .catch(() => {});
-    }
-  };
-  const openGenre = (name?: string) => {
+  const openDetail = useCallback(
+    (obj: any) => {
+      // Detail screens assume tracks is always an array (they read p.tracks.length); a summary (charts especially) may lack it, so default it.
+      obj = { ...obj, tracks: obj?.tracks ?? [] };
+      setDetail(obj);
+      playContext.current = obj.tracks;
+      setView("detail");
+      // Real playlist/collection summaries carry no tracks -> fetch detail to backfill.
+      if (obj?.id && obj?._real !== false && (!obj.tracks || obj.tracks.length === 0)) {
+        const kind = obj.kind;
+        const fetcher =
+          kind === "Album"
+            ? () => provider.albumDetail(obj.id).then(toVibeAlbum)
+            : kind === "Chart"
+              ? () => provider.toplistDetail(obj.id).then(toVibePlaylist)
+              : () => provider.playlistDetail(obj.id).then(toVibePlaylist);
+        queryClient
+          .fetchQuery({ queryKey: ["detail", kind, provider.name, obj.id], queryFn: fetcher })
+          .then((full: any) => {
+            // full (detail) is the base; keep summary name/image/coverSeed/kind when detail lacks them (charts especially).
+            const merged: any = { ...obj, ...full };
+            if (!merged.name) merged.name = obj.name;
+            if (!merged.image) merged.image = obj.image;
+            merged.coverSeed = obj.coverSeed ?? merged.coverSeed;
+            merged.kind = obj.kind ?? merged.kind;
+            if (!merged.tracks?.length) merged.tracks = obj.tracks ?? [];
+            playContext.current = merged.tracks ?? [];
+            setDetail(merged);
+          })
+          .catch(() => {});
+      }
+    },
+    [provider, queryClient],
+  );
+  const albumDetail = useCallback((al: any) => openDetail({ ...al, kind: "Album" }), [openDetail]);
+  const openChart = useCallback(
+    (c: any) => openDetail({ ...c, kind: "Chart", _real: true }),
+    [openDetail],
+  );
+  const openArtist = useCallback(
+    (ar: any) => {
+      setArtistObj(ar);
+      playContext.current = ar?.tracks ?? [];
+      setView("artist");
+      if (ar?.id && (!ar.tracks || ar.tracks.length === 0)) {
+        queryClient
+          .fetchQuery({
+            queryKey: ["artist", provider.name, ar.id],
+            queryFn: () => provider.artistDetail(ar.id),
+          })
+          .then((full) => {
+            const mapped: any = toVibeArtist(full);
+            mapped.tracks = toVibeTracks(full.topTracks);
+            playContext.current = mapped.tracks;
+            setArtistObj(mapped);
+          })
+          .catch(() => {});
+      }
+    },
+    [provider, queryClient],
+  );
+  const openGenre = useCallback((name?: string) => {
     setSeedQuery(name || "");
     setView("search");
-  };
-  const openLib = (tab: string, vw?: string) => {
+  }, []);
+  const openLib = useCallback((tab: string, vw?: string) => {
     setLibraryTab(tab);
     setLibraryView(vw || "grid");
     setView("library");
-  };
-  const likedDetail = () =>
-    openDetail({
-      name: "Liked Songs",
-      kind: "Playlist",
-      owner: "You",
-      coverSeed: 0,
-      gradient: ["#2a0420", "#ff4fa3"],
-      _real: false,
-      description: "Everything you've hearted, in one place.",
-      tracks: screenData.allTracks.filter((t: any) => liked.has(t.id)),
-    });
+  }, []);
+  const likedDetail = useCallback(
+    () =>
+      openDetail({
+        name: "Liked Songs",
+        kind: "Playlist",
+        owner: "You",
+        coverSeed: 0,
+        gradient: ["#2a0420", "#ff4fa3"],
+        _real: false,
+        description: "Everything you've hearted, in one place.",
+        tracks: screenData.allTracks.filter((t: any) => liked.has(t.id)),
+      }),
+    [openDetail, screenData, liked],
+  );
 
   /* ---- right-click context menu (extracted hook) ---- */
   const { menu, setMenu } = useContextMenu({ onPlay, openDetail, openArtist, toggleLike, liked });
@@ -531,7 +553,7 @@ export default function Shell() {
         ],
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats intentionally curates deps; the referenced callbacks (openDetail, openChart, openLib, likedDetail) are recreated each render by design.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats intentionally curates deps; the referenced callbacks (openDetail, openChart, openLib, likedDetail) are now memoized and stable, so they don't need to be deps here.
   }, [current, queue, liked, screenData, toplists]);
 
   /* ==========================================================================

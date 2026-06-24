@@ -1,7 +1,7 @@
 // ============================================================
 // PlayerBar — frosted glass transport bar (driven by kernel playback state)
 // ============================================================
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Slider } from "../components/Slider";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
@@ -32,7 +32,7 @@ type Props = {
   onVolume: (v: number) => void;
 };
 
-export function PlayerBar({
+export const PlayerBar = React.memo(function PlayerBar({
   track,
   playing,
   setPlaying,
@@ -65,6 +65,9 @@ export function PlayerBar({
   const [scrub, setScrub] = useState<number | null>(null);
   const [volOpen, setVolOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(scrubTimer.current), []);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const pos = scrub ?? Math.min(positionSec, dur);
@@ -127,7 +130,8 @@ export function PlayerBar({
           onSeek(dur > 0 ? (v / dur) * 100 : 0);
           // Keep showing the scrub position until the kernel catches up,
           // avoiding a one-frame snap-back to the old position.
-          setTimeout(() => setScrub(null), 400);
+          clearTimeout(scrubTimer.current);
+          scrubTimer.current = setTimeout(() => setScrub(null), 400);
         }}
         onMouseMove={(e) => {
           const r = barRef.current!.getBoundingClientRect();
@@ -448,4 +452,4 @@ export function PlayerBar({
       </div>
     </div>
   );
-}
+});

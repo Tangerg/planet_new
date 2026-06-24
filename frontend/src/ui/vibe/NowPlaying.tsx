@@ -76,6 +76,84 @@ function LyricLines({
   );
 }
 
+// ============================================================
+// TagStack — floating tag stack (top-left)
+// ============================================================
+function TagStack({
+  accent,
+  liked,
+  toggleLike,
+  extra,
+}: {
+  accent: string;
+  liked: boolean;
+  toggleLike: () => void;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 64,
+        left: 48,
+        zIndex: 6,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        alignItems: "flex-start",
+      }}
+    >
+      <button
+        onClick={toggleLike}
+        aria-label="Like"
+        style={{
+          background: "none",
+          border: 0,
+          cursor: "pointer",
+          color: accent,
+          padding: 0,
+          filter: `drop-shadow(0 4px 12px ${accent}88)`,
+        }}
+      >
+        <Icon.heart size={30} filled={liked} />
+      </button>
+      {extra}
+    </div>
+  );
+}
+
+// ============================================================
+// ModeTag — clickable pill tag (mode toggle), keyboard-accessible
+// ============================================================
+function ModeTag({
+  cls = "tag",
+  onClick,
+  children,
+}: {
+  cls?: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="button"
+      tabIndex={0}
+      className={cls}
+      style={{ cursor: "pointer" }}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 type Props = {
   track: any;
   accent: string;
@@ -94,7 +172,7 @@ type Props = {
   progressSec?: number;
 };
 
-export function NowPlaying({
+export const NowPlaying = React.memo(function NowPlaying({
   track,
   accent,
   liked,
@@ -175,67 +253,7 @@ export function NowPlaying({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [queueOpen]);
 
-  // floating tag stack (top-left)
-  const TagStack = ({ extra }: { extra?: any }) => (
-    <div
-      style={{
-        position: "absolute",
-        top: 64,
-        left: 48,
-        zIndex: 6,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        alignItems: "flex-start",
-      }}
-    >
-      <button
-        onClick={toggleLike}
-        aria-label="Like"
-        style={{
-          background: "none",
-          border: 0,
-          cursor: "pointer",
-          color: accent,
-          padding: 0,
-          filter: `drop-shadow(0 4px 12px ${accent}88)`,
-        }}
-      >
-        <Icon.heart size={30} filled={liked} />
-      </button>
-      {extra}
-    </div>
-  );
-
-  // A clickable pill tag (mode toggle), keyboard-accessible. Rich pill styling
-  // lives in the `.tag`/`.pill-accent` classes, so role="button" on a <span>
-  // is the right pattern here.
-  const ModeTag = ({
-    cls = "tag",
-    onClick,
-    children,
-  }: {
-    cls?: string;
-    onClick: () => void;
-    children: React.ReactNode;
-  }) => (
-    <span
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-      role="button"
-      tabIndex={0}
-      className={cls}
-      style={{ cursor: "pointer" }}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-    >
-      {children}
-    </span>
-  );
+  // TagStack and ModeTag are defined at module scope above
 
   return (
     <div
@@ -303,6 +321,9 @@ export function NowPlaying({
           }}
         />
         <TagStack
+          accent={accent}
+          liked={liked}
+          toggleLike={toggleLike}
           extra={
             mode === "cover" ? (
               <>
@@ -757,4 +778,4 @@ export function NowPlaying({
       </div>
     </div>
   );
-}
+});
