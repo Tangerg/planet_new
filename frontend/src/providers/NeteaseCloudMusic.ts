@@ -7,10 +7,13 @@ import { Track, TrackPlayUrl } from "@domain/model/track";
 import { Artist } from "@domain/model/artist";
 import { Lyric, parseLyrics } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
+import { Chart } from "@domain/model/chart";
 import { Personalized } from "@domain/model/personalized";
+import { SearchResult } from "@domain/model/search";
 import {
   mapNcmAlbum,
   mapNcmAlbumNewest,
+  mapNcmChart,
   mapNcmFeaturedArtist,
   mapNcmPlaylist,
   mapNcmPlaylistStub,
@@ -30,6 +33,8 @@ export class NeteaseCloudMusic extends Provider {
       "artistDetail",
       "lyric",
       "personalized",
+      "search",
+      "toplist",
       "fullPlayback",
     ]);
 
@@ -167,5 +172,44 @@ export class NeteaseCloudMusic extends Provider {
       artists: artists.slice(0, 10),
       tracks: tracks.slice(0, 10),
     };
+  }
+
+  async search(query: string): Promise<SearchResult> {
+    const q = query.trim();
+    if (!q) return { tracks: [], artists: [], albums: [], playlists: [] };
+    // /cloudsearch returns full song nodes (al/ar/dt); one call per type, in
+    // parallel. type 1=songs · 100=artists · 10=albums · 1000=playlists.
+    const byType = (type: number) =>
+      this.http
+        .get("cloudsearch", { searchParams: { keywords: q, type, limit: 30 } })
+        .json<{ result?: any }>()
+        .catch(() => ({ result: {} }) as { result?: any });
+    const [songs, artists, albums, playlists] = await Promise.all([
+      byType(1),
+      byType(100),
+      byType(10),
+      byType(1000),
+    ]);
+    return {
+      tracks: (songs.result?.songs ?? []).map((s: any, i: number) =>
+        mapNcmTrack(s, { index: i + 1 }),
+      ),
+      artists: (artists.result?.artists ?? []).map(mapNcmFeaturedArtist),
+      albums: (albums.result?.albums ?? []).map(mapNcmAlbumNewest),
+      playlists: (playlists.result?.playlists ?? []).map(mapNcmPlaylistStub),
+    };
+  }
+
+  async toplists(): Promise<Chart[]> {
+    const res = await this.http
+      .get("toplist")
+      .json<{ list?: any[] }>()
+      .catch(() => ({ list: [] }) as { list?: any[] });
+    return (res.list ?? []).map(mapNcmChart).filter((c) => c.id && c.title);
+  }
+
+  async toplistDetail(id: string): Promise<Playlist> {
+    // A chart is a playlist on NCM, so its detail goes through the same endpoint.
+    return this.playlistDetail(id);
   }
 }
