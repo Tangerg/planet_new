@@ -18,6 +18,8 @@ type Props = {
   onOpenComments: () => void;
   shuffle: boolean;
   setShuffle: (v: boolean) => void;
+  repeat: boolean;
+  onToggleRepeat: () => void;
   onNext?: () => void;
   onPrev?: () => void;
   /** Real playback progress / total, in seconds (from the kernel). */
@@ -43,6 +45,8 @@ export function PlayerBar({
   onOpenComments,
   shuffle,
   setShuffle,
+  repeat,
+  onToggleRepeat,
   onNext,
   onPrev,
   positionSec,
@@ -60,7 +64,6 @@ export function PlayerBar({
   // the audio isn't hammered every frame of the drag.
   const [scrub, setScrub] = useState<number | null>(null);
   const [volOpen, setVolOpen] = useState(false);
-  const [repeat, setRepeat] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
@@ -122,7 +125,9 @@ export function PlayerBar({
         onValueChange={([v]) => setScrub(v)}
         onValueCommit={([v]) => {
           onSeek(dur > 0 ? (v / dur) * 100 : 0);
-          setScrub(null);
+          // Keep showing the scrub position until the kernel catches up,
+          // avoiding a one-frame snap-back to the old position.
+          setTimeout(() => setScrub(null), 400);
         }}
         onMouseMove={(e) => {
           const r = barRef.current!.getBoundingClientRect();
@@ -290,7 +295,7 @@ export function PlayerBar({
         <button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
           <Icon.shuffle size={18} />
         </button>
-        <button style={ctlBtn(repeat)} onClick={() => setRepeat((r) => !r)} aria-label="Repeat">
+        <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
           <Icon.loop size={18} />
         </button>
         <button

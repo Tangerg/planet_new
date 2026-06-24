@@ -18,25 +18,50 @@ export class PlaybackService {
     private readonly getProvider: () => IProvider,
   ) {}
 
+  /**
+   * Monotonically increasing generation counter for the play() method.
+   * Each call increments before the await; after the await resolves the
+   * counter is checked against the captured generation. If they differ, a
+   * newer play() call has superseded this one and the stale result is
+   * discarded. This prevents a slow playUrls() resolution from overwriting
+   * the queue with an outdated track after the user has already requested
+   * a different track.
+   */
+  private playGeneration = 0;
+
   // ── Queue + play ──────────────────────────────────────────────────
 
   /**
    * Set the play queue and start at the given track.
    * Resolves playable URLs via the provider before emitting to the kernel.
    * Tracks are mutated in place to carry the resolved `playUrl`.
+   *
+   * A generation counter guards against a stale `playUrls()` resolve
+   * overwriting the queue when `play()` is called twice rapidly.
    */
   async play(tracks: Track[], track: Track, key = "vibe"): Promise<void> {
+    const gen = ++this.playGeneration;
     const queue = tracks.length ? tracks : [track];
     const ids = queue.map((t) => t.id).filter(Boolean);
-    try {
-      const urls = await this.getProvider().playUrls(ids);
-      for (const u of urls) {
-        const t = queue.find((x) => x.id === u.id);
-        if (t) t.playUrl = u.playUrl;
+
+    let urls: Array<{ id: string | number; playUrl: string }> = [];
+    if (ids.length) {
+      try {
+        urls = await this.getProvider().playUrls(ids);
+      } catch {
+        // Provider has no play-URL support: stay silent; the UI still switches track.
       }
-    } catch {
-      // Provider has no play-URL support: stay silent; the UI still switches track.
     }
+
+    // Stale guard: if a newer play() call has already incremented the
+    // generation, discard this result — only the latest call may emit.
+    if (gen !== this.playGeneration) return;
+
+    for (const u of urls) {
+      const t = queue.find((x) => x.id === u.id);
+      if (t) t.playUrl = u.playUrl;
+    }
+
     this.planet.hooks.emit("change_play_queue", { key, tracks: queue, track });
   }
 

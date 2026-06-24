@@ -45,6 +45,7 @@ export class NeteaseCloudMusic extends Provider {
     super();
     this.http = ky.create({
       prefix: opts.host,
+      timeout: 10_000,
     });
   }
 

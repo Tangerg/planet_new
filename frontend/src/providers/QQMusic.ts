@@ -48,7 +48,7 @@ export class QQMusic extends Provider {
 
   constructor(opts: QQMusicOptions) {
     super();
-    this.http = ky.create({ prefix: opts.host });
+    this.http = ky.create({ prefix: opts.host, timeout: 10_000 });
   }
 
   get name(): string {
