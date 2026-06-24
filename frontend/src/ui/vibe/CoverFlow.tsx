@@ -274,20 +274,27 @@ export function CoverFlow({
                     </button>
                   )}
                 </Art>
-                {/* reflection */}
+                {/* reflection — mirrored off a glossy floor: small gap below the
+                    cover, blurred, and fading out quickly; the centred card
+                    reflects a touch brighter than the angled side cards. */}
                 <div
                   className="grain"
                   aria-hidden
                   style={{
                     width: COVER,
                     height: COVER,
+                    marginTop: 3,
                     background: artBg(it.seed, it.grad),
                     transform: "scaleY(-1)",
                     transformOrigin: "top",
                     overflow: "hidden",
-                    WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,.45), transparent 55%)",
-                    maskImage: "linear-gradient(to bottom, rgba(0,0,0,.45), transparent 55%)",
-                    opacity: 0.5,
+                    filter: "blur(2px)",
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,.14) 30%, transparent 50%)",
+                    maskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,.14) 30%, transparent 50%)",
+                    opacity: isC ? 0.45 : 0.28,
+                    transition: "opacity .45s",
                   }}
                 >
                   {it.image && (
