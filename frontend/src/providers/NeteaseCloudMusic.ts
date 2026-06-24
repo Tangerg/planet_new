@@ -133,7 +133,10 @@ export class NeteaseCloudMusic extends Provider {
       .map(
         (tr): TrackPlayUrl => ({
           id: tr.id.toString(),
-          playUrl: tr.url as string,
+          // NCM returns http stream URLs; the secure-context webview blocks
+          // http <audio src> as mixed content, so upgrade to https (the CDN
+          // serves both — verified 206 audio/mpeg).
+          playUrl: toHttps(tr.url as string),
         }),
       );
   }
