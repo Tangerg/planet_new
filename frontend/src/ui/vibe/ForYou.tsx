@@ -123,35 +123,55 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
         marginBottom: 40,
       }}
     >
-      {/* real featured cover behind the copy (gradient stays as fallback). */}
+      {/* real featured cover: a blurred copy fills the banner (its colours),
+          with the whole cover shown un-cropped on the right (contain). */}
       {playlist.image && (
-        <img
-          src={playlist.image}
-          alt=""
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        <>
+          <img
+            src={playlist.image}
+            alt=""
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 1,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: "blur(40px) saturate(1.2)",
+              transform: "scale(1.18)",
+              opacity: 0.6,
+            }}
+          />
+          <img
+            src={playlist.image}
+            alt=""
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 2,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "right center",
+            }}
+          />
+        </>
       )}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          zIndex: 2,
-          background: `linear-gradient(90deg, rgba(6,6,10,.82) 0%, rgba(6,6,10,.45) 45%, rgba(6,6,10,.15) 100%)`,
+          zIndex: 3,
+          background: `linear-gradient(90deg, rgba(6,6,10,.82) 0%, rgba(6,6,10,.45) 55%, transparent 100%)`,
         }}
       />
       <div
         style={{
           position: "absolute",
           inset: 0,
-          zIndex: 3,
+          zIndex: 4,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
