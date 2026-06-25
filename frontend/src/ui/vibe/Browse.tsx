@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from "react";
 import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg } from "./primitives";
+import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
@@ -128,23 +129,23 @@ export function SearchScreen({
             }}
           />
           {q && (
-            <button
+            <Button
               onClick={() => setQ("")}
               style={{ background: "none", border: 0, color: "var(--tx-3)", cursor: "pointer" }}
             >
               <Icon.close size={20} />
-            </button>
+            </Button>
           )}
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" }}>
           {chips.map((c) => (
-            <button
+            <Button
               key={c}
               className={"chip" + (ql === c.toLowerCase() ? " on" : "")}
               onClick={() => setQ(c)}
             >
               {c}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -199,7 +200,7 @@ export function SearchScreen({
                 <h2 style={{ fontSize: 22 }}>Top result</h2>
               </div>
               {top && (
-                <button
+                <Button
                   onClick={(e) => {
                     const a = e.currentTarget.querySelector(".grain");
                     const r = (a || e.currentTarget).getBoundingClientRect();
@@ -251,7 +252,7 @@ export function SearchScreen({
                   <span className="tag" style={{ marginTop: 14, display: "inline-block" }}>
                     Artist
                   </span>
-                </button>
+                </Button>
               )}
             </div>
             {/* songs */}
@@ -343,7 +344,7 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
     else onClick();
   };
   return (
-    <button
+    <Button
       onClick={handle}
       className="grain"
       style={{
@@ -415,7 +416,7 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
           {time}
         </div>
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -529,7 +530,7 @@ export function CollectionRow({
           style={{ width: 48, height: 48, borderRadius: round ? "50%" : 4 }}
         />
         {onPlay && hover && (
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onPlay();
@@ -548,7 +549,7 @@ export function CollectionRow({
             }}
           >
             <Icon.play size={18} />
-          </button>
+          </Button>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>

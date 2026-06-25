@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
+import { Button } from "../components/Button";
 import { MOCK } from "./mockCatalog";
 
 // ============================================================
@@ -103,7 +104,7 @@ function TagStack({
         alignItems: "flex-start",
       }}
     >
-      <button
+      <Button
         onClick={toggleLike}
         aria-label="Like"
         style={{
@@ -116,7 +117,7 @@ function TagStack({
         }}
       >
         <Icon.heart size={30} filled={liked} />
-      </button>
+      </Button>
       {extra}
     </div>
   );
@@ -288,7 +289,7 @@ export const NowPlaying = React.memo(function NowPlaying({
       }}
     >
       {/* close */}
-      <button
+      <Button
         onClick={onClose}
         aria-label="Close"
         style={{
@@ -304,7 +305,7 @@ export const NowPlaying = React.memo(function NowPlaying({
         }}
       >
         <Icon.close size={20} />
-      </button>
+      </Button>
 
       {/* full-bleed hero (portrait drop) — stays put; lyrics panel slides over its right half */}
       <Art
@@ -386,7 +387,7 @@ export const NowPlaying = React.memo(function NowPlaying({
             }}
           >
             {onOpenArtist && track?.artistId ? (
-              <button
+              <Button
                 style={{
                   cursor: "pointer",
                   background: "none",
@@ -410,7 +411,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                 }}
               >
                 {track?.artist}
-              </button>
+              </Button>
             ) : (
               track?.artist
             )}
@@ -581,7 +582,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                         marginTop: 10,
                       }}
                     >
-                      <button
+                      <Button
                         onClick={() => toggleC(c.id)}
                         style={{
                           background: "none",
@@ -597,7 +598,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                         <span className="mlabel" style={{ fontSize: 10 }}>
                           {c.likes + (likedC.has(c.id) ? 1 : 0)}
                         </span>
-                      </button>
+                      </Button>
                       <span
                         className="mlabel"
                         style={{ color: "rgba(255,255,255,.3)", fontSize: 10 }}
@@ -624,7 +625,7 @@ export const NowPlaying = React.memo(function NowPlaying({
 
       {/* Up Next handle (bottom-center) — invites the down axis */}
       {!queueOpen && (
-        <button
+        <Button
           onClick={() => setQueueOpen(true)}
           aria-label="Up Next"
           style={{
@@ -653,7 +654,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           <span style={{ display: "grid", placeItems: "center", transform: "rotate(90deg)" }}>
             <Icon.back size={14} />
           </span>
-        </button>
+        </Button>
       )}
 
       {/* queue sheet — slides up from the bottom */}
@@ -750,7 +751,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                 }}
               >
                 {onOpenArtist && track?.artistId ? (
-                  <button
+                  <Button
                     style={{
                       cursor: "pointer",
                       background: "none",
@@ -777,7 +778,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                     }}
                   >
                     {track?.artist}
-                  </button>
+                  </Button>
                 ) : (
                   track?.artist
                 )}

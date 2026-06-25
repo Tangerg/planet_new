@@ -4,6 +4,7 @@
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
 import { Icon, artBg, artPair } from "./primitives";
+import { Button } from "../components/Button";
 
 const XMB_CAT_GAP = 172; // horizontal spacing between category icons
 const XMB_ANCHOR = "26%"; // x of the active category column (icon + its sub-item list)
@@ -70,7 +71,7 @@ function XmbCategory({
   const I = Icon[cat.icon] || Icon.note;
   const sz = active ? 92 : 58;
   return (
-    <button
+    <Button
       onClick={onClick}
       style={{
         position: "absolute",
@@ -107,7 +108,7 @@ function XmbCategory({
       >
         <I size={active ? 40 : 26} />
       </span>
-    </button>
+    </Button>
   );
 }
 

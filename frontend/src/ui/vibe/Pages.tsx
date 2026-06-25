@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
+import { Button } from "../components/Button";
 import { MediaCard } from "./ForYou";
 import { CollectionRow } from "./Browse";
 import { TrackRow, TrackCard } from "./Detail";
@@ -167,7 +168,7 @@ function ArtistScreen({
                     alignItems: "center",
                   }}
                 >
-                  <button
+                  <Button
                     onClick={() => setFollowed((f) => !f)}
                     className="tag"
                     style={{
@@ -181,7 +182,7 @@ function ArtistScreen({
                     }}
                   >
                     {followed ? "Following" : "Follow"}
-                  </button>
+                  </Button>
                   <StatPill>
                     {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
                   </StatPill>
@@ -194,7 +195,7 @@ function ArtistScreen({
                   ))}
                 </div>
               </div>
-              <button
+              <Button
                 onClick={() => onPlay(tracks[0])}
                 aria-label="Play"
                 style={{
@@ -216,7 +217,7 @@ function ArtistScreen({
                 ) : (
                   <Icon.play size={26} />
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -239,40 +240,40 @@ function ArtistScreen({
               ["albums", "All Albums"],
               ["similar", "Similar Artist"],
             ].map(([k, l]) => (
-              <button
+              <Button
                 key={k}
                 className={"tab" + (tab === k ? " on" : "")}
                 onClick={() => setTab(k)}
               >
                 {l}
-              </button>
+              </Button>
             ))}
             {tab !== "similar" && (
               <div
                 className="viewtoggle"
                 style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
               >
-                <button
+                <Button
                   className={view === "grid" ? "on" : ""}
                   onClick={() => setView("grid")}
                   aria-label="Grid view"
                 >
                   <Icon.grid size={17} />
-                </button>
-                <button
+                </Button>
+                <Button
                   className={view === "list" ? "on" : ""}
                   onClick={() => setView("list")}
                   aria-label="List view"
                 >
                   <Icon.list size={17} />
-                </button>
-                <button
+                </Button>
+                <Button
                   className={view === "flow" ? "on" : ""}
                   onClick={() => setView("flow")}
                   aria-label="Cover flow view"
                 >
                   <Icon.flow size={17} />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -517,7 +518,7 @@ function ProfileScreen({
           </span>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 14 }}>
             {items.map((p: any, i: number) => (
-              <button
+              <Button
                 key={p.id}
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   const r = e.currentTarget.getBoundingClientRect();
@@ -559,7 +560,7 @@ function ProfileScreen({
                 >
                   {p.plays} played
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -611,7 +612,7 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
               {C[key].map((g: any, i: number) => {
                 const [name, color] = g;
                 return (
-                  <button
+                  <Button
                     key={name}
                     className="gtile rise"
                     style={{ background: color, animationDelay: i * 0.02 + "s" }}
@@ -627,7 +628,7 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
                       className="gart grain"
                       style={{ background: artBg(i, [color, "#06060a"]) }}
                     />
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -750,7 +751,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
               alignItems: "flex-start",
             }}
           >
-            <button
+            <Button
               onClick={toggleLike}
               style={{
                 background: "none",
@@ -762,7 +763,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
               }}
             >
               <Icon.heart size={30} filled={liked} />
-            </button>
+            </Button>
             <span className="pill-accent">{track?.quality || "SQ"}</span>
             <span className="tag">30.88K Comments</span>
           </div>
@@ -837,7 +838,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
                   marginTop: 12,
                 }}
               >
-                <button
+                <Button
                   onClick={() => tl(i)}
                   style={{
                     background: "none",
@@ -853,7 +854,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
                   <span className="mlabel" style={{ fontSize: 10 }}>
                     {c.likes + (likedC.has(i) ? 1 : 0)}
                   </span>
-                </button>
+                </Button>
                 <span className="mlabel" style={{ color: "var(--tx-4)", fontSize: 10 }}>
                   {c.time}
                 </span>

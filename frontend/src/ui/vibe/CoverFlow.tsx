@@ -7,6 +7,7 @@
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
 import { Icon, Art, artPair, artBg } from "./primitives";
+import { Button } from "../components/Button";
 
 type Props = {
   items: any[];
@@ -185,7 +186,7 @@ export function CoverFlow({
             return (
               <div
                 key={it.id}
-                // 3D card surface (cover art + reflection), not valid <button>
+                // 3D card surface (cover art + reflection), not valid a native button
                 // content — role="button" + keyboard is the right pattern.
                 // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
                 role="button"
@@ -241,7 +242,7 @@ export function CoverFlow({
                   }}
                 >
                   {isC && (
-                    <button
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         onPlay(it);
@@ -265,7 +266,7 @@ export function CoverFlow({
                       }}
                     >
                       <Icon.play size={20} />
-                    </button>
+                    </Button>
                   )}
                 </Art>
                 {/* reflection — classic Cover Flow mirror on the floor below the
@@ -366,7 +367,7 @@ export function CoverFlow({
           {items.map((_, i) => {
             if (Math.abs(i - center) > COVER_DOT_WINDOW) return null;
             return (
-              <button
+              <Button
                 key={i}
                 onClick={() => setCenter(i)}
                 aria-label={"Go to " + (i + 1)}
@@ -468,7 +469,7 @@ export function CoverFlow({
                   {sheetTracks.length} tracks
                 </span>
               </div>
-              <button
+              <Button
                 className="pill-accent"
                 style={{
                   fontSize: 11,
@@ -481,7 +482,7 @@ export function CoverFlow({
                 onClick={() => onOpen(cur)}
               >
                 Open
-              </button>
+              </Button>
             </div>
             {sheetTracks.map((t, i) => (
               <div

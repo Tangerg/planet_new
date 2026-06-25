@@ -8,6 +8,7 @@ import { VirtualGrid } from "../components/VirtualGrid";
 import { Switch } from "../components/Switch";
 import { ToggleGroup } from "../components/ToggleGroup";
 import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
+import { Button } from "../components/Button";
 import { CoverFlow } from "./CoverFlow";
 
 type TrackRowProps = {
@@ -105,7 +106,7 @@ export function TrackRow({
   };
   return (
     <div
-      // A rich flex row (art + meta + inline actions), not valid <button>
+      // A rich flex row (art + meta + inline actions), not valid a native button
       // content — role="button" + keyboard handling is the right pattern.
       // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="button"
@@ -210,7 +211,7 @@ export function TrackRow({
         </div>
         <div className="truncate" style={{ fontSize: 12.5, fontWeight: 300, color: sub }}>
           {onOpenArtist && track.artistId ? (
-            <button
+            <Button
               style={{
                 cursor: "pointer",
                 transition: "color .2s",
@@ -240,7 +241,7 @@ export function TrackRow({
               }}
             >
               {track.artist}
-            </button>
+            </Button>
           ) : (
             track.artist
           )}
@@ -251,7 +252,7 @@ export function TrackRow({
           <Trend />
         </span>
       )}
-      <button
+      <Button
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
           toggleLike(track.id);
@@ -266,7 +267,7 @@ export function TrackRow({
         }}
       >
         <Icon.heart size={17} filled={liked.has(track.id)} />
-      </button>
+      </Button>
       <span
         className="mlabel"
         style={{ color: sub, fontSize: 11, width: 42, textAlign: "right", flex: "0 0 auto" }}
@@ -314,7 +315,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           images={track.images}
           style={{ width: "100%", aspectRatio: "1", borderRadius: 6 }}
         />
-        <button
+        <Button
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onPlay(track);
@@ -340,7 +341,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           }}
         >
           <Icon.play size={18} />
-        </button>
+        </Button>
       </div>
       <div className="truncate" style={{ marginTop: 11, fontSize: 14.5, fontWeight: 400 }}>
         {track.title}
@@ -350,7 +351,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
         style={{ fontSize: 12.5, fontWeight: 300, color: "rgba(255,255,255,.5)" }}
       >
         {onOpenArtist && track.artistId ? (
-          <button
+          <Button
             style={{
               cursor: "pointer",
               transition: "color .2s",
@@ -380,7 +381,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
             }}
           >
             {track.artist}
-          </button>
+          </Button>
         ) : (
           track.artist
         )}
@@ -489,7 +490,7 @@ export function PlaylistDetailScreen({
           pointerEvents: "none",
         }}
       >
-        <button
+        <Button
           onClick={playFirst}
           aria-label="Play"
           style={{
@@ -507,7 +508,7 @@ export function PlaylistDetailScreen({
           }}
         >
           <Icon.play size={16} />
-        </button>
+        </Button>
         <div
           style={{
             width: 34,
@@ -604,7 +605,7 @@ export function PlaylistDetailScreen({
               {p.owner} · {total} tracks
             </div>
             <div style={{ display: "flex", gap: 14, marginTop: 26 }}>
-              <button
+              <Button
                 className="pill-accent"
                 style={{
                   fontSize: 12,
@@ -616,10 +617,10 @@ export function PlaylistDetailScreen({
                 onClick={playFirst}
               >
                 <Icon.play size={15} /> Play
-              </button>
-              <button className="pill-ghost">
+              </Button>
+              <Button className="pill-ghost">
                 <Icon.infinity size={15} /> Shuffle
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -658,7 +659,7 @@ export function PlaylistDetailScreen({
                     ["title", "Title"],
                     ["duration", "Time"],
                   ].map(([k, l]) => (
-                    <button
+                    <Button
                       key={k}
                       onClick={() => setSort(k)}
                       className="mlabel"
@@ -673,7 +674,7 @@ export function PlaylistDetailScreen({
                       }}
                     >
                       {l}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -792,7 +793,7 @@ export function PlaylistDetailScreen({
           <span className="mlabel" style={{ color: "#fff", fontSize: 11 }}>
             {sel.size} selected
           </span>
-          <button
+          <Button
             className="mlabel"
             onClick={() => {
               p.tracks
@@ -811,8 +812,8 @@ export function PlaylistDetailScreen({
             }}
           >
             Add to queue
-          </button>
-          <button
+          </Button>
+          <Button
             className="mlabel"
             onClick={() => {
               const first = p.tracks.find((t: any) => sel.has(t.id));
@@ -830,8 +831,8 @@ export function PlaylistDetailScreen({
             }}
           >
             Play
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setSel(new Set())}
             aria-label="Clear"
             style={{
@@ -845,7 +846,7 @@ export function PlaylistDetailScreen({
             }}
           >
             <Icon.close size={16} />
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -1106,7 +1107,7 @@ export function HistoryScreen({
                 Everything you've played recently · {total} tracks
               </div>
               {hero && (
-                <button
+                <Button
                   onClick={() => onPlay(hero)}
                   className="pill-accent"
                   style={{
@@ -1124,7 +1125,7 @@ export function HistoryScreen({
                   }}
                 >
                   <Icon.play size={16} /> Resume listening
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -1244,7 +1245,7 @@ export function SettingsScreen({
             }}
           >
             {accentOptions.map((col) => (
-              <button
+              <Button
                 key={col}
                 onClick={() => setAccent(col)}
                 aria-label={col}
@@ -1265,7 +1266,7 @@ export function SettingsScreen({
                     <Icon.check size={16} />
                   </span>
                 )}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
