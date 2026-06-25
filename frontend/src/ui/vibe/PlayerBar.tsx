@@ -8,6 +8,7 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import { Slider } from "../components/Slider";
 import { Button } from "../components/Button";
 import { useMorph } from "@/infra/morph";
+import { useScreenActions } from "./screenActions";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
 type Props = {
@@ -63,6 +64,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   onOpenArtist,
 }: Props) {
   const morph = useMorph();
+  const { enqueue } = useScreenActions();
   // Real duration from the kernel (the loaded audio); track metadata is the
   // pre-load fallback so the bar has a sane scale before `durationchange`.
   const dur = durationSec > 0 ? durationSec : track?.durSec || 1;
@@ -471,7 +473,7 @@ export const PlayerBar = React.memo(function PlayerBar({
             e.preventDefault();
             setDragOver(false);
             const id = e.dataTransfer.getData("text/sonance-track");
-            if (id && window.__ENQUEUE) window.__ENQUEUE(id);
+            if (id) enqueue(id);
           }}
         >
           <Icon.list size={18} />

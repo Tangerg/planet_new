@@ -7,6 +7,7 @@ import { VirtualList } from "../components/VirtualList";
 import { VirtualGrid } from "../components/VirtualGrid";
 import { Switch } from "../components/Switch";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { useScreenActions } from "./screenActions";
 import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
 import { CoverFlow } from "./CoverFlow";
@@ -44,6 +45,7 @@ export function TrackRow({
   onSelect,
   onOpenArtist,
 }: TrackRowProps) {
+  const { trackMenu } = useScreenActions();
   const isCur = current?.id === track.id;
   const [hover, setHover] = useState(false);
   const col = dark ? "#fff" : "#16161a";
@@ -119,7 +121,7 @@ export function TrackRow({
         e.dataTransfer.setData("text/sonance-track", track.id);
         e.dataTransfer.effectAllowed = "copy";
       }}
-      onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU && window.__TRACKMENU(e, track)}
+      onContextMenu={(e: React.MouseEvent) => trackMenu(e, track)}
       onClick={(e: React.MouseEvent) => {
         if (unavailable) return;
         if (onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
@@ -287,6 +289,7 @@ type TrackCardProps = {
 };
 
 export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {
+  const { trackMenu } = useScreenActions();
   const [hover, setHover] = useState(false);
   return (
     <div
@@ -303,7 +306,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           onPlay(track);
         }
       }}
-      onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU && window.__TRACKMENU(e, track)}
+      onContextMenu={(e: React.MouseEvent) => trackMenu(e, track)}
       style={{ cursor: "pointer" }}
     >
       <div style={{ position: "relative" }}>
@@ -411,6 +414,7 @@ export function PlaylistDetailScreen({
   accent,
   onOpenArtist,
 }: PlaylistDetailScreenProps) {
+  const { enqueue } = useScreenActions();
   const p = playlist;
   const total = p.tracks.length;
   const [b1] = [artPair(p.coverSeed, p.gradient)[1]];
@@ -785,9 +789,7 @@ export function PlaylistDetailScreen({
           <Button
             className="mlabel"
             onClick={() => {
-              p.tracks
-                .filter((t: any) => sel.has(t.id))
-                .forEach((t: any) => window.__ENQUEUE && window.__ENQUEUE(t.id));
+              p.tracks.filter((t: any) => sel.has(t.id)).forEach((t: any) => enqueue(t.id));
               setSel(new Set());
             }}
             style={{

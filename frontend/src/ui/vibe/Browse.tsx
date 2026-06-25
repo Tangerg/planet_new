@@ -8,6 +8,7 @@ import { Icon, Art, artBg } from "./primitives";
 import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
 import { useMorph } from "@/infra/morph";
+import { useScreenActions } from "./screenActions";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
 import { CoverFlow } from "./CoverFlow";
@@ -489,6 +490,7 @@ export function CollectionRow({
 }: CollectionRowProps) {
   const [hover, setHover] = useState(false);
   const morph = useMorph();
+  const { collMenu } = useScreenActions();
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     const a = e.currentTarget.querySelector(".clrt");
     const r = (a || e.currentTarget).getBoundingClientRect();
@@ -508,7 +510,7 @@ export function CollectionRow({
           handle(e as any);
         }
       }}
-      onContextMenu={item ? (e) => window.__COLLMENU?.(e, item) : undefined}
+      onContextMenu={item ? (e) => collMenu(e, item) : undefined}
       style={{
         display: "flex",
         alignItems: "center",
