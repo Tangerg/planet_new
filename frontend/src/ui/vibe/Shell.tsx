@@ -66,6 +66,38 @@ type NavSnapshot = {
   lastTile: any;
 };
 
+/**
+ * Mount/unmount presence with enter + exit transitions: keeps a node mounted
+ * through its exit so it can animate out instead of popping. `mounted` gates
+ * render; `active` drives the shown/hidden styles. Used to slide the player bar
+ * in/out (and let it stay through the slide-down before unmounting).
+ */
+function usePresence(show: boolean, exitMs: number): { mounted: boolean; active: boolean } {
+  const [mounted, setMounted] = useState(show);
+  const [active, setActive] = useState(show);
+  const raf = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    clearTimeout(timer.current);
+    cancelAnimationFrame(raf.current);
+    if (show) {
+      setMounted(true);
+      // Paint the hidden state first, then flip active so the enter transition runs.
+      raf.current = requestAnimationFrame(() => {
+        raf.current = requestAnimationFrame(() => setActive(true));
+      });
+    } else {
+      setActive(false);
+      timer.current = setTimeout(() => setMounted(false), exitMs);
+    }
+    return () => {
+      clearTimeout(timer.current);
+      cancelAnimationFrame(raf.current);
+    };
+  }, [show, exitMs]);
+  return { mounted, active };
+}
+
 export default function Shell() {
   const media = useMediaService();
   const queryClient = useQueryClient();
@@ -331,6 +363,12 @@ export default function Shell() {
 
   const npView = view === "np";
   const homeView = view === "xmb";
+
+  // Player bar visibility, animated: shown when a track exists and we're not in
+  // the full-screen now-playing view. usePresence keeps it mounted through the
+  // slide-out so it glides instead of popping.
+  const showBar = !npView && !!playback.current;
+  const bar = usePresence(showBar, 480);
 
   /* ==========================================================================
      XMB model -- built from the real catalog + static categories (mirrors the example domain partitions)
@@ -992,31 +1030,54 @@ export default function Shell() {
           )}
         </div>
 
-        {!npView && playback.current && (
-          <PlayerBar
-            track={current}
-            playing={playing}
-            setPlaying={setPlaying}
-            liked={isLiked}
-            toggleLike={() => current && toggleLike(current.id)}
-            accent={accent}
-            shuffle={shuffle}
-            setShuffle={setShuffle}
-            repeat={repeat}
-            onToggleRepeat={onToggleRepeat}
-            onNext={playNext}
-            onPrev={playPrev}
-            positionSec={playback.progress.duration}
-            durationSec={playback.duration.duration}
-            onSeek={playback.seek}
-            volume={playback.volume}
-            onVolume={playback.setVolume}
-            onOpenNowPlaying={() => navigate("np")}
-            onOpenQueue={() => navigate("queue")}
-            onOpenComments={() => navigate("comments")}
-            onOpenLyrics={() => navigate("np")}
-            onOpenArtist={openArtist}
-          />
+        {bar.mounted && (
+          // Layout reservation tracks showBar *instantly* (no transition) so .view
+          // is full-height the frame we enter now-playing — the np cover morph
+          // measures its (vertically-centered) hero correctly, never re-jumping.
+          // Only the inner slide is animated. overflow:visible lets the volume
+          // popup escape upward; .win (overflow:hidden) clips the slide.
+          <div
+            style={{
+              flexGrow: 0,
+              flexShrink: 0,
+              flexBasis: showBar ? 84 : 0,
+              overflow: "visible",
+            }}
+          >
+            <div
+              style={{
+                transform: bar.active ? "translateY(0)" : "translateY(108%)",
+                opacity: bar.active ? 1 : 0,
+                transition: "transform .44s cubic-bezier(.16,1,.3,1), opacity .3s ease",
+                willChange: "transform",
+              }}
+            >
+              <PlayerBar
+                track={current}
+                playing={playing}
+                setPlaying={setPlaying}
+                liked={isLiked}
+                toggleLike={() => current && toggleLike(current.id)}
+                accent={accent}
+                shuffle={shuffle}
+                setShuffle={setShuffle}
+                repeat={repeat}
+                onToggleRepeat={onToggleRepeat}
+                onNext={playNext}
+                onPrev={playPrev}
+                positionSec={playback.progress.duration}
+                durationSec={playback.duration.duration}
+                onSeek={playback.seek}
+                volume={playback.volume}
+                onVolume={playback.setVolume}
+                onOpenNowPlaying={() => navigate("np")}
+                onOpenQueue={() => navigate("queue")}
+                onOpenComments={() => navigate("comments")}
+                onOpenLyrics={() => navigate("np")}
+                onOpenArtist={openArtist}
+              />
+            </div>
+          </div>
         )}
       </div>
 
