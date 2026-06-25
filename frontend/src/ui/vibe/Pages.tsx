@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { ViewToggle } from "./ViewToggle";
 import { useMorph } from "@/infra/morph";
 import { MediaCard } from "./ForYou";
 import { CollectionRow } from "./Browse";
@@ -250,21 +251,10 @@ function ArtistScreen({
               ]}
             />
             {tab !== "similar" && (
-              <ToggleGroup
-                ariaLabel="View mode"
-                className="viewtoggle"
-                style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
+              <ViewToggle
                 value={view}
-                onValueChange={setView}
-                items={[
-                  { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
-                  { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
-                  {
-                    value: "flow",
-                    label: <Icon.flow size={17} />,
-                    "aria-label": "Cover flow view",
-                  },
-                ]}
+                onChange={setView}
+                style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
               />
             )}
           </div>
