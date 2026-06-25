@@ -84,6 +84,7 @@ function ArtistScreen({
           grad={artist.gradient}
           image={artist.banner || artist.image}
           mono={mono}
+          objectPosition="center 25%"
           style={{ height: 300 }}
         >
           <div
