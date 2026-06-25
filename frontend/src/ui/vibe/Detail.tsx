@@ -8,8 +8,11 @@ import { VirtualGrid } from "../components/VirtualGrid";
 import { Switch } from "../components/Switch";
 import { ToggleGroup } from "../components/ToggleGroup";
 import { ViewToggle } from "./ViewToggle";
+import { TextReveal } from "../components/TextReveal";
 import { useScreenActions } from "./screenActions";
 import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
+import { LiftCard, RiseFab } from "./lift";
+import { FadeIn, Rise, XFade } from "./motion";
 import { Button } from "../components/Button";
 import { CoverFlow } from "./CoverFlow";
 
@@ -291,15 +294,12 @@ type TrackCardProps = {
 
 export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {
   const { trackMenu } = useScreenActions();
-  const [hover, setHover] = useState(false);
   return (
-    <div
+    <LiftCard
       // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="button"
       tabIndex={0}
       aria-label={track.title}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       onClick={() => onPlay(track)}
       onKeyDown={(e: React.KeyboardEvent) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -308,6 +308,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
         }
       }}
       onContextMenu={(e: React.MouseEvent) => trackMenu(e, track)}
+      className="gridcard"
       style={{ cursor: "pointer" }}
     >
       <div style={{ position: "relative" }}>
@@ -319,7 +320,8 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           images={track.images}
           style={{ width: "100%", aspectRatio: "1", borderRadius: 6 }}
         />
-        <Button
+        <RiseFab
+          className="trackfab"
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onPlay(track);
@@ -338,14 +340,11 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
             color: "#06060a",
             display: "grid",
             placeItems: "center",
-            opacity: hover ? 1 : 0,
-            transform: hover ? "translateY(0)" : "translateY(8px)",
-            transition: "opacity .2s, transform .2s",
             boxShadow: `0 10px 26px -6px ${accent}`,
           }}
         >
           <Icon.play size={18} />
-        </Button>
+        </RiseFab>
       </div>
       <div className="truncate" style={{ marginTop: 11, fontSize: 14.5, fontWeight: 400 }}>
         {track.title}
@@ -390,7 +389,7 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           track.artist
         )}
       </div>
-    </div>
+    </LiftCard>
   );
 }
 
@@ -464,11 +463,17 @@ export function PlaylistDetailScreen({
     return ts;
   }, [p.tracks, sort]);
 
+  // Real-world names run long; a fixed 64px title wraps a long CJK name to two
+  // lines and deforms the hero. Scale the title down so it stays ~one line (CJK
+  // glyphs count double for width); the 2-line clamp below is only a safety net.
+  const nameWeight = [...(p.name || "")].reduce(
+    (a: number, ch: string) => a + (/[⺀-鿿＀-￯]/.test(ch) ? 2 : 1),
+    0,
+  );
+  const heroTitleSize = nameWeight > 48 ? 34 : nameWeight > 36 ? 42 : nameWeight > 24 ? 52 : 64;
+
   return (
-    <div
-      className="fade-in"
-      style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
-    >
+    <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
       {/* Full-page background from the cover (Spotify-style, full-height). */}
       <HeroBackdrop image={p.image} seed={p.coverSeed} grad={p.gradient} />
 
@@ -570,41 +575,39 @@ export function PlaylistDetailScreen({
             <span className="mlabel" style={{ color: "rgba(255,255,255,.7)" }}>
               {p.kind || "Playlist"}
             </span>
-            <div
+            <TextReveal
+              lines={2}
+              full={<span style={{ fontSize: 20, fontWeight: 300 }}>{p.name}</span>}
+              cardStyle={{ maxWidth: 480 }}
               style={{
-                fontSize: 64,
+                fontSize: heroTitleSize,
                 fontWeight: 200,
                 letterSpacing: ".005em",
-                lineHeight: 1.02,
+                lineHeight: 1.04,
                 margin: "12px 0 16px",
                 textWrap: "balance",
-                // Long real-world names clamp to 2 lines so the hero stays bounded.
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                overflowWrap: "anywhere",
+                // Safety net only: heroTitleSize keeps most names to one line;
+                // rare overflow clamps to 2 lines and reveals in full on hover.
               }}
             >
               {p.name}
-            </div>
+            </TextReveal>
             {p.description && (
-              <div
+              <TextReveal
+                lines={2}
+                cardStyle={{ maxWidth: 440 }}
                 style={{
                   fontSize: 15,
                   fontWeight: 300,
                   color: "rgba(255,255,255,.7)",
                   maxWidth: 560,
                   lineHeight: 1.5,
-                  // Descriptions can be paragraphs; clamp to 3 lines.
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
+                  // Clamp to 2 lines so the hero stays bounded (1-line name +
+                  // 2-line description reads best); hover reveals the full text.
                 }}
               >
                 {p.description}
-              </div>
+              </TextReveal>
             )}
             <div className="mlabel" style={{ color: "rgba(255,255,255,.5)", marginTop: 14 }}>
               {p.owner} · {total} tracks
@@ -676,7 +679,7 @@ export function PlaylistDetailScreen({
             </div>
           </div>
 
-          <div key={view} className="xfade">
+          <XFade key={view}>
             {view === "list" && (
               <VirtualList
                 scrollRef={scrollRef}
@@ -744,90 +747,101 @@ export function PlaylistDetailScreen({
                 />
               </div>
             )}
-          </div>
+          </XFade>
         </div>
       </div>
 
       {/* multi-select action bar (⌘/Shift-click rows to select) */}
       {sel.size > 0 && (
+        // Flex-centred strip: the bar travels up via <Rise> (Motion owns its
+        // transform), so the old `translateX(-50%)` centring would clash — centre
+        // it with the wrapper instead. Strip is click-through; bar re-enables it.
         <div
-          className="rise"
           style={{
             position: "absolute",
             bottom: 26,
-            left: "50%",
-            transform: "translateX(-50%)",
+            left: 0,
+            right: 0,
             zIndex: 40,
             display: "flex",
-            alignItems: "center",
-            gap: 18,
-            padding: "12px 14px 12px 22px",
-            background: "rgba(20,20,24,.92)",
-            borderRadius: 999,
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,.12)",
-            boxShadow: "0 18px 50px -12px rgba(0,0,0,.7)",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          <span className="mlabel" style={{ color: "#fff", fontSize: 11 }}>
-            {sel.size} selected
-          </span>
-          <Button
-            className="mlabel"
-            onClick={() => {
-              p.tracks.filter((t: any) => sel.has(t.id)).forEach((t: any) => enqueue(t.id));
-              setSel(new Set());
-            }}
+          <Rise
             style={{
-              fontSize: 10,
-              padding: "8px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              padding: "12px 14px 12px 22px",
+              background: "rgba(20,20,24,.92)",
               borderRadius: 999,
-              border: 0,
-              cursor: "pointer",
-              background: accent,
-              color: "#06060a",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,.12)",
+              boxShadow: "0 18px 50px -12px rgba(0,0,0,.7)",
+              pointerEvents: "auto",
             }}
           >
-            Add to queue
-          </Button>
-          <Button
-            className="mlabel"
-            onClick={() => {
-              const first = p.tracks.find((t: any) => sel.has(t.id));
-              if (first) onPlay(first);
-              setSel(new Set());
-            }}
-            style={{
-              fontSize: 10,
-              padding: "8px 14px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,.2)",
-              cursor: "pointer",
-              background: "transparent",
-              color: "#fff",
-            }}
-          >
-            Play
-          </Button>
-          <Button
-            onClick={() => setSel(new Set())}
-            aria-label="Clear"
-            style={{
-              background: "none",
-              border: 0,
-              cursor: "pointer",
-              color: "rgba(255,255,255,.6)",
-              display: "grid",
-              placeItems: "center",
-              padding: 4,
-            }}
-          >
-            <Icon.close size={16} />
-          </Button>
+            <span className="mlabel" style={{ color: "#fff", fontSize: 11 }}>
+              {sel.size} selected
+            </span>
+            <Button
+              className="mlabel"
+              onClick={() => {
+                p.tracks.filter((t: any) => sel.has(t.id)).forEach((t: any) => enqueue(t.id));
+                setSel(new Set());
+              }}
+              style={{
+                fontSize: 10,
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: 0,
+                cursor: "pointer",
+                background: accent,
+                color: "#06060a",
+              }}
+            >
+              Add to queue
+            </Button>
+            <Button
+              className="mlabel"
+              onClick={() => {
+                const first = p.tracks.find((t: any) => sel.has(t.id));
+                if (first) onPlay(first);
+                setSel(new Set());
+              }}
+              style={{
+                fontSize: 10,
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,.2)",
+                cursor: "pointer",
+                background: "transparent",
+                color: "#fff",
+              }}
+            >
+              Play
+            </Button>
+            <Button
+              onClick={() => setSel(new Set())}
+              aria-label="Clear"
+              style={{
+                background: "none",
+                border: 0,
+                cursor: "pointer",
+                color: "rgba(255,255,255,.6)",
+                display: "grid",
+                placeItems: "center",
+                padding: 4,
+              }}
+            >
+              <Icon.close size={16} />
+            </Button>
+          </Rise>
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 }
 
@@ -854,8 +868,7 @@ export function QueueScreen({
 }: QueueScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   return (
-    <div
-      className="fade-in"
+    <FadeIn
       style={{
         height: "100%",
         position: "relative",
@@ -962,7 +975,7 @@ export function QueueScreen({
           </div>
         )}
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -1044,10 +1057,7 @@ export function HistoryScreen({
     ) : null;
 
   return (
-    <div
-      className="fade-in"
-      style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
-    >
+    <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
       <HeroBackdrop image={hero?.image} seed={hero?.coverSeed || 0} grad={hero?.gradient} />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
         <div style={{ padding: "70px 56px 30px", maxWidth: 1180, margin: "0 auto" }}>
@@ -1118,7 +1128,7 @@ export function HistoryScreen({
           )}
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -1197,8 +1207,8 @@ export function SettingsScreen({
   const s = settings;
   const up = (k: string, v: any) => setSettings((prev) => ({ ...prev, [k]: v }));
   return (
-    <div
-      className="fade-in scroll"
+    <FadeIn
+      className="scroll"
       style={{
         height: "100%",
         background: "radial-gradient(120% 90% at 80% 0%, #14161d, #0a0a0d)",
@@ -1300,6 +1310,6 @@ export function SettingsScreen({
           />
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }

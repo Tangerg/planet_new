@@ -675,6 +675,15 @@ export default function Shell() {
           cats={cats}
           accent={accent}
           playing={playing}
+          np={
+            playback.current
+              ? {
+                  image: current.image,
+                  seed: current.coverSeed,
+                  grad: current.gradient,
+                }
+              : undefined
+          }
           showWaves={settings.waves}
           onOpen={startForward}
           cState={xmbCategory}

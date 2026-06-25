@@ -6,8 +6,11 @@
 //   · Enter opens the full detail
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { Icon, Art, artPair, artBg } from "./primitives";
 import { Button } from "../components/Button";
+import { TextReveal } from "../components/TextReveal";
+import { FadeIn } from "./motion";
 import { useScreenActions } from "./screenActions";
 
 type Props = {
@@ -19,6 +22,8 @@ type Props = {
   accent: string;
   tracksFor?: (item: any) => any[];
   onPlayTrack?: (track: any) => void;
+  /** Render covers as circles (artists) instead of squares (everything else). */
+  round?: boolean;
 };
 
 export function CoverFlow({
@@ -30,13 +35,14 @@ export function CoverFlow({
   accent,
   tracksFor,
   onPlayTrack,
+  round,
 }: Props) {
   const { trackMenu, collMenu } = useScreenActions();
   const COVER = 280;
-  // Only the center ±4 are ever visible (tf() sets op:0 beyond), so mount a
-  // ±6 window (2-card margin → entering cards mount invisibly, then fade in as
-  // they cross into ±4). Keyed on `center`, this is the carousel's analogue of
-  // scroll virtualization: ~13 cards in the DOM instead of all N.
+  // Only the center ±4 are ever visible (tf() sets op:0 beyond) — 9 cards in a
+  // gentle fan — so mount a ±6 window (2-card margin → entering cards mount
+  // invisibly, then fade in as they cross into ±4). Keyed on `center`, this is
+  // the carousel's analogue of scroll virtualization: ~13 cards, not all N.
   const COVER_WINDOW = 6;
   // Progress dots are cheap but N of them overflow the bar and waste transitions
   // at scale; window them too. Small lists (≤ 2*win+1) still render every dot.
@@ -138,11 +144,13 @@ export function CoverFlow({
     const s = Math.sign(off),
       a = Math.abs(off);
     if (off === 0) return { x: 0, ry: 0, tz: 130, sc: 1, z: 300, op: 1 };
+    // Gentle tilt (37°) + wide spacing so side cards read as cards, not edge-on
+    // slivers; ±4 stay visible (9 total).
     return {
-      x: s * (185 + (a - 1) * 64),
-      ry: -s * 60,
-      tz: -50 - a * 26,
-      sc: 0.92,
+      x: s * (215 + (a - 1) * 84),
+      ry: -s * 39,
+      tz: -40 - a * 28,
+      sc: 0.94,
       z: 250 - a,
       op: a > 4 ? 0 : 1,
     };
@@ -167,15 +175,15 @@ export function CoverFlow({
         userSelect: "none",
       }}
     >
-      <div
+      <motion.div
         style={{
           position: "relative",
           width: "100%",
           height: COVER * 1.8,
           perspective: 1500,
-          transform: expanded ? "translateY(-58px) scale(.92)" : "none",
-          transition: `transform .5s ${NP_EASE}`,
         }}
+        animate={{ y: expanded ? -58 : 0, scale: expanded ? 0.92 : 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
         <div
           style={{ position: "absolute", left: "50%", top: "44%", transformStyle: "preserve-3d" }}
@@ -186,7 +194,7 @@ export function CoverFlow({
             const o = tf(i - center);
             const isC = i === center;
             return (
-              <div
+              <motion.div
                 key={it.id}
                 // 3D card surface (cover art + reflection), not valid a native button
                 // content — role="button" + keyboard is the right pattern.
@@ -210,16 +218,17 @@ export function CoverFlow({
                 }}
                 onDoubleClick={() => isC && onOpen(it)}
                 onContextMenu={isC && it.obj ? (e) => collMenu(e, it.obj) : undefined}
+                // The fan geometry (per-card translate/rotateY/scale/opacity) is
+                // Motion now — it tweens to the new values as `center` changes.
+                animate={{ x: o.x, z: o.tz, rotateY: o.ry, scale: o.sc, opacity: o.op }}
+                transition={{ duration: 0.45, ease: [0.2, 0.7, 0.2, 1] }}
                 style={{
                   position: "absolute",
                   left: -COVER / 2,
                   top: -COVER / 2,
                   width: COVER,
                   height: COVER,
-                  transform: `translateX(${o.x}px) translateZ(${o.tz}px) rotateY(${o.ry}deg) scale(${o.sc})`,
                   zIndex: o.z,
-                  opacity: o.op,
-                  transition: "transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s",
                   cursor: "pointer",
                   pointerEvents: o.op ? "auto" : "none",
                 }}
@@ -234,6 +243,7 @@ export function CoverFlow({
                   style={{
                     width: COVER,
                     height: COVER,
+                    borderRadius: round ? "50%" : undefined,
                     boxShadow: isC
                       ? `0 30px 70px -10px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08)`
                       : "0 20px 50px -16px rgba(0,0,0,.7)",
@@ -248,8 +258,10 @@ export function CoverFlow({
                       aria-label="Play"
                       style={{
                         position: "absolute",
-                        right: 16,
-                        bottom: 16,
+                        // On a circle the square corner sits outside the disc, so
+                        // pull the button inward to rest on the lower-right edge.
+                        right: round ? 30 : 16,
+                        bottom: round ? 30 : 16,
                         width: 52,
                         height: 52,
                         borderRadius: "50%",
@@ -279,6 +291,7 @@ export function CoverFlow({
                     width: COVER,
                     height: COVER,
                     marginTop: 2,
+                    borderRadius: round ? "50%" : undefined,
                     background: artBg(it.seed, it.grad),
                     transform: "scaleY(-1)",
                     transformOrigin: "center",
@@ -306,16 +319,15 @@ export function CoverFlow({
                     />
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       {/* meta */}
-      <div
+      <FadeIn
         key={cur?.id}
-        className="fade-in"
         style={{
           textAlign: "center",
           marginTop: expanded ? -COVER * 0.66 : -COVER * 0.42,
@@ -324,38 +336,40 @@ export function CoverFlow({
           transition: `margin-top .5s ${NP_EASE}`,
         }}
       >
-        <div
+        <TextReveal
+          lines={1}
+          side="top"
+          align="center"
+          full={cur?.name}
           style={{
             fontSize: 30,
             fontWeight: 300,
             letterSpacing: ".01em",
             maxWidth: 560,
             margin: "0 auto",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            overflowWrap: "anywhere",
+            // One line, never wraps to two (which crammed the meta against the
+            // cover); the full title reveals on hover and in the expanded sheet.
           }}
         >
           {cur?.name}
-        </div>
-        <div
+        </TextReveal>
+        <TextReveal
+          lines={1}
+          side="top"
+          align="center"
           className="mlabel"
+          full={cur?.sub}
           style={{
             color: "var(--tx-3)",
             marginTop: 8,
             maxWidth: 460,
             marginLeft: "auto",
             marginRight: "auto",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
           }}
         >
           {cur?.sub}
-        </div>
-      </div>
+        </TextReveal>
+      </FadeIn>
 
       {/* progress dots */}
       {!expanded && (
@@ -387,8 +401,10 @@ export function CoverFlow({
 
       {/* tracklist sheet — expands in place below the center cover */}
       {tracksFor && (
-        <div
+        <motion.div
           className="scroll"
+          animate={{ y: expanded ? "0%" : "102%" }}
+          transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: "absolute",
             left: 0,
@@ -396,8 +412,6 @@ export function CoverFlow({
             bottom: 0,
             height: "56%",
             zIndex: 500,
-            transform: expanded ? "translateY(0)" : "translateY(102%)",
-            transition: `transform .52s ${NP_EASE}`,
             background: `linear-gradient(180deg, ${artPair(cur?.seed, cur?.grad)[1]}22, rgba(8,8,11,.97) 22%)`,
             backdropFilter: "blur(34px)",
             WebkitBackdropFilter: "blur(34px)",
@@ -551,7 +565,7 @@ export function CoverFlow({
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

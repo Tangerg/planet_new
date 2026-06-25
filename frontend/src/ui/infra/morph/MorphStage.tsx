@@ -1,6 +1,7 @@
 import React from "react";
 import type { RefObject } from "react";
 
+import { MorphFrozen } from "./context";
 import { EASE, layerStyle, type Transition } from "./useMorphTransition";
 
 type MorphStageProps = {
@@ -59,7 +60,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
             }
             return (
               <div className="t-layer t-from" style={fromStyle}>
-                {renderScreen(trans.from)}
+                <MorphFrozen>{renderScreen(trans.from)}</MorphFrozen>
               </div>
             );
           })()}

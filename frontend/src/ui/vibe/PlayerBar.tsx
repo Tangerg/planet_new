@@ -5,6 +5,7 @@
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
 import * as HoverCard from "@radix-ui/react-hover-card";
+import { AnimatePresence, motion } from "motion/react";
 import { Slider } from "../components/Slider";
 import { Button } from "../components/Button";
 import { useMorph } from "@/infra/morph";
@@ -72,6 +73,8 @@ export const PlayerBar = React.memo(function PlayerBar({
   // the audio isn't hammered every frame of the drag.
   const [scrub, setScrub] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  // Controlled so AnimatePresence can play the volume popup's exit before unmount.
+  const [volOpen, setVolOpen] = useState(false);
   const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
@@ -351,7 +354,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         </Button>
         {/* volume — Radix HoverCard owns the hover-open + the trigger→content
             safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
-        <HoverCard.Root openDelay={0} closeDelay={120}>
+        <HoverCard.Root open={volOpen} onOpenChange={setVolOpen} openDelay={0} closeDelay={120}>
           <HoverCard.Trigger asChild>
             <Button
               style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
@@ -361,99 +364,106 @@ export const PlayerBar = React.memo(function PlayerBar({
               <Icon.volume size={18} />
             </Button>
           </HoverCard.Trigger>
-          <HoverCard.Portal>
-            <HoverCard.Content
-              side="top"
-              align="center"
-              sideOffset={12}
-              className="volpop"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 12,
-                padding: "15px 13px 13px",
-                zIndex: 9000,
-                // Same frosted material as the bar (tint + base + blur) so the
-                // popup reads as part of the control bar, not a foreign surface.
-                background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.86)`,
-                border: "0.5px solid rgba(255,255,255,.6)",
-                borderRadius: 14,
-                WebkitBackdropFilter: "blur(22px) saturate(180%)",
-                backdropFilter: "blur(22px) saturate(180%)",
-                boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 9.5,
-                  letterSpacing: ".1em",
-                  color: "rgba(20,20,24,.5)",
-                  // Fixed footprint + tabular figures: 1–3 digits (7→71→100)
-                  // never change the popup width.
-                  display: "block",
-                  width: 30,
-                  textAlign: "center",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {Math.round(volume)}
-              </span>
-              <Slider
-                orientation="vertical"
-                min={0}
-                max={1}
-                step={0.01}
-                value={[volume / 100]}
-                onValueChange={([v]) => onVolume(Math.round(v * 100))}
-                thumbLabel="Volume"
-                // Flex-center the Root so the thumb wrapper centers on the track;
-                // the thumb itself must NOT set transform (that would clobber
-                // Radix's own translateY(50%) main-axis positioning).
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  width: 12,
-                  height: 96,
-                  cursor: "pointer",
-                  touchAction: "none",
-                }}
-                parts={{
-                  track: {
-                    style: {
-                      position: "relative",
-                      width: 4,
-                      height: "100%",
-                      borderRadius: 999,
-                      background: "rgba(20,20,24,.16)",
-                    },
-                  },
-                  range: {
-                    style: {
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      background: accent,
-                      borderRadius: 999,
-                    },
-                  },
-                  thumb: {
-                    style: {
-                      display: "block",
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      background: "#fff",
-                      boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
-                    },
-                  },
-                }}
-              />
-            </HoverCard.Content>
-          </HoverCard.Portal>
+          <AnimatePresence>
+            {volOpen && (
+              <HoverCard.Portal forceMount>
+                <HoverCard.Content side="top" align="center" sideOffset={12} asChild forceMount>
+                  <motion.div
+                    className="volpop"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "15px 13px 13px",
+                      zIndex: 9000,
+                      // Same frosted material as the bar (tint + base + blur) so the
+                      // popup reads as part of the control bar, not a foreign surface.
+                      background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.86)`,
+                      border: "0.5px solid rgba(255,255,255,.6)",
+                      borderRadius: 14,
+                      WebkitBackdropFilter: "blur(22px) saturate(180%)",
+                      backdropFilter: "blur(22px) saturate(180%)",
+                      boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 9.5,
+                        letterSpacing: ".1em",
+                        color: "rgba(20,20,24,.5)",
+                        // Fixed footprint + tabular figures: 1–3 digits (7→71→100)
+                        // never change the popup width.
+                        display: "block",
+                        width: 30,
+                        textAlign: "center",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {Math.round(volume)}
+                    </span>
+                    <Slider
+                      orientation="vertical"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={[volume / 100]}
+                      onValueChange={([v]) => onVolume(Math.round(v * 100))}
+                      thumbLabel="Volume"
+                      // Flex-center the Root so the thumb wrapper centers on the track;
+                      // the thumb itself must NOT set transform (that would clobber
+                      // Radix's own translateY(50%) main-axis positioning).
+                      style={{
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        width: 12,
+                        height: 96,
+                        cursor: "pointer",
+                        touchAction: "none",
+                      }}
+                      parts={{
+                        track: {
+                          style: {
+                            position: "relative",
+                            width: 4,
+                            height: "100%",
+                            borderRadius: 999,
+                            background: "rgba(20,20,24,.16)",
+                          },
+                        },
+                        range: {
+                          style: {
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            background: accent,
+                            borderRadius: 999,
+                          },
+                        },
+                        thumb: {
+                          style: {
+                            display: "block",
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            background: "#fff",
+                            boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
+                          },
+                        },
+                      }}
+                    />
+                  </motion.div>
+                </HoverCard.Content>
+              </HoverCard.Portal>
+            )}
+          </AnimatePresence>
         </HoverCard.Root>
         <Button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
           LRC

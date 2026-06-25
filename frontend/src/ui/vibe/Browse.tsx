@@ -12,6 +12,8 @@ import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "./screenActions";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
+import { LiftButton } from "./lift";
+import { FadeIn, XFade } from "./motion";
 import { CoverFlow } from "./CoverFlow";
 import { MOCK } from "./mockCatalog";
 
@@ -92,8 +94,8 @@ export function SearchScreen({
   const top = artists[0] || null;
 
   return (
-    <div
-      className="fade-in scroll"
+    <FadeIn
+      className="scroll"
       style={{
         height: "100%",
         background: "radial-gradient(120% 80% at 30% -5%, #16161d, var(--surf-0))",
@@ -204,14 +206,16 @@ export function SearchScreen({
                 <h2 style={{ fontSize: 22 }}>Top result</h2>
               </div>
               {top && (
-                <Button
+                <LiftButton
+                  scale={1.04}
+                  liftY={-6}
                   onClick={(e) => {
                     const a = e.currentTarget.querySelector(".grain");
                     const r = (a || e.currentTarget).getBoundingClientRect();
                     const run = () => openArtist(top);
                     morph(r, top.coverSeed, top.gradient, run, top.image);
                   }}
-                  className="grain rise"
+                  className="grain"
                   style={{
                     position: "relative",
                     width: "100%",
@@ -254,7 +258,7 @@ export function SearchScreen({
                   <span className="tag" style={{ marginTop: 14, display: "inline-block" }}>
                     Artist
                   </span>
-                </Button>
+                </LiftButton>
               )}
             </div>
             {/* songs */}
@@ -290,6 +294,8 @@ export function SearchScreen({
                 <MediaCard
                   key={a.id}
                   round
+                  liftScale={1.12}
+                  liftY={-6}
                   title={a.name}
                   sub="Artist"
                   seed={a.coverSeed}
@@ -311,6 +317,8 @@ export function SearchScreen({
               {albums.map((al: any) => (
                 <MediaCard
                   key={al.id}
+                  liftScale={1.12}
+                  liftY={-6}
                   title={al.name}
                   sub={al.artist}
                   seed={al.coverSeed}
@@ -325,7 +333,7 @@ export function SearchScreen({
           </section>
         )}
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -346,7 +354,7 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
     morph(r, seed, grad, onClick, image);
   };
   return (
-    <Button
+    <LiftButton
       onClick={handle}
       className="grain"
       style={{
@@ -418,7 +426,7 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
           {time}
         </div>
       </div>
-    </Button>
+    </LiftButton>
   );
 }
 
@@ -429,8 +437,8 @@ type ChartsScreenProps = {
 
 export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
   return (
-    <div
-      className="fade-in scroll"
+    <FadeIn
+      className="scroll"
       style={{
         height: "100%",
         background: "radial-gradient(120% 90% at 50% 0%, #16161d, var(--surf-0))",
@@ -442,21 +450,20 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
           Ranked by plays · refreshed daily
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
-          {((data.charts?.length ? data.charts : MOCK.charts) as any[]).map((c: any, i: number) => (
-            <div key={c.id} className="rise" style={{ animationDelay: i * 0.05 + "s" }}>
-              <ChartCard
-                title={c.title}
-                time={c.updatedAt ? "Updated " + c.updatedAt : "Top chart"}
-                seed={c.coverSeed ?? c.seed}
-                grad={c.gradient}
-                image={c.image}
-                onClick={() => onOpenChart(c)}
-              />
-            </div>
+          {((data.charts?.length ? data.charts : MOCK.charts) as any[]).map((c: any) => (
+            <ChartCard
+              key={c.id}
+              title={c.title}
+              time={c.updatedAt ? "Updated " + c.updatedAt : "Top chart"}
+              seed={c.coverSeed ?? c.seed}
+              grad={c.gradient}
+              image={c.image}
+              onClick={() => onOpenChart(c)}
+            />
           ))}
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -683,8 +690,8 @@ export function LibraryScreen({
 
   const flowMode = cardTab && view === "flow";
   return (
-    <div
-      className={flowMode ? "fade-in" : "fade-in scroll"}
+    <FadeIn
+      className={flowMode ? undefined : "scroll"}
       style={{
         height: "100%",
         overflow: flowMode ? "hidden" : undefined,
@@ -726,9 +733,8 @@ export function LibraryScreen({
           )}
         </div>
 
-        <div
+        <XFade
           key={tab + view}
-          className="xfade"
           style={
             flowMode
               ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }
@@ -739,6 +745,7 @@ export function LibraryScreen({
             <div style={{ flex: 1, minHeight: 0, margin: "0 -48px" }}>
               <CoverFlow
                 items={flowItems}
+                round={round}
                 center={Math.min(flowCenter, flowItems.length - 1)}
                 setCenter={setFlowCenter}
                 accent={accent}
@@ -832,8 +839,8 @@ export function LibraryScreen({
               </div>
             </div>
           )}
-        </div>
+        </XFade>
       </div>
-    </div>
+    </FadeIn>
   );
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { motion } from "motion/react";
 import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
+import { FadeIn, NpSwap } from "./motion";
 import { Button } from "../components/Button";
 import { useScreenActions } from "./screenActions";
 import { MOCK } from "./mockCatalog";
@@ -261,8 +263,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   // TagStack and ModeTag are defined at module scope above
 
   return (
-    <div
-      className="fade-in"
+    <FadeIn
       style={{ height: "100%", position: "relative", background: "#08080b", overflow: "hidden" }}
       onTouchStart={(e: React.TouchEvent) => {
         const t = e.touches[0];
@@ -446,7 +447,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           transition: `left .62s ${NP_EASE}, transform .62s ${NP_EASE}`,
         }}
       >
-        <div
+        <motion.div
           className="grain"
           data-hero="1"
           style={{
@@ -457,8 +458,9 @@ export const NowPlaying = React.memo(function NowPlaying({
             position: "relative",
             background: artBg(coverSeed + 1, grad),
             boxShadow: `0 0 90px -10px ${b}, 0 30px 80px rgba(0,0,0,.5)`,
-            animation: "spin 26s linear infinite",
           }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 26, ease: "linear", repeat: Infinity }}
         >
           {track?.image && (
             <img
@@ -505,8 +507,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               background: "rgba(255,255,255,.16)",
             }}
           />
-        </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </motion.div>
       </div>
 
       {/* side panel — lyrics or comments — slides in from the right over a blurred tint */}
@@ -537,11 +538,7 @@ export const NowPlaying = React.memo(function NowPlaying({
             background: "rgba(10,12,18,.35)",
           }}
         />
-        <div
-          key={mode}
-          className="np-swap"
-          style={{ position: "relative", zIndex: 2, height: "100%" }}
-        >
+        <NpSwap key={mode} style={{ position: "relative", zIndex: 2, height: "100%" }}>
           {commentsMode ? (
             <div className="scroll" style={{ height: "100%", padding: "58px 48px 40px" }}>
               <div
@@ -622,7 +619,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               />
             </div>
           )}
-        </div>
+        </NpSwap>
       </div>
 
       {/* Up Next handle (bottom-center) — invites the down axis */}
@@ -880,6 +877,6 @@ export const NowPlaying = React.memo(function NowPlaying({
           )}
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 });

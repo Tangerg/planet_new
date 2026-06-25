@@ -1,5 +1,6 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { motion } from "motion/react";
 import { Icon } from "./primitives";
 
 // ============================================================
@@ -36,38 +37,40 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
         />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="ctxmenu"
-          sideOffset={0}
-          collisionPadding={10}
-          style={{
-            zIndex: 9000,
-            minWidth: 212,
-            animation: "ctxFadeIn .12s ease, ctxScaleIn .14s cubic-bezier(.32,.72,0,1)",
-          }}
-        >
-          {items.map((it, i) =>
-            it.sep ? (
-              <DropdownMenu.Separator key={i} className="ctxsep" />
-            ) : (
-              <DropdownMenu.Item key={i} className="ctxitem" onSelect={() => it.onClick?.()}>
-                {it.icon && (
-                  <span
-                    className="ctxico"
-                    style={{
-                      color: it.danger ? "#ff6b6b" : it.accent ? accent : "rgba(255,255,255,.66)",
-                    }}
-                  >
-                    {React.createElement(Icon[it.icon], { size: 16 })}
+        <DropdownMenu.Content className="ctxmenu" sideOffset={0} collisionPadding={10} asChild>
+          <motion.div
+            style={{
+              zIndex: 9000,
+              minWidth: 212,
+              transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)",
+            }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.14, ease: [0.32, 0.72, 0, 1] }}
+          >
+            {items.map((it, i) =>
+              it.sep ? (
+                <DropdownMenu.Separator key={i} className="ctxsep" />
+              ) : (
+                <DropdownMenu.Item key={i} className="ctxitem" onSelect={() => it.onClick?.()}>
+                  {it.icon && (
+                    <span
+                      className="ctxico"
+                      style={{
+                        color: it.danger ? "#ff6b6b" : it.accent ? accent : "rgba(255,255,255,.66)",
+                      }}
+                    >
+                      {React.createElement(Icon[it.icon], { size: 16 })}
+                    </span>
+                  )}
+                  <span className="ctxlabel" style={{ color: it.danger ? "#ff6b6b" : "#fff" }}>
+                    {it.label}
                   </span>
-                )}
-                <span className="ctxlabel" style={{ color: it.danger ? "#ff6b6b" : "#fff" }}>
-                  {it.label}
-                </span>
-                {it.hint && <span className="ctxhint">{it.hint}</span>}
-              </DropdownMenu.Item>
-            ),
-          )}
+                  {it.hint && <span className="ctxhint">{it.hint}</span>}
+                </DropdownMenu.Item>
+              ),
+            )}
+          </motion.div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

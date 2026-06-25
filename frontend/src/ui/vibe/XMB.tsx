@@ -3,7 +3,9 @@
 // Horizontal categories × vertical items, keyboard + click driven.
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
-import { Icon, artBg, artPair } from "./primitives";
+import { motion, useMotionValue, useTransform, animate } from "motion/react";
+import { Icon, artBg, artPair, HeroBackdrop } from "./primitives";
+import { FadeIn } from "./motion";
 import { Button } from "../components/Button";
 
 const XMB_CAT_GAP = 172; // horizontal spacing between category icons
@@ -42,17 +44,22 @@ function FlowWaves({ accent }: { accent: string }) {
         </linearGradient>
       </defs>
       {paths.map((p, i) => (
-        <path
+        <motion.path
           key={i}
           d={p.d}
           fill="none"
           stroke="url(#wv)"
           strokeWidth={p.w}
           opacity={p.o}
-          style={{ animation: `wvdrift ${p.dur}s ease-in-out ${i * -3}s infinite alternate` }}
+          animate={{ x: [-30, 30], y: [-8, 10] }}
+          transition={{
+            duration: p.dur,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "mirror",
+          }}
         />
       ))}
-      <style>{`@keyframes wvdrift{from{transform:translate(-30px,-8px)}to{transform:translate(30px,10px)}}`}</style>
     </svg>
   );
 }
@@ -70,6 +77,24 @@ function XmbCategory({
 }) {
   const I = Icon[cat.icon] || Icon.note;
   const sz = active ? 92 : 58;
+  // Breathing glow on the active icon. Motion can't interpolate a box-shadow
+  // whose colour is `var(--accent)`, so drive a 0→1→0 value and template the
+  // shadow from it — only the numbers tween, the accent var stays literal.
+  const glow = useMotionValue(0);
+  useEffect(() => {
+    if (!active) return;
+    const controls = animate(glow, [0, 1, 0], {
+      duration: 3.4,
+      ease: "easeInOut",
+      repeat: Infinity,
+    });
+    return () => controls.stop();
+  }, [active, glow]);
+  const catShadow = useTransform(
+    glow,
+    (v) =>
+      `0 0 ${(44 + v * 26).toFixed(1)}px ${(-8 + v * 10).toFixed(1)}px var(--accent), 0 8px 24px rgba(0,0,0,.45)`,
+  );
   return (
     <Button
       onClick={onClick}
@@ -90,7 +115,7 @@ function XmbCategory({
         opacity: active ? 1 : dim,
       }}
     >
-      <span
+      <motion.span
         style={{
           width: sz,
           height: sz,
@@ -101,13 +126,14 @@ function XmbCategory({
           background: active ? "var(--accent)" : "rgba(16,16,22,.55)",
           border: active ? "none" : "1px solid rgba(255,255,255,.14)",
           backdropFilter: active ? "none" : "blur(6px)",
-          boxShadow: active ? "0 0 44px -6px var(--accent), 0 8px 24px rgba(0,0,0,.45)" : "none",
-          animation: active ? "xmbCatBreathe 3.4s ease-in-out infinite" : "none",
-          transition: `all .55s ${XMB_EASE}`,
+          boxShadow: active ? catShadow : "none",
+          // box-shadow is Motion-driven (catShadow); transition the rest only, or
+          // the CSS transition would fight the per-frame shadow updates.
+          transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, color .55s ${XMB_EASE}, background .55s ${XMB_EASE}, border .55s ${XMB_EASE}, backdrop-filter .55s ${XMB_EASE}`,
         }}
       >
         <I size={active ? 40 : 26} />
-      </span>
+      </motion.span>
     </Button>
   );
 }
@@ -121,6 +147,23 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
   const op = active ? 1 : Math.max(0.14, (above ? 0.4 : 0.54) - 0.13 * ad);
   const blur = active ? 0 : Math.min(2.6, 0.55 * ad);
   const iconSz = active ? 52 : 30;
+  // Breathing glow on the active art — same accent-var box-shadow trick as
+  // XmbCategory (template a 0→1→0 value so only the numbers tween).
+  const glow = useMotionValue(0);
+  useEffect(() => {
+    if (!active) return;
+    const controls = animate(glow, [0, 1, 0], {
+      duration: 3.2,
+      ease: "easeInOut",
+      repeat: Infinity,
+    });
+    return () => controls.stop();
+  }, [active, glow]);
+  const artShadow = useTransform(
+    glow,
+    (v) =>
+      `0 ${(12 + v * 2).toFixed(1)}px ${(30 + v * 4).toFixed(1)}px rgba(0,0,0,${(0.5 + v * 0.05).toFixed(3)}), 0 0 ${(26 + v * 24).toFixed(1)}px ${(-10 + v * 4).toFixed(1)}px var(--accent)`,
+  );
   return (
     <div
       style={{
@@ -143,7 +186,7 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
           zIndex: 1,
         }}
       >
-        <div
+        <motion.div
           data-art="1"
           data-xmb-active-art={active ? "1" : undefined}
           style={{
@@ -151,12 +194,13 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
             height: iconSz,
             borderRadius: active ? 12 : 8,
             background: artBg(item.seed, item.grad),
-            boxShadow: active ? "0 12px 30px rgba(0,0,0,.5)" : "0 4px 12px rgba(0,0,0,.4)",
-            animation: active ? "xmbArtBreathe 3.2s ease-in-out infinite" : "none",
+            boxShadow: active ? artShadow : "0 4px 12px rgba(0,0,0,.4)",
             display: "grid",
             placeItems: "center",
             color: "#fff",
-            transition: `all .55s ${XMB_EASE}`,
+            // box-shadow is Motion-driven (artShadow); transition the morphing
+            // box props only so the CSS transition doesn't fight per-frame writes.
+            transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, border-radius .55s ${XMB_EASE}`,
             overflow: "hidden",
             position: "relative",
           }}
@@ -180,7 +224,7 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
             (Icon[item.icon]
               ? React.createElement(Icon[item.icon], { size: active ? 20 : 15, filled: true })
               : null)}
-        </div>
+        </motion.div>
       </div>
       <div style={{ minWidth: 0, position: "relative", zIndex: 1 }}>
         <div
@@ -194,14 +238,17 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            maxWidth: 340,
+            // The selected item is the focus and owns the whole bar's width, so
+            // give it a far larger cap: at 27px a shared 340px cap truncated it
+            // EARLIER than the 18px candidates, hiding text on selection. Widen
+            // it so selecting reveals more of the title, never less.
+            maxWidth: active ? 600 : 340,
           }}
         >
           {item.label}
         </div>
         {active && (
-          <div
-            className="fade-in"
+          <FadeIn
             style={{
               height: 2,
               width: 42,
@@ -213,8 +260,8 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
           />
         )}
         {active && item.sub && (
-          <div
-            className="mlabel fade-in"
+          <FadeIn
+            className="mlabel"
             style={{
               marginTop: 9,
               fontSize: 10.5,
@@ -222,11 +269,11 @@ function XmbItem({ item, active, o }: { item: any; active: boolean; o: number })
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              maxWidth: 340,
+              maxWidth: 600,
             }}
           >
             {item.sub}
-          </div>
+          </FadeIn>
         )}
       </div>
     </div>
@@ -237,6 +284,8 @@ type Props = {
   cats: any[];
   accent: string;
   playing: boolean;
+  /** Now-playing cover — drives the ambient backdrop. Absent = nothing playing. */
+  np?: { image?: string; seed?: number; grad?: string[] };
   showWaves?: boolean;
   onOpen?: (m: any, rect: DOMRect) => void;
   cState?: number;
@@ -249,6 +298,7 @@ export const XMB = React.memo(function XMB({
   cats,
   accent,
   playing: _playing,
+  np,
   showWaves = true,
   onOpen,
   cState,
@@ -344,51 +394,29 @@ export const XMB = React.memo(function XMB({
   }, []);
 
   return (
-    <div
-      className="fade-in"
-      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#06060a" }}
-    >
-      <style>{`
-        @keyframes xmbArtBreathe { 0%,100%{ box-shadow: 0 12px 30px rgba(0,0,0,.5), 0 0 26px -10px var(--accent);} 50%{ box-shadow: 0 14px 34px rgba(0,0,0,.55), 0 0 50px -6px var(--accent);} }
-        @keyframes xmbCatBreathe { 0%,100%{ box-shadow: 0 0 44px -8px var(--accent), 0 8px 24px rgba(0,0,0,.45);} 50%{ box-shadow: 0 0 70px 2px var(--accent), 0 8px 24px rgba(0,0,0,.45);} }
-      `}</style>
-      {/* crossfading cover, blurred + scaled into an ambient field (stage backdrop) */}
-      <div
-        key={`${c}-${it}`}
-        className="fade-in"
-        style={{
-          position: "absolute",
-          inset: "-8%",
-          zIndex: 0,
-          background: artBg(item.seed, item.grad),
-          filter: "blur(54px) saturate(1.35)",
-          transform: "scale(1.18)",
-          overflow: "hidden",
-        }}
-      >
-        {item.image && (
-          <img
-            src={item.image}
-            alt=""
-            draggable={false}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        )}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          background: "linear-gradient(180deg, rgba(6,6,10,.5), rgba(6,6,10,.66))",
-        }}
-      />
+    <FadeIn style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#06060a" }}>
+      {/* Ambient stage backdrop driven by the NOW-PLAYING cover (not the selected
+          item), so it no longer thrashes colour on every nav — it only shifts when
+          the song changes. Same living drift as the detail pages. Nothing playing
+          → a deep, calm black (no seeded colour cycling). */}
+      {np ? (
+        <HeroBackdrop
+          image={np.image}
+          seed={np.seed}
+          grad={np.grad}
+          scrim="linear-gradient(180deg, rgba(6,6,10,.5) 0%, rgba(6,6,10,.66) 100%)"
+        />
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            background:
+              "radial-gradient(120% 120% at 50% 36%, #0c0d13 0%, #07070b 58%, #050507 100%)",
+          }}
+        />
+      )}
       {showWaves && <FlowWaves accent={accent} />}
 
       {/* sub-item column — single vertical list at the active category's x,
@@ -522,6 +550,6 @@ export const XMB = React.memo(function XMB({
           </span>
         ))}
       </div>
-    </div>
+    </FadeIn>
   );
 });

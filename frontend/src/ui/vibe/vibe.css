@@ -296,6 +296,49 @@ input:focus-visible,
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* ---- HeroBackdrop: living ambient artwork ----------------------------------
+   Two blurred copies of the cover, sampled from different regions and drifting
+   in opposite directions, make the dominant hues slowly cross — the page reads
+   as alive rather than one static smear. A fine grain layer kills gradient
+   banding for a filmic finish. Heavy blur is rasterised once; only the
+   GPU-composited transform animates, so the loop is cheap. */
+.herobg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.herobg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform: translateZ(0);
+}
+/* drift transform is driven by Motion (HeroBackdrop in ./primitives.tsx); only
+   the static blur / opacity / sampling region stay here. */
+.herobg-a {
+  filter: blur(46px) saturate(1.55);
+  opacity: 0.72;
+}
+.herobg-b {
+  object-position: 72% 28%;
+  filter: blur(82px) saturate(1.5);
+  opacity: 0.44;
+}
+.herobg-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 /* scrollbars */
 .scroll {
   overflow-y: auto;
@@ -373,7 +416,9 @@ image-slot::part(empty) {
   gap: 18px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 2px 14px;
+  /* generous vertical room: rail cards lift on hover (Motion), and overflow-y is
+     clipped (x-scroll forces it), so without the padding the float would be cut. */
+  padding: 20px 2px 24px;
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
@@ -442,12 +487,6 @@ image-slot::part(empty) {
 .mcard.round .art {
   border-radius: 50%;
 }
-.mcard:hover .art {
-  transform: translateY(-6px);
-  box-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.3),
-    0 26px 50px -14px rgba(0, 0, 0, 0.72);
-}
 .mcard .playfab {
   position: absolute;
   right: 12px;
@@ -462,17 +501,7 @@ image-slot::part(empty) {
   color: #06060a;
   display: grid;
   place-items: center;
-  opacity: 0;
-  transform: translateY(10px) scale(0.9);
-  transition: all 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
   box-shadow: 0 10px 24px -6px var(--accent);
-}
-.mcard:hover .playfab {
-  opacity: 1;
-  transform: none;
-}
-.mcard .playfab:active {
-  transform: scale(0.9);
 }
 .mcard .ttl {
   margin-top: 12px;
@@ -508,9 +537,9 @@ image-slot::part(empty) {
   color: #fff;
   overflow: hidden;
   text-align: left;
-  transition:
-    background 0.15s,
-    transform 0.2s;
+  /* lift is Motion (LiftCard) now — only the bg hover stays CSS; a transform
+     transition here would fight Motion's per-frame writes. */
+  transition: background 0.15s;
   position: relative;
 }
 .tile:hover {
@@ -639,10 +668,8 @@ image-slot::part(empty) {
   color: #fff;
   padding: 20px;
   box-shadow: var(--shadow-card);
-  transition: transform 0.2s;
-}
-.gtile:hover {
-  transform: translateY(-4px);
+  /* lift is Motion (LiftButton) now; keep only the hover-shadow transition. */
+  transition: box-shadow 0.2s;
 }
 .gtile h3 {
   margin: 0;
@@ -660,35 +687,10 @@ image-slot::part(empty) {
   box-shadow: -8px 8px 18px rgba(0, 0, 0, 0.4);
 }
 
-.fade-in {
-  animation: fadeIn 0.5s ease both;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.rise {
-  animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* During a screen transition the OUTGOING layer is a freshly-mounted copy of the
-   leaving screen — without this it would replay its own entry animations (fade-in
-   / rise) from opacity:0, flashing as it leaves. Freeze it at its resting state;
-   morph/clip is the only entrance/exit motion. (transition: clip-path is unaffected.) */
+/* In-page entrances (fade-in / rise / xfade / np-swap) are Motion now — see
+   ./motion.tsx. The outgoing morph layer freezes them via useMorphFrozen(); this
+   CSS freeze stays as a belt-and-suspenders for any remaining CSS animation on a
+   re-mounted leaving screen (transition: clip-path is unaffected). */
 .t-from,
 .t-from * {
   animation: none !important;
@@ -713,46 +715,6 @@ image-slot::part(empty) {
   }
 }
 
-/* Now-Playing side-panel content swap (lyrics <-> comments): gentle rise + fade */
-@keyframes npSwap {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.np-swap {
-  animation: npSwap 0.42s cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .np-swap {
-    animation: none;
-  }
-}
-
-/* generic content cross-fade for tab-panel swaps (Library / Artist) */
-@keyframes xfade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.xfade {
-  animation: xfade 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .xfade {
-    animation: none;
-  }
-}
-
 /* ============================================================
    POLISH PASS — one consistent light source (top-center), more
    material depth, and a stronger primary/secondary hierarchy so
@@ -771,12 +733,17 @@ image-slot::part(empty) {
     0 1px 2px rgba(0, 0, 0, 0.26),
     0 14px 32px -12px rgba(0, 0, 0, 0.6);
 }
-.mcard:hover .art {
-  transform: translateY(-6px);
+/* Grid cards lift as a WHOLE via Motion (LiftCard) — the art only deepens its
+   shadow to sell the elevation (the card scale already moves it, so no per-art
+   transform that would compound). Drives both .mcard.gridcard tiles and the
+   bare .gridcard track tiles. */
+.gridcard .art {
+  transition: box-shadow 0.45s ease;
+}
+.gridcard:hover .art {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 2px 6px rgba(0, 0, 0, 0.32),
-    0 32px 60px -16px rgba(0, 0, 0, 0.76);
+    0 30px 64px -16px rgba(0, 0, 0, 0.82);
 }
 
 /* --- browse facet tiles: rim light + decisive lift --- */
@@ -801,7 +768,6 @@ image-slot::part(empty) {
   mix-blend-mode: soft-light;
 }
 .gtile:hover {
-  transform: translateY(-5px) scale(1.012);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 24px 50px -16px rgba(0, 0, 0, 0.72);
@@ -1031,52 +997,35 @@ textarea:focus-visible {
   background: rgba(255, 255, 255, 0.1);
   margin: 5px 8px;
 }
-@keyframes ctxFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes ctxScaleIn {
-  from {
-    transform: scale(0.96);
-  }
-  to {
-    transform: scale(1);
-  }
-}
 
-/* ---- volume HoverCard popup: rise+fade on open, reverse on close.
-   Radix waits for the [data-state="closed"] animation before unmounting, so
-   the popup glides out instead of vanishing. Transform here is safe — Radix
-   positions via an internal wrapper, not on the Content element. ---- */
-.volpop[data-state="open"] {
-  animation: volPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.volpop[data-state="closed"] {
-  animation: volPopOut 0.16s ease;
-}
-@keyframes volPopIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes volPopOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(6px);
-  }
+/* ---- text-reveal popover: full text of any clamped label. Frosted glass that
+   lets the atmospheric backdrop bleed through (blur + saturate pick up the page
+   hue), with a glass-edge highlight — the app's material, not a flat tooltip.
+   Shown only when the source text overflows. ---- */
+.textpop {
+  max-width: 400px;
+  max-height: min(58vh, 460px);
+  padding: 20px 26px 22px;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.62;
+  letter-spacing: 0.004em;
+  color: rgba(255, 255, 255, 0.93);
+  /* Translucent frosted glass: the page's atmospheric colour bleeds through and
+     is enriched (saturate) + steadied for contrast (brightness), so the card
+     ADOPTS the page hue instead of sitting on it as a foreign neutral slab.
+     NO bright rim/border — instead the edges are feathered to transparent (mask)
+     so the panel melts softly into the page; the centre stays solid for text. */
+  background: linear-gradient(180deg, rgba(24, 24, 31, 0.6), rgba(15, 15, 21, 0.66));
+  -webkit-backdrop-filter: blur(60px) saturate(132%) brightness(0.94);
+  backdrop-filter: blur(60px) saturate(132%) brightness(0.94);
+  -webkit-mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
+  mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
+  /* enter/exit are Motion now (TextReveal in ../components/TextReveal.tsx); the
+     transform-origin still points at Radix's computed origin so the scale grows
+     from the side the card opens on. */
+  transform-origin: var(--radix-hover-card-content-transform-origin);
+  z-index: 9000;
 }
 
 /* ---- grid / list view toggle (Library) ---- */
@@ -1191,20 +1140,18 @@ textarea:focus-visible {
   transform: translateX(20px);
 }
 
-/* ---- PS5-style focus: the hovered card becomes the visual center ---- */
+/* Every card lifts on hover via Motion (LiftCard) — in grids AND rails (Netflix
+   style), replacing the old PS5 dim-others focus. The base .mcard transition is
+   only for a non-lift fallback; .gridcard cards drop it so Motion fully owns the
+   root transform/filter (a CSS transition would fight the per-frame writes). */
 .mcard {
   transition:
     opacity 0.3s ease,
     filter 0.3s ease,
     transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.hrail:hover .mcard:not(:hover),
-.hrail:focus-within .mcard:not(:hover) {
-  opacity: 0.48;
-  filter: saturate(0.8) brightness(0.82);
-}
-.hrail .mcard:hover {
-  transform: translateY(-2px) scale(1.015);
+.mcard.gridcard {
+  transition: none;
 }
 /* a soft specular sweep across the focused art, like light on glossy plastic */
 .mcard .art::after {
@@ -1229,3 +1176,8 @@ textarea:focus-visible {
   opacity: 1;
   transform: translateX(30%);
 }
+
+/* Grid-card hover lift (float-up + scale; fab rises from below) is Motion-driven
+   now — see LiftCard / RiseFab in ./lift.tsx. Only the art-shadow pop (above,
+   `.gridcard:hover .art`) and the rail/grid split of the `.playfab` reveal stay
+   in CSS. */
