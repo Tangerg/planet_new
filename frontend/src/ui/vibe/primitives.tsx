@@ -380,7 +380,7 @@ export function HeroBackdrop({
   image,
   seed = 0,
   grad,
-  scrim = "linear-gradient(180deg, rgba(10,10,13,.28) 0%, rgba(10,10,13,.6) 55%, #0a0a0d 100%)",
+  scrim = "linear-gradient(180deg, rgba(10,10,13,.4) 0%, rgba(10,10,13,.74) 52%, #0a0a0d 100%)",
 }: {
   image?: string;
   seed?: number;
@@ -402,9 +402,11 @@ export function HeroBackdrop({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "blur(72px) saturate(1.35)",
+            // Restrained: low opacity + no saturation boost so it reads as a
+            // calm hue, not a saturated flood that drowns the content.
+            filter: "blur(82px) saturate(1)",
             transform: "scale(1.3)",
-            opacity: 0.5,
+            opacity: 0.28,
           }}
         />
       ) : (
@@ -416,8 +418,8 @@ export function HeroBackdrop({
             inset: 0,
             zIndex: 0,
             background: artBg(seed, grad),
-            filter: "blur(72px) saturate(1.25)",
-            opacity: 0.4,
+            filter: "blur(82px) saturate(1)",
+            opacity: 0.24,
             transform: "scale(1.3)",
           }}
         />
