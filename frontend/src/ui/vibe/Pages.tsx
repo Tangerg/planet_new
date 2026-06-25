@@ -79,14 +79,61 @@ function ArtistScreen({
       />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
         {/* header */}
-        <Art
-          seed={artist.coverSeed}
-          grad={artist.gradient}
-          image={artist.banner || artist.image}
-          mono={mono}
-          objectPosition="center 30%"
-          style={{ height: 420 }}
-        >
+        <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
+          {/* Two-layer hero: a blurred copy fills the whole banner (keeps the
+              large area filled), and a scaled-down sharp copy on top shows far
+              more of the photo than a tight cover-crop; its left/right edges
+              fade into the blurred layer so there's no hard seam. */}
+          {artist.banner || artist.image ? (
+            <>
+              <img
+                src={artist.banner || artist.image}
+                alt=""
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  filter: `${mono ? "grayscale(1) " : ""}blur(46px) saturate(1.25)`,
+                  transform: "scale(1.2)",
+                  opacity: 0.85,
+                }}
+              />
+              <img
+                src={artist.banner || artist.image}
+                alt=""
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 1,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  transform: "scale(1.5)",
+                  filter: mono ? "grayscale(1)" : "none",
+                  WebkitMaskImage:
+                    "linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%)",
+                  maskImage:
+                    "linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%)",
+                }}
+              />
+            </>
+          ) : (
+            <div
+              className="grain"
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 0,
+                background: artBg(artist.coverSeed, artist.gradient),
+              }}
+            />
+          )}
           {/* Spotify-style scrim: darken the left (where the name sits) and the
               bottom (blend into the page), leaving the face/right clear. */}
           <div
@@ -197,7 +244,7 @@ function ArtistScreen({
               </button>
             </div>
           </div>
-        </Art>
+        </div>
 
         {/* tabs + content */}
         <div

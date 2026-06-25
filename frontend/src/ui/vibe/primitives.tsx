@@ -296,10 +296,6 @@ export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Render width in CSS px for image selection, when the box is sized by a CSS
    *  class rather than an inline numeric width (cards, tiles). */
   px?: number;
-  /** object-position for the cover <img>. Default "center"; a non-square box
-   *  (e.g. a wide artist banner from a portrait source) can pass "center 30%"
-   *  so the crop favours the face/head instead of slicing the middle. */
-  objectPosition?: string;
   mono?: boolean;
   glow?: string;
 };
@@ -310,7 +306,6 @@ export function Art({
   image,
   images,
   px,
-  objectPosition = "center",
   mono = false,
   className = "",
   style = {},
@@ -350,7 +345,6 @@ export function Art({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition,
             filter: mono ? "grayscale(1) contrast(1.05)" : "none",
             zIndex: 0,
           }}
