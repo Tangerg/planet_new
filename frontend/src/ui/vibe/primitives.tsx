@@ -296,12 +296,10 @@ export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Render width in CSS px for image selection, when the box is sized by a CSS
    *  class rather than an inline numeric width (cards, tiles). */
   px?: number;
-  /** object-position for the <img>. Default "center". */
+  /** object-position for the cover <img>. Default "center"; a non-square box
+   *  (e.g. a wide artist banner from a portrait source) can pass "center 30%"
+   *  so the crop favours the face/head instead of slicing the middle. */
   objectPosition?: string;
-  /** "cover" (default, fills+crops; right for square art in square boxes) or
-   *  "contain" (whole image shown, no crop, with a blurred fill behind — right
-   *  for a square/portrait source in a wide banner). */
-  objectFit?: "cover" | "contain";
   mono?: boolean;
   glow?: string;
 };
@@ -313,7 +311,6 @@ export function Art({
   images,
   px,
   objectPosition = "center",
-  objectFit = "cover",
   mono = false,
   className = "",
   style = {},
@@ -336,27 +333,6 @@ export function Art({
       {...rest}
       style={{ position: "relative", overflow: "hidden", background: bg, ...style }}
     >
-      {/* In contain mode the image fits whole (no crop); a blurred copy of it
-          fills the box behind so the wide box isn't empty around the artwork. */}
-      {src && objectFit === "contain" && (
-        <img
-          src={src}
-          alt=""
-          aria-hidden
-          draggable={false}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: `${mono ? "grayscale(1) " : ""}blur(40px) saturate(1.2)`,
-            transform: "scale(1.18)",
-            opacity: 0.55,
-            zIndex: 0,
-          }}
-        />
-      )}
       {src && (
         <img
           src={src}
@@ -373,10 +349,10 @@ export function Art({
             inset: 0,
             width: "100%",
             height: "100%",
-            objectFit,
+            objectFit: "cover",
             objectPosition,
             filter: mono ? "grayscale(1) contrast(1.05)" : "none",
-            zIndex: objectFit === "contain" ? 1 : 0,
+            zIndex: 0,
           }}
         />
       )}

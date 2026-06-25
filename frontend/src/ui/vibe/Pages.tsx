@@ -84,8 +84,7 @@ function ArtistScreen({
           grad={artist.gradient}
           image={artist.banner || artist.image}
           mono={mono}
-          objectFit="contain"
-          objectPosition="right center"
+          objectPosition="center 30%"
           style={{ height: 420 }}
         >
           {/* Spotify-style scrim: darken the left (where the name sits) and the
