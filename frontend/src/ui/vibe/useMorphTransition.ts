@@ -236,5 +236,8 @@ export function useMorphTransition(
   // Esc/back are owned by Shell's goBack so they share the navigation
   // back-stack (pop one level) instead of always collapsing to the launcher.
 
-  return { trans, startForward, startReverse, goMorph, layerStyle, EASE };
+  // lastTile is exposed so Shell's back-stack can snapshot/restore it: a card
+  // morph (window.__MORPH) overwrites it, so without per-level restore the
+  // eventual collapse-to-launcher would fly from the wrong origin tile.
+  return { trans, startForward, startReverse, goMorph, layerStyle, EASE, lastTile };
 }

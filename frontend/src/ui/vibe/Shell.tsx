@@ -61,6 +61,9 @@ type NavSnapshot = {
   libraryView: string;
   searchQuery: string;
   playContext: VibeTrack[];
+  // The morph origin tile active while on this screen — restored so a later
+  // collapse-to-launcher flies from the right place after a deep back-walk.
+  lastTile: any;
 };
 
 export default function Shell() {
@@ -132,19 +135,9 @@ export default function Shell() {
     [playFn],
   );
 
-  /* Mirror the live navigation state so a back-stack push captures the screen
-     being left without stale closures (safe to write during render: pure mirror). */
-  navSnapRef.current = {
-    view,
-    detail,
-    artistObj,
-    libraryTab,
-    libraryView,
-    searchQuery,
-    playContext: playContext.current,
-  };
   // Remember the current screen before a forward hop. No-op at the launcher:
   // the XMB↔screen boundary is the morph engine's (startReverse), not the stack's.
+  // Reads navSnapRef at call time (populated each render, after the morph hook).
   const pushCurrent = useCallback(() => {
     const snap = navSnapRef.current;
     if (!snap || snap.view === "xmb") return;
@@ -282,11 +275,27 @@ export default function Shell() {
 
   /* ---- shared-element transition engine (extracted hook) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
-  const { trans, startForward, startReverse, layerStyle, EASE } = useMorphTransition(
+  const { trans, startForward, startReverse, layerStyle, EASE, lastTile } = useMorphTransition(
     viewRef,
     view,
     setView,
   );
+
+  /* Mirror the live navigation state so a back-stack push captures the screen
+     being left without stale closures. Written during render (pure mirror);
+     placed after the morph hook so lastTile is in scope. A card morph mutates
+     lastTile only inside the click handler that follows this render, so the
+     value captured here is still the origin tile of the *current* screen. */
+  navSnapRef.current = {
+    view,
+    detail,
+    artistObj,
+    libraryTab,
+    libraryView,
+    searchQuery,
+    playContext: playContext.current,
+    lastTile: lastTile.current,
+  };
 
   /* Back: pop one screen off the stack and restore its full data snapshot;
      when the stack is empty we're at a launcher-level screen, so hand off to
@@ -304,7 +313,8 @@ export default function Shell() {
     setLibraryView(prev.libraryView);
     setSeedQuery(prev.searchQuery);
     playContext.current = prev.playContext;
-  }, [startReverse]);
+    lastTile.current = prev.lastTile;
+  }, [startReverse, lastTile]);
 
   /* Esc backs out one level (was the morph hook's job; centralised here so it
      shares the back-stack instead of always jumping to the launcher). */
@@ -679,7 +689,8 @@ export default function Shell() {
           current={current}
           playing={playing}
           accent={accent}
-          initialQuery={searchQuery}
+          query={searchQuery}
+          onQuery={setSeedQuery}
           liked={liked}
           toggleLike={toggleLike}
           openArtist={openArtist}
@@ -692,9 +703,10 @@ export default function Shell() {
     if (v === "library" || v === "made")
       return (
         <LibraryScreen
-          key={libraryTab + libraryView}
-          initialTab={libraryTab}
-          initialView={libraryView}
+          tab={libraryTab}
+          view={libraryView}
+          onTab={setLibraryTab}
+          onView={setLibraryView}
           data={screenData}
           onPlay={onPlay}
           current={current}
