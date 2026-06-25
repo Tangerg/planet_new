@@ -4,6 +4,7 @@
 // with always-visible times · utilities. Dark to match the app shell.
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { Slider } from "../components/Slider";
 import { Button } from "../components/Button";
@@ -108,17 +109,10 @@ export const PlayerBar = React.memo(function PlayerBar({
     minWidth: 42,
   };
 
-  // Open the full-screen now-playing view, measuring the cover art as the morph
-  // origin so the shared-element transition flies from the bar's artwork.
-  const openNowPlaying = (el: HTMLElement) => {
-    const art = el.querySelector(".grain");
-    const rect = (art ?? el).getBoundingClientRect();
-    if (window.__MORPH) {
-      window.__MORPH(rect, track?.coverSeed || 0, track?.gradient, onOpenNowPlaying, track?.image);
-    } else {
-      onOpenNowPlaying();
-    }
-  };
+  // SPIKE: open now-playing via Motion's shared-element layout (the cover and
+  // the np disc share `layoutId`), so no grain-tile __MORPH measuring here —
+  // just navigate and let Motion fly the cover.
+  const openNowPlaying = () => onOpenNowPlaying();
 
   return (
     <div
@@ -143,11 +137,11 @@ export const PlayerBar = React.memo(function PlayerBar({
         role="button"
         tabIndex={0}
         aria-label="Open now playing"
-        onClick={(e) => openNowPlaying(e.currentTarget)}
+        onClick={() => openNowPlaying()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            openNowPlaying(e.currentTarget);
+            openNowPlaying();
           }
         }}
         style={{
@@ -164,18 +158,29 @@ export const PlayerBar = React.memo(function PlayerBar({
           zIndex: 1,
         }}
       >
-        <Art
-          seed={track?.coverSeed || 0}
-          grad={track?.gradient}
-          image={track?.image}
-          images={track?.images}
+        <motion.div
+          layoutId="np-morph-cover"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           style={{
             width: 54,
             height: 54,
             flex: "0 0 auto",
+            // Percent (not px) so it tweens cleanly against the disc's "50%"
+            // (Motion can't interpolate px↔%); % also scales with the box, so
+            // the corners round progressively during the fly, not all at the end.
+            borderRadius: "8%",
+            overflow: "hidden",
             boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
           }}
-        />
+        >
+          <Art
+            seed={track?.coverSeed || 0}
+            grad={track?.gradient}
+            image={track?.image}
+            images={track?.images}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </motion.div>
         <div style={{ minWidth: 0 }}>
           <div className="truncate" style={{ fontSize: 16, fontWeight: 400 }}>
             {track?.title || "—"}

@@ -1019,7 +1019,9 @@ export default function Shell() {
             <motion.div
               initial={{ y: "108%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: "108%", opacity: 0 }}
+              // SPIKE: quick fade on exit (no slide) so the cover's layoutId fly
+              // to the np disc isn't fighting a sliding parent.
+              exit={{ opacity: 0, transition: { duration: 0.12 } }}
               transition={{
                 y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
                 opacity: { duration: 0.3 },

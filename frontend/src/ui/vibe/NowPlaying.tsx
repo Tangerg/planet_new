@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { motion } from "motion/react";
 import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
 import { Button } from "../components/Button";
@@ -444,9 +445,15 @@ export const NowPlaying = React.memo(function NowPlaying({
           transition: `left .62s ${NP_EASE}, transform .62s ${NP_EASE}`,
         }}
       >
-        <div
+        <motion.div
           className="grain"
           data-hero="1"
+          layoutId="np-morph-cover"
+          // SPIKE: shared-element morph via Motion. This disc and the player-bar
+          // cover share `layoutId`, so Motion flies between them on np enter/exit
+          // — replacing the hand-rolled grain tile for this one path. The spin
+          // moved to an inner element (rotate transform would fight layout).
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           style={{
             width: 300,
             height: 300,
@@ -455,55 +462,56 @@ export const NowPlaying = React.memo(function NowPlaying({
             position: "relative",
             background: artBg(coverSeed + 1, grad),
             boxShadow: `0 0 90px -10px ${b}, 0 30px 80px rgba(0,0,0,.5)`,
-            animation: "spin 26s linear infinite",
           }}
         >
-          {track?.image && (
-            <img
-              src={track.image}
-              alt=""
-              draggable={false}
+          <div style={{ position: "absolute", inset: 0, animation: "spin 26s linear infinite" }}>
+            {track?.image && (
+              <img
+                src={track.image}
+                alt=""
+                draggable={false}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            )}
+            {/* vinyl centre — subtle spindle detail */}
+            <div
+              aria-hidden
               style={{
                 position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
+                top: "50%",
+                left: "50%",
+                width: 60,
+                height: 60,
+                marginLeft: -30,
+                marginTop: -30,
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(0,0,0,.5), rgba(0,0,0,.18) 60%, transparent 72%)",
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)",
               }}
             />
-          )}
-          {/* vinyl centre — subtle spindle detail */}
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 60,
-              height: 60,
-              marginLeft: -30,
-              marginTop: -30,
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, rgba(0,0,0,.5), rgba(0,0,0,.18) 60%, transparent 72%)",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)",
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 12,
-              height: 12,
-              marginLeft: -6,
-              marginTop: -6,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,.16)",
-            }}
-          />
-        </div>
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: 12,
+                height: 12,
+                marginLeft: -6,
+                marginTop: -6,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,.16)",
+              }}
+            />
+          </div>
+        </motion.div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
 
