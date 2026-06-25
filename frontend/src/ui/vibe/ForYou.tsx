@@ -123,6 +123,22 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
         marginBottom: 40,
       }}
     >
+      {/* real featured cover behind the copy (gradient stays as fallback). */}
+      {playlist.image && (
+        <img
+          src={playlist.image}
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      )}
       <div
         style={{
           position: "absolute",

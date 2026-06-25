@@ -84,16 +84,18 @@ function ArtistScreen({
           grad={artist.gradient}
           image={artist.banner || artist.image}
           mono={mono}
-          objectPosition="center 25%"
-          style={{ height: 300 }}
+          objectPosition="center 20%"
+          style={{ height: 420 }}
         >
+          {/* Spotify-style scrim: darken the left (where the name sits) and the
+              bottom (blend into the page), leaving the face/right clear. */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               zIndex: 2,
               background:
-                "linear-gradient(180deg, rgba(8,8,11,.42) 0%, rgba(8,8,11,.5) 58%, var(--surf-0) 100%)",
+                "linear-gradient(90deg, rgba(8,8,11,.72) 0%, rgba(8,8,11,.2) 42%, transparent 68%), linear-gradient(180deg, transparent 42%, rgba(10,10,13,.45) 74%, #0a0a0d 100%)",
             }}
           />
           {/* Bottom-anchored via flow (flex-end column), not absolute: text stays
