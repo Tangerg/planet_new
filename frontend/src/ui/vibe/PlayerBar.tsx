@@ -141,14 +141,23 @@ export const PlayerBar = React.memo(function PlayerBar({
         }}
         onMouseLeave={() => setHoverX(null)}
         thumbLabel="Seek"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: 14, zIndex: 4 }}
+        // Flex-center the Root so Radix's abspos thumb wrapper takes a centered
+        // static position (align-items) and lands on the track — no magic top.
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 14,
+          display: "flex",
+          alignItems: "center",
+          zIndex: 4,
+        }}
         parts={{
           track: {
             style: {
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
+              position: "relative",
+              flexGrow: 1,
               height: 3,
               background: "rgba(20,20,24,.12)",
             },
@@ -163,7 +172,6 @@ export const PlayerBar = React.memo(function PlayerBar({
           thumb: {
             style: {
               display: "block",
-              top: -2.5,
               width: 9,
               height: 9,
               borderRadius: "50%",
@@ -366,86 +374,100 @@ export const PlayerBar = React.memo(function PlayerBar({
           >
             <Icon.volume size={18} />
           </button>
+          {/* Outer layer = positioning + a transparent hover-bridge (paddingBottom)
+              that reaches down to the button, so moving the cursor up to the panel
+              never crosses a dead gap that dismisses it. Inner = the dark glass
+              panel (matches the page's dark vibe, like the seek-time tooltip). */}
           <div
             style={{
               position: "absolute",
               bottom: "100%",
               left: "50%",
               transform: `translateX(-50%) translateY(${volOpen ? 0 : 6}px)`,
-              marginBottom: 12,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-              padding: "16px 13px 14px",
-              background: "rgba(247,246,244,.86)",
-              border: "0.5px solid rgba(255,255,255,.7)",
-              borderRadius: 16,
-              WebkitBackdropFilter: "blur(20px) saturate(180%)",
-              backdropFilter: "blur(20px) saturate(180%)",
+              paddingBottom: 12,
               opacity: volOpen ? 1 : 0,
               pointerEvents: volOpen ? "auto" : "none",
               transition: "opacity .2s ease, transform .2s ease",
-              boxShadow: "0 16px 38px -12px rgba(0,0,0,.45)",
             }}
           >
-            <span
+            <div
               style={{
-                fontFamily: "var(--mono)",
-                fontSize: 9.5,
-                letterSpacing: ".1em",
-                color: "rgba(20,20,24,.5)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+                padding: "15px 13px 13px",
+                background: "rgba(16,16,20,.92)",
+                border: "0.5px solid rgba(255,255,255,.1)",
+                borderRadius: 14,
+                WebkitBackdropFilter: "blur(22px) saturate(160%)",
+                backdropFilter: "blur(22px) saturate(160%)",
+                boxShadow: "0 18px 44px -14px rgba(0,0,0,.65)",
               }}
             >
-              {Math.round(volume)}
-            </span>
-            <Slider
-              orientation="vertical"
-              min={0}
-              max={1}
-              step={0.01}
-              value={[volume / 100]}
-              onValueChange={([v]) => onVolume(Math.round(v * 100))}
-              thumbLabel="Volume"
-              style={{
-                position: "relative",
-                width: 5,
-                height: 96,
-                cursor: "pointer",
-                touchAction: "none",
-              }}
-              parts={{
-                track: {
-                  style: {
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: 999,
-                    background: "rgba(20,20,24,.16)",
+              <span
+                style={{
+                  fontFamily: "var(--mono)",
+                  fontSize: 9.5,
+                  letterSpacing: ".1em",
+                  color: "rgba(255,255,255,.55)",
+                }}
+              >
+                {Math.round(volume)}
+              </span>
+              <Slider
+                orientation="vertical"
+                min={0}
+                max={1}
+                step={0.01}
+                value={[volume / 100]}
+                onValueChange={([v]) => onVolume(Math.round(v * 100))}
+                thumbLabel="Volume"
+                // Flex-center the Root so the thumb wrapper centers on the track;
+                // the thumb itself must NOT set transform (that would clobber
+                // Radix's own translateY(50%) main-axis positioning).
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  width: 12,
+                  height: 96,
+                  cursor: "pointer",
+                  touchAction: "none",
+                }}
+                parts={{
+                  track: {
+                    style: {
+                      position: "relative",
+                      width: 4,
+                      height: "100%",
+                      borderRadius: 999,
+                      background: "rgba(255,255,255,.18)",
+                    },
                   },
-                },
-                range: {
-                  style: {
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    background: accent,
-                    borderRadius: 999,
+                  range: {
+                    style: {
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      background: accent,
+                      borderRadius: 999,
+                    },
                   },
-                },
-                thumb: {
-                  style: {
-                    display: "block",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: "#fff",
-                    boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
+                  thumb: {
+                    style: {
+                      display: "block",
+                      width: 12,
+                      height: 12,
+                      borderRadius: "50%",
+                      background: "#fff",
+                      boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.45)`,
+                    },
                   },
-                },
-              }}
-            />
+                }}
+              />
+            </div>
           </div>
         </div>
         {/* divider: utilities | transport */}
