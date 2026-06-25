@@ -654,28 +654,17 @@ export function PlaylistDetailScreen({
                   >
                     Sort
                   </span>
-                  {[
-                    ["order", "#"],
-                    ["title", "Title"],
-                    ["duration", "Time"],
-                  ].map(([k, l]) => (
-                    <Button
-                      key={k}
-                      onClick={() => setSort(k)}
-                      className="mlabel"
-                      style={{
-                        fontSize: 10,
-                        padding: "5px 9px",
-                        borderRadius: 6,
-                        border: 0,
-                        cursor: "pointer",
-                        background: sort === k ? "rgba(255,255,255,.12)" : "transparent",
-                        color: sort === k ? "#fff" : "rgba(255,255,255,.45)",
-                      }}
-                    >
-                      {l}
-                    </Button>
-                  ))}
+                  <ToggleGroup
+                    ariaLabel="Sort tracks"
+                    className="sortseg"
+                    value={sort}
+                    onValueChange={setSort}
+                    items={[
+                      { value: "order", label: "#" },
+                      { value: "title", label: "Title" },
+                      { value: "duration", label: "Time" },
+                    ]}
+                  />
                 </div>
               )}
               <ToggleGroup
