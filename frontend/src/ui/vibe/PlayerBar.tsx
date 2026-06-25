@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect } from "react";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { Slider } from "../components/Slider";
 import { Button } from "../components/Button";
+import { useMorph } from "@/infra/morph";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
 type Props = {
@@ -61,6 +62,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   onVolume,
   onOpenArtist,
 }: Props) {
+  const morph = useMorph();
   // Real duration from the kernel (the loaded audio); track metadata is the
   // pre-load fallback so the bar has a sane scale before `durationchange`.
   const dur = durationSec > 0 ? durationSec : track?.durSec || 1;
@@ -113,11 +115,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   const openNowPlaying = (el: HTMLElement) => {
     const art = el.querySelector(".grain");
     const rect = (art ?? el).getBoundingClientRect();
-    if (window.__MORPH) {
-      window.__MORPH(rect, track?.coverSeed || 0, track?.gradient, onOpenNowPlaying, track?.image);
-    } else {
-      onOpenNowPlaying();
-    }
+    morph(rect, track?.coverSeed || 0, track?.gradient, onOpenNowPlaying, track?.image);
   };
 
   return (

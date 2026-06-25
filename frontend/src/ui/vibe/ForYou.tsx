@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
+import { useMorph } from "@/infra/morph";
 import { MOCK } from "./mockCatalog";
 
 type MediaCardProps = {
@@ -33,12 +34,12 @@ export function MediaCard({
   onPlay,
   item,
 }: MediaCardProps) {
+  const morph = useMorph();
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!onClick) return;
     const art = e.currentTarget.querySelector(".art");
     const rect = (art || e.currentTarget).getBoundingClientRect();
-    if (window.__MORPH) window.__MORPH(rect, seed, grad, onClick, image);
-    else onClick();
+    morph(rect, seed, grad, onClick, image);
   };
   return (
     <div
@@ -111,6 +112,7 @@ type HeroBannerProps = {
 };
 
 export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps) {
+  const morph = useMorph();
   const [_a, _b] = artPair(playlist.coverSeed, playlist.gradient);
   return (
     <div
@@ -236,9 +238,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             onClick={(e) => {
               const banner = e.currentTarget.closest("[data-hero]");
               const r = (banner || e.currentTarget).getBoundingClientRect();
-              if (window.__MORPH)
-                window.__MORPH(r, playlist.coverSeed, playlist.gradient, onOpen, playlist.image);
-              else onOpen();
+              morph(r, playlist.coverSeed, playlist.gradient, onOpen, playlist.image);
             }}
             className="pill-ghost"
           >
@@ -272,6 +272,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   onNav,
   accent,
 }: ForYouScreenProps) {
+  const morph = useMorph();
   const greeting = (() => {
     const h = new Date().getHours();
     return h < 5
@@ -365,8 +366,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                   const art = e.currentTarget.querySelector(".tart");
                   const rect = (art || e.currentTarget).getBoundingClientRect();
                   const run = () => openTile(t);
-                  if (window.__MORPH) window.__MORPH(rect, t.coverSeed, t.gradient, run, t.image);
-                  else run();
+                  morph(rect, t.coverSeed, t.gradient, run, t.image);
                 }}
               >
                 <Art

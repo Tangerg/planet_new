@@ -7,6 +7,7 @@ import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg } from "./primitives";
 import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { useMorph } from "@/infra/morph";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
 import { CoverFlow } from "./CoverFlow";
@@ -49,6 +50,7 @@ export function SearchScreen({
   toggleLike,
   search,
 }: SearchScreenProps) {
+  const morph = useMorph();
   const [results, setResults] = useState<SearchResults>({ tracks: [], artists: [], albums: [] });
   const [loading, setLoading] = useState(false);
   // Debounce input 320ms, then call provider.search; an empty query clears results.
@@ -205,9 +207,7 @@ export function SearchScreen({
                     const a = e.currentTarget.querySelector(".grain");
                     const r = (a || e.currentTarget).getBoundingClientRect();
                     const run = () => openArtist(top);
-                    if (window.__MORPH)
-                      window.__MORPH(r, top.coverSeed, top.gradient, run, top.image);
-                    else run();
+                    morph(r, top.coverSeed, top.gradient, run, top.image);
                   }}
                   className="grain rise"
                   style={{
@@ -338,10 +338,10 @@ type ChartCardProps = {
 };
 
 function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) {
+  const morph = useMorph();
   const handle = (e: React.MouseEvent<HTMLButtonElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    if (window.__MORPH) window.__MORPH(r, seed, grad, onClick, image);
-    else onClick();
+    morph(r, seed, grad, onClick, image);
   };
   return (
     <Button
@@ -488,11 +488,11 @@ export function CollectionRow({
   item,
 }: CollectionRowProps) {
   const [hover, setHover] = useState(false);
+  const morph = useMorph();
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     const a = e.currentTarget.querySelector(".clrt");
     const r = (a || e.currentTarget).getBoundingClientRect();
-    if (window.__MORPH) window.__MORPH(r, seed, grad, onOpen, image);
-    else onOpen();
+    morph(r, seed, grad, onOpen, image);
   };
   return (
     <div
