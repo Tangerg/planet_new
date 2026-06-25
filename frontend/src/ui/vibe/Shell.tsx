@@ -1030,53 +1030,59 @@ export default function Shell() {
           )}
         </div>
 
+        {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
+            transition). Entering now-playing collapses it to 0 the same frame, so
+            .view is full-height when the np cover morph measures its (vertically
+            centered) hero — never re-jumping. The bar itself is positioned
+            absolutely and slides independently of this spacer, so its
+            appear/disappear never reflows .view. That's the fix for the asymmetry:
+            with the old single collapsing box, entering np yanked the bar into a
+            0-height box (no slide — a dark strip just popped where it sat); now the
+            light bar visibly slides off the bottom over the full-height np content. */}
+        <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
+
         {bar.mounted && (
-          // Layout reservation tracks showBar *instantly* (no transition) so .view
-          // is full-height the frame we enter now-playing — the np cover morph
-          // measures its (vertically-centered) hero correctly, never re-jumping.
-          // Only the inner slide is animated. overflow:visible lets the volume
-          // popup escape upward; .win (overflow:hidden) clips the slide.
+          // Absolute over .win's bottom. z-index 30 sits below the morph grain (40)
+          // so the flying cover passes over it, above .view content. overflow:visible
+          // lets the volume popup escape upward; .win (overflow:hidden) clips the slide.
           <div
             style={{
-              flexGrow: 0,
-              flexShrink: 0,
-              flexBasis: showBar ? 84 : 0,
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 30,
               overflow: "visible",
+              transform: bar.active ? "translateY(0)" : "translateY(108%)",
+              opacity: bar.active ? 1 : 0,
+              transition: "transform .44s cubic-bezier(.16,1,.3,1), opacity .3s ease",
+              willChange: "transform",
             }}
           >
-            <div
-              style={{
-                transform: bar.active ? "translateY(0)" : "translateY(108%)",
-                opacity: bar.active ? 1 : 0,
-                transition: "transform .44s cubic-bezier(.16,1,.3,1), opacity .3s ease",
-                willChange: "transform",
-              }}
-            >
-              <PlayerBar
-                track={current}
-                playing={playing}
-                setPlaying={setPlaying}
-                liked={isLiked}
-                toggleLike={() => current && toggleLike(current.id)}
-                accent={accent}
-                shuffle={shuffle}
-                setShuffle={setShuffle}
-                repeat={repeat}
-                onToggleRepeat={onToggleRepeat}
-                onNext={playNext}
-                onPrev={playPrev}
-                positionSec={playback.progress.duration}
-                durationSec={playback.duration.duration}
-                onSeek={playback.seek}
-                volume={playback.volume}
-                onVolume={playback.setVolume}
-                onOpenNowPlaying={() => navigate("np")}
-                onOpenQueue={() => navigate("queue")}
-                onOpenComments={() => navigate("comments")}
-                onOpenLyrics={() => navigate("np")}
-                onOpenArtist={openArtist}
-              />
-            </div>
+            <PlayerBar
+              track={current}
+              playing={playing}
+              setPlaying={setPlaying}
+              liked={isLiked}
+              toggleLike={() => current && toggleLike(current.id)}
+              accent={accent}
+              shuffle={shuffle}
+              setShuffle={setShuffle}
+              repeat={repeat}
+              onToggleRepeat={onToggleRepeat}
+              onNext={playNext}
+              onPrev={playPrev}
+              positionSec={playback.progress.duration}
+              durationSec={playback.duration.duration}
+              onSeek={playback.seek}
+              volume={playback.volume}
+              onVolume={playback.setVolume}
+              onOpenNowPlaying={() => navigate("np")}
+              onOpenQueue={() => navigate("queue")}
+              onOpenComments={() => navigate("comments")}
+              onOpenLyrics={() => navigate("np")}
+              onOpenArtist={openArtist}
+            />
           </div>
         )}
       </div>
