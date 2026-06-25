@@ -1,7 +1,14 @@
 /**
  * Shared-element transition engine — the morph phase machine that flies a
- * tile onto the destination hero and back. Ported verbatim from the example
- * Sonance Vibe App; extracted from Shell.tsx for separation of concerns.
+ * tile onto the destination hero and back. The page-to-page (navigation)
+ * transition system, ported verbatim from the example Sonance Vibe App.
+ *
+ * UI-layer infra (`@/infra/morph`): framework of the transition only — it holds
+ * no vibe/screen knowledge. Consumers drive it with a `view` string + setView,
+ * trigger forward/reverse, and render screens themselves (see MorphStage, which
+ * paints the resident container + base/from/grain layers from this state).
+ * In-page animation is a separate concern (use Motion for that); this owns the
+ * cross-screen morph.
  *
  * The dep arrays are intentionally curated (keyed on `view` / `trans`); the
  * referenced callbacks are recreated each render by design. Adding them to
@@ -15,7 +22,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 
-const EASE = "cubic-bezier(.16,1,.3,1)";
+export const EASE = "cubic-bezier(.16,1,.3,1)";
 
 type Rect = {
   left: number;
@@ -25,7 +32,7 @@ type Rect = {
   borderRadius: number | string;
 };
 
-type Transition = {
+export type Transition = {
   from: string;
   to: string;
   origin: Rect;
@@ -40,6 +47,24 @@ type Transition = {
   hero: boolean | null;
   measured: boolean;
 };
+
+/** Style for the outgoing-screen layer (`.t-from`): fades + blurs out, unless
+ *  it's the start frame or a clip reveal (`hero === false`). Pure fn of EASE. */
+export function layerStyle(t: Transition): React.CSSProperties {
+  const begin = t.phase === "start" || t.hero === false;
+  return {
+    position: "absolute",
+    inset: 0,
+    height: "100%",
+    pointerEvents: "none",
+    zIndex: 20,
+    opacity: begin ? 1 : 0,
+    transform: begin ? "scale(1)" : "scale(.985)",
+    filter: begin ? "blur(0px)" : "blur(3px)",
+    transformOrigin: "center",
+    transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
+  };
+}
 
 export function useMorphTransition(
   viewRef: RefObject<HTMLDivElement | null>,
@@ -191,22 +216,6 @@ export function useMorphTransition(
     };
   }, []);
 
-  const layerStyle = (t: Transition): React.CSSProperties => {
-    const begin = t.phase === "start" || t.hero === false;
-    return {
-      position: "absolute",
-      inset: 0,
-      height: "100%",
-      pointerEvents: "none",
-      zIndex: 20,
-      opacity: begin ? 1 : 0,
-      transform: begin ? "scale(1)" : "scale(.985)",
-      filter: begin ? "blur(0px)" : "blur(3px)",
-      transformOrigin: "center",
-      transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
-    };
-  };
-
   // Measure the destination hero once the new screen mounts.
   useLayoutEffect(() => {
     if (!trans || trans.dir !== "fwd" || trans.measured) return;
@@ -236,8 +245,9 @@ export function useMorphTransition(
   // Esc/back are owned by Shell's goBack so they share the navigation
   // back-stack (pop one level) instead of always collapsing to the launcher.
 
-  // lastTile is exposed so Shell's back-stack can snapshot/restore it: a card
-  // morph (window.__MORPH) overwrites it, so without per-level restore the
+  // lastTile is exposed so the consumer's back-stack can snapshot/restore it: a
+  // card morph (window.__MORPH) overwrites it, so without per-level restore the
   // eventual collapse-to-launcher would fly from the wrong origin tile.
-  return { trans, startForward, startReverse, goMorph, layerStyle, EASE, lastTile };
+  // (layerStyle/EASE are module exports now; goMorph is internal via __MORPH.)
+  return { trans, startForward, startReverse, lastTile };
 }

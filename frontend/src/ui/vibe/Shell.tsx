@@ -21,7 +21,7 @@ import { RepeatMode } from "@core/plugin/playqueue/repeat";
 import { useCatalog, useLyric, useProviderSearch, useToplists, useVibePlayback } from "./hooks";
 import { toVibeAlbum, toVibeArtist, toVibePlaylist, toVibeTracks, type VibeTrack } from "./adapt";
 import { useLikes } from "./useLikes";
-import { useMorphTransition } from "./useMorphTransition";
+import { useMorphTransition, MorphStage } from "@/infra/morph";
 import { useSpatialNavigation } from "./useSpatialNavigation";
 import { useContextMenu } from "./useContextMenu";
 
@@ -275,9 +275,9 @@ export default function Shell() {
   /* ---- right-click context menu (extracted hook) ---- */
   const { menu, setMenu } = useContextMenu({ onPlay, openDetail, openArtist, toggleLike, liked });
 
-  /* ---- shared-element transition engine (extracted hook) ---- */
+  /* ---- page-to-page transition engine (UI-layer infra: @/infra/morph) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
-  const { trans, startForward, startReverse, layerStyle, EASE, lastTile } = useMorphTransition(
+  const { trans, startForward, startReverse, lastTile } = useMorphTransition(
     viewRef,
     view,
     setView,
@@ -904,100 +904,13 @@ export default function Shell() {
           </div>
         )}
 
-        <div className="view" ref={viewRef}>
-          {(() => {
-            const fwd = trans && trans.dir === "fwd" && trans.point;
-            const clipping = fwd && trans.hero !== true;
-            const st: React.CSSProperties = { height: "100%" };
-            if (clipping) {
-              const started = trans.phase !== "start";
-              const cp = `circle(${started ? trans.clipR : 0}px at ${trans.point.x}px ${trans.point.y}px)`;
-              (st as any).clipPath = cp;
-              (st as any).WebkitClipPath = cp;
-              st.transition = started ? `clip-path .6s ${EASE}` : "none";
-              st.position = "relative";
-              st.zIndex = 25;
-            }
-            return (
-              <div className="t-base" key={view} style={st}>
-                {renderScreen(view)}
-              </div>
-            );
-          })()}
-          {trans && (
-            <React.Fragment>
-              {(() => {
-                const fromStyle = layerStyle(trans);
-                if (trans.dir === "rev" && trans.hero === false && trans.point) {
-                  const collapsed = trans.phase !== "start";
-                  const cp = `circle(${collapsed ? 0 : trans.clipR}px at ${trans.point.x}px ${trans.point.y}px)`;
-                  (fromStyle as any).clipPath = cp;
-                  (fromStyle as any).WebkitClipPath = cp;
-                  fromStyle.opacity = 1;
-                  fromStyle.transition = collapsed ? `clip-path .55s ${EASE}` : "none";
-                }
-                return (
-                  <div className="t-layer t-from" style={fromStyle}>
-                    {renderScreen(trans.from)}
-                  </div>
-                );
-              })()}
-              {trans.hero !== false &&
-                (() => {
-                  const t = trans;
-                  const geom =
-                    t.dir === "fwd"
-                      ? t.phase === "start"
-                        ? t.origin
-                        : t.target
-                      : t.phase === "start"
-                        ? t.target
-                        : t.origin;
-                  const op =
-                    t.dir === "fwd" ? (t.phase === "reveal" ? 0 : 1) : t.phase === "start" ? 1 : 0;
-                  const anim = t.phase !== "start";
-                  return (
-                    <div
-                      className="grain"
-                      aria-hidden
-                      style={{
-                        position: "absolute",
-                        zIndex: 40,
-                        pointerEvents: "none",
-                        overflow: "hidden",
-                        left: geom!.left,
-                        top: geom!.top,
-                        width: geom!.width,
-                        height: geom!.height,
-                        borderRadius: geom!.borderRadius,
-                        opacity: op,
-                        background: artBg(t.seed, t.grad),
-                        boxShadow: "0 30px 70px -26px rgba(0,0,0,.5)",
-                        transition: anim
-                          ? `left .58s ${EASE}, top .58s ${EASE}, width .58s ${EASE}, height .58s ${EASE}, border-radius .58s ${EASE}, opacity .34s ease`
-                          : "none",
-                      }}
-                    >
-                      {t.image && (
-                        <img
-                          src={t.image}
-                          alt=""
-                          draggable={false}
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })()}
-            </React.Fragment>
-          )}
-        </div>
+        <MorphStage
+          viewRef={viewRef}
+          view={view}
+          trans={trans}
+          renderScreen={renderScreen}
+          tileBg={artBg}
+        />
 
         {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
             transition). Entering now-playing collapses it to 0 the same frame, so
