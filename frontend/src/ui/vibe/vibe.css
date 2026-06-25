@@ -564,6 +564,12 @@ image-slot::part(empty) {
   gap: 28px;
   border-bottom: 1px solid var(--line);
 }
+/* inner row of tabs (the tabs ToggleGroup root) so the view toggle can sit
+   beside it while .tabs still carries the full-width underline */
+.tabgroup {
+  display: flex;
+  gap: 28px;
+}
 .tab {
   font-family: var(--mono);
   font-size: 12px;
@@ -580,7 +586,7 @@ image-slot::part(empty) {
 .tab:hover {
   color: var(--tx-2);
 }
-.tab.on {
+.tab[data-state="on"] {
   color: var(--tx);
 }
 /* short centred accent underline (Listen1-style) — old shrinks, new grows */
@@ -598,7 +604,7 @@ image-slot::part(empty) {
   box-shadow: 0 0 10px -1px var(--accent);
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.tab.on::after {
+.tab[data-state="on"]::after {
   transform: translateX(-50%) scaleX(1);
 }
 
@@ -1049,9 +1055,66 @@ textarea:focus-visible {
 .viewtoggle button:hover {
   color: var(--tx-2);
 }
-.viewtoggle button.on {
+.viewtoggle button[data-state="on"] {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
+}
+
+/* ---- segmented control (Settings; Radix ToggleGroup, keyed off data-state) ---- */
+.seg {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.seg button {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.seg button[data-state="on"] {
+  background: var(--accent);
+  color: #06060a;
+}
+
+/* ---- switch (Radix-backed; visuals match the former hand-rolled toggle) ---- */
+.vswitch {
+  width: 46px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  border-radius: 99px;
+  position: relative;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.2s;
+}
+.vswitch[data-state="checked"] {
+  background: var(--accent);
+}
+.vswitch-thumb {
+  display: block;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+  will-change: transform;
+}
+.vswitch-thumb[data-state="checked"] {
+  transform: translateX(20px);
 }
 
 /* ---- PS5-style focus: the hovered card becomes the visual center ---- */

@@ -5,6 +5,8 @@
 import React, { useState, useRef } from "react";
 import { VirtualList } from "../components/VirtualList";
 import { VirtualGrid } from "../components/VirtualGrid";
+import { Switch } from "../components/Switch";
+import { ToggleGroup } from "../components/ToggleGroup";
 import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { CoverFlow } from "./CoverFlow";
 
@@ -675,29 +677,21 @@ export function PlaylistDetailScreen({
                   ))}
                 </div>
               )}
-              <div className="viewtoggle">
-                <button
-                  className={view === "list" ? "on" : ""}
-                  onClick={() => setView("list")}
-                  aria-label="List view"
-                >
-                  <Icon.list size={17} />
-                </button>
-                <button
-                  className={view === "grid" ? "on" : ""}
-                  onClick={() => setView("grid")}
-                  aria-label="Grid view"
-                >
-                  <Icon.grid size={17} />
-                </button>
-                <button
-                  className={view === "flow" ? "on" : ""}
-                  onClick={() => setView("flow")}
-                  aria-label="Cover flow view"
-                >
-                  <Icon.flow size={17} />
-                </button>
-              </div>
+              <ToggleGroup
+                ariaLabel="View mode"
+                className="viewtoggle"
+                value={view}
+                onValueChange={setView}
+                items={[
+                  { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
+                  { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
+                  {
+                    value: "flow",
+                    label: <Icon.flow size={17} />,
+                    "aria-label": "Cover flow view",
+                  },
+                ]}
+              />
             </div>
           </div>
 
@@ -1160,24 +1154,12 @@ type SetToggleProps = {
 function SetToggle({ label, sub, on, onClick }: SetToggleProps) {
   return (
     <div
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "16px 0",
         borderBottom: "1px solid rgba(255,255,255,.08)",
-        cursor: "pointer",
       }}
     >
       <div>
@@ -1191,31 +1173,7 @@ function SetToggle({ label, sub, on, onClick }: SetToggleProps) {
           </div>
         )}
       </div>
-      <span
-        style={{
-          width: 46,
-          height: 26,
-          borderRadius: 99,
-          flex: "0 0 auto",
-          position: "relative",
-          background: on ? "var(--accent)" : "rgba(255,255,255,.16)",
-          transition: "background .2s",
-        }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            top: 3,
-            left: on ? 23 : 3,
-            width: 20,
-            height: 20,
-            borderRadius: "50%",
-            background: "#fff",
-            transition: "left .2s",
-            boxShadow: "0 2px 6px rgba(0,0,0,.3)",
-          }}
-        />
-      </span>
+      <Switch checked={on} onCheckedChange={() => onClick()} aria-label={label} />
     </div>
   );
 }
@@ -1231,28 +1189,13 @@ function SetSeg({ label, value, options, onChange }: SetSegProps) {
   return (
     <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
       <div style={{ fontSize: 16, fontWeight: 300, marginBottom: 12 }}>{label}</div>
-      <div style={{ display: "inline-flex", gap: 0, border: "1px solid rgba(255,255,255,.18)" }}>
-        {options.map((o) => (
-          <button
-            key={o}
-            onClick={() => onChange(o)}
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 11,
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              padding: "9px 18px",
-              border: 0,
-              cursor: "pointer",
-              background: value === o ? "var(--accent)" : "transparent",
-              color: value === o ? "#06060a" : "rgba(255,255,255,.6)",
-              transition: "all .15s",
-            }}
-          >
-            {o}
-          </button>
-        ))}
-      </div>
+      <ToggleGroup
+        ariaLabel={label}
+        className="seg"
+        value={value}
+        onValueChange={onChange}
+        items={options.map((o) => ({ value: o, label: o }))}
+      />
     </div>
   );
 }
