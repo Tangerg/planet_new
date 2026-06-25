@@ -7,6 +7,7 @@ import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg } from "./primitives";
 import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { ViewToggle } from "./ViewToggle";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "./screenActions";
 import { MediaCard } from "./ForYou";
@@ -717,17 +718,10 @@ export function LibraryScreen({
             ]}
           />
           {cardTab && (
-            <ToggleGroup
-              ariaLabel="View mode"
-              className="viewtoggle"
-              style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
+            <ViewToggle
               value={view}
-              onValueChange={onView}
-              items={[
-                { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
-                { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
-                { value: "flow", label: <Icon.flow size={17} />, "aria-label": "Cover flow view" },
-              ]}
+              onChange={onView}
+              style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
             />
           )}
         </div>

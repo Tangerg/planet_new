@@ -7,6 +7,7 @@ import { VirtualList } from "../components/VirtualList";
 import { VirtualGrid } from "../components/VirtualGrid";
 import { Switch } from "../components/Switch";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { ViewToggle } from "./ViewToggle";
 import { useScreenActions } from "./screenActions";
 import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
@@ -671,21 +672,7 @@ export function PlaylistDetailScreen({
                   />
                 </div>
               )}
-              <ToggleGroup
-                ariaLabel="View mode"
-                className="viewtoggle"
-                value={view}
-                onValueChange={setView}
-                items={[
-                  { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
-                  { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
-                  {
-                    value: "flow",
-                    label: <Icon.flow size={17} />,
-                    "aria-label": "Cover flow view",
-                  },
-                ]}
-              />
+              <ViewToggle value={view} onChange={setView} />
             </div>
           </div>
 
