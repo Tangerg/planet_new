@@ -5,7 +5,7 @@
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
 import { Slider } from "../components/Slider";
-import { Icon, Art, fmt } from "./primitives";
+import { Icon, Art, artPair, fmt } from "./primitives";
 
 type Props = {
   track: any;
@@ -71,18 +71,20 @@ export const PlayerBar = React.memo(function PlayerBar({
 
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
 
+  const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const pos = scrub ?? Math.min(positionSec, dur);
 
   const txtBtn: React.CSSProperties = {
     fontFamily: "var(--mono)",
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: ".12em",
     textTransform: "uppercase",
-    color: "rgba(255,255,255,.6)",
+    color: "rgba(20,20,24,.62)",
     background: "none",
     border: 0,
     cursor: "pointer",
-    padding: "6px 6px",
+    padding: "6px 2px",
+    borderBottom: "1.5px solid rgba(20,20,24,.35)",
   };
   const ctlBtn = (on: boolean): React.CSSProperties => ({
     appearance: "none",
@@ -90,7 +92,7 @@ export const PlayerBar = React.memo(function PlayerBar({
     background: "none",
     cursor: "pointer",
     padding: 5,
-    color: on ? accent : "rgba(255,255,255,.72)",
+    color: on ? accent : "rgba(20,20,24,.78)",
     display: "grid",
     placeItems: "center",
   });
@@ -100,7 +102,7 @@ export const PlayerBar = React.memo(function PlayerBar({
     fontFamily: "var(--mono)",
     fontSize: 11,
     letterSpacing: ".04em",
-    color: "rgba(255,255,255,.5)",
+    color: "rgba(20,20,24,.5)",
     flex: "0 0 auto",
     minWidth: 42,
   };
@@ -120,16 +122,15 @@ export const PlayerBar = React.memo(function PlayerBar({
   return (
     <div
       className="glassbar"
-      style={{ color: "#fff", display: "flex", alignItems: "center", gap: 6 }}
+      style={{ color: "#141418", display: "flex", alignItems: "center", gap: 6 }}
     >
-      {/* dark frosted backdrop — stable colour (no per-song tint that would
-          flicker on every track change); blur lives here so it can't flicker */}
+      {/* bounded frosted backdrop — blur lives here so it can't flicker */}
       <div
         className="glass-frost"
         aria-hidden
         style={{
-          background: "rgba(13,13,17,.82)",
-          borderTop: "0.5px solid rgba(255,255,255,.08)",
+          background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.62)`,
+          borderTop: "0.5px solid rgba(255,255,255,.5)",
         }}
       />
 
@@ -168,23 +169,19 @@ export const PlayerBar = React.memo(function PlayerBar({
           image={track?.image}
           images={track?.images}
           style={{
-            width: 46,
-            height: 46,
+            width: 54,
+            height: 54,
             flex: "0 0 auto",
-            borderRadius: 6,
-            boxShadow: "0 1px 2px rgba(0,0,0,.35), 0 6px 16px -6px rgba(0,0,0,.5)",
+            boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
           }}
         />
         <div style={{ minWidth: 0 }}>
-          <div
-            className="truncate"
-            style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,.92)" }}
-          >
+          <div className="truncate" style={{ fontSize: 16, fontWeight: 400 }}>
             {track?.title || "—"}
           </div>
           <div
             className="truncate"
-            style={{ fontSize: 12, color: "rgba(255,255,255,.5)", fontWeight: 300, marginTop: 2 }}
+            style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
           >
             {onOpenArtist && track?.artistId ? (
               <button
@@ -230,7 +227,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         }}
       >
         <button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
-          <Icon.prev size={22} />
+          <Icon.prev size={21} />
         </button>
         <button
           style={{
@@ -239,21 +236,21 @@ export const PlayerBar = React.memo(function PlayerBar({
             cursor: "pointer",
             display: "grid",
             placeItems: "center",
-            background: "#fff",
-            color: "#0c0c10",
-            width: 42,
-            height: 42,
+            background: accent,
+            color: "#06060a",
+            width: 44,
+            height: 44,
             borderRadius: "50%",
             margin: "0 2px",
-            boxShadow: "0 4px 14px -4px rgba(0,0,0,.6)",
+            boxShadow: `0 6px 18px -4px ${accent}`,
           }}
           onClick={() => setPlaying(!playing)}
           aria-label={playing ? "Pause" : "Play"}
         >
-          {playing ? <Icon.pause size={20} /> : <Icon.play size={20} />}
+          {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
         </button>
         <button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
-          <Icon.next size={22} />
+          <Icon.next size={21} />
         </button>
       </div>
 
@@ -304,7 +301,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                 flexGrow: 1,
                 height: 4,
                 borderRadius: 999,
-                background: "rgba(255,255,255,.16)",
+                background: "rgba(20,20,24,.14)",
               },
             },
             range: {
@@ -312,7 +309,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                 position: "absolute",
                 height: "100%",
                 borderRadius: 999,
-                background: accent,
+                background: `linear-gradient(90deg, ${accent}, ${b})`,
               },
             },
             thumb: {
@@ -322,7 +319,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                 height: 12,
                 borderRadius: "50%",
                 background: "#fff",
-                boxShadow: "0 1px 4px rgba(0,0,0,.55)",
+                boxShadow: `0 0 0 2px ${accent}, 0 2px 6px rgba(0,0,0,.45)`,
               },
             },
           }}
