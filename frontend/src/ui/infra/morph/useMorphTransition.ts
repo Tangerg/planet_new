@@ -132,7 +132,9 @@ export function useMorphTransition(
       }
       clearAll();
       const o = relRect(rect);
-      const origin = { ...o, borderRadius: 6 };
+      // Round sources (artist circles) pass radius "50%" so the tile flies as a
+      // circle the whole way; default to a small square radius otherwise.
+      const origin = { ...o, borderRadius: item.radius ?? 6 };
       const vw = viewRef.current.getBoundingClientRect();
       const px = o.left + o.width / 2,
         py = o.top + o.height / 2;
@@ -203,12 +205,13 @@ export function useMorphTransition(
   // Stable rect-based morph trigger for deep consumers (cards/rows), exposed via
   // the MorphProvider context — not a window global. startForward is recreated
   // each render (curated deps), so route through a ref to keep `morph` stable.
-  const goMorph: MorphFn = (rect, seed, grad, run, image) =>
-    startForward({ seed, grad, dest: "_", run, image }, rect);
+  const goMorph: MorphFn = (rect, seed, grad, run, image, radius) =>
+    startForward({ seed, grad, dest: "_", run, image, radius }, rect);
   const goMorphRef = useRef(goMorph);
   goMorphRef.current = goMorph;
   const morph = useCallback<MorphFn>(
-    (rect, seed, grad, run, image) => goMorphRef.current(rect, seed, grad, run, image),
+    (rect, seed, grad, run, image, radius) =>
+      goMorphRef.current(rect, seed, grad, run, image, radius),
     [],
   );
 

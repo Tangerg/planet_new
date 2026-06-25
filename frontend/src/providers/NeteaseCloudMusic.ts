@@ -111,9 +111,11 @@ export class NeteaseCloudMusic extends Provider {
     return {
       id: artist.id?.toString() ?? id,
       name: artist.name ?? "",
-      images: coverSet(artist.cover ?? artist.picUrl),
-      // Banner spans full width; keep the original (full-res) asset.
-      banner: toHttps(artist.cover),
+      // Use the canonical square avatar (img1v1) — the SAME asset the artist
+      // cards (featured / search) use — so opening an artist morphs the round
+      // card straight into the round hero with no image swap. NCM's `cover` is
+      // just the portrait (not a wide banner), so there's no banner to set.
+      images: coverSet(artist.img1v1Url ?? artist.picUrl),
       alias: artist.alias ?? [],
       description,
       topTracks,

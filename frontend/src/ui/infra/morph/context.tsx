@@ -12,6 +12,8 @@ export type MorphFn = (
   grad?: string[],
   run?: () => void,
   image?: string,
+  /** Start corner radius of the flying tile (match a round source → circle→circle). */
+  radius?: number | string,
 ) => void;
 
 // Fallback when no provider is mounted: still navigate (run), just no animation.

@@ -76,151 +76,150 @@ function ArtistScreen({
       className="fade-in"
       style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
     >
-      <HeroBackdrop
-        image={artist.banner || artist.image}
-        seed={artist.coverSeed}
-        grad={artist.gradient}
-      />
+      <HeroBackdrop image={artist.image} seed={artist.coverSeed} grad={artist.gradient} />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
-        {/* header */}
-        <div style={{ position: "relative", height: 440, overflow: "hidden" }}>
-          {/* Spotify-style hero: the photo fills the banner edge-to-edge (cover,
-              no letterbox / no border), framed toward the top so the face shows,
-              then fades into the page at the bottom. */}
-          {artist.banner || artist.image ? (
-            <img
-              src={artist.banner || artist.image}
-              alt=""
-              aria-hidden
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center 18%",
-                filter: mono ? "grayscale(1)" : "none",
-              }}
-            />
-          ) : (
-            <div
-              className="grain"
-              aria-hidden
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: artBg(artist.coverSeed, artist.gradient),
-              }}
-            />
-          )}
-          {/* Spotify-style scrim: darken the left (where the name sits) and the
-              bottom (blend into the page), leaving the face/right clear. */}
+        {/* header — atmospheric circle. The artist's blurred image (HeroBackdrop,
+            above) plus a seeded colour wash give ambiance; a large circular
+            portrait with a soft colour halo carries identity. Robust for any
+            avatar (square→circle, no crop, no giant-face), distinct from
+            album/playlist (square covers), and atmospheric without needing a
+            wide banner image. */}
+        <div style={{ position: "relative", padding: "88px 48px 32px" }}>
+          {/* colour wash from the seeded artist hue — guarantees atmosphere even
+              when the photo (hence the backdrop) is dark; fades into the page. */}
           <div
+            aria-hidden
             style={{
               position: "absolute",
               inset: 0,
-              zIndex: 2,
-              background:
-                "linear-gradient(90deg, rgba(8,8,11,.72) 0%, rgba(8,8,11,.2) 42%, transparent 68%), linear-gradient(180deg, transparent 42%, rgba(10,10,13,.45) 74%, #0a0a0d 100%)",
+              zIndex: 0,
+              pointerEvents: "none",
+              background: `radial-gradient(86% 140% at 14% -16%, ${b}4d, transparent 62%)`,
             }}
           />
-          {/* Bottom-anchored via flow (flex-end column), not absolute: text stays
-            in flow so it can't overflow the banner. */}
           <div
             style={{
               position: "relative",
-              zIndex: 4,
-              height: "100%",
+              zIndex: 1,
               display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-              padding: "0 48px 30px",
-              boxSizing: "border-box",
+              alignItems: "center",
+              gap: 40,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-                gap: 24,
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
+            {/* circular portrait + soft colour halo */}
+            <div style={{ position: "relative", flex: "0 0 auto" }}>
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: -28,
+                  borderRadius: "50%",
+                  background: `radial-gradient(closest-side, ${b}66, transparent 72%)`,
+                  filter: "blur(28px)",
+                }}
+              />
+              <Art
+                seed={artist.coverSeed}
+                grad={artist.gradient}
+                image={artist.image}
+                images={artist.images}
+                mono={mono}
+                // Morph anchor: opening an artist from a (round) artist card flies
+                // the shared-element tile straight into this circle — a clean
+                // circle→circle morph, so navigation feels continuous.
+                data-hero="1"
+                style={{
+                  position: "relative",
+                  width: 216,
+                  height: 216,
+                  borderRadius: "50%",
+                  boxShadow:
+                    "0 26px 64px -18px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.1)",
+                }}
+              />
+            </div>
+            {/* name + stats */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 60,
+                  fontWeight: 200,
+                  letterSpacing: ".01em",
+                  lineHeight: 1.02,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {artist.name}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 14,
+                  marginTop: 24,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                {/* play leads the action row (left-aligned, like the references) so
+                    there's no lone button floating in the right-side void */}
+                <Button
+                  onClick={() => onPlay(tracks[0])}
+                  aria-label="Play"
                   style={{
-                    fontSize: 48,
-                    fontWeight: 200,
-                    letterSpacing: ".01em",
-                    lineHeight: 1.04,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    overflowWrap: "anywhere",
+                    flex: "0 0 auto",
+                    width: 54,
+                    height: 54,
+                    borderRadius: "50%",
+                    border: 0,
+                    cursor: "pointer",
+                    background: accent,
+                    color: "#06060a",
+                    display: "grid",
+                    placeItems: "center",
+                    boxShadow: `0 10px 30px -6px ${accent}`,
+                    marginRight: 4,
                   }}
                 >
-                  {artist.name}
-                </div>
-                <div
+                  {playing && tracks.some((t: any) => t.id === current?.id) ? (
+                    <Icon.pause size={24} />
+                  ) : (
+                    <Icon.play size={24} />
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setFollowed((f) => !f)}
+                  className="tag"
                   style={{
-                    display: "flex",
-                    gap: 12,
-                    marginTop: 20,
-                    flexWrap: "wrap",
-                    alignItems: "center",
+                    cursor: "pointer",
+                    borderRadius: 999,
+                    border: 0,
+                    background: followed
+                      ? `linear-gradient(90deg, ${accent}, ${b})`
+                      : "rgba(255,255,255,.14)",
+                    color: followed ? "#06060a" : "#fff",
                   }}
                 >
-                  <Button
-                    onClick={() => setFollowed((f) => !f)}
-                    className="tag"
-                    style={{
-                      cursor: "pointer",
-                      borderRadius: 999,
-                      border: 0,
-                      background: followed
-                        ? `linear-gradient(90deg, ${accent}, ${b})`
-                        : "rgba(255,255,255,.14)",
-                      color: followed ? "#06060a" : "#fff",
-                    }}
-                  >
-                    {followed ? "Following" : "Follow"}
-                  </Button>
-                  <StatPill>
-                    {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
-                  </StatPill>
+                  {followed ? "Following" : "Follow"}
+                </Button>
+                <StatPill>
+                  {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
+                </StatPill>
+                {/* hide stat pills with no real data instead of showing "0 ALBUMS"
+                    / an empty "LISTENERS" */}
+                {albums.length > 0 && (
                   <StatPill>
                     {albums.length} {albums.length === 1 ? "Album" : "Albums"}
                   </StatPill>
-                  <StatPill>{artist.listeners} Listeners</StatPill>
-                  {(artist.genres || []).map((g: any) => (
-                    <StatPill key={g}>{g}</StatPill>
-                  ))}
-                </div>
-              </div>
-              <Button
-                onClick={() => onPlay(tracks[0])}
-                aria-label="Play"
-                style={{
-                  flex: "0 0 auto",
-                  width: 64,
-                  height: 64,
-                  borderRadius: "50%",
-                  border: 0,
-                  cursor: "pointer",
-                  background: accent,
-                  color: "#06060a",
-                  display: "grid",
-                  placeItems: "center",
-                  boxShadow: `0 10px 30px -6px ${accent}`,
-                }}
-              >
-                {playing && tracks.some((t: any) => t.id === current?.id) ? (
-                  <Icon.pause size={26} />
-                ) : (
-                  <Icon.play size={26} />
                 )}
-              </Button>
+                {artist.listeners ? <StatPill>{artist.listeners} Listeners</StatPill> : null}
+                {(artist.genres || []).map((g: any) => (
+                  <StatPill key={g}>{g}</StatPill>
+                ))}
+              </div>
             </div>
           </div>
         </div>
