@@ -461,34 +461,49 @@ export function PlaylistDetailScreen({
       className="fade-in"
       style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
     >
-      {/* ambient wash from the cover — full-height, masked to fade out smoothly (no seam) */}
+      {/* Background derived from the cover itself (Spotify-style, but the colour
+          field spans the WHOLE page top→bottom rather than only the upper band).
+          A heavily-blurred copy of the artwork supplies the real hue; the
+          gradient over it darkens progressively into the base. The cover image
+          is the one already loaded for the hero, so this adds no extra request. */}
+      {p.image ? (
+        <img
+          src={p.image}
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "blur(72px) saturate(1.35)",
+            transform: "scale(1.3)",
+            opacity: 0.5,
+          }}
+        />
+      ) : (
+        <div
+          className="grain"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            background: artBg(p.coverSeed, p.gradient),
+            filter: "blur(72px) saturate(1.25)",
+            opacity: 0.4,
+            transform: "scale(1.3)",
+          }}
+        />
+      )}
       <div
-        className="grain"
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "100%",
-          zIndex: 0,
-          background: artBg(p.coverSeed, p.gradient),
-          filter: "blur(70px) saturate(1.25)",
-          opacity: 0.4,
-          transform: "scale(1.2)",
-          WebkitMaskImage: "linear-gradient(180deg, #000 0%, rgba(0,0,0,.5) 32%, transparent 60%)",
-          maskImage: "linear-gradient(180deg, #000 0%, rgba(0,0,0,.5) 32%, transparent 60%)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "100%",
+          inset: 0,
           zIndex: 1,
           background:
-            "linear-gradient(180deg, rgba(10,10,13,.2) 0%, rgba(10,10,13,.55) 40%, #0a0a0d 70%)",
+            "linear-gradient(180deg, rgba(10,10,13,.28) 0%, rgba(10,10,13,.6) 55%, #0a0a0d 100%)",
         }}
       />
 

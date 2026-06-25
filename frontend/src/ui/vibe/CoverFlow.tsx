@@ -61,15 +61,9 @@ export function CoverFlow({
   setExpandedRef.current = setExpanded;
   setCenterRef.current = setCenter;
 
-  // background follows the centered cover
-  useEffect(() => {
-    if (cur && window.__AMBIENT) window.__AMBIENT(cur.seed, cur.grad);
-    // Intentionally keyed on `center`: re-sync the ambient background when the
-    // centered index changes. `cur`/`cur.grad` are derived and `items` is
-    // recreated upstream each render, so depending on them would re-fire every frame.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center]);
-
+  // The page background is NOT repainted per centered cover: rapidly recolouring
+  // the whole backdrop on every flip is distracting and a photosensitivity risk.
+  // The screen's own hero gradient (Detail/Library) stays put instead.
   useEffect(() => {
     setExpanded(false);
   }, [center]);
