@@ -1,13 +1,14 @@
 /**
- * Bridge hooks between the vibe UI and the application/kernel layers.
- *   - useVibePlayback wraps playback state (usePlayQueueStore + planet.hooks
+ * Bridge hooks between the vibe UI and the application/kernel layers. The UI
+ * holds only the Engine facade — never the provider or the event bus directly.
+ *   - useVibePlayback wraps playback state (usePlayQueueStore + engine.events
  *     for state subscriptions) and delegates all commands to PlaybackService.
  *     The queue holds domain Tracks (the kernel only reads id + playUrl);
  *     reads adapt domain → VibeTrack for display, writes adapt VibeTrack →
  *     domain Track for playback.
- *   - useCatalog projects provider.personalized() into the vibe catalog (home / XMB).
+ *   - useCatalog projects media.personalized() into the vibe catalog (home / XMB).
  *   - useProviderSearch / useLyric / useToplists are data-fetching hooks that
- *     read through the IProvider port + React Query.
+ *     read through the MediaService use-case layer + React Query (cache).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -16,8 +17,8 @@ import type { Personalized } from "@domain/model/personalized";
 import { PlayState } from "@core/plugin";
 import { RepeatMode } from "@core/plugin/playqueue/repeat";
 
-import { usePlanet } from "@/hooks/usePlanet";
-import { useActiveProvider } from "@/hooks/useActiveProvider";
+import { useEngine } from "@/hooks/useEngine";
+import { useMediaService } from "@/hooks/useMediaService";
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
 
@@ -35,7 +36,7 @@ import {
 // ── Playback ────────────────────────────────────────────────────────
 
 export function useVibePlayback() {
-  const planet = usePlanet();
+  const engine = useEngine();
   const playbackService = usePlaybackService();
 
   // Read domain Track from the store and adapt to VibeTrack for display.
@@ -61,15 +62,16 @@ export function useVibePlayback() {
   const [volume, setVolumeState] = useState(100);
 
   useEffect(() => {
-    planet.hooks.on("shuffle_enable_changed", setShuffleState);
-    planet.hooks.on("repeat_mode_changed", setRepeatState);
-    planet.hooks.on("volume_changed", setVolumeState);
+    const { events } = engine;
+    events.on("shuffle_enable_changed", setShuffleState);
+    events.on("repeat_mode_changed", setRepeatState);
+    events.on("volume_changed", setVolumeState);
     return () => {
-      planet.hooks.off("shuffle_enable_changed", setShuffleState);
-      planet.hooks.off("repeat_mode_changed", setRepeatState);
-      planet.hooks.off("volume_changed", setVolumeState);
+      events.off("shuffle_enable_changed", setShuffleState);
+      events.off("repeat_mode_changed", setRepeatState);
+      events.off("volume_changed", setVolumeState);
     };
-  }, [planet]);
+  }, [engine]);
 
   // ── Commands (delegated to PlaybackService — no business logic in UI) ──
 
@@ -145,10 +147,10 @@ function buildCatalog(p?: Personalized) {
 }
 
 export function useCatalog() {
-  const provider = useActiveProvider();
+  const media = useMediaService();
   const { data, isLoading } = useQuery({
-    queryKey: ["personalized", provider.name],
-    queryFn: () => provider.personalized(),
+    queryKey: ["personalized", media.providerName],
+    queryFn: () => media.personalized(),
   });
   const catalog = useMemo(() => buildCatalog(data), [data]);
   return { catalog, isLoading };
@@ -156,28 +158,28 @@ export function useCatalog() {
 
 // ── Search / charts ──────────────────────────────────────────────────
 
-/** Returns a search(query) that calls provider.search and projects to vibe shapes. */
+/** Returns a search(query) that calls media.search and projects to vibe shapes. */
 export function useProviderSearch() {
-  const provider = useActiveProvider();
+  const media = useMediaService();
   return useCallback(
     async (query: string) => {
-      const r = await provider.search(query);
+      const r = await media.search(query);
       return {
         tracks: toVibeTracks(r.tracks),
         artists: (r.artists ?? []).map(toVibeArtist),
         albums: (r.albums ?? []).map(toVibeAlbum),
       };
     },
-    [provider],
+    [media],
   );
 }
 
 /** Real lyrics for the current track, projected to the NowPlaying { line } shape ([] when none). */
 export function useLyric(id: string | undefined) {
-  const provider = useActiveProvider();
+  const media = useMediaService();
   const { data } = useQuery({
-    queryKey: ["lyric", provider.name, id],
-    queryFn: () => provider.lyric(id as string),
+    queryKey: ["lyric", media.providerName, id],
+    queryFn: () => media.lyric(id as string),
     enabled: !!id,
   });
   return useMemo(() => (data ?? []).map((l) => ({ line: l.content, t: l.duration })), [data]);
@@ -185,10 +187,10 @@ export function useLyric(id: string | undefined) {
 
 /** Chart list in vibe shape, for the Charts grid. */
 export function useToplists() {
-  const provider = useActiveProvider();
+  const media = useMediaService();
   const { data } = useQuery({
-    queryKey: ["toplists", provider.name],
-    queryFn: () => provider.toplists(),
+    queryKey: ["toplists", media.providerName],
+    queryFn: () => media.toplists(),
   });
   return useMemo(
     () =>

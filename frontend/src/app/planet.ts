@@ -1,4 +1,4 @@
-import { Planet } from "@core";
+import { Engine, Planet } from "@core";
 import { Control, Volume, PlayQueue, Progress } from "@core/plugin";
 import { Mock, NeteaseCloudMusic, Provider, QQMusic, Spotify } from "@providers";
 
@@ -34,7 +34,7 @@ function createProvider(): Provider {
   }
 }
 
-export const planet = new Planet({
+const planet = new Planet({
   plugins: [
     createProvider(),
     new Control(),
@@ -44,3 +44,7 @@ export const planet = new Planet({
     new PlayQueueStoreBridge(),
   ],
 });
+
+/** The application Engine — the UI's single handle to the kernel (events +
+ *  playback/media use-cases). Provider resolution is owned by the Engine. */
+export const engine = new Engine(planet);

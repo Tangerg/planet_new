@@ -12,7 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useActiveProvider } from "@/hooks/useActiveProvider";
+import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg, Equalizer, Icon } from "./primitives";
 import { MOCK } from "./mockCatalog";
@@ -67,7 +67,7 @@ type NavSnapshot = {
 };
 
 export default function Shell() {
-  const provider = useActiveProvider();
+  const media = useMediaService();
   const queryClient = useQueryClient();
 
   /* ---- theme tweaks (example TweaksPanel knobs; fixed here, accent editable in Settings) ---- */
@@ -188,12 +188,12 @@ export default function Shell() {
         const kind = obj.kind;
         const fetcher =
           kind === "Album"
-            ? () => provider.albumDetail(obj.id).then(toVibeAlbum)
+            ? () => media.albumDetail(obj.id).then(toVibeAlbum)
             : kind === "Chart"
-              ? () => provider.toplistDetail(obj.id).then(toVibePlaylist)
-              : () => provider.playlistDetail(obj.id).then(toVibePlaylist);
+              ? () => media.toplistDetail(obj.id).then(toVibePlaylist)
+              : () => media.playlistDetail(obj.id).then(toVibePlaylist);
         queryClient
-          .fetchQuery({ queryKey: ["detail", kind, provider.name, obj.id], queryFn: fetcher })
+          .fetchQuery({ queryKey: ["detail", kind, media.providerName, obj.id], queryFn: fetcher })
           .then((full: any) => {
             // full (detail) is the base; keep summary name/image/coverSeed/kind when detail lacks them (charts especially).
             const merged: any = { ...obj, ...full };
@@ -208,7 +208,7 @@ export default function Shell() {
           .catch(() => {});
       }
     },
-    [provider, queryClient, pushCurrent],
+    [media, queryClient, pushCurrent],
   );
   const albumDetail = useCallback((al: any) => openDetail({ ...al, kind: "Album" }), [openDetail]);
   const openChart = useCallback(
@@ -224,8 +224,8 @@ export default function Shell() {
       if (ar?.id && (!ar.tracks || ar.tracks.length === 0)) {
         queryClient
           .fetchQuery({
-            queryKey: ["artist", provider.name, ar.id],
-            queryFn: () => provider.artistDetail(ar.id),
+            queryKey: ["artist", media.providerName, ar.id],
+            queryFn: () => media.artistDetail(ar.id),
           })
           .then((full) => {
             const mapped: any = toVibeArtist(full);
@@ -236,7 +236,7 @@ export default function Shell() {
           .catch(() => {});
       }
     },
-    [provider, queryClient, pushCurrent],
+    [media, queryClient, pushCurrent],
   );
   const openGenre = useCallback(
     (name?: string) => {
