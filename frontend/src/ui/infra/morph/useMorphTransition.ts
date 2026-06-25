@@ -22,6 +22,8 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 
+import type { MorphFn } from "./context";
+
 export const EASE = "cubic-bezier(.16,1,.3,1)";
 
 type Rect = {
@@ -198,23 +200,17 @@ export function useMorphTransition(
     timers.current.push(setTimeout(() => setTrans(null), 760));
   }, [view]);
 
-  const goMorph = (
-    rect: DOMRect,
-    seed?: number,
-    grad?: string[],
-    run?: () => void,
-    image?: string,
-  ) => startForward({ seed, grad, dest: "_", run, image }, rect);
-
+  // Stable rect-based morph trigger for deep consumers (cards/rows), exposed via
+  // the MorphProvider context — not a window global. startForward is recreated
+  // each render (curated deps), so route through a ref to keep `morph` stable.
+  const goMorph: MorphFn = (rect, seed, grad, run, image) =>
+    startForward({ seed, grad, dest: "_", run, image }, rect);
   const goMorphRef = useRef(goMorph);
   goMorphRef.current = goMorph;
-
-  useEffect(() => {
-    window.__MORPH = ((...args: any[]) => (goMorphRef.current as any)(...args)) as any;
-    return () => {
-      window.__MORPH = undefined;
-    };
-  }, []);
+  const morph = useCallback<MorphFn>(
+    (rect, seed, grad, run, image) => goMorphRef.current(rect, seed, grad, run, image),
+    [],
+  );
 
   // Measure the destination hero once the new screen mounts.
   useLayoutEffect(() => {
@@ -246,8 +242,9 @@ export function useMorphTransition(
   // back-stack (pop one level) instead of always collapsing to the launcher.
 
   // lastTile is exposed so the consumer's back-stack can snapshot/restore it: a
-  // card morph (window.__MORPH) overwrites it, so without per-level restore the
-  // eventual collapse-to-launcher would fly from the wrong origin tile.
-  // (layerStyle/EASE are module exports now; goMorph is internal via __MORPH.)
-  return { trans, startForward, startReverse, lastTile };
+  // card morph overwrites it, so without per-level restore the eventual
+  // collapse-to-launcher would fly from the wrong origin tile.
+  // (layerStyle/EASE are module exports; `morph` is the stable trigger the Shell
+  // feeds into MorphProvider for deep consumers.)
+  return { trans, startForward, startReverse, lastTile, morph };
 }

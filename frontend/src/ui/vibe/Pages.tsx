@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
 import { ToggleGroup } from "../components/ToggleGroup";
+import { useMorph } from "@/infra/morph";
 import { MediaCard } from "./ForYou";
 import { CollectionRow } from "./Browse";
 import { TrackRow, TrackCard } from "./Detail";
@@ -433,6 +434,7 @@ function ProfileScreen({
   onPlay: _onPlay,
   mono,
 }: ProfileScreenProps) {
+  const morph = useMorph();
   const [_a, b] = ["#1b1033", accent];
   const items = playlists.slice(0, 6).map((p: any, i: number) => ({
     ...p,
@@ -516,8 +518,7 @@ function ProfileScreen({
                     setActive(i);
                     onOpenPlaylist(p);
                   };
-                  if (window.__MORPH) window.__MORPH(r, p.coverSeed, p.gradient, run, p.image);
-                  else run();
+                  morph(r, p.coverSeed, p.gradient, run, p.image);
                 }}
                 style={{
                   background:
@@ -566,6 +567,7 @@ type BrowseScreenProps = {
 };
 
 function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
+  const morph = useMorph();
   const C = MOCK.classification;
   const sections = [
     ["Languages", "languages"],
@@ -609,8 +611,7 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                       const r = e.currentTarget.getBoundingClientRect();
                       const run = () => onOpenGenre(name);
-                      if (window.__MORPH) window.__MORPH(r, i, [color, "#06060a"], run);
-                      else run();
+                      morph(r, i, [color, "#06060a"], run);
                     }}
                   >
                     <h3>{name}</h3>
