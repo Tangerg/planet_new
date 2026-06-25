@@ -344,8 +344,6 @@ function ChartCard({ title, time, seed, grad, image, onClick }: ChartCardProps) 
   return (
     <button
       onClick={handle}
-      onMouseEnter={() => window.__AMBIENT?.(seed, grad)}
-      onFocus={() => window.__AMBIENT?.(seed, grad)}
       className="grain"
       style={{
         position: "relative",
@@ -496,10 +494,7 @@ export function CollectionRow({
   };
   return (
     <div
-      onMouseEnter={() => {
-        setHover(true);
-        window.__AMBIENT?.(seed, grad);
-      }}
+      onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={handle}
       // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive row container

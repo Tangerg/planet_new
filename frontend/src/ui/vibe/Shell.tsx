@@ -4,8 +4,8 @@
 // example Sonance Vibe.html App. The phase machine (trans / startForward /
 // startReverse / morph layers) is unchanged; only MOCK playback became the real kernel.
 //
-// The morph engine, spatial navigation, ambient glow, context menu, and
-// likes/history state have been extracted into dedicated hooks for clarity.
+// The morph engine, spatial navigation, context menu, and likes/history state
+// have been extracted into dedicated hooks for clarity.
 // Shell remains the composition root: it owns navigation state, data fetching
 // (openDetail / openArtist), the XMB category model, and screen rendering.
 // ============================================================
@@ -19,7 +19,6 @@ import { MOCK } from "./mockCatalog";
 import { RepeatMode } from "@core/plugin/playqueue/repeat";
 import { useCatalog, useLyric, useProviderSearch, useToplists, useVibePlayback } from "./hooks";
 import { toVibeAlbum, toVibeArtist, toVibePlaylist, toVibeTracks, type VibeTrack } from "./adapt";
-import { useAmbient } from "./useAmbient";
 import { useLikes } from "./useLikes";
 import { useMorphTransition } from "./useMorphTransition";
 import { useSpatialNavigation } from "./useSpatialNavigation";
@@ -219,9 +218,6 @@ export default function Shell() {
 
   /* ---- right-click context menu (extracted hook) ---- */
   const { menu, setMenu } = useContextMenu({ onPlay, openDetail, openArtist, toggleLike, liked });
-
-  /* ---- PS5-style dynamic ambient (extracted hook) ---- */
-  useAmbient(view);
 
   /* ---- shared-element transition engine (extracted hook) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
@@ -801,21 +797,6 @@ export default function Shell() {
         )}
 
         <div className="view" ref={viewRef}>
-          <div
-            id="ambient"
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 7,
-              pointerEvents: "none",
-              opacity: 0,
-              mixBlendMode: "screen",
-              filter: "blur(90px) saturate(1.35)",
-              transform: "scale(1.25)",
-              transition: "opacity .55s ease, background .55s ease",
-            }}
-          ></div>
           {(() => {
             const fwd = trans && trans.dir === "fwd" && trans.point;
             const clipping = fwd && trans.hero !== true;

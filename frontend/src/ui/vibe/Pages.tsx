@@ -590,8 +590,6 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
                     key={name}
                     className="gtile rise"
                     style={{ background: color, animationDelay: i * 0.02 + "s" }}
-                    onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(i, [color, "#06060a"])}
-                    onFocus={() => window.__AMBIENT && window.__AMBIENT(i, [color, "#06060a"])}
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                       const r = e.currentTarget.getBoundingClientRect();
                       const run = () => onOpenGenre(name);
