@@ -10,6 +10,7 @@
 // (openDetail / openArtist), the XMB category model, and screen rendering.
 // ============================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useMediaService } from "@/hooks/useMediaService";
@@ -66,38 +67,6 @@ type NavSnapshot = {
   // collapse-to-launcher flies from the right place after a deep back-walk.
   lastTile: any;
 };
-
-/**
- * Mount/unmount presence with enter + exit transitions: keeps a node mounted
- * through its exit so it can animate out instead of popping. `mounted` gates
- * render; `active` drives the shown/hidden styles. Used to slide the player bar
- * in/out (and let it stay through the slide-down before unmounting).
- */
-function usePresence(show: boolean, exitMs: number): { mounted: boolean; active: boolean } {
-  const [mounted, setMounted] = useState(show);
-  const [active, setActive] = useState(show);
-  const raf = useRef(0);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => {
-    clearTimeout(timer.current);
-    cancelAnimationFrame(raf.current);
-    if (show) {
-      setMounted(true);
-      // Paint the hidden state first, then flip active so the enter transition runs.
-      raf.current = requestAnimationFrame(() => {
-        raf.current = requestAnimationFrame(() => setActive(true));
-      });
-    } else {
-      setActive(false);
-      timer.current = setTimeout(() => setMounted(false), exitMs);
-    }
-    return () => {
-      clearTimeout(timer.current);
-      cancelAnimationFrame(raf.current);
-    };
-  }, [show, exitMs]);
-  return { mounted, active };
-}
 
 export default function Shell() {
   const media = useMediaService();
@@ -365,11 +334,10 @@ export default function Shell() {
   const npView = view === "np";
   const homeView = view === "xmb";
 
-  // Player bar visibility, animated: shown when a track exists and we're not in
-  // the full-screen now-playing view. usePresence keeps it mounted through the
-  // slide-out so it glides instead of popping.
+  // Player bar visibility: shown when a track exists and we're not in the
+  // full-screen now-playing view. Motion's AnimatePresence keeps it mounted
+  // through the slide-out so it glides instead of popping.
   const showBar = !npView && !!playback.current;
-  const bar = usePresence(showBar, 480);
 
   /* ==========================================================================
      XMB model -- built from the real catalog + static categories (mirrors the example domain partitions)
@@ -1042,50 +1010,57 @@ export default function Shell() {
             light bar visibly slides off the bottom over the full-height np content. */}
         <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
 
-        {bar.mounted && (
-          // Absolute over .win's bottom. z-index 30 sits below the morph grain (40)
-          // so the flying cover passes over it, above .view content. overflow:visible
-          // lets the volume popup escape upward; .win (overflow:hidden) clips the slide.
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 30,
-              overflow: "visible",
-              transform: bar.active ? "translateY(0)" : "translateY(108%)",
-              opacity: bar.active ? 1 : 0,
-              transition: "transform .44s cubic-bezier(.16,1,.3,1), opacity .3s ease",
-              willChange: "transform",
-            }}
-          >
-            <PlayerBar
-              track={current}
-              playing={playing}
-              setPlaying={setPlaying}
-              liked={isLiked}
-              toggleLike={() => current && toggleLike(current.id)}
-              accent={accent}
-              shuffle={shuffle}
-              setShuffle={setShuffle}
-              repeat={repeat}
-              onToggleRepeat={onToggleRepeat}
-              onNext={playNext}
-              onPrev={playPrev}
-              positionSec={playback.progress.duration}
-              durationSec={playback.duration.duration}
-              onSeek={playback.seek}
-              volume={playback.volume}
-              onVolume={playback.setVolume}
-              onOpenNowPlaying={() => navigate("np")}
-              onOpenQueue={() => navigate("queue")}
-              onOpenComments={() => navigate("comments")}
-              onOpenLyrics={() => navigate("np")}
-              onOpenArtist={openArtist}
-            />
-          </div>
-        )}
+        {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
+            the slide-out. z-index 30 sits below the morph grain (40) so the flying
+            cover passes over it, above .view content. overflow:visible is harmless
+            now the volume popup portals out; .win (overflow:hidden) clips the slide. */}
+        <AnimatePresence>
+          {showBar && (
+            <motion.div
+              initial={{ y: "108%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "108%", opacity: 0 }}
+              transition={{
+                y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
+                opacity: { duration: 0.3 },
+              }}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 30,
+                overflow: "visible",
+                willChange: "transform",
+              }}
+            >
+              <PlayerBar
+                track={current}
+                playing={playing}
+                setPlaying={setPlaying}
+                liked={isLiked}
+                toggleLike={() => current && toggleLike(current.id)}
+                accent={accent}
+                shuffle={shuffle}
+                setShuffle={setShuffle}
+                repeat={repeat}
+                onToggleRepeat={onToggleRepeat}
+                onNext={playNext}
+                onPrev={playPrev}
+                positionSec={playback.progress.duration}
+                durationSec={playback.duration.duration}
+                onSeek={playback.seek}
+                volume={playback.volume}
+                onVolume={playback.setVolume}
+                onOpenNowPlaying={() => navigate("np")}
+                onOpenQueue={() => navigate("queue")}
+                onOpenComments={() => navigate("comments")}
+                onOpenLyrics={() => navigate("np")}
+                onOpenArtist={openArtist}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {menu && (
