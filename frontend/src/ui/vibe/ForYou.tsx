@@ -5,6 +5,7 @@
 import React, { useState } from "react";
 import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
+import { Button } from "../components/Button";
 import { MOCK } from "./mockCatalog";
 
 type MediaCardProps = {
@@ -64,7 +65,7 @@ export function MediaCard({
         glow={(round ? null : artPair(seed, grad)[1]) as any}
       >
         {onPlay && (
-          <button
+          <Button
             className="playfab"
             onClick={(e) => {
               e.stopPropagation();
@@ -73,7 +74,7 @@ export function MediaCard({
             aria-label="Play"
           >
             <Icon.play size={18} />
-          </button>
+          </Button>
         )}
       </Art>
       <div className="ttl">{title}</div>
@@ -93,9 +94,9 @@ export function Rail({ title, onAll, children }: RailProps) {
     <section style={{ marginBottom: 40 }}>
       <div className="sech">
         <h2>{title}</h2>
-        <button className="all" onClick={onAll}>
+        <Button className="all" onClick={onAll}>
           Show all
-        </button>
+        </Button>
       </div>
       <div className="hrail">{children}</div>
     </section>
@@ -218,7 +219,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
           {playlist.description}
         </div>
         <div style={{ display: "flex", gap: 14, marginTop: 26, alignItems: "center" }}>
-          <button
+          <Button
             className="pill-accent"
             onClick={onPlay}
             style={{
@@ -230,8 +231,8 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             }}
           >
             <Icon.play size={15} /> Play
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               const banner = e.currentTarget.closest("[data-hero]");
               const r = (banner || e.currentTarget).getBoundingClientRect();
@@ -242,7 +243,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             className="pill-ghost"
           >
             Open
-          </button>
+          </Button>
           <span className="mlabel" style={{ color: "rgba(255,255,255,.5)", marginLeft: 6 }}>
             {playlist.tracks.length} tracks
           </span>
@@ -316,13 +317,13 @@ export const ForYouScreen = React.memo(function ForYouScreen({
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               {["All", "Music", "Mixes", "Charts"].map((c) => (
-                <button
+                <Button
                   key={c}
                   className={"chip" + (chip === c ? " on" : "")}
                   onClick={() => setChip(c)}
                 >
                   {c}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -377,7 +378,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                   className="tart"
                 />
                 <span className="tname">{t.name}</span>
-                <button
+                <Button
                   className="tfab"
                   aria-label="Open"
                   onClick={(e) => {
@@ -386,7 +387,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                   }}
                 >
                   <Icon.play size={15} />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

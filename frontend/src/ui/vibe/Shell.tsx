@@ -25,6 +25,7 @@ import { useSpatialNavigation } from "./useSpatialNavigation";
 import { useContextMenu } from "./useContextMenu";
 
 import { PlayerBar } from "./PlayerBar";
+import { Button } from "../components/Button";
 import { XMB } from "./XMB";
 import { ForYouScreen } from "./ForYou";
 import { NowPlaying } from "./NowPlaying";
@@ -922,16 +923,16 @@ export default function Shell() {
         {!npView && (
           <div className="win-tools" style={noDragStyle}>
             {!homeView && (
-              <button onClick={goBack} aria-label="Menu">
+              <Button onClick={goBack} aria-label="Menu">
                 <Icon.back size={20} />
-              </button>
+              </Button>
             )}
-            <button onClick={() => navigate("np")} aria-label="Now playing">
+            <Button onClick={() => navigate("np")} aria-label="Now playing">
               <Equalizer playing={playing} color="currentColor" size={18} />
-            </button>
-            <button aria-label="More">
+            </Button>
+            <Button aria-label="More">
               <Icon.kebab size={20} />
-            </button>
+            </Button>
           </div>
         )}
 

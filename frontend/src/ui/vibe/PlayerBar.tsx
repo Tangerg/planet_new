@@ -6,6 +6,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { Slider } from "../components/Slider";
+import { Button } from "../components/Button";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
 type Props = {
@@ -136,7 +137,7 @@ export const PlayerBar = React.memo(function PlayerBar({
 
       {/* ── left: cover + meta (cover = morph origin) ── */}
       <div
-        // Children are <div>s (invalid inside <button>), so role="button" +
+        // Children are <div>s (invalid inside a native button), so role="button" +
         // keyboard handling is the correct accessible pattern here.
         // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="button"
@@ -184,7 +185,7 @@ export const PlayerBar = React.memo(function PlayerBar({
             style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
           >
             {onOpenArtist && track?.artistId ? (
-              <button
+              <Button
                 style={{
                   cursor: "pointer",
                   background: "none",
@@ -207,7 +208,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                 }}
               >
                 {track?.artist || ""}
-              </button>
+              </Button>
             ) : (
               track?.artist || ""
             )}
@@ -226,10 +227,10 @@ export const PlayerBar = React.memo(function PlayerBar({
           zIndex: 1,
         }}
       >
-        <button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
+        <Button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
           <Icon.prev size={21} />
-        </button>
-        <button
+        </Button>
+        <Button
           style={{
             appearance: "none",
             border: 0,
@@ -248,10 +249,10 @@ export const PlayerBar = React.memo(function PlayerBar({
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
-        </button>
-        <button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
+        </Button>
+        <Button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
           <Icon.next size={21} />
-        </button>
+        </Button>
       </div>
 
       {/* ── inline scrubber: current time · slider · total time (always shown) ── */}
@@ -339,26 +340,26 @@ export const PlayerBar = React.memo(function PlayerBar({
           zIndex: 1,
         }}
       >
-        <button style={ctlBtn(liked)} onClick={toggleLike} aria-label="Like">
+        <Button style={ctlBtn(liked)} onClick={toggleLike} aria-label="Like">
           <Icon.heart size={18} filled={liked} />
-        </button>
-        <button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
+        </Button>
+        <Button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
           <Icon.shuffle size={18} />
-        </button>
-        <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
+        </Button>
+        <Button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
           <Icon.loop size={18} />
-        </button>
+        </Button>
         {/* volume — Radix HoverCard owns the hover-open + the trigger→content
             safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
         <HoverCard.Root openDelay={0} closeDelay={120}>
           <HoverCard.Trigger asChild>
-            <button
+            <Button
               style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
               aria-label="Volume"
               onClick={() => onVolume(volume > 0 ? 0 : 80)}
             >
               <Icon.volume size={18} />
-            </button>
+            </Button>
           </HoverCard.Trigger>
           <HoverCard.Portal>
             <HoverCard.Content
@@ -454,10 +455,10 @@ export const PlayerBar = React.memo(function PlayerBar({
             </HoverCard.Content>
           </HoverCard.Portal>
         </HoverCard.Root>
-        <button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
+        <Button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
           LRC
-        </button>
-        <button
+        </Button>
+        <Button
           style={ctlBtn(dragOver)}
           onClick={onOpenQueue}
           aria-label="Up next"
@@ -476,10 +477,10 @@ export const PlayerBar = React.memo(function PlayerBar({
           }}
         >
           <Icon.list size={18} />
-        </button>
-        <button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
+        </Button>
+        <Button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
           <Icon.comment size={18} />
-        </button>
+        </Button>
       </div>
     </div>
   );

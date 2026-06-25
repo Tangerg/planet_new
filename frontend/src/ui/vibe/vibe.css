@@ -189,6 +189,25 @@ input:focus-visible,
   opacity: 0.6;
 }
 
+/* ---- shared button base (the <Button> primitive) ----
+   The chrome reset every control already repeated, plus a tactile :active press
+   (purely additive — no button had one). Font/color stay per-button (no global
+   button font reset exists, so inheriting here would shift bare text buttons),
+   and the keyboard focus ring is already global (`button:focus-visible` halo
+   above) — .btn is a <button>, so it inherits that. Net: visually
+   non-destructive, just adds the press. Inline `transition` (if any) overrides
+   the press transition; that's fine. */
+.btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+.btn:active {
+  transform: translateY(0.5px) scale(0.96);
+}
+
 .view {
   flex: 1;
   min-height: 0;
