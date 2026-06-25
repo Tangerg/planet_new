@@ -170,9 +170,9 @@ export default function Shell() {
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
 
-  // Real lyrics ([] when none; NowPlaying shows "No lyrics" on its own).
-  const realLyrics = useLyric(playback.current?.id);
-  const lyrics = realLyrics.length ? realLyrics : [];
+  // Current-track lyrics, kernel-owned (Lyric plugin follows the track); the UI
+  // just reads them. [] when none — NowPlaying shows "No lyrics" on its own.
+  const lyrics = useLyric();
 
   /* ---- open detail: fetch the real collection async (switch screen + skeleton now, backfill tracks when data lands) ---- */
   const openDetail = useCallback(

@@ -1,5 +1,5 @@
 import { Engine, Planet } from "@core";
-import { Control, Volume, PlayQueue, Progress } from "@core/plugin";
+import { Control, Volume, PlayQueue, Progress, LyricPlugin } from "@core/plugin";
 import { Mock, NeteaseCloudMusic, Provider, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
@@ -41,6 +41,7 @@ const planet = new Planet({
     new PlayQueue(),
     new Volume(),
     new Progress(),
+    new LyricPlugin(),
     new PlayQueueStoreBridge(),
   ],
 });

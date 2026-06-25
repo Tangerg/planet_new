@@ -3,13 +3,22 @@ import { IManageable } from "../manager";
 import { Disposable } from "../types";
 import { PlanetEventMap } from "./event";
 
-/** Runtime context injected into every Plugin: the shared audio element and the event bus. */
+/** Runtime context injected into every Plugin: the shared audio element, the
+ *  event bus, and sibling-plugin resolution. */
 export interface IContext {
   get audioElement(): HTMLAudioElement;
 
   get audioContext(): AudioContext;
 
   get hooks(): IEventEmitter<PlanetEventMap>;
+
+  /**
+   * Resolve a sibling plugin by id — lets a reactive plugin reach another
+   * (e.g. the Lyric plugin reaching the provider). Returns null if not mounted.
+   * Intended for runtime use (all plugins are mounted by then); declare the
+   * dependency via `dependsOn` so the sibling is guaranteed installed first.
+   */
+  getPlugin<T extends IPlugin = IPlugin>(id: string): T | null;
 }
 
 /**

@@ -174,15 +174,15 @@ export function useProviderSearch() {
   );
 }
 
-/** Real lyrics for the current track, projected to the NowPlaying { line } shape ([] when none). */
-export function useLyric(id: string | undefined) {
-  const media = useMediaService();
-  const { data } = useQuery({
-    queryKey: ["lyric", media.providerName, id],
-    queryFn: () => media.lyric(id as string),
-    enabled: !!id,
-  });
-  return useMemo(() => (data ?? []).map((l) => ({ line: l.content, t: l.duration })), [data]);
+/**
+ * Current-track lyrics in the NowPlaying { line, t } shape ([] when none).
+ * Pure read of kernel-owned reactive state: the Lyric plugin follows
+ * current_track_changed and pins lyric_changed into the store. The UI doesn't
+ * fetch lyrics or pass a track id — it just renders what's current.
+ */
+export function useLyric() {
+  const lyric = usePlayQueueStore.use.lyric();
+  return useMemo(() => lyric.map((l) => ({ line: l.content, t: l.duration })), [lyric]);
 }
 
 /** Chart list in vibe shape, for the Charts grid. */
