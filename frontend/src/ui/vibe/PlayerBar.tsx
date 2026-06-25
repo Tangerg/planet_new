@@ -1,9 +1,11 @@
 // ============================================================
-// PlayerBar — frosted glass transport bar (driven by kernel playback state)
+// PlayerBar — dark transport bar (driven by kernel playback state)
+// Single-row layout (Listen1/QQ-style): identity · transport · inline scrubber
+// with always-visible times · utilities. Dark to match the app shell.
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
 import { Slider } from "../components/Slider";
-import { Icon, Art, artPair, fmt } from "./primitives";
+import { Icon, Art, fmt } from "./primitives";
 
 type Props = {
   track: any;
@@ -60,8 +62,6 @@ export const PlayerBar = React.memo(function PlayerBar({
   // Real duration from the kernel (the loaded audio); track metadata is the
   // pre-load fallback so the bar has a sane scale before `durationchange`.
   const dur = durationSec > 0 ? durationSec : track?.durSec || 1;
-  const barRef = useRef<HTMLSpanElement | null>(null);
-  const [hoverX, setHoverX] = useState<number | null>(null);
   // While scrubbing, show the dragged seconds; commit the seek on release so
   // the audio isn't hammered every frame of the drag.
   const [scrub, setScrub] = useState<number | null>(null);
@@ -71,7 +71,6 @@ export const PlayerBar = React.memo(function PlayerBar({
 
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
 
-  const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const pos = scrub ?? Math.min(positionSec, dur);
 
   const txtBtn: React.CSSProperties = {
@@ -79,7 +78,7 @@ export const PlayerBar = React.memo(function PlayerBar({
     fontSize: 10.5,
     letterSpacing: ".12em",
     textTransform: "uppercase",
-    color: "rgba(20,20,24,.62)",
+    color: "rgba(255,255,255,.6)",
     background: "none",
     border: 0,
     cursor: "pointer",
@@ -91,10 +90,20 @@ export const PlayerBar = React.memo(function PlayerBar({
     background: "none",
     cursor: "pointer",
     padding: 5,
-    color: on ? accent : "rgba(20,20,24,.78)",
+    color: on ? accent : "rgba(255,255,255,.72)",
     display: "grid",
     placeItems: "center",
   });
+  // Mono time labels flanking the scrubber; fixed width so digit changes
+  // (9:59 → 10:00) don't nudge the layout.
+  const timeStyle: React.CSSProperties = {
+    fontFamily: "var(--mono)",
+    fontSize: 11,
+    letterSpacing: ".04em",
+    color: "rgba(255,255,255,.5)",
+    flex: "0 0 auto",
+    minWidth: 42,
+  };
 
   // Open the full-screen now-playing view, measuring the cover art as the morph
   // origin so the shared-element transition flies from the bar's artwork.
@@ -111,237 +120,115 @@ export const PlayerBar = React.memo(function PlayerBar({
   return (
     <div
       className="glassbar"
-      // 3-zone grid (NetEase-style): identity ｜ centered transport ｜ utilities.
-      // minmax(0,1fr) side columns keep the transport dead-centered and let long
-      // titles truncate instead of blowing out the bar width.
-      style={{
-        color: "#141418",
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
-        alignItems: "center",
-      }}
+      style={{ color: "#fff", display: "flex", alignItems: "center", gap: 6 }}
     >
-      {/* bounded frosted backdrop — blur lives here so it can't flicker */}
+      {/* dark frosted backdrop — stable colour (no per-song tint that would
+          flicker on every track change); blur lives here so it can't flicker */}
       <div
         className="glass-frost"
         aria-hidden
         style={{
-          background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.62)`,
-          borderTop: "0.5px solid rgba(255,255,255,.5)",
+          background: "rgba(13,13,17,.82)",
+          borderTop: "0.5px solid rgba(255,255,255,.08)",
         }}
       />
-      {/* progress line + scrubber (Radix slider: click / drag / keyboard) */}
-      <Slider
-        ref={barRef}
-        min={0}
-        max={dur}
-        step={1}
-        value={[pos]}
-        onValueChange={([v]) => setScrub(v)}
-        onValueCommit={([v]) => {
-          onSeek(dur > 0 ? (v / dur) * 100 : 0);
-          // Keep showing the scrub position until the kernel catches up,
-          // avoiding a one-frame snap-back to the old position.
-          clearTimeout(scrubTimer.current);
-          scrubTimer.current = setTimeout(() => setScrub(null), 400);
-        }}
-        onMouseMove={(e) => {
-          const r = barRef.current!.getBoundingClientRect();
-          setHoverX(e.clientX - r.left);
-        }}
-        onMouseLeave={() => setHoverX(null)}
-        thumbLabel="Seek"
-        // Flex-center the Root so Radix's abspos thumb wrapper takes a centered
-        // static position (align-items) and lands on the track — no magic top.
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 14,
-          display: "flex",
-          alignItems: "center",
-          zIndex: 4,
-        }}
-        parts={{
-          track: {
-            style: {
-              position: "relative",
-              flexGrow: 1,
-              height: 3,
-              background: "rgba(20,20,24,.12)",
-            },
-          },
-          range: {
-            style: {
-              position: "absolute",
-              height: "100%",
-              background: accent,
-            },
-          },
-          thumb: {
-            style: {
-              display: "block",
-              width: 9,
-              height: 9,
-              borderRadius: "50%",
-              background: "#fff",
-              boxShadow: `0 0 0 2px ${accent}, 0 2px 6px rgba(0,0,0,.45)`,
-              opacity: hoverX != null ? 1 : 0,
-              transition: "opacity .16s",
-            },
-          },
-        }}
-      >
-        {hoverX != null && (
-          <div
-            style={{
-              position: "absolute",
-              top: -34,
-              left: hoverX,
-              transform: "translateX(-50%)",
-              background: "rgba(12,12,16,.96)",
-              color: "#fff",
-              fontFamily: "var(--mono)",
-              fontSize: 10,
-              letterSpacing: ".06em",
-              padding: "4px 9px",
-              borderRadius: 7,
-              whiteSpace: "nowrap",
-              pointerEvents: "none",
-              boxShadow: "0 8px 22px -8px rgba(0,0,0,.7)",
-            }}
-          >
-            {fmt(
-              Math.round(
-                Math.max(
-                  0,
-                  Math.min(
-                    1,
-                    hoverX / (barRef.current ? barRef.current.getBoundingClientRect().width : 1),
-                  ),
-                ) * dur,
-              ),
-            )}{" "}
-            / {fmt(dur)}
-          </div>
-        )}
-      </Slider>
 
-      {/* ── left: round cover + meta (morph origin) + like ── */}
+      {/* ── left: cover + meta (cover = morph origin) ── */}
       <div
+        // Children are <div>s (invalid inside <button>), so role="button" +
+        // keyboard handling is the correct accessible pattern here.
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+        role="button"
+        tabIndex={0}
+        aria-label="Open now playing"
+        onClick={(e) => openNowPlaying(e.currentTarget)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openNowPlaying(e.currentTarget);
+          }
+        }}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 11,
           paddingLeft: 18,
+          paddingRight: 6,
           minWidth: 0,
+          flex: "0 0 auto",
+          width: 224,
+          cursor: "pointer",
           position: "relative",
           zIndex: 1,
         }}
       >
-        <div
-          // cover + meta open Now Playing; the .grain cover is the morph origin.
-          // Children are <div>s (invalid in <button>), so role="button" is correct.
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-          role="button"
-          tabIndex={0}
-          aria-label="Open now playing"
-          onClick={(e) => openNowPlaying(e.currentTarget)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              openNowPlaying(e.currentTarget);
-            }
-          }}
+        <Art
+          seed={track?.coverSeed || 0}
+          grad={track?.gradient}
+          image={track?.image}
+          images={track?.images}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            minWidth: 0,
-            cursor: "pointer",
+            width: 46,
+            height: 46,
+            flex: "0 0 auto",
+            borderRadius: 6,
+            boxShadow: "0 1px 2px rgba(0,0,0,.35), 0 6px 16px -6px rgba(0,0,0,.5)",
           }}
-        >
-          <Art
-            seed={track?.coverSeed || 0}
-            grad={track?.gradient}
-            image={track?.image}
-            images={track?.images}
-            style={{
-              width: 52,
-              height: 52,
-              flex: "0 0 auto",
-              borderRadius: "50%",
-              boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -5px rgba(0,0,0,.4)",
-            }}
-          />
-          <div style={{ minWidth: 0 }}>
-            <div className="truncate" style={{ fontSize: 15, fontWeight: 400 }}>
-              {track?.title || "—"}
-            </div>
-            <div
-              className="truncate"
-              style={{
-                fontSize: 12.5,
-                color: "rgba(20,20,24,.55)",
-                fontWeight: 300,
-                marginTop: 2,
-              }}
-            >
-              {onOpenArtist && track?.artistId ? (
-                <button
-                  style={{
-                    cursor: "pointer",
-                    background: "none",
-                    border: 0,
-                    padding: 0,
-                    font: "inherit",
-                    color: "inherit",
-                    textAlign: "left",
-                  }}
-                  onClick={(e) => {
+        />
+        <div style={{ minWidth: 0 }}>
+          <div
+            className="truncate"
+            style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,.92)" }}
+          >
+            {track?.title || "—"}
+          </div>
+          <div
+            className="truncate"
+            style={{ fontSize: 12, color: "rgba(255,255,255,.5)", fontWeight: 300, marginTop: 2 }}
+          >
+            {onOpenArtist && track?.artistId ? (
+              <button
+                style={{
+                  cursor: "pointer",
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  font: "inherit",
+                  color: "inherit",
+                  textAlign: "left",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenArtist({ id: track.artistId, name: track.artist });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     e.stopPropagation();
                     onOpenArtist({ id: track.artistId, name: track.artist });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onOpenArtist({ id: track.artistId, name: track.artist });
-                    }
-                  }}
-                >
-                  {track?.artist || ""}
-                </button>
-              ) : (
-                track?.artist || ""
-              )}
-            </div>
+                  }
+                }}
+              >
+                {track?.artist || ""}
+              </button>
+            ) : (
+              track?.artist || ""
+            )}
           </div>
         </div>
-        <button
-          style={{ ...ctlBtn(liked), flex: "0 0 auto" }}
-          onClick={toggleLike}
-          aria-label="Like"
-        >
-          <Icon.heart size={18} filled={liked} />
-        </button>
       </div>
 
-      {/* ── center: transport (the focal point) ── */}
+      {/* ── transport (left-aligned; white play button is the focal point) ── */}
       <div
         style={{
-          justifySelf: "center",
           display: "flex",
           alignItems: "center",
-          gap: 10,
+          gap: 4,
+          flex: "0 0 auto",
           position: "relative",
           zIndex: 1,
         }}
       >
-        <button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
-          <Icon.shuffle size={18} />
-        </button>
         <button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
           <Icon.prev size={22} />
         </button>
@@ -352,64 +239,117 @@ export const PlayerBar = React.memo(function PlayerBar({
             cursor: "pointer",
             display: "grid",
             placeItems: "center",
-            background: accent,
-            color: "#06060a",
-            width: 48,
-            height: 48,
+            background: "#fff",
+            color: "#0c0c10",
+            width: 42,
+            height: 42,
             borderRadius: "50%",
             margin: "0 2px",
-            boxShadow: `0 8px 20px -6px ${accent}`,
+            boxShadow: "0 4px 14px -4px rgba(0,0,0,.6)",
           }}
           onClick={() => setPlaying(!playing)}
           aria-label={playing ? "Pause" : "Play"}
         >
-          {playing ? <Icon.pause size={24} /> : <Icon.play size={24} />}
+          {playing ? <Icon.pause size={20} /> : <Icon.play size={20} />}
         </button>
         <button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
           <Icon.next size={22} />
         </button>
-        <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
-          <Icon.loop size={18} />
-        </button>
+      </div>
+
+      {/* ── inline scrubber: current time · slider · total time (always shown) ── */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 14px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <span style={{ ...timeStyle, textAlign: "right" }}>{fmt(Math.round(pos))}</span>
+        <Slider
+          min={0}
+          max={dur}
+          step={1}
+          value={[pos]}
+          onValueChange={([v]) => setScrub(v)}
+          onValueCommit={([v]) => {
+            onSeek(dur > 0 ? (v / dur) * 100 : 0);
+            // Keep showing the scrub position until the kernel catches up,
+            // avoiding a one-frame snap-back to the old position.
+            clearTimeout(scrubTimer.current);
+            scrubTimer.current = setTimeout(() => setScrub(null), 400);
+          }}
+          thumbLabel="Seek"
+          // Flex-center the Root so Radix's abspos thumb wrapper centers on the
+          // track (no magic offset); the track flows so it fills the width.
+          style={{
+            position: "relative",
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+            height: 16,
+            cursor: "pointer",
+            touchAction: "none",
+          }}
+          parts={{
+            track: {
+              style: {
+                position: "relative",
+                flexGrow: 1,
+                height: 4,
+                borderRadius: 999,
+                background: "rgba(255,255,255,.16)",
+              },
+            },
+            range: {
+              style: {
+                position: "absolute",
+                height: "100%",
+                borderRadius: 999,
+                background: accent,
+              },
+            },
+            thumb: {
+              style: {
+                display: "block",
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                background: "#fff",
+                boxShadow: "0 1px 4px rgba(0,0,0,.55)",
+              },
+            },
+          }}
+        />
+        <span style={{ ...timeStyle, textAlign: "left" }}>{fmt(Math.round(dur))}</span>
       </div>
 
       {/* ── right: utilities ── */}
       <div
         style={{
-          justifySelf: "end",
           display: "flex",
           alignItems: "center",
-          gap: 6,
-          paddingRight: 22,
+          gap: 4,
+          paddingRight: 18,
+          flex: "0 0 auto",
           position: "relative",
           zIndex: 1,
         }}
       >
-        <button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
-          LRC
+        <button style={ctlBtn(liked)} onClick={toggleLike} aria-label="Like">
+          <Icon.heart size={18} filled={liked} />
         </button>
-        <button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
-          <Icon.comment size={18} />
+        <button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
+          <Icon.shuffle size={18} />
         </button>
-        <button
-          style={ctlBtn(dragOver)}
-          onClick={onOpenQueue}
-          aria-label="Up next"
-          onDragOver={(e) => {
-            if (e.dataTransfer.types.includes("text/sonance-track")) {
-              e.preventDefault();
-              setDragOver(true);
-            }
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const id = e.dataTransfer.getData("text/sonance-track");
-            if (id && window.__ENQUEUE) window.__ENQUEUE(id);
-          }}
-        >
-          <Icon.list size={18} />
+        <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
+          <Icon.loop size={18} />
         </button>
         {/* volume */}
         <div
@@ -426,8 +366,7 @@ export const PlayerBar = React.memo(function PlayerBar({
           </button>
           {/* Outer layer = positioning + a transparent hover-bridge (paddingBottom)
               that reaches down to the button, so moving the cursor up to the panel
-              never crosses a dead gap that dismisses it. Inner = the dark glass
-              panel (matches the page's dark vibe, like the seek-time tooltip). */}
+              never crosses a dead gap that dismisses it. Inner = the dark glass panel. */}
           <div
             style={{
               position: "absolute",
@@ -520,6 +459,32 @@ export const PlayerBar = React.memo(function PlayerBar({
             </div>
           </div>
         </div>
+        <button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
+          LRC
+        </button>
+        <button
+          style={ctlBtn(dragOver)}
+          onClick={onOpenQueue}
+          aria-label="Up next"
+          onDragOver={(e) => {
+            if (e.dataTransfer.types.includes("text/sonance-track")) {
+              e.preventDefault();
+              setDragOver(true);
+            }
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const id = e.dataTransfer.getData("text/sonance-track");
+            if (id && window.__ENQUEUE) window.__ENQUEUE(id);
+          }}
+        >
+          <Icon.list size={18} />
+        </button>
+        <button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
+          <Icon.comment size={18} />
+        </button>
       </div>
     </div>
   );
