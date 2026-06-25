@@ -72,7 +72,9 @@ export class Planet implements IPlanet {
 
   constructor(opt?: PlanetOption) {
     this.pluginManager = new Manager();
-    this.context = new Context();
+    // Wire sibling-plugin resolution into the context (read at runtime, by which
+    // point every plugin is mounted) so reactive plugins can reach the provider.
+    this.context = new Context((id) => this.pluginManager.get(id));
 
     if (opt?.plugins?.length) {
       const sorted = topoSort(opt.plugins);

@@ -3,7 +3,6 @@ import type { Personalized } from "@domain/model/personalized";
 import type { Playlist } from "@domain/model/playlist";
 import type { Album } from "@domain/model/album";
 import type { Artist } from "@domain/model/artist";
-import type { Lyric } from "@domain/model/lyric";
 import type { Chart } from "@domain/model/chart";
 import type { SearchResult } from "@domain/model/search";
 import type { ProviderCapability } from "@domain";
@@ -54,10 +53,9 @@ export class MediaService {
     return this.getProvider().artistDetail(id);
   }
 
-  /** Track lyrics ([] when the provider has none). */
-  lyric(id: string): Promise<Lyric[]> {
-    return this.getProvider().lyric(id);
-  }
+  /* Lyrics are not a browse read — they follow the current track. The Lyric
+     kernel plugin owns that (emits lyric_changed); the UI reads it from the
+     store. So no lyric() here on purpose. */
 
   /** All charts (list items, without tracks). */
   toplists(): Promise<Chart[]> {
