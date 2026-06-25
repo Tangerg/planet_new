@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useState } from "react";
 import type { Image } from "@domain/model/image";
-import { Icon, Art, artBg, artPair } from "./primitives";
+import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { MOCK } from "./mockCatalog";
 
 type MediaCardProps = {
@@ -258,154 +258,154 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
   return (
     <div
-      className="fade-in scroll"
-      style={{
-        height: "100%",
-        background: "radial-gradient(120% 80% at 30% -5%, #181922, #0c0c10 55%, #08080b)",
-      }}
+      className="fade-in"
+      style={{ height: "100%", position: "relative", background: "#08080b" }}
     >
-      <div style={{ padding: "60px 56px 50px" }}>
-        {/* greeting + chips */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 30,
-          }}
-        >
-          <div>
-            <div className="mlabel" style={{ color: accent, marginBottom: 8 }}>
-              {greeting}
+      <HeroBackdrop image={featured?.image} seed={featured?.coverSeed} grad={featured?.gradient} />
+      <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
+        <div style={{ padding: "60px 56px 50px" }}>
+          {/* greeting + chips */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              marginBottom: 30,
+            }}
+          >
+            <div>
+              <div className="mlabel" style={{ color: accent, marginBottom: 8 }}>
+                {greeting}
+              </div>
+              <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: ".01em" }}>For You</div>
             </div>
-            <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: ".01em" }}>For You</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {["All", "Music", "Mixes", "Charts"].map((c) => (
+                <button
+                  key={c}
+                  className={"chip" + (chip === c ? " on" : "")}
+                  onClick={() => setChip(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            {["All", "Music", "Mixes", "Charts"].map((c) => (
-              <button
-                key={c}
-                className={"chip" + (chip === c ? " on" : "")}
-                onClick={() => setChip(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <HeroBanner
-          playlist={featured}
-          accent={accent}
-          onOpen={() => openPlaylist(featured)}
-          onPlay={() => openPlaylist(featured)}
-        />
+          <HeroBanner
+            playlist={featured}
+            accent={accent}
+            onOpen={() => openPlaylist(featured)}
+            onPlay={() => openPlaylist(featured)}
+          />
 
-        {/* quick tiles */}
-        <div
-          style={{
-            display: "grid",
-            // minmax(0,1fr) (not bare 1fr): a long tile name must not blow the
-            // track past its share and push the grid wider than the viewport.
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 10,
-            marginBottom: 44,
-          }}
-        >
-          {tiles.map((t: any, i: number) => (
-            <div
-              key={t.id}
-              className="tile rise"
-              style={{ animationDelay: i * 0.03 + "s" }}
-              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive tile container
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openTile(t);
-                }
-              }}
-              onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(t.coverSeed, t.gradient)}
-              onContextMenu={(e) => window.__COLLMENU && window.__COLLMENU(e, t)}
-              onClick={(e) => {
-                const art = e.currentTarget.querySelector(".tart");
-                const rect = (art || e.currentTarget).getBoundingClientRect();
-                const run = () => openTile(t);
-                if (window.__MORPH) window.__MORPH(rect, t.coverSeed, t.gradient, run, t.image);
-                else run();
-              }}
-            >
-              <Art
-                seed={t.coverSeed}
-                grad={t.gradient}
-                image={t.image}
-                images={t.images}
-                px={72}
-                className="tart"
-              />
-              <span className="tname">{t.name}</span>
-              <button
-                className="tfab"
-                aria-label="Open"
+          {/* quick tiles */}
+          <div
+            style={{
+              display: "grid",
+              // minmax(0,1fr) (not bare 1fr): a long tile name must not blow the
+              // track past its share and push the grid wider than the viewport.
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 10,
+              marginBottom: 44,
+            }}
+          >
+            {tiles.map((t: any, i: number) => (
+              <div
+                key={t.id}
+                className="tile rise"
+                style={{ animationDelay: i * 0.03 + "s" }}
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive tile container
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openTile(t);
+                  }
+                }}
+                onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(t.coverSeed, t.gradient)}
+                onContextMenu={(e) => window.__COLLMENU && window.__COLLMENU(e, t)}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  openTile(t);
+                  const art = e.currentTarget.querySelector(".tart");
+                  const rect = (art || e.currentTarget).getBoundingClientRect();
+                  const run = () => openTile(t);
+                  if (window.__MORPH) window.__MORPH(rect, t.coverSeed, t.gradient, run, t.image);
+                  else run();
                 }}
               >
-                <Icon.play size={15} />
-              </button>
-            </div>
-          ))}
+                <Art
+                  seed={t.coverSeed}
+                  grad={t.gradient}
+                  image={t.image}
+                  images={t.images}
+                  px={72}
+                  className="tart"
+                />
+                <span className="tname">{t.name}</span>
+                <button
+                  className="tfab"
+                  aria-label="Open"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openTile(t);
+                  }}
+                >
+                  <Icon.play size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <Rail title="Made for you" onAll={() => onNav("library")}>
+            {playlists.map((p: any) => (
+              <MediaCard
+                key={p.id}
+                title={p.name}
+                sub={p.kind}
+                seed={p.coverSeed}
+                grad={p.gradient}
+                image={p.image}
+                item={p}
+                onClick={() => openPlaylist(p)}
+                onPlay={() => openPlaylist(p)}
+              />
+            ))}
+          </Rail>
+
+          <Rail title="Recently played" onAll={() => onNav("library")}>
+            {albums.map((al: any) => (
+              <MediaCard
+                key={al.id}
+                title={al.name}
+                sub={al.artist}
+                seed={al.coverSeed}
+                grad={al.gradient}
+                image={al.image}
+                item={al}
+                onClick={() => openAlbum(al)}
+                onPlay={() => openAlbum(al)}
+              />
+            ))}
+          </Rail>
+
+          <Rail title="Your artists" onAll={() => onNav("library")}>
+            {artists.map((ar: any) => (
+              <MediaCard
+                key={ar.id}
+                round
+                title={ar.name}
+                sub="Artist"
+                seed={ar.coverSeed}
+                grad={ar.gradient}
+                image={ar.image}
+                item={ar}
+                onClick={() => openArtist(ar)}
+                onPlay={() => openArtist(ar)}
+              />
+            ))}
+          </Rail>
         </div>
-
-        <Rail title="Made for you" onAll={() => onNav("library")}>
-          {playlists.map((p: any) => (
-            <MediaCard
-              key={p.id}
-              title={p.name}
-              sub={p.kind}
-              seed={p.coverSeed}
-              grad={p.gradient}
-              image={p.image}
-              item={p}
-              onClick={() => openPlaylist(p)}
-              onPlay={() => openPlaylist(p)}
-            />
-          ))}
-        </Rail>
-
-        <Rail title="Recently played" onAll={() => onNav("library")}>
-          {albums.map((al: any) => (
-            <MediaCard
-              key={al.id}
-              title={al.name}
-              sub={al.artist}
-              seed={al.coverSeed}
-              grad={al.gradient}
-              image={al.image}
-              item={al}
-              onClick={() => openAlbum(al)}
-              onPlay={() => openAlbum(al)}
-            />
-          ))}
-        </Rail>
-
-        <Rail title="Your artists" onAll={() => onNav("library")}>
-          {artists.map((ar: any) => (
-            <MediaCard
-              key={ar.id}
-              round
-              title={ar.name}
-              sub="Artist"
-              seed={ar.coverSeed}
-              grad={ar.gradient}
-              image={ar.image}
-              item={ar}
-              onClick={() => openArtist(ar)}
-              onPlay={() => openArtist(ar)}
-            />
-          ))}
-        </Rail>
       </div>
     </div>
   );
