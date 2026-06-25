@@ -19,7 +19,10 @@ type SearchScreenProps = {
   current: any;
   playing: any;
   accent: any;
-  initialQuery?: string;
+  // Controlled by Shell so the typed query survives a back-navigation round-trip
+  // (snapshot lives in the Shell back-stack, single source of truth).
+  query: string;
+  onQuery: (q: string) => void;
   openArtist: (...args: any[]) => void;
   openAlbum: (...args: any[]) => void;
   openPlaylist: (...args: any[]) => void;
@@ -35,7 +38,8 @@ export function SearchScreen({
   current,
   playing,
   accent,
-  initialQuery = "",
+  query: q,
+  onQuery: setQ,
   openArtist,
   openAlbum,
   openPlaylist: _openPlaylist,
@@ -43,12 +47,8 @@ export function SearchScreen({
   toggleLike,
   search,
 }: SearchScreenProps) {
-  const [q, setQ] = useState(initialQuery);
   const [results, setResults] = useState<SearchResults>({ tracks: [], artists: [], albums: [] });
   const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    setQ(initialQuery);
-  }, [initialQuery]);
   // Debounce input 320ms, then call provider.search; an empty query clears results.
   useEffect(() => {
     const term = q.trim();
@@ -601,8 +601,12 @@ type LibraryScreenProps = {
   openArtist: (...args: any[]) => void;
   liked: any;
   toggleLike: (...args: any[]) => void;
-  initialTab?: any;
-  initialView?: any;
+  // Controlled by Shell so the active tab/view survives a back-navigation
+  // round-trip (snapshot lives in the Shell back-stack, single source of truth).
+  tab: string;
+  view: string;
+  onTab: (t: string) => void;
+  onView: (v: string) => void;
 };
 
 export function LibraryScreen({
@@ -616,11 +620,11 @@ export function LibraryScreen({
   openArtist,
   liked,
   toggleLike,
-  initialTab,
-  initialView,
+  tab,
+  view,
+  onTab,
+  onView,
 }: LibraryScreenProps) {
-  const [tab, setTab] = useState(initialTab || "playlists");
-  const [view, setView] = useState(initialView || "grid"); // grid | list | flow
   const [flowCenter, setFlowCenter] = useState(2);
   useEffect(() => {
     setFlowCenter(2);
@@ -701,7 +705,7 @@ export function LibraryScreen({
             ["artists", "Artists"],
             ["songs", "Songs"],
           ].map(([k, l]) => (
-            <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => setTab(k)}>
+            <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => onTab(k)}>
               {l}
             </button>
           ))}
@@ -712,21 +716,21 @@ export function LibraryScreen({
             >
               <button
                 className={view === "grid" ? "on" : ""}
-                onClick={() => setView("grid")}
+                onClick={() => onView("grid")}
                 aria-label="Grid view"
               >
                 <Icon.grid size={17} />
               </button>
               <button
                 className={view === "list" ? "on" : ""}
-                onClick={() => setView("list")}
+                onClick={() => onView("list")}
                 aria-label="List view"
               >
                 <Icon.list size={17} />
               </button>
               <button
                 className={view === "flow" ? "on" : ""}
-                onClick={() => setView("flow")}
+                onClick={() => onView("flow")}
                 aria-label="Cover flow view"
               >
                 <Icon.flow size={17} />
