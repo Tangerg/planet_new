@@ -1,7 +1,7 @@
 /**
  * Cross-screen bridge globals, installed on `window` at runtime by the resident
  * Shell. Cards/rows inside screens call these to trigger the shared-element
- * morph, the ambient glow, context menus, and enqueue. Follows the example
+ * morph, context menus, and enqueue. Follows the example
  * vibe player's `window.__*` convention.
  */
 export {};
@@ -23,8 +23,6 @@ declare global {
       run?: MorphRun,
       image?: string,
     ) => void;
-    /** Ambient glow: page background follows the focused card. */
-    __AMBIENT?: (seed?: number, grad?: string[]) => void;
     /** Context menu for a track. */
     __TRACKMENU?: (e: React.MouseEvent | MouseEvent, track: any) => void;
     /** Context menu for a collection (playlist/album). */

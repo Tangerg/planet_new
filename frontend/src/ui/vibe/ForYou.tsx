@@ -52,7 +52,6 @@ export function MediaCard({
           handle(e as any);
         }
       }}
-      onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(seed, grad)}
       onContextMenu={item ? (e) => window.__COLLMENU && window.__COLLMENU(e, item) : undefined}
     >
       <Art
@@ -324,7 +323,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                     openTile(t);
                   }
                 }}
-                onMouseEnter={() => window.__AMBIENT && window.__AMBIENT(t.coverSeed, t.gradient)}
                 onContextMenu={(e) => window.__COLLMENU && window.__COLLMENU(e, t)}
                 onClick={(e) => {
                   const art = e.currentTarget.querySelector(".tart");
