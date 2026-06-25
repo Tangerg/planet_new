@@ -383,12 +383,14 @@ export const PlayerBar = React.memo(function PlayerBar({
                 alignItems: "center",
                 gap: 12,
                 padding: "15px 13px 13px",
-                background: "rgba(16,16,20,.92)",
-                border: "0.5px solid rgba(255,255,255,.1)",
+                // Same frosted material as the bar (tint + base + blur) so the
+                // popup reads as part of the control bar, not a foreign surface.
+                background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.86)`,
+                border: "0.5px solid rgba(255,255,255,.6)",
                 borderRadius: 14,
-                WebkitBackdropFilter: "blur(22px) saturate(160%)",
-                backdropFilter: "blur(22px) saturate(160%)",
-                boxShadow: "0 18px 44px -14px rgba(0,0,0,.65)",
+                WebkitBackdropFilter: "blur(22px) saturate(180%)",
+                backdropFilter: "blur(22px) saturate(180%)",
+                boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
               }}
             >
               <span
@@ -396,7 +398,13 @@ export const PlayerBar = React.memo(function PlayerBar({
                   fontFamily: "var(--mono)",
                   fontSize: 9.5,
                   letterSpacing: ".1em",
-                  color: "rgba(255,255,255,.55)",
+                  color: "rgba(20,20,24,.5)",
+                  // Fixed footprint + tabular figures: 1–3 digits (7→71→100)
+                  // never change the popup width.
+                  display: "block",
+                  width: 30,
+                  textAlign: "center",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {Math.round(volume)}
@@ -429,7 +437,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                       width: 4,
                       height: "100%",
                       borderRadius: 999,
-                      background: "rgba(255,255,255,.18)",
+                      background: "rgba(20,20,24,.16)",
                     },
                   },
                   range: {
@@ -448,7 +456,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                       height: 12,
                       borderRadius: "50%",
                       background: "#fff",
-                      boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.45)`,
+                      boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
                     },
                   },
                 }}
