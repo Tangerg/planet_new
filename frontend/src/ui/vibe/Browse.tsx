@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from "react";
 import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg } from "./primitives";
+import { ToggleGroup } from "../components/ToggleGroup";
 import { MediaCard } from "./ForYou";
 import { TrackRow } from "./Detail";
 import { CoverFlow } from "./CoverFlow";
@@ -699,43 +700,32 @@ export function LibraryScreen({
       >
         <div style={{ fontSize: 36, fontWeight: 200, marginBottom: 22 }}>Your Library</div>
         <div className="tabs" style={{ marginBottom: 30 }}>
-          {[
-            ["playlists", "Playlists"],
-            ["albums", "Albums"],
-            ["artists", "Artists"],
-            ["songs", "Songs"],
-          ].map(([k, l]) => (
-            <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => onTab(k)}>
-              {l}
-            </button>
-          ))}
+          <ToggleGroup
+            ariaLabel="Library section"
+            className="tabgroup"
+            itemClassName="tab"
+            value={tab}
+            onValueChange={onTab}
+            items={[
+              { value: "playlists", label: "Playlists" },
+              { value: "albums", label: "Albums" },
+              { value: "artists", label: "Artists" },
+              { value: "songs", label: "Songs" },
+            ]}
+          />
           {cardTab && (
-            <div
+            <ToggleGroup
+              ariaLabel="View mode"
               className="viewtoggle"
               style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
-            >
-              <button
-                className={view === "grid" ? "on" : ""}
-                onClick={() => onView("grid")}
-                aria-label="Grid view"
-              >
-                <Icon.grid size={17} />
-              </button>
-              <button
-                className={view === "list" ? "on" : ""}
-                onClick={() => onView("list")}
-                aria-label="List view"
-              >
-                <Icon.list size={17} />
-              </button>
-              <button
-                className={view === "flow" ? "on" : ""}
-                onClick={() => onView("flow")}
-                aria-label="Cover flow view"
-              >
-                <Icon.flow size={17} />
-              </button>
-            </div>
+              value={view}
+              onValueChange={onView}
+              items={[
+                { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
+                { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
+                { value: "flow", label: <Icon.flow size={17} />, "aria-label": "Cover flow view" },
+              ]}
+            />
           )}
         </div>
 
