@@ -1029,6 +1029,37 @@ textarea:focus-visible {
   }
 }
 
+/* ---- volume HoverCard popup: rise+fade on open, reverse on close.
+   Radix waits for the [data-state="closed"] animation before unmounting, so
+   the popup glides out instead of vanishing. Transform here is safe — Radix
+   positions via an internal wrapper, not on the Content element. ---- */
+.volpop[data-state="open"] {
+  animation: volPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.volpop[data-state="closed"] {
+  animation: volPopOut 0.16s ease;
+}
+@keyframes volPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes volPopOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 /* ---- grid / list view toggle (Library) ---- */
 .viewtoggle {
   display: flex;

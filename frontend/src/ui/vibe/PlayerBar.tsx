@@ -4,6 +4,7 @@
 // with always-visible times · utilities. Dark to match the app shell.
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
+import * as HoverCard from "@radix-ui/react-hover-card";
 import { Slider } from "../components/Slider";
 import { Icon, Art, artPair, fmt } from "./primitives";
 
@@ -65,7 +66,6 @@ export const PlayerBar = React.memo(function PlayerBar({
   // While scrubbing, show the dragged seconds; commit the seek on release so
   // the audio isn't hammered every frame of the drag.
   const [scrub, setScrub] = useState<number | null>(null);
-  const [volOpen, setVolOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -348,41 +348,31 @@ export const PlayerBar = React.memo(function PlayerBar({
         <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
           <Icon.loop size={18} />
         </button>
-        {/* volume */}
-        <div
-          style={{ position: "relative" }}
-          onMouseEnter={() => setVolOpen(true)}
-          onMouseLeave={() => setVolOpen(false)}
-        >
-          <button
-            style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
-            aria-label="Volume"
-            onClick={() => onVolume(volume > 0 ? 0 : 80)}
-          >
-            <Icon.volume size={18} />
-          </button>
-          {/* Outer layer = positioning + a transparent hover-bridge (paddingBottom)
-              that reaches down to the button, so moving the cursor up to the panel
-              never crosses a dead gap that dismisses it. Inner = the dark glass panel. */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "100%",
-              left: "50%",
-              transform: `translateX(-50%) translateY(${volOpen ? 0 : 6}px)`,
-              paddingBottom: 12,
-              opacity: volOpen ? 1 : 0,
-              pointerEvents: volOpen ? "auto" : "none",
-              transition: "opacity .2s ease, transform .2s ease",
-            }}
-          >
-            <div
+        {/* volume — Radix HoverCard owns the hover-open + the trigger→content
+            safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
+        <HoverCard.Root openDelay={0} closeDelay={120}>
+          <HoverCard.Trigger asChild>
+            <button
+              style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
+              aria-label="Volume"
+              onClick={() => onVolume(volume > 0 ? 0 : 80)}
+            >
+              <Icon.volume size={18} />
+            </button>
+          </HoverCard.Trigger>
+          <HoverCard.Portal>
+            <HoverCard.Content
+              side="top"
+              align="center"
+              sideOffset={12}
+              className="volpop"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 12,
                 padding: "15px 13px 13px",
+                zIndex: 9000,
                 // Same frosted material as the bar (tint + base + blur) so the
                 // popup reads as part of the control bar, not a foreign surface.
                 background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.86)`,
@@ -461,9 +451,9 @@ export const PlayerBar = React.memo(function PlayerBar({
                   },
                 }}
               />
-            </div>
-          </div>
-        </div>
+            </HoverCard.Content>
+          </HoverCard.Portal>
+        </HoverCard.Root>
         <button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
           LRC
         </button>
