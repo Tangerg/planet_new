@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-import { Icon, Art, artBg, artPair } from "./primitives";
+import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { MediaCard } from "./ForYou";
 import { CollectionRow } from "./Browse";
 import { TrackRow, TrackCard } from "./Detail";
@@ -68,319 +68,333 @@ function ArtistScreen({
   const _half = Math.ceil(tracks.length / 2);
 
   return (
-    <div className="fade-in scroll" style={{ height: "100%", background: "var(--surf-0)" }}>
-      {/* header */}
-      <Art
+    <div
+      className="fade-in"
+      style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
+    >
+      <HeroBackdrop
+        image={artist.banner || artist.image}
         seed={artist.coverSeed}
         grad={artist.gradient}
-        image={artist.banner || artist.image}
-        mono={mono}
-        style={{ height: 300 }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            background:
-              "linear-gradient(180deg, rgba(8,8,11,.42) 0%, rgba(8,8,11,.5) 58%, var(--surf-0) 100%)",
-          }}
-        />
-        {/* Bottom-anchored via flow (flex-end column), not absolute: text stays
+      />
+      <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
+        {/* header */}
+        <Art
+          seed={artist.coverSeed}
+          grad={artist.gradient}
+          image={artist.banner || artist.image}
+          mono={mono}
+          style={{ height: 300 }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 2,
+              background:
+                "linear-gradient(180deg, rgba(8,8,11,.42) 0%, rgba(8,8,11,.5) 58%, var(--surf-0) 100%)",
+            }}
+          />
+          {/* Bottom-anchored via flow (flex-end column), not absolute: text stays
             in flow so it can't overflow the banner. */}
+          <div
+            style={{
+              position: "relative",
+              zIndex: 4,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              padding: "0 48px 30px",
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+                gap: 24,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 48,
+                    fontWeight: 200,
+                    letterSpacing: ".01em",
+                    lineHeight: 1.04,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {artist.name}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    marginTop: 20,
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                  }}
+                >
+                  <button
+                    onClick={() => setFollowed((f) => !f)}
+                    className="tag"
+                    style={{
+                      cursor: "pointer",
+                      borderRadius: 999,
+                      border: 0,
+                      background: followed
+                        ? `linear-gradient(90deg, ${accent}, ${b})`
+                        : "rgba(255,255,255,.14)",
+                      color: followed ? "#06060a" : "#fff",
+                    }}
+                  >
+                    {followed ? "Following" : "Follow"}
+                  </button>
+                  <StatPill>
+                    {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
+                  </StatPill>
+                  <StatPill>
+                    {albums.length} {albums.length === 1 ? "Album" : "Albums"}
+                  </StatPill>
+                  <StatPill>{artist.listeners} Listeners</StatPill>
+                  {(artist.genres || []).map((g: any) => (
+                    <StatPill key={g}>{g}</StatPill>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => onPlay(tracks[0])}
+                aria-label="Play"
+                style={{
+                  flex: "0 0 auto",
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  border: 0,
+                  cursor: "pointer",
+                  background: accent,
+                  color: "#06060a",
+                  display: "grid",
+                  placeItems: "center",
+                  boxShadow: `0 10px 30px -6px ${accent}`,
+                }}
+              >
+                {playing && tracks.some((t: any) => t.id === current?.id) ? (
+                  <Icon.pause size={26} />
+                ) : (
+                  <Icon.play size={26} />
+                )}
+              </button>
+            </div>
+          </div>
+        </Art>
+
+        {/* tabs + content */}
         <div
           style={{
-            position: "relative",
-            zIndex: 4,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            padding: "0 48px 30px",
+            padding: "26px 48px 40px",
+            maxWidth: 1320,
+            margin: "0 auto",
             boxSizing: "border-box",
           }}
         >
           <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              gap: 24,
-            }}
+            className="tabs"
+            style={{ marginBottom: 24, display: "flex", alignItems: "flex-start" }}
           >
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 48,
-                  fontWeight: 200,
-                  letterSpacing: ".01em",
-                  lineHeight: 1.04,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  overflowWrap: "anywhere",
-                }}
+            {[
+              ["top", "Top 50"],
+              ["albums", "All Albums"],
+              ["similar", "Similar Artist"],
+            ].map(([k, l]) => (
+              <button
+                key={k}
+                className={"tab" + (tab === k ? " on" : "")}
+                onClick={() => setTab(k)}
               >
-                {artist.name}
-              </div>
+                {l}
+              </button>
+            ))}
+            {tab !== "similar" && (
               <div
-                style={{
-                  display: "flex",
-                  gap: 12,
-                  marginTop: 20,
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                }}
+                className="viewtoggle"
+                style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
               >
                 <button
-                  onClick={() => setFollowed((f) => !f)}
-                  className="tag"
-                  style={{
-                    cursor: "pointer",
-                    borderRadius: 999,
-                    border: 0,
-                    background: followed
-                      ? `linear-gradient(90deg, ${accent}, ${b})`
-                      : "rgba(255,255,255,.14)",
-                    color: followed ? "#06060a" : "#fff",
-                  }}
+                  className={view === "grid" ? "on" : ""}
+                  onClick={() => setView("grid")}
+                  aria-label="Grid view"
                 >
-                  {followed ? "Following" : "Follow"}
+                  <Icon.grid size={17} />
                 </button>
-                <StatPill>
-                  {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
-                </StatPill>
-                <StatPill>
-                  {albums.length} {albums.length === 1 ? "Album" : "Albums"}
-                </StatPill>
-                <StatPill>{artist.listeners} Listeners</StatPill>
-                {(artist.genres || []).map((g: any) => (
-                  <StatPill key={g}>{g}</StatPill>
+                <button
+                  className={view === "list" ? "on" : ""}
+                  onClick={() => setView("list")}
+                  aria-label="List view"
+                >
+                  <Icon.list size={17} />
+                </button>
+                <button
+                  className={view === "flow" ? "on" : ""}
+                  onClick={() => setView("flow")}
+                  aria-label="Cover flow view"
+                >
+                  <Icon.flow size={17} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div key={tab + view} className="xfade">
+            {tab === "top" && view === "list" && (
+              <div>
+                {tracks.map((t: any, i: number) => (
+                  <TrackRow
+                    key={t.id}
+                    track={t}
+                    index={i + 1}
+                    onPlay={onPlay}
+                    current={current}
+                    playing={playing}
+                    liked={liked}
+                    toggleLike={toggleLike}
+                    accent={accent}
+                    onOpenArtist={onOpenArtist}
+                  />
                 ))}
               </div>
-            </div>
-            <button
-              onClick={() => onPlay(tracks[0])}
-              aria-label="Play"
-              style={{
-                flex: "0 0 auto",
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                border: 0,
-                cursor: "pointer",
-                background: accent,
-                color: "#06060a",
-                display: "grid",
-                placeItems: "center",
-                boxShadow: `0 10px 30px -6px ${accent}`,
-              }}
-            >
-              {playing && tracks.some((t: any) => t.id === current?.id) ? (
-                <Icon.pause size={26} />
-              ) : (
-                <Icon.play size={26} />
-              )}
-            </button>
+            )}
+            {tab === "top" && view === "grid" && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
+                  gap: 26,
+                }}
+              >
+                {tracks.map((t: any) => (
+                  <TrackCard
+                    key={t.id}
+                    track={t}
+                    onPlay={onPlay}
+                    accent={accent}
+                    onOpenArtist={onOpenArtist}
+                  />
+                ))}
+              </div>
+            )}
+            {tab === "top" && view === "flow" && (
+              <div style={{ height: 480, margin: "0 -48px" }}>
+                <CoverFlow
+                  items={tracks.map((t: any) => ({
+                    id: t.id,
+                    name: t.title,
+                    sub: t.artist,
+                    seed: t.coverSeed,
+                    grad: t.gradient,
+                    image: t.image,
+                    images: t.images,
+                    obj: t,
+                  }))}
+                  center={Math.min(flowCenter, tracks.length - 1)}
+                  setCenter={setFlowCenter}
+                  accent={accent}
+                  onOpen={(it: any) => onPlay(it.obj)}
+                  onPlay={(it: any) => onPlay(it.obj)}
+                />
+              </div>
+            )}
+            {tab === "albums" && view === "grid" && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(176px, 1fr))",
+                  gap: 24,
+                  justifyItems: "start",
+                }}
+              >
+                {albums.map((al: any) => (
+                  <MediaCard
+                    key={al.id}
+                    title={al.name}
+                    sub={al.year + ""}
+                    seed={al.coverSeed}
+                    grad={al.gradient}
+                    image={al.image}
+                    item={al}
+                    onClick={() => onOpenAlbum(al)}
+                    onPlay={() => onOpenAlbum(al)}
+                  />
+                ))}
+              </div>
+            )}
+            {tab === "albums" && view === "list" && (
+              <div>
+                {albums.map((al: any) => (
+                  <CollectionRow
+                    key={al.id}
+                    name={al.name}
+                    sub={al.artist || "Album"}
+                    meta={al.year + " · " + (al.tracks ? al.tracks.length : 0) + " tracks"}
+                    seed={al.coverSeed}
+                    grad={al.gradient}
+                    image={al.image}
+                    images={al.images}
+                    item={al}
+                    onOpen={() => onOpenAlbum(al)}
+                    onPlay={() => onOpenAlbum(al)}
+                  />
+                ))}
+              </div>
+            )}
+            {tab === "albums" && view === "flow" && (
+              <div style={{ height: 480, margin: "0 -48px" }}>
+                <CoverFlow
+                  items={albums.map((al: any) => ({
+                    id: al.id,
+                    name: al.name,
+                    sub: al.year + "",
+                    seed: al.coverSeed,
+                    grad: al.gradient,
+                    image: al.image,
+                    images: al.images,
+                    obj: al,
+                  }))}
+                  center={Math.min(flowCenter, albums.length - 1)}
+                  setCenter={setFlowCenter}
+                  accent={accent}
+                  onOpen={(it: any) => onOpenAlbum(it.obj)}
+                  onPlay={(it: any) => onOpenAlbum(it.obj)}
+                  tracksFor={(it: any) => it.obj.tracks}
+                  onPlayTrack={onPlay}
+                />
+              </div>
+            )}
+            {tab === "similar" && (
+              <div className="hrail" style={{ flexWrap: "wrap", overflow: "visible" }}>
+                {similar.map((ar: any) => (
+                  <MediaCard
+                    key={ar.id}
+                    round
+                    title={ar.name}
+                    sub="Artist"
+                    seed={ar.coverSeed}
+                    grad={ar.gradient}
+                    image={ar.image}
+                    item={ar}
+                    onClick={() => onOpenArtist(ar)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </Art>
-
-      {/* tabs + content */}
-      <div
-        style={{
-          padding: "26px 48px 40px",
-          maxWidth: 1320,
-          margin: "0 auto",
-          boxSizing: "border-box",
-        }}
-      >
-        <div
-          className="tabs"
-          style={{ marginBottom: 24, display: "flex", alignItems: "flex-start" }}
-        >
-          {[
-            ["top", "Top 50"],
-            ["albums", "All Albums"],
-            ["similar", "Similar Artist"],
-          ].map(([k, l]) => (
-            <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => setTab(k)}>
-              {l}
-            </button>
-          ))}
-          {tab !== "similar" && (
-            <div
-              className="viewtoggle"
-              style={{ marginLeft: "auto", transform: "translateY(-8px)" }}
-            >
-              <button
-                className={view === "grid" ? "on" : ""}
-                onClick={() => setView("grid")}
-                aria-label="Grid view"
-              >
-                <Icon.grid size={17} />
-              </button>
-              <button
-                className={view === "list" ? "on" : ""}
-                onClick={() => setView("list")}
-                aria-label="List view"
-              >
-                <Icon.list size={17} />
-              </button>
-              <button
-                className={view === "flow" ? "on" : ""}
-                onClick={() => setView("flow")}
-                aria-label="Cover flow view"
-              >
-                <Icon.flow size={17} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div key={tab + view} className="xfade">
-          {tab === "top" && view === "list" && (
-            <div>
-              {tracks.map((t: any, i: number) => (
-                <TrackRow
-                  key={t.id}
-                  track={t}
-                  index={i + 1}
-                  onPlay={onPlay}
-                  current={current}
-                  playing={playing}
-                  liked={liked}
-                  toggleLike={toggleLike}
-                  accent={accent}
-                  onOpenArtist={onOpenArtist}
-                />
-              ))}
-            </div>
-          )}
-          {tab === "top" && view === "grid" && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
-                gap: 26,
-              }}
-            >
-              {tracks.map((t: any) => (
-                <TrackCard
-                  key={t.id}
-                  track={t}
-                  onPlay={onPlay}
-                  accent={accent}
-                  onOpenArtist={onOpenArtist}
-                />
-              ))}
-            </div>
-          )}
-          {tab === "top" && view === "flow" && (
-            <div style={{ height: 480, margin: "0 -48px" }}>
-              <CoverFlow
-                items={tracks.map((t: any) => ({
-                  id: t.id,
-                  name: t.title,
-                  sub: t.artist,
-                  seed: t.coverSeed,
-                  grad: t.gradient,
-                  image: t.image,
-                  images: t.images,
-                  obj: t,
-                }))}
-                center={Math.min(flowCenter, tracks.length - 1)}
-                setCenter={setFlowCenter}
-                accent={accent}
-                onOpen={(it: any) => onPlay(it.obj)}
-                onPlay={(it: any) => onPlay(it.obj)}
-              />
-            </div>
-          )}
-          {tab === "albums" && view === "grid" && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(176px, 1fr))",
-                gap: 24,
-                justifyItems: "start",
-              }}
-            >
-              {albums.map((al: any) => (
-                <MediaCard
-                  key={al.id}
-                  title={al.name}
-                  sub={al.year + ""}
-                  seed={al.coverSeed}
-                  grad={al.gradient}
-                  image={al.image}
-                  item={al}
-                  onClick={() => onOpenAlbum(al)}
-                  onPlay={() => onOpenAlbum(al)}
-                />
-              ))}
-            </div>
-          )}
-          {tab === "albums" && view === "list" && (
-            <div>
-              {albums.map((al: any) => (
-                <CollectionRow
-                  key={al.id}
-                  name={al.name}
-                  sub={al.artist || "Album"}
-                  meta={al.year + " · " + (al.tracks ? al.tracks.length : 0) + " tracks"}
-                  seed={al.coverSeed}
-                  grad={al.gradient}
-                  image={al.image}
-                  images={al.images}
-                  item={al}
-                  onOpen={() => onOpenAlbum(al)}
-                  onPlay={() => onOpenAlbum(al)}
-                />
-              ))}
-            </div>
-          )}
-          {tab === "albums" && view === "flow" && (
-            <div style={{ height: 480, margin: "0 -48px" }}>
-              <CoverFlow
-                items={albums.map((al: any) => ({
-                  id: al.id,
-                  name: al.name,
-                  sub: al.year + "",
-                  seed: al.coverSeed,
-                  grad: al.gradient,
-                  image: al.image,
-                  images: al.images,
-                  obj: al,
-                }))}
-                center={Math.min(flowCenter, albums.length - 1)}
-                setCenter={setFlowCenter}
-                accent={accent}
-                onOpen={(it: any) => onOpenAlbum(it.obj)}
-                onPlay={(it: any) => onOpenAlbum(it.obj)}
-                tracksFor={(it: any) => it.obj.tracks}
-                onPlayTrack={onPlay}
-              />
-            </div>
-          )}
-          {tab === "similar" && (
-            <div className="hrail" style={{ flexWrap: "wrap", overflow: "visible" }}>
-              {similar.map((ar: any) => (
-                <MediaCard
-                  key={ar.id}
-                  round
-                  title={ar.name}
-                  sub="Artist"
-                  seed={ar.coverSeed}
-                  grad={ar.gradient}
-                  image={ar.image}
-                  item={ar}
-                  onClick={() => onOpenArtist(ar)}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

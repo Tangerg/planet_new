@@ -369,6 +369,64 @@ export function Art({
   );
 }
 
+/**
+ * Full-page background derived from a hero cover: a heavily-blurred copy of the
+ * artwork supplies the real hue, and a top→bottom gradient darkens it into the
+ * base across the WHOLE height (Spotify-like, but not just the top band). Render
+ * it as the first child of a `position: relative` page wrapper, with the
+ * scrolling content above it. Falls back to the seeded gradient with no cover.
+ */
+export function HeroBackdrop({
+  image,
+  seed = 0,
+  grad,
+  scrim = "linear-gradient(180deg, rgba(10,10,13,.28) 0%, rgba(10,10,13,.6) 55%, #0a0a0d 100%)",
+}: {
+  image?: string;
+  seed?: number;
+  grad?: string[];
+  /** Top→bottom overlay; override to tune how far the colour reaches. */
+  scrim?: string;
+}) {
+  return (
+    <>
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "blur(72px) saturate(1.35)",
+            transform: "scale(1.3)",
+            opacity: 0.5,
+          }}
+        />
+      ) : (
+        <div
+          className="grain"
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            background: artBg(seed, grad),
+            filter: "blur(72px) saturate(1.25)",
+            opacity: 0.4,
+            transform: "scale(1.3)",
+          }}
+        />
+      )}
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, background: scrim }} />
+    </>
+  );
+}
+
 export function fmt(sec: number): string {
   sec = Math.max(0, Math.floor(sec));
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;

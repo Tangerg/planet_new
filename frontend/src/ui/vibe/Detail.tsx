@@ -5,7 +5,7 @@
 import React, { useState, useRef } from "react";
 import { VirtualList } from "../components/VirtualList";
 import { VirtualGrid } from "../components/VirtualGrid";
-import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
+import { Icon, Equalizer, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { CoverFlow } from "./CoverFlow";
 
 type TrackRowProps = {
@@ -461,51 +461,8 @@ export function PlaylistDetailScreen({
       className="fade-in"
       style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
     >
-      {/* Background derived from the cover itself (Spotify-style, but the colour
-          field spans the WHOLE page top→bottom rather than only the upper band).
-          A heavily-blurred copy of the artwork supplies the real hue; the
-          gradient over it darkens progressively into the base. The cover image
-          is the one already loaded for the hero, so this adds no extra request. */}
-      {p.image ? (
-        <img
-          src={p.image}
-          alt=""
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: "blur(72px) saturate(1.35)",
-            transform: "scale(1.3)",
-            opacity: 0.5,
-          }}
-        />
-      ) : (
-        <div
-          className="grain"
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            background: artBg(p.coverSeed, p.gradient),
-            filter: "blur(72px) saturate(1.25)",
-            opacity: 0.4,
-            transform: "scale(1.3)",
-          }}
-        />
-      )}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          background:
-            "linear-gradient(180deg, rgba(10,10,13,.28) 0%, rgba(10,10,13,.6) 55%, #0a0a0d 100%)",
-        }}
-      />
+      {/* Full-page background from the cover (Spotify-style, full-height). */}
+      <HeroBackdrop image={p.image} seed={p.coverSeed} grad={p.gradient} />
 
       {/* sticky condensed header on scroll */}
       <div
@@ -928,13 +885,21 @@ export function QueueScreen({
       className="fade-in"
       style={{
         height: "100%",
+        position: "relative",
         display: "grid",
         gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
-        background: "radial-gradient(120% 90% at 20% 0%, #1a1320, #0a0a0d)",
+        background: "#0a0a0d",
       }}
     >
+      <HeroBackdrop
+        image={current?.image}
+        seed={current?.coverSeed || 0}
+        grad={current?.gradient}
+      />
       <div
         style={{
+          position: "relative",
+          zIndex: 2,
           padding: "70px 48px",
           display: "flex",
           flexDirection: "column",
@@ -987,7 +952,11 @@ export function QueueScreen({
           {current?.artist}
         </div>
       </div>
-      <div className="scroll" ref={scrollRef} style={{ padding: "64px 24px 30px" }}>
+      <div
+        className="scroll"
+        ref={scrollRef}
+        style={{ position: "relative", zIndex: 2, padding: "64px 24px 30px" }}
+      >
         <div className="mlabel" style={{ color: "rgba(255,255,255,.5)", padding: "0 14px 14px" }}>
           Up Next · {queue.length}
         </div>
@@ -1103,78 +1072,78 @@ export function HistoryScreen({
 
   return (
     <div
-      className="fade-in scroll"
-      style={{
-        height: "100%",
-        background: "radial-gradient(120% 90% at 22% 0%, #16131d, #0a0a0d)",
-      }}
+      className="fade-in"
+      style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
     >
-      <div style={{ padding: "70px 56px 30px", maxWidth: 1180, margin: "0 auto" }}>
-        {/* header */}
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 30, marginBottom: 46 }}>
-          <Art
-            seed={hero?.coverSeed || 0}
-            grad={hero?.gradient}
-            image={hero?.image}
-            data-hero="1"
-            style={{
-              width: 168,
-              height: 168,
-              flex: "0 0 auto",
-              boxShadow: "0 30px 70px -18px rgba(0,0,0,.6)",
-            }}
-            glow={artPair(hero?.coverSeed || 0, hero?.gradient)[1]}
-          />
-          <div style={{ minWidth: 0, paddingBottom: 6 }}>
-            <span className="mlabel" style={{ color: accent, letterSpacing: ".2em" }}>
-              Consumption
-            </span>
-            <div
+      <HeroBackdrop image={hero?.image} seed={hero?.coverSeed || 0} grad={hero?.gradient} />
+      <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
+        <div style={{ padding: "70px 56px 30px", maxWidth: 1180, margin: "0 auto" }}>
+          {/* header */}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 30, marginBottom: 46 }}>
+            <Art
+              seed={hero?.coverSeed || 0}
+              grad={hero?.gradient}
+              image={hero?.image}
+              data-hero="1"
               style={{
-                fontSize: 56,
-                fontWeight: 200,
-                letterSpacing: "-.015em",
-                lineHeight: 1,
-                margin: "12px 0 16px",
+                width: 168,
+                height: 168,
+                flex: "0 0 auto",
+                boxShadow: "0 30px 70px -18px rgba(0,0,0,.6)",
               }}
-            >
-              History
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,.55)" }}>
-              Everything you've played recently · {total} tracks
-            </div>
-            {hero && (
-              <button
-                onClick={() => onPlay(hero)}
-                className="pill-accent"
+              glow={artPair(hero?.coverSeed || 0, hero?.gradient)[1]}
+            />
+            <div style={{ minWidth: 0, paddingBottom: 6 }}>
+              <span className="mlabel" style={{ color: accent, letterSpacing: ".2em" }}>
+                Consumption
+              </span>
+              <div
                 style={{
-                  marginTop: 22,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 9,
-                  border: 0,
-                  cursor: "pointer",
-                  padding: "11px 22px",
-                  borderRadius: 999,
-                  background: accent,
-                  color: "#06060a",
-                  fontWeight: 500,
+                  fontSize: 56,
+                  fontWeight: 200,
+                  letterSpacing: "-.015em",
+                  lineHeight: 1,
+                  margin: "12px 0 16px",
                 }}
               >
-                <Icon.play size={16} /> Resume listening
-              </button>
-            )}
+                History
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,.55)" }}>
+                Everything you've played recently · {total} tracks
+              </div>
+              {hero && (
+                <button
+                  onClick={() => onPlay(hero)}
+                  className="pill-accent"
+                  style={{
+                    marginTop: 22,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 9,
+                    border: 0,
+                    cursor: "pointer",
+                    padding: "11px 22px",
+                    borderRadius: 999,
+                    background: accent,
+                    color: "#06060a",
+                    fontWeight: 500,
+                  }}
+                >
+                  <Icon.play size={16} /> Resume listening
+                </button>
+              )}
+            </div>
           </div>
+          {/* grouped lists */}
+          <Group label="Today" items={todays} startIndex={1} />
+          <Group label="Earlier this week" items={week} startIndex={1} />
+          <Group label="Earlier" items={earlier} startIndex={1} />
+          {!total && (
+            <div style={{ padding: 50, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
+              Nothing played yet.
+            </div>
+          )}
         </div>
-        {/* grouped lists */}
-        <Group label="Today" items={todays} startIndex={1} />
-        <Group label="Earlier this week" items={week} startIndex={1} />
-        <Group label="Earlier" items={earlier} startIndex={1} />
-        {!total && (
-          <div style={{ padding: 50, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
-            Nothing played yet.
-          </div>
-        )}
       </div>
     </div>
   );
