@@ -495,7 +495,7 @@ export function CollectionRow({
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     const a = e.currentTarget.querySelector(".clrt");
     const r = (a || e.currentTarget).getBoundingClientRect();
-    morph(r, seed, grad, onOpen, image);
+    morph(r, seed, grad, onOpen, image, round ? "50%" : undefined);
   };
   return (
     <div

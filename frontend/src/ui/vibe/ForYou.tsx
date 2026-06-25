@@ -41,7 +41,7 @@ export function MediaCard({
     if (!onClick) return;
     const art = e.currentTarget.querySelector(".art");
     const rect = (art || e.currentTarget).getBoundingClientRect();
-    morph(rect, seed, grad, onClick, image);
+    morph(rect, seed, grad, onClick, image, round ? "50%" : undefined);
   };
   return (
     <div
