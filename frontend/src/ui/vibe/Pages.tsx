@@ -12,6 +12,8 @@ import { MediaCard } from "./ForYou";
 import { CollectionRow } from "./Browse";
 import { TrackRow, TrackCard } from "./Detail";
 import { CoverFlow } from "./CoverFlow";
+import { LiftButton } from "./lift";
+import { FadeIn, XFade } from "./motion";
 import { MOCK } from "./mockCatalog";
 
 // ---------- ARTIST ----------
@@ -72,10 +74,7 @@ function ArtistScreen({
   const _half = Math.ceil(tracks.length / 2);
 
   return (
-    <div
-      className="fade-in"
-      style={{ height: "100%", position: "relative", background: "#0a0a0d" }}
-    >
+    <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
       <HeroBackdrop image={artist.image} seed={artist.coverSeed} grad={artist.gradient} />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
         {/* header — atmospheric circle. The artist's blurred image (HeroBackdrop,
@@ -258,7 +257,7 @@ function ArtistScreen({
             )}
           </div>
 
-          <div key={tab + view} className="xfade">
+          <XFade key={tab + view}>
             {tab === "top" && view === "list" && (
               <div>
                 {tracks.map((t: any, i: number) => (
@@ -389,6 +388,8 @@ function ArtistScreen({
                   <MediaCard
                     key={ar.id}
                     round
+                    liftScale={1.12}
+                    liftY={-6}
                     title={ar.name}
                     sub="Artist"
                     seed={ar.coverSeed}
@@ -400,10 +401,10 @@ function ArtistScreen({
                 ))}
               </div>
             )}
-          </div>
+          </XFade>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -431,7 +432,7 @@ function ProfileScreen({
   }));
   const [active, setActive] = useState(1);
   return (
-    <div className="fade-in" style={{ height: "100%", position: "relative" }}>
+    <FadeIn style={{ height: "100%", position: "relative" }}>
       <Art
         seed={3}
         grad={["#16161c", "#2a2a33"]}
@@ -545,7 +546,7 @@ function ProfileScreen({
           </div>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -566,8 +567,8 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
     ["Themes", "themes"],
   ];
   return (
-    <div
-      className="fade-in scroll"
+    <FadeIn
+      className="scroll"
       style={{
         height: "100%",
         background: "radial-gradient(120% 80% at 50% -5%, #16161d, var(--surf-0))",
@@ -593,10 +594,10 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
               {C[key].map((g: any, i: number) => {
                 const [name, color] = g;
                 return (
-                  <Button
+                  <LiftButton
                     key={name}
-                    className="gtile rise"
-                    style={{ background: color, animationDelay: i * 0.02 + "s" }}
+                    className="gtile"
+                    style={{ background: color }}
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                       const r = e.currentTarget.getBoundingClientRect();
                       const run = () => onOpenGenre(name);
@@ -608,14 +609,14 @@ function BrowseScreen({ onOpenGenre, accent: _accent }: BrowseScreenProps) {
                       className="gart grain"
                       style={{ background: artBg(i, [color, "#06060a"]) }}
                     />
-                  </Button>
+                  </LiftButton>
                 );
               })}
             </div>
           </section>
         ))}
       </div>
-    </div>
+    </FadeIn>
   );
 }
 
@@ -683,8 +684,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
       return n;
     });
   return (
-    <div
-      className="fade-in"
+    <FadeIn
       style={{
         height: "100%",
         display: "grid",
@@ -843,7 +843,7 @@ function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScre
           </div>
         ))}
       </div>
-    </div>
+    </FadeIn>
   );
 }
 

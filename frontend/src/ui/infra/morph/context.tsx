@@ -35,3 +35,28 @@ export function MorphProvider({ morph, children }: { morph: MorphFn; children: R
 export function useMorph(): MorphFn {
   return useContext(MorphContext);
 }
+
+// ---------------------------------------------------------------------------
+// Outgoing-layer freeze
+//
+// During a transition the leaving screen is re-rendered as the `t-from` layer
+// (see MorphStage). Its in-page entrance animations must NOT replay there — a
+// from-opacity:0 entrance would flash as the screen slides away. The CSS design
+// system froze this with `.t-from * { animation: none !important }`, but that
+// `!important` only catches CSS `animation`, not Motion. So the stage wraps the
+// outgoing render in <MorphFrozen> and the Motion entrance primitives
+// (FadeIn/Rise/XFade/…) read useMorphFrozen() to render at their final state.
+// This is purely additive — the morph mechanism (clip / container-transform /
+// flying tile) is unchanged.
+// ---------------------------------------------------------------------------
+const FrozenContext = createContext(false);
+
+/** Marks its subtree as the outgoing morph layer (entrances render frozen). */
+export function MorphFrozen({ children }: { children: React.ReactNode }) {
+  return <FrozenContext.Provider value={true}>{children}</FrozenContext.Provider>;
+}
+
+/** True when rendered on the outgoing `t-from` layer — skip entrance animation. */
+export function useMorphFrozen(): boolean {
+  return useContext(FrozenContext);
+}

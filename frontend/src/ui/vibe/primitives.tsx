@@ -6,6 +6,7 @@
 // the mockup-only <image-slot> drag-drop web component.
 // ============================================================
 import React from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { pickImageUrl, type Image } from "@domain/model/image";
 
@@ -234,18 +235,26 @@ export function Equalizer({
       style={{ display: "inline-flex", alignItems: "flex-end", gap: 2, height: size, width: size }}
     >
       {bars.map((i) => (
-        <span
+        // Full-height bar scaled from the bottom — scaleY is GPU-composited, so it
+        // doesn't thrash layout the way the old `height` keyframe did.
+        <motion.span
           key={i}
           style={{
             width: 2.5,
             background: color,
             borderRadius: 2,
-            height: playing ? undefined : "40%",
-            animation: playing ? `eqb 1s ${i * 0.18}s ease-in-out infinite` : "none",
+            height: "100%",
+            transformOrigin: "bottom",
           }}
+          initial={false}
+          animate={playing ? { scaleY: [0.3, 1, 0.3] } : { scaleY: 0.4 }}
+          transition={
+            playing
+              ? { duration: 1, ease: "easeInOut", repeat: Infinity, delay: i * 0.18 }
+              : { duration: 0.2 }
+          }
         />
       ))}
-      <style>{`@keyframes eqb{0%,100%{height:30%}50%{height:100%}}`}</style>
     </span>
   );
 }
@@ -375,12 +384,21 @@ export function Art({
  * base across the WHOLE height (Spotify-like, but not just the top band). Render
  * it as the first child of a `position: relative` page wrapper, with the
  * scrolling content above it. Falls back to the seeded gradient with no cover.
+ *
+ * Atmosphere comes from sampling only a SMALL region of the artwork: the image
+ * is scaled up hard (~2.4×) so cover-crop keeps just the centre. Blur is kept
+ * moderate ON PURPOSE — too much (>60px) averages every hue into one flat wash
+ * ("the whole page is one colour"); a lighter blur preserves the image's colour
+ * structure so a vivid cover reads as real variation across the page, while
+ * still abstracting any face into soft shapes. Opacity + saturation are pushed
+ * so it actually reads; the scrim stays light at the top (colour breathes behind
+ * the hero) and resolves to the solid base by the bottom for content legibility.
  */
 export function HeroBackdrop({
   image,
   seed = 0,
   grad,
-  scrim = "linear-gradient(180deg, rgba(10,10,13,.4) 0%, rgba(10,10,13,.74) 52%, #0a0a0d 100%)",
+  scrim = "linear-gradient(180deg, rgba(10,10,13,.18) 0%, rgba(10,10,13,.58) 46%, #0a0a0d 90%)",
 }: {
   image?: string;
   seed?: number;
@@ -388,42 +406,53 @@ export function HeroBackdrop({
   /** Top→bottom overlay; override to tune how far the colour reaches. */
   scrim?: string;
 }) {
+  // Two layers sample different regions of the same cover and drift in opposite
+  // directions (Motion) so the hues slowly cross — a living ambient wash, not a
+  // flat smear. The heavy blur / opacity / object-position stay static in CSS
+  // (.herobg*); only the GPU-composited transform animates. Reduced-motion holds
+  // each layer at a fixed scale (no drift).
+  const reduce = useReducedMotion();
+  const layer = (which: "a" | "b") => {
+    const cls = `herobg-layer herobg-${which}`;
+    const animate = reduce
+      ? { scale: which === "a" ? 1.6 : 1.65 }
+      : which === "a"
+        ? { scale: [1.5, 1.7], x: ["-8%", "8%"], y: ["-5%", "6%"] }
+        : { scale: [1.6, 1.7], x: ["8%", "-8%"], y: ["5%", "-6%"], rotate: [0, 2] };
+    const transition = reduce
+      ? undefined
+      : ({
+          duration: which === "a" ? 10 : 15,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "mirror",
+        } as const);
+    return image ? (
+      <motion.img
+        src={image}
+        alt=""
+        aria-hidden
+        className={cls}
+        animate={animate}
+        transition={transition}
+      />
+    ) : (
+      <motion.div
+        aria-hidden
+        className={cls}
+        style={{ background: artBg(seed, grad) }}
+        animate={animate}
+        transition={transition}
+      />
+    );
+  };
   return (
     <>
-      {image ? (
-        <img
-          src={image}
-          alt=""
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            // Restrained: low opacity + no saturation boost so it reads as a
-            // calm hue, not a saturated flood that drowns the content.
-            filter: "blur(82px) saturate(1)",
-            transform: "scale(1.3)",
-            opacity: 0.28,
-          }}
-        />
-      ) : (
-        <div
-          className="grain"
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            background: artBg(seed, grad),
-            filter: "blur(82px) saturate(1)",
-            opacity: 0.24,
-            transform: "scale(1.3)",
-          }}
-        />
-      )}
+      <div className="herobg" aria-hidden>
+        {layer("a")}
+        {layer("b")}
+        <div className="herobg-grain" />
+      </div>
       <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, background: scrim }} />
     </>
   );

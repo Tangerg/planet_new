@@ -5,6 +5,8 @@
 import React, { useState } from "react";
 import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
+import { LiftCard, RiseFab } from "./lift";
+import { FadeIn } from "./motion";
 import { Button } from "../components/Button";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "./screenActions";
@@ -18,6 +20,9 @@ type MediaCardProps = {
   image?: string;
   images?: Image[];
   round?: boolean;
+  /** Lift intensity — gentler for rail/wrapping cards (square covers use 1.22). */
+  liftScale?: number;
+  liftY?: number;
   onClick?: (...args: any[]) => void;
   onPlay?: (...args: any[]) => void;
   item?: any;
@@ -31,6 +36,8 @@ export function MediaCard({
   image,
   images,
   round,
+  liftScale,
+  liftY,
   onClick,
   onPlay,
   item,
@@ -43,20 +50,24 @@ export function MediaCard({
     const rect = (art || e.currentTarget).getBoundingClientRect();
     morph(rect, seed, grad, onClick, image, round ? "50%" : undefined);
   };
+  // Every card floats up + scales on hover via Motion (LiftCard) and the play fab
+  // rises with it (RiseFab). Rail / wrapping cards pass a gentler liftScale.
   return (
-    <div
-      className={"mcard rise" + (round ? " round" : "")}
+    <LiftCard
+      className={"mcard gridcard" + (round ? " round" : "")}
+      scale={liftScale}
+      liftY={liftY}
       onClick={handle}
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive card container
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- interactive card container
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           handle(e as any);
         }
       }}
-      onContextMenu={item ? (e) => collMenu(e, item) : undefined}
+      onContextMenu={item ? (e: React.MouseEvent<HTMLDivElement>) => collMenu(e, item) : undefined}
     >
       <Art
         seed={seed}
@@ -68,21 +79,21 @@ export function MediaCard({
         glow={(round ? null : artPair(seed, grad)[1]) as any}
       >
         {onPlay && (
-          <Button
+          <RiseFab
             className="playfab"
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onPlay();
             }}
             aria-label="Play"
           >
             <Icon.play size={18} />
-          </Button>
+          </RiseFab>
         )}
       </Art>
       <div className="ttl">{title}</div>
       {sub && <div className="sub">{sub}</div>}
-    </div>
+    </LiftCard>
   );
 }
 
@@ -117,8 +128,10 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
   const morph = useMorph();
   const [_a, _b] = artPair(playlist.coverSeed, playlist.gradient);
   return (
-    <div
-      className="grain rise"
+    <LiftCard
+      className="grain"
+      scale={1.02}
+      liftY={-4}
       style={{
         position: "relative",
         height: 320,
@@ -251,7 +264,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
           </span>
         </div>
       </div>
-    </div>
+    </LiftCard>
   );
 }
 
@@ -294,13 +307,10 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const tiles = [...playlists, ...albums].slice(0, 8);
   const openTile = (t: any) => (t.artist && t.kind === "Album" ? openAlbum(t) : openPlaylist(t));
 
-  if (!featured) return <div className="fade-in" style={{ height: "100%" }} />;
+  if (!featured) return <FadeIn style={{ height: "100%" }} />;
 
   return (
-    <div
-      className="fade-in"
-      style={{ height: "100%", position: "relative", background: "#08080b" }}
-    >
+    <FadeIn style={{ height: "100%", position: "relative", background: "#08080b" }}>
       <HeroBackdrop image={featured?.image} seed={featured?.coverSeed} grad={featured?.gradient} />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
         <div style={{ padding: "60px 56px 50px" }}>
@@ -350,12 +360,13 @@ export const ForYouScreen = React.memo(function ForYouScreen({
               marginBottom: 44,
             }}
           >
-            {tiles.map((t: any, i: number) => (
-              <div
+            {tiles.map((t: any) => (
+              <LiftCard
                 key={t.id}
-                className="tile rise"
-                style={{ animationDelay: i * 0.03 + "s" }}
-                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive tile container
+                className="tile"
+                scale={1.08}
+                liftY={-4}
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- interactive tile container
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -391,7 +402,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 >
                   <Icon.play size={15} />
                 </Button>
-              </div>
+              </LiftCard>
             ))}
           </div>
 
@@ -399,6 +410,8 @@ export const ForYouScreen = React.memo(function ForYouScreen({
             {playlists.map((p: any) => (
               <MediaCard
                 key={p.id}
+                liftScale={1.12}
+                liftY={-6}
                 title={p.name}
                 sub={p.kind}
                 seed={p.coverSeed}
@@ -415,6 +428,8 @@ export const ForYouScreen = React.memo(function ForYouScreen({
             {albums.map((al: any) => (
               <MediaCard
                 key={al.id}
+                liftScale={1.12}
+                liftY={-6}
                 title={al.name}
                 sub={al.artist}
                 seed={al.coverSeed}
@@ -432,6 +447,8 @@ export const ForYouScreen = React.memo(function ForYouScreen({
               <MediaCard
                 key={ar.id}
                 round
+                liftScale={1.12}
+                liftY={-6}
                 title={ar.name}
                 sub="Artist"
                 seed={ar.coverSeed}
@@ -445,6 +462,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
           </Rail>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 });
