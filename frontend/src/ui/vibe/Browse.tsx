@@ -525,7 +525,6 @@ export function CollectionRow({
           grad={grad}
           image={image}
           images={images}
-          mono={round}
           style={{ width: 48, height: 48, borderRadius: round ? "50%" : 4 }}
         />
         {onPlay && hover && (
