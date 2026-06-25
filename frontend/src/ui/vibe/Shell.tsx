@@ -24,6 +24,7 @@ import { useLikes } from "./useLikes";
 import { useMorphTransition, MorphStage, MorphProvider } from "@/infra/morph";
 import { useSpatialNavigation } from "./useSpatialNavigation";
 import { useContextMenu } from "./useContextMenu";
+import { ScreenActionsProvider } from "./screenActions";
 
 import { PlayerBar } from "./PlayerBar";
 import { Button } from "../components/Button";
@@ -273,7 +274,13 @@ export default function Shell() {
   );
 
   /* ---- right-click context menu (extracted hook) ---- */
-  const { menu, setMenu } = useContextMenu({ onPlay, openDetail, openArtist, toggleLike, liked });
+  const { menu, setMenu, actions } = useContextMenu({
+    onPlay,
+    openDetail,
+    openArtist,
+    toggleLike,
+    liked,
+  });
 
   /* ---- page-to-page transition engine (UI-layer infra: @/infra/morph) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
@@ -845,75 +852,76 @@ export default function Shell() {
 
   return (
     <MorphProvider morph={morph}>
-      <div className="win-stage">
-        <div className="win">
-          {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 30,
-              zIndex: 55,
-              ...dragStyle,
-            }}
-          />
+      <ScreenActionsProvider actions={actions}>
+        <div className="win-stage">
+          <div className="win">
+            {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 30,
+                zIndex: 55,
+                ...dragStyle,
+              }}
+            />
 
-          <div className="traffic" style={noDragStyle}>
-            {(
-              [
-                ["r", "Close", () => wails()?.Quit?.()],
-                ["y", "Minimise", () => wails()?.WindowMinimise?.()],
-                ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
-              ] as const
-            ).map(([cls, label, action]) => (
-              <i
-                key={cls}
-                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-                role="button"
-                tabIndex={0}
-                aria-label={label}
-                className={cls}
-                style={{ cursor: "pointer" }}
-                onClick={action}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    action();
-                  }
-                }}
-                title={label}
-              />
-            ))}
-          </div>
-
-          {!npView && (
-            <div className="win-tools" style={noDragStyle}>
-              {!homeView && (
-                <Button onClick={goBack} aria-label="Menu">
-                  <Icon.back size={20} />
-                </Button>
-              )}
-              <Button onClick={() => navigate("np")} aria-label="Now playing">
-                <Equalizer playing={playing} color="currentColor" size={18} />
-              </Button>
-              <Button aria-label="More">
-                <Icon.kebab size={20} />
-              </Button>
+            <div className="traffic" style={noDragStyle}>
+              {(
+                [
+                  ["r", "Close", () => wails()?.Quit?.()],
+                  ["y", "Minimise", () => wails()?.WindowMinimise?.()],
+                  ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
+                ] as const
+              ).map(([cls, label, action]) => (
+                <i
+                  key={cls}
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+                  role="button"
+                  tabIndex={0}
+                  aria-label={label}
+                  className={cls}
+                  style={{ cursor: "pointer" }}
+                  onClick={action}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      action();
+                    }
+                  }}
+                  title={label}
+                />
+              ))}
             </div>
-          )}
 
-          <MorphStage
-            viewRef={viewRef}
-            view={view}
-            trans={trans}
-            renderScreen={renderScreen}
-            tileBg={artBg}
-          />
+            {!npView && (
+              <div className="win-tools" style={noDragStyle}>
+                {!homeView && (
+                  <Button onClick={goBack} aria-label="Menu">
+                    <Icon.back size={20} />
+                  </Button>
+                )}
+                <Button onClick={() => navigate("np")} aria-label="Now playing">
+                  <Equalizer playing={playing} color="currentColor" size={18} />
+                </Button>
+                <Button aria-label="More">
+                  <Icon.kebab size={20} />
+                </Button>
+              </div>
+            )}
 
-          {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
+            <MorphStage
+              viewRef={viewRef}
+              view={view}
+              trans={trans}
+              renderScreen={renderScreen}
+              tileBg={artBg}
+            />
+
+            {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
             transition). Entering now-playing collapses it to 0 the same frame, so
             .view is full-height when the np cover morph measures its (vertically
             centered) hero — never re-jumping. The bar itself is positioned
@@ -922,73 +930,74 @@ export default function Shell() {
             with the old single collapsing box, entering np yanked the bar into a
             0-height box (no slide — a dark strip just popped where it sat); now the
             light bar visibly slides off the bottom over the full-height np content. */}
-          <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
+            <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
 
-          {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
+            {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
             the slide-out. z-index 30 sits below the morph grain (40) so the flying
             cover passes over it, above .view content. overflow:visible is harmless
             now the volume popup portals out; .win (overflow:hidden) clips the slide. */}
-          <AnimatePresence>
-            {showBar && (
-              <motion.div
-                initial={{ y: "108%", opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: "108%", opacity: 0 }}
-                transition={{
-                  y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
-                  opacity: { duration: 0.3 },
-                }}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 30,
-                  overflow: "visible",
-                  willChange: "transform",
-                }}
-              >
-                <PlayerBar
-                  track={current}
-                  playing={playing}
-                  setPlaying={setPlaying}
-                  liked={isLiked}
-                  toggleLike={() => current && toggleLike(current.id)}
-                  accent={accent}
-                  shuffle={shuffle}
-                  setShuffle={setShuffle}
-                  repeat={repeat}
-                  onToggleRepeat={onToggleRepeat}
-                  onNext={playNext}
-                  onPrev={playPrev}
-                  positionSec={playback.progress.duration}
-                  durationSec={playback.duration.duration}
-                  onSeek={playback.seek}
-                  volume={playback.volume}
-                  onVolume={playback.setVolume}
-                  onOpenNowPlaying={() => navigate("np")}
-                  onOpenQueue={() => navigate("queue")}
-                  onOpenComments={() => navigate("comments")}
-                  onOpenLyrics={() => navigate("np")}
-                  onOpenArtist={openArtist}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+            <AnimatePresence>
+              {showBar && (
+                <motion.div
+                  initial={{ y: "108%", opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: "108%", opacity: 0 }}
+                  transition={{
+                    y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
+                    opacity: { duration: 0.3 },
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 30,
+                    overflow: "visible",
+                    willChange: "transform",
+                  }}
+                >
+                  <PlayerBar
+                    track={current}
+                    playing={playing}
+                    setPlaying={setPlaying}
+                    liked={isLiked}
+                    toggleLike={() => current && toggleLike(current.id)}
+                    accent={accent}
+                    shuffle={shuffle}
+                    setShuffle={setShuffle}
+                    repeat={repeat}
+                    onToggleRepeat={onToggleRepeat}
+                    onNext={playNext}
+                    onPrev={playPrev}
+                    positionSec={playback.progress.duration}
+                    durationSec={playback.duration.duration}
+                    onSeek={playback.seek}
+                    volume={playback.volume}
+                    onVolume={playback.setVolume}
+                    onOpenNowPlaying={() => navigate("np")}
+                    onOpenQueue={() => navigate("queue")}
+                    onOpenComments={() => navigate("comments")}
+                    onOpenLyrics={() => navigate("np")}
+                    onOpenArtist={openArtist}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-        {menu && (
-          <React.Suspense fallback={null}>
-            <LazyContextMenu
-              x={menu.x}
-              y={menu.y}
-              items={menu.items}
-              accent={accent}
-              onClose={() => setMenu(null)}
-            />
-          </React.Suspense>
-        )}
-      </div>
+          {menu && (
+            <React.Suspense fallback={null}>
+              <LazyContextMenu
+                x={menu.x}
+                y={menu.y}
+                items={menu.items}
+                accent={accent}
+                onClose={() => setMenu(null)}
+              />
+            </React.Suspense>
+          )}
+        </div>
+      </ScreenActionsProvider>
     </MorphProvider>
   );
 }

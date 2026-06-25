@@ -1,11 +1,13 @@
 /**
- * Right-click context menu state + helpers. Extracted from Shell.tsx.
- * Sets global handlers (window.__TRACKMENU / __COLLMENU / __ENQUEUE) that
- * deeply nested screens call without prop drilling.
+ * Right-click context menu state + the screen-action handlers (track/collection
+ * menu + enqueue). Returns them as stable callbacks; the Shell hands them to the
+ * ScreenActionsProvider so deeply-nested screens reach them via useScreenActions
+ * (no prop-drilling, no window globals).
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { VibeTrack, VibeCollection } from "./adapt";
+import type { ScreenActions } from "./screenActions";
 
 type MenuItem = {
   label?: string;
@@ -33,48 +35,50 @@ export function useContextMenu(opts: {
   const optsRef = useRef(opts);
   optsRef.current = opts;
 
-  useEffect(() => {
-    window.__TRACKMENU = (e, track) => {
-      const { onPlay, toggleLike, liked, openArtist } = optsRef.current;
-      e.preventDefault();
-      e.stopPropagation();
-      const items: MenuItem[] = [
-        { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
-        { sep: true },
-        {
-          label: liked.has(track.id) ? "Remove from Liked" : "Add to Liked",
-          icon: "heart",
-          onClick: () => toggleLike(track.id),
-        },
-        track.artistId && {
-          label: "Go to artist",
-          icon: "user",
-          onClick: () => openArtist({ id: track.artistId, name: track.artist }),
-        },
-      ].filter(Boolean) as MenuItem[];
-      setMenu({ x: e.clientX, y: e.clientY, items });
-    };
-    window.__COLLMENU = (e, item) => {
-      const { openDetail, openArtist } = optsRef.current;
-      e.preventDefault();
-      e.stopPropagation();
-      const items: MenuItem[] = [
-        { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
-        item.artistId && {
-          label: "Go to artist",
-          icon: "user",
-          onClick: () => openArtist({ id: item.artistId, name: item.artist }),
-        },
-      ].filter(Boolean) as MenuItem[];
-      setMenu({ x: e.clientX, y: e.clientY, items });
-    };
-    window.__ENQUEUE = () => {};
-    return () => {
-      window.__TRACKMENU = undefined;
-      window.__COLLMENU = undefined;
-      window.__ENQUEUE = undefined;
-    };
+  // Stable handlers (read latest opts via ref) so the provider value never churns.
+  const trackMenu = useCallback<ScreenActions["trackMenu"]>((e, track) => {
+    const { onPlay, toggleLike, liked, openArtist } = optsRef.current;
+    e.preventDefault();
+    e.stopPropagation();
+    const items: MenuItem[] = [
+      { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
+      { sep: true },
+      {
+        label: liked.has(track.id) ? "Remove from Liked" : "Add to Liked",
+        icon: "heart",
+        onClick: () => toggleLike(track.id),
+      },
+      track.artistId && {
+        label: "Go to artist",
+        icon: "user",
+        onClick: () => openArtist({ id: track.artistId, name: track.artist }),
+      },
+    ].filter(Boolean) as MenuItem[];
+    setMenu({ x: e.clientX, y: e.clientY, items });
   }, []);
 
-  return { menu, setMenu };
+  const collMenu = useCallback<ScreenActions["collMenu"]>((e, item) => {
+    const { openDetail, openArtist } = optsRef.current;
+    e.preventDefault();
+    e.stopPropagation();
+    const items: MenuItem[] = [
+      { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
+      item.artistId && {
+        label: "Go to artist",
+        icon: "user",
+        onClick: () => openArtist({ id: item.artistId, name: item.artist }),
+      },
+    ].filter(Boolean) as MenuItem[];
+    setMenu({ x: e.clientX, y: e.clientY, items });
+  }, []);
+
+  // Enqueue is not wired to the kernel queue yet — placeholder, as before.
+  const enqueue = useCallback<ScreenActions["enqueue"]>(() => {}, []);
+
+  const actions = useMemo<ScreenActions>(
+    () => ({ trackMenu, collMenu, enqueue }),
+    [trackMenu, collMenu, enqueue],
+  );
+
+  return { menu, setMenu, actions };
 }

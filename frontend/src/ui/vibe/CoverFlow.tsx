@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Icon, Art, artPair, artBg } from "./primitives";
 import { Button } from "../components/Button";
+import { useScreenActions } from "./screenActions";
 
 type Props = {
   items: any[];
@@ -30,6 +31,7 @@ export function CoverFlow({
   tracksFor,
   onPlayTrack,
 }: Props) {
+  const { trackMenu, collMenu } = useScreenActions();
   const COVER = 280;
   // Only the center ±4 are ever visible (tf() sets op:0 beyond), so mount a
   // ±6 window (2-card margin → entering cards mount invisibly, then fade in as
@@ -207,11 +209,7 @@ export function CoverFlow({
                   }
                 }}
                 onDoubleClick={() => isC && onOpen(it)}
-                onContextMenu={
-                  isC && it.obj
-                    ? (e) => window.__COLLMENU && window.__COLLMENU(e, it.obj)
-                    : undefined
-                }
+                onContextMenu={isC && it.obj ? (e) => collMenu(e, it.obj) : undefined}
                 style={{
                   position: "absolute",
                   left: -COVER / 2,
@@ -498,7 +496,7 @@ export function CoverFlow({
                     if (onPlayTrack) onPlayTrack(t);
                   }
                 }}
-                onContextMenu={(e) => window.__TRACKMENU && window.__TRACKMENU(e, t)}
+                onContextMenu={(e) => trackMenu(e, t)}
                 style={{
                   display: "flex",
                   alignItems: "center",

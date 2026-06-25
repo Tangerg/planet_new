@@ -7,6 +7,7 @@ import type { Image } from "@domain/model/image";
 import { Icon, Art, artBg, artPair, HeroBackdrop } from "./primitives";
 import { Button } from "../components/Button";
 import { useMorph } from "@/infra/morph";
+import { useScreenActions } from "./screenActions";
 import { MOCK } from "./mockCatalog";
 
 type MediaCardProps = {
@@ -35,6 +36,7 @@ export function MediaCard({
   item,
 }: MediaCardProps) {
   const morph = useMorph();
+  const { collMenu } = useScreenActions();
   const handle = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!onClick) return;
     const art = e.currentTarget.querySelector(".art");
@@ -54,7 +56,7 @@ export function MediaCard({
           handle(e as any);
         }
       }}
-      onContextMenu={item ? (e) => window.__COLLMENU && window.__COLLMENU(e, item) : undefined}
+      onContextMenu={item ? (e) => collMenu(e, item) : undefined}
     >
       <Art
         seed={seed}
@@ -273,6 +275,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   accent,
 }: ForYouScreenProps) {
   const morph = useMorph();
+  const { collMenu } = useScreenActions();
   const greeting = (() => {
     const h = new Date().getHours();
     return h < 5
@@ -361,7 +364,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                     openTile(t);
                   }
                 }}
-                onContextMenu={(e) => window.__COLLMENU && window.__COLLMENU(e, t)}
+                onContextMenu={(e) => collMenu(e, t)}
                 onClick={(e) => {
                   const art = e.currentTarget.querySelector(".tart");
                   const rect = (art || e.currentTarget).getBoundingClientRect();

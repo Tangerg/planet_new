@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { VirtualList } from "../components/VirtualList";
 import { Icon, Equalizer, Art, artBg, artPair } from "./primitives";
 import { Button } from "../components/Button";
+import { useScreenActions } from "./screenActions";
 import { MOCK } from "./mockCatalog";
 
 // ============================================================
@@ -190,6 +191,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   progressSec = 0,
   onOpenArtist,
 }: Props) {
+  const { trackMenu } = useScreenActions();
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -809,7 +811,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                         if (onPlay) onPlay(t);
                       }
                     }}
-                    onContextMenu={(e: React.MouseEvent) => window.__TRACKMENU?.(e, t)}
+                    onContextMenu={(e: React.MouseEvent) => trackMenu(e, t)}
                     style={{
                       display: "flex",
                       alignItems: "center",
