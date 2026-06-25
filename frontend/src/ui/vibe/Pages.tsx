@@ -79,52 +79,25 @@ function ArtistScreen({
       />
       <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
         {/* header */}
-        <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
-          {/* Two-layer hero: a blurred copy fills the whole banner (keeps the
-              large area filled), and a scaled-down sharp copy on top shows far
-              more of the photo than a tight cover-crop; its left/right edges
-              fade into the blurred layer so there's no hard seam. */}
+        <div style={{ position: "relative", height: 440, overflow: "hidden" }}>
+          {/* Spotify-style hero: the photo fills the banner edge-to-edge (cover,
+              no letterbox / no border), framed toward the top so the face shows,
+              then fades into the page at the bottom. */}
           {artist.banner || artist.image ? (
-            <>
-              <img
-                src={artist.banner || artist.image}
-                alt=""
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  filter: `${mono ? "grayscale(1) " : ""}blur(46px) saturate(1.25)`,
-                  transform: "scale(1.2)",
-                  opacity: 0.85,
-                }}
-              />
-              <img
-                src={artist.banner || artist.image}
-                alt=""
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  height: "150%",
-                  width: "auto",
-                  maxWidth: "none",
-                  zIndex: 1,
-                  filter: mono ? "grayscale(1)" : "none",
-                  // Radial feather (not a rectangle): the sharp photo stays crisp
-                  // around the subject and dissolves into the blurred layer on all
-                  // sides — no visible border.
-                  WebkitMaskImage:
-                    "radial-gradient(78% 92% at 50% 42%, #000 52%, transparent 100%)",
-                  maskImage: "radial-gradient(78% 92% at 50% 42%, #000 52%, transparent 100%)",
-                }}
-              />
-            </>
+            <img
+              src={artist.banner || artist.image}
+              alt=""
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center 18%",
+                filter: mono ? "grayscale(1)" : "none",
+              }}
+            />
           ) : (
             <div
               className="grain"
@@ -132,7 +105,6 @@ function ArtistScreen({
               style={{
                 position: "absolute",
                 inset: 0,
-                zIndex: 0,
                 background: artBg(artist.coverSeed, artist.gradient),
               }}
             />
