@@ -233,14 +233,8 @@ export function useMorphTransition(
     };
   }, [trans]);
 
-  // Esc returns to launcher.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && view !== "xmb") startReverse();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [view]);
+  // Esc/back are owned by Shell's goBack so they share the navigation
+  // back-stack (pop one level) instead of always collapsing to the launcher.
 
   return { trans, startForward, startReverse, goMorph, layerStyle, EASE };
 }

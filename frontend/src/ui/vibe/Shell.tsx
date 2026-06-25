@@ -49,6 +49,20 @@ const PLACEHOLDER_TRACK: VibeTrack = {
   duration: "0:00",
 };
 
+// One frame of navigation state — enough to rebuild any screen on "back".
+// Screen rendering reads several independent Shell state slices (detail /
+// artistObj / library tab+view / search seed), so a back-stack entry must
+// snapshot all of them, not just the `view` string.
+type NavSnapshot = {
+  view: string;
+  detail: any;
+  artistObj: any;
+  libraryTab: string;
+  libraryView: string;
+  searchQuery: string;
+  playContext: VibeTrack[];
+};
+
 export default function Shell() {
   const provider = useActiveProvider();
   const queryClient = useQueryClient();
@@ -73,6 +87,14 @@ export default function Shell() {
   const [searchQuery, setSeedQuery] = useState("");
   const [libraryTab, setLibraryTab] = useState("playlists");
   const [libraryView, setLibraryView] = useState("grid");
+
+  /* ---- back-stack: each forward hop remembers the screen it left, so "back"
+     pops one level instead of always collapsing to the XMB launcher. The
+     launcher boundary itself stays the morph engine's job (startReverse), so
+     we never push "xmb" — an empty stack means "morph home". Held in a ref:
+     it only drives the goBack branch, never rendering. ---- */
+  const navStack = useRef<NavSnapshot[]>([]);
+  const navSnapRef = useRef<NavSnapshot | null>(null);
 
   /* ---- real kernel playback state (replaces the example MOCK + local useState) ---- */
   const playback = useVibePlayback();
@@ -110,6 +132,33 @@ export default function Shell() {
     [playFn],
   );
 
+  /* Mirror the live navigation state so a back-stack push captures the screen
+     being left without stale closures (safe to write during render: pure mirror). */
+  navSnapRef.current = {
+    view,
+    detail,
+    artistObj,
+    libraryTab,
+    libraryView,
+    searchQuery,
+    playContext: playContext.current,
+  };
+  // Remember the current screen before a forward hop. No-op at the launcher:
+  // the XMB↔screen boundary is the morph engine's (startReverse), not the stack's.
+  const pushCurrent = useCallback(() => {
+    const snap = navSnapRef.current;
+    if (!snap || snap.view === "xmb") return;
+    navStack.current.push(snap);
+  }, []);
+  // Forward navigation to a bare view: push the current screen, then switch.
+  const navigate = useCallback(
+    (v: string) => {
+      pushCurrent();
+      setView(v);
+    },
+    [pushCurrent],
+  );
+
   /* ---- catalog / charts / search (real provider) ---- */
   const { catalog } = useCatalog();
   const toplists = useToplists();
@@ -135,6 +184,7 @@ export default function Shell() {
   /* ---- open detail: fetch the real collection async (switch screen + skeleton now, backfill tracks when data lands) ---- */
   const openDetail = useCallback(
     (obj: any) => {
+      pushCurrent();
       // Detail screens assume tracks is always an array (they read p.tracks.length); a summary (charts especially) may lack it, so default it.
       obj = { ...obj, tracks: obj?.tracks ?? [] };
       setDetail(obj);
@@ -165,7 +215,7 @@ export default function Shell() {
           .catch(() => {});
       }
     },
-    [provider, queryClient],
+    [provider, queryClient, pushCurrent],
   );
   const albumDetail = useCallback((al: any) => openDetail({ ...al, kind: "Album" }), [openDetail]);
   const openChart = useCallback(
@@ -174,6 +224,7 @@ export default function Shell() {
   );
   const openArtist = useCallback(
     (ar: any) => {
+      pushCurrent();
       setArtistObj(ar);
       playContext.current = ar?.tracks ?? [];
       setView("artist");
@@ -192,17 +243,25 @@ export default function Shell() {
           .catch(() => {});
       }
     },
-    [provider, queryClient],
+    [provider, queryClient, pushCurrent],
   );
-  const openGenre = useCallback((name?: string) => {
-    setSeedQuery(name || "");
-    setView("search");
-  }, []);
-  const openLib = useCallback((tab: string, vw?: string) => {
-    setLibraryTab(tab);
-    setLibraryView(vw || "grid");
-    setView("library");
-  }, []);
+  const openGenre = useCallback(
+    (name?: string) => {
+      pushCurrent();
+      setSeedQuery(name || "");
+      setView("search");
+    },
+    [pushCurrent],
+  );
+  const openLib = useCallback(
+    (tab: string, vw?: string) => {
+      pushCurrent();
+      setLibraryTab(tab);
+      setLibraryView(vw || "grid");
+      setView("library");
+    },
+    [pushCurrent],
+  );
   const likedDetail = useCallback(
     () =>
       openDetail({
@@ -229,8 +288,36 @@ export default function Shell() {
     setView,
   );
 
+  /* Back: pop one screen off the stack and restore its full data snapshot;
+     when the stack is empty we're at a launcher-level screen, so hand off to
+     the morph engine to collapse home. */
+  const goBack = useCallback(() => {
+    const prev = navStack.current.pop();
+    if (!prev) {
+      startReverse();
+      return;
+    }
+    setView(prev.view);
+    setDetail(prev.detail);
+    setArtistObj(prev.artistObj);
+    setLibraryTab(prev.libraryTab);
+    setLibraryView(prev.libraryView);
+    setSeedQuery(prev.searchQuery);
+    playContext.current = prev.playContext;
+  }, [startReverse]);
+
+  /* Esc backs out one level (was the morph hook's job; centralised here so it
+     shares the back-stack instead of always jumping to the launcher). */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && view !== "xmb") goBack();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [view, goBack]);
+
   /* ---- arrow-key spatial navigation (extracted hook) ---- */
-  useSpatialNavigation(viewRef, view, startReverse);
+  useSpatialNavigation(viewRef, view, goBack);
 
   const npView = view === "np";
   const homeView = view === "xmb";
@@ -581,7 +668,7 @@ export default function Shell() {
           openPlaylist={openDetail}
           openAlbum={albumDetail}
           openArtist={openArtist}
-          onNav={setView}
+          onNav={navigate}
         />
       );
     if (v === "search")
@@ -725,7 +812,7 @@ export default function Shell() {
           onPrev={playPrev}
           progressSec={playback.progress.duration}
           initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
-          onClose={startReverse}
+          onClose={goBack}
           onOpenArtist={openArtist}
         />
       );
@@ -785,11 +872,11 @@ export default function Shell() {
         {!npView && (
           <div className="win-tools" style={noDragStyle}>
             {!homeView && (
-              <button onClick={startReverse} aria-label="Menu">
+              <button onClick={goBack} aria-label="Menu">
                 <Icon.back size={20} />
               </button>
             )}
-            <button onClick={() => setView("np")} aria-label="Now playing">
+            <button onClick={() => navigate("np")} aria-label="Now playing">
               <Equalizer playing={playing} color="currentColor" size={18} />
             </button>
             <button aria-label="More">
@@ -912,10 +999,10 @@ export default function Shell() {
             onSeek={playback.seek}
             volume={playback.volume}
             onVolume={playback.setVolume}
-            onOpenNowPlaying={() => setView("np")}
-            onOpenQueue={() => setView("queue")}
-            onOpenComments={() => setView("comments")}
-            onOpenLyrics={() => setView("np")}
+            onOpenNowPlaying={() => navigate("np")}
+            onOpenQueue={() => navigate("queue")}
+            onOpenComments={() => navigate("comments")}
+            onOpenLyrics={() => navigate("np")}
             onOpenArtist={openArtist}
           />
         )}
