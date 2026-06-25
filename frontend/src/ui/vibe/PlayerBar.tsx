@@ -76,15 +76,14 @@ export const PlayerBar = React.memo(function PlayerBar({
 
   const txtBtn: React.CSSProperties = {
     fontFamily: "var(--mono)",
-    fontSize: 11,
+    fontSize: 10.5,
     letterSpacing: ".12em",
     textTransform: "uppercase",
     color: "rgba(20,20,24,.62)",
     background: "none",
     border: 0,
     cursor: "pointer",
-    padding: "6px 2px",
-    borderBottom: "1.5px solid rgba(20,20,24,.35)",
+    padding: "6px 6px",
   };
   const ctlBtn = (on: boolean): React.CSSProperties => ({
     appearance: "none",
@@ -110,7 +109,18 @@ export const PlayerBar = React.memo(function PlayerBar({
   };
 
   return (
-    <div className="glassbar" style={{ color: "#141418" }}>
+    <div
+      className="glassbar"
+      // 3-zone grid (NetEase-style): identity ｜ centered transport ｜ utilities.
+      // minmax(0,1fr) side columns keep the transport dead-centered and let long
+      // titles truncate instead of blowing out the bar width.
+      style={{
+        color: "#141418",
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+        alignItems: "center",
+      }}
+    >
       {/* bounded frosted backdrop — blur lives here so it can't flicker */}
       <div
         className="glass-frost"
@@ -166,7 +176,7 @@ export const PlayerBar = React.memo(function PlayerBar({
             style: {
               position: "absolute",
               height: "100%",
-              background: `linear-gradient(90deg, ${accent}, ${b})`,
+              background: accent,
             },
           },
           thumb: {
@@ -218,128 +228,168 @@ export const PlayerBar = React.memo(function PlayerBar({
         )}
       </Slider>
 
-      {/* left: cover + meta */}
+      {/* ── left: round cover + meta (morph origin) + like ── */}
       <div
-        // A rich flex container (cover art + meta), not a native control: its
-        // children are <div>s, invalid inside <button>, so role="button" +
-        // keyboard handling is the correct accessible pattern here.
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-        role="button"
-        tabIndex={0}
-        aria-label="Open now playing"
-        onClick={(e) => openNowPlaying(e.currentTarget)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openNowPlaying(e.currentTarget);
-          }
-        }}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 14,
-          padding: "0 18px",
+          gap: 8,
+          paddingLeft: 18,
           minWidth: 0,
-          flex: "0 0 auto",
-          width: 300,
-          cursor: "pointer",
           position: "relative",
           zIndex: 1,
         }}
       >
-        <Art
-          seed={track?.coverSeed || 0}
-          grad={track?.gradient}
-          image={track?.image}
-          images={track?.images}
-          style={{
-            width: 56,
-            height: 56,
-            flex: "0 0 auto",
-            boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
+        <div
+          // cover + meta open Now Playing; the .grain cover is the morph origin.
+          // Children are <div>s (invalid in <button>), so role="button" is correct.
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+          role="button"
+          tabIndex={0}
+          aria-label="Open now playing"
+          onClick={(e) => openNowPlaying(e.currentTarget)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openNowPlaying(e.currentTarget);
+            }
           }}
-        />
-        <div style={{ minWidth: 0 }}>
-          <div className="truncate" style={{ fontSize: 16, fontWeight: 400 }}>
-            {track?.title || "—"}
-          </div>
-          <div
-            className="truncate"
-            style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
-          >
-            {onOpenArtist && track?.artistId ? (
-              <button
-                style={{
-                  cursor: "pointer",
-                  background: "none",
-                  border: 0,
-                  padding: 0,
-                  font: "inherit",
-                  color: "inherit",
-                  textAlign: "left",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenArtist({ id: track.artistId, name: track.artist });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minWidth: 0,
+            cursor: "pointer",
+          }}
+        >
+          <Art
+            seed={track?.coverSeed || 0}
+            grad={track?.gradient}
+            image={track?.image}
+            images={track?.images}
+            style={{
+              width: 52,
+              height: 52,
+              flex: "0 0 auto",
+              borderRadius: "50%",
+              boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -5px rgba(0,0,0,.4)",
+            }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div className="truncate" style={{ fontSize: 15, fontWeight: 400 }}>
+              {track?.title || "—"}
+            </div>
+            <div
+              className="truncate"
+              style={{
+                fontSize: 12.5,
+                color: "rgba(20,20,24,.55)",
+                fontWeight: 300,
+                marginTop: 2,
+              }}
+            >
+              {onOpenArtist && track?.artistId ? (
+                <button
+                  style={{
+                    cursor: "pointer",
+                    background: "none",
+                    border: 0,
+                    padding: 0,
+                    font: "inherit",
+                    color: "inherit",
+                    textAlign: "left",
+                  }}
+                  onClick={(e) => {
                     e.stopPropagation();
                     onOpenArtist({ id: track.artistId, name: track.artist });
-                  }
-                }}
-              >
-                {track?.artist || ""}
-              </button>
-            ) : (
-              track?.artist || ""
-            )}
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenArtist({ id: track.artistId, name: track.artist });
+                    }
+                  }}
+                >
+                  {track?.artist || ""}
+                </button>
+              ) : (
+                track?.artist || ""
+              )}
+            </div>
           </div>
         </div>
+        <button
+          style={{ ...ctlBtn(liked), flex: "0 0 auto" }}
+          onClick={toggleLike}
+          aria-label="Like"
+        >
+          <Icon.heart size={18} filled={liked} />
+        </button>
       </div>
 
-      {/* center: LRC / COMMENTS */}
+      {/* ── center: transport (the focal point) ── */}
       <div
         style={{
-          flex: 1,
-          minWidth: 0,
+          justifySelf: "center",
           display: "flex",
-          justifyContent: "center",
           alignItems: "center",
-          gap: 28,
+          gap: 10,
           position: "relative",
           zIndex: 1,
         }}
       >
-        <button style={txtBtn} onClick={onOpenLyrics}>
-          LRC
-        </button>
-        <button style={txtBtn} onClick={onOpenComments}>
-          30.88K Comments
-        </button>
-      </div>
-
-      {/* right: controls */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          padding: "0 22px",
-          flex: "0 0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <button style={ctlBtn(liked)} onClick={toggleLike} aria-label="Like">
-          <Icon.heart size={19} filled={liked} />
-        </button>
         <button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
           <Icon.shuffle size={18} />
         </button>
+        <button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
+          <Icon.prev size={22} />
+        </button>
+        <button
+          style={{
+            appearance: "none",
+            border: 0,
+            cursor: "pointer",
+            display: "grid",
+            placeItems: "center",
+            background: accent,
+            color: "#06060a",
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            margin: "0 2px",
+            boxShadow: `0 8px 20px -6px ${accent}`,
+          }}
+          onClick={() => setPlaying(!playing)}
+          aria-label={playing ? "Pause" : "Play"}
+        >
+          {playing ? <Icon.pause size={24} /> : <Icon.play size={24} />}
+        </button>
+        <button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
+          <Icon.next size={22} />
+        </button>
         <button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
           <Icon.loop size={18} />
+        </button>
+      </div>
+
+      {/* ── right: utilities ── */}
+      <div
+        style={{
+          justifySelf: "end",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          paddingRight: 22,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
+          LRC
+        </button>
+        <button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
+          <Icon.comment size={18} />
         </button>
         <button
           style={ctlBtn(dragOver)}
@@ -470,38 +520,6 @@ export const PlayerBar = React.memo(function PlayerBar({
             </div>
           </div>
         </div>
-        {/* divider: utilities | transport */}
-        <span
-          style={{
-            width: 1,
-            height: 22,
-            background: "rgba(20,20,24,.18)",
-            margin: "0 12px",
-            flex: "0 0 auto",
-          }}
-        />
-        <button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
-          <Icon.prev size={21} />
-        </button>
-        <button
-          style={{
-            ...ctlBtn(false),
-            background: accent,
-            color: "#06060a",
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            margin: "0 4px",
-            boxShadow: `0 6px 18px -4px ${accent}`,
-          }}
-          onClick={() => setPlaying(!playing)}
-          aria-label="Play"
-        >
-          {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
-        </button>
-        <button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
-          <Icon.next size={21} />
-        </button>
       </div>
     </div>
   );
