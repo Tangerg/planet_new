@@ -108,17 +108,20 @@ function ArtistScreen({
                 aria-hidden
                 style={{
                   position: "absolute",
-                  inset: 0,
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  height: "150%",
+                  width: "auto",
+                  maxWidth: "none",
                   zIndex: 1,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                  transform: "scale(1.5)",
                   filter: mono ? "grayscale(1)" : "none",
+                  // Radial feather (not a rectangle): the sharp photo stays crisp
+                  // around the subject and dissolves into the blurred layer on all
+                  // sides — no visible border.
                   WebkitMaskImage:
-                    "linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%)",
-                  maskImage:
-                    "linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%)",
+                    "radial-gradient(78% 92% at 50% 42%, #000 52%, transparent 100%)",
+                  maskImage: "radial-gradient(78% 92% at 50% 42%, #000 52%, transparent 100%)",
                 }}
               />
             </>
