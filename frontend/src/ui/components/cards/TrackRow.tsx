@@ -1,0 +1,251 @@
+// ============================================================
+// TrackRow — the dense track list row (art + meta + inline like + duration),
+// with optional chart rank/trend and multi-select. The shared list-row used by
+// Playlist/Album detail, Queue, History, Search and Library songs.
+// ============================================================
+import React, { useState } from "react";
+import type { VibeTrack } from "@/model/adapt";
+import { Icon, Equalizer, Art } from "@/components/primitives";
+import { Button } from "@/components/controls/Button";
+import { ArtistLink } from "@/components/cards/ArtistLink";
+import { useScreenActions } from "@/hooks/screenActions";
+
+type TrackRowProps = {
+  track: VibeTrack;
+  index: number;
+  onPlay: (track: VibeTrack) => void;
+  current?: VibeTrack;
+  playing: boolean;
+  liked: Set<string>;
+  toggleLike: (id: string) => void;
+  accent: string;
+  dark?: boolean;
+  rank?: number;
+  delta?: number;
+  selected?: boolean;
+  onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
+  onOpenArtist?: (artist: { id: string; name: string }) => void;
+};
+
+export function TrackRow({
+  track,
+  index,
+  onPlay,
+  current,
+  playing,
+  liked,
+  toggleLike,
+  accent,
+  dark = true,
+  rank,
+  delta,
+  selected,
+  onSelect,
+  onOpenArtist,
+}: TrackRowProps) {
+  const { trackMenu } = useScreenActions();
+  const isCur = current?.id === track.id;
+  const [hover, setHover] = useState(false);
+  const col = dark ? "#fff" : "#16161a";
+  const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
+  const unavailable = track.available === false;
+  const isChart = rank != null;
+  const badge: React.CSSProperties = {
+    fontFamily: "var(--mono)",
+    fontSize: 8.5,
+    letterSpacing: ".08em",
+    textTransform: "uppercase",
+    padding: "2px 5px",
+    borderRadius: 3,
+    flex: "0 0 auto",
+    lineHeight: 1.3,
+  };
+  const Trend = () => {
+    if (delta == null)
+      return (
+        <span
+          style={{
+            color: accent,
+            fontFamily: "var(--mono)",
+            fontSize: 8.5,
+            letterSpacing: ".06em",
+          }}
+        >
+          NEW
+        </span>
+      );
+    if (delta > 0)
+      return (
+        <span
+          style={{
+            color: "#1ed98a",
+            fontSize: 11,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          ▲<span style={{ fontSize: 9 }}>{delta}</span>
+        </span>
+      );
+    if (delta < 0)
+      return (
+        <span
+          style={{
+            color: "#ff6b6b",
+            fontSize: 11,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          ▼<span style={{ fontSize: 9 }}>{-delta}</span>
+        </span>
+      );
+    return <span style={{ color: sub, fontSize: 12 }}>–</span>;
+  };
+  return (
+    <div
+      // A rich flex row (art + meta + inline actions), not valid native button
+      // content — role="button" + keyboard handling is the right pattern.
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+      role="button"
+      tabIndex={unavailable ? -1 : 0}
+      aria-label={track.title}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      draggable={!unavailable}
+      onDragStart={(e: React.DragEvent) => {
+        e.dataTransfer.setData("text/sonance-track", track.id);
+        e.dataTransfer.effectAllowed = "copy";
+      }}
+      onContextMenu={(e: React.MouseEvent) => trackMenu(e, track)}
+      onClick={(e: React.MouseEvent) => {
+        if (unavailable) return;
+        if (onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+          onSelect(track, e);
+          return;
+        }
+        onPlay(track);
+      }}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (!unavailable && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onPlay(track);
+        }
+      }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        padding: "11px 14px",
+        cursor: unavailable ? "default" : "pointer",
+        opacity: unavailable ? 0.42 : 1,
+        background: selected
+          ? `${accent}22`
+          : hover && !unavailable
+            ? dark
+              ? "rgba(255,255,255,.06)"
+              : "rgba(0,0,0,.04)"
+            : "transparent",
+        boxShadow: selected ? `inset 2px 0 0 ${accent}` : "none",
+        transition: "background .15s",
+      }}
+    >
+      <div style={{ width: isChart ? 30 : 22, textAlign: "center", flex: "0 0 auto" }}>
+        {isChart ? (
+          <span
+            className="mlabel"
+            style={{ color: isCur ? accent : col, fontSize: 16, fontWeight: 500 }}
+          >
+            {rank}
+          </span>
+        ) : isCur && playing ? (
+          <Equalizer playing color={accent} size={14} />
+        ) : hover && !unavailable ? (
+          <span style={{ color: col }}>
+            <Icon.play size={15} />
+          </span>
+        ) : (
+          <span className="mlabel" style={{ color: sub, fontSize: 12 }}>
+            {index}
+          </span>
+        )}
+      </div>
+      <Art
+        seed={track.coverSeed}
+        grad={track.gradient}
+        image={track.image}
+        images={track.images}
+        style={{ width: 44, height: 44, flex: "0 0 auto" }}
+      />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span
+            className="truncate"
+            style={{ fontSize: 15, fontWeight: 400, color: isCur ? accent : col }}
+          >
+            {track.title}
+          </span>
+          {track.version && track.version !== "studio" && (
+            <span
+              style={{
+                ...badge,
+                color: "rgba(255,255,255,.7)",
+                border: "1px solid rgba(255,255,255,.22)",
+              }}
+            >
+              {track.version}
+            </span>
+          )}
+          {track.vipOnly && (
+            <span style={{ ...badge, color: "#06060a", background: accent, fontWeight: 700 }}>
+              VIP
+            </span>
+          )}
+          {unavailable && (
+            <span style={{ ...badge, color: sub, border: "1px solid rgba(255,255,255,.18)" }}>
+              Unavailable
+            </span>
+          )}
+        </div>
+        <div className="truncate" style={{ fontSize: 12.5, fontWeight: 300, color: sub }}>
+          <ArtistLink
+            name={track.artist}
+            artistId={track.artistId}
+            accent={accent}
+            color={sub}
+            onOpenArtist={onOpenArtist}
+          />
+        </div>
+      </div>
+      {isChart && (
+        <span style={{ width: 38, textAlign: "center", flex: "0 0 auto" }}>
+          <Trend />
+        </span>
+      )}
+      <Button
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          toggleLike(track.id);
+        }}
+        aria-label="Like"
+        style={{
+          background: "none",
+          border: 0,
+          cursor: "pointer",
+          padding: 4,
+          color: liked.has(track.id) ? accent : hover ? col : "transparent",
+        }}
+      >
+        <Icon.heart size={17} filled={liked.has(track.id)} />
+      </Button>
+      <span
+        className="mlabel"
+        style={{ color: sub, fontSize: 11, width: 42, textAlign: "right", flex: "0 0 auto" }}
+      >
+        {track.duration}
+      </span>
+    </div>
+  );
+}
