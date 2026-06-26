@@ -68,14 +68,20 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
           {trans.hero !== false &&
             (() => {
               const t = trans;
-              const geom =
-                t.dir === "fwd"
-                  ? t.phase === "start"
-                    ? t.origin
-                    : t.target
-                  : t.phase === "start"
-                    ? t.target
-                    : t.origin;
+              // FLIP: lay the tile out at the TARGET rect and never resize it —
+              // translate+scale it onto the ORIGIN rect, then animate the transform
+              // back. transform+opacity are the only compositor-only props (no
+              // per-frame layout/paint), so the flight stays on the GPU instead of
+              // re-laying-out the box + re-sampling the cover <img> every frame
+              // (the old left/top/width/height tween thrashed layout in WKWebView).
+              // border-radius is constant across the morph (0↔0 sharp, or 50%↔50%
+              // circle after the shape unify), so it rides on the box, not the tween.
+              const target = t.target ?? t.origin;
+              const o = t.origin;
+              const atOrigin = t.dir === "fwd" ? t.phase === "start" : t.phase !== "start";
+              const flip =
+                `translate(${o.left - target.left}px, ${o.top - target.top}px) ` +
+                `scale(${o.width / target.width}, ${o.height / target.height})`;
               const op =
                 t.dir === "fwd" ? (t.phase === "reveal" ? 0 : 1) : t.phase === "start" ? 1 : 0;
               const anim = t.phase !== "start";
@@ -88,17 +94,18 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
                     zIndex: 40,
                     pointerEvents: "none",
                     overflow: "hidden",
-                    left: geom!.left,
-                    top: geom!.top,
-                    width: geom!.width,
-                    height: geom!.height,
-                    borderRadius: geom!.borderRadius,
+                    left: target.left,
+                    top: target.top,
+                    width: target.width,
+                    height: target.height,
+                    borderRadius: o.borderRadius,
+                    transformOrigin: "0 0",
+                    transform: atOrigin ? flip : "none",
+                    willChange: "transform, opacity",
                     opacity: op,
                     background: tileBg(t.seed, t.grad),
                     boxShadow: "0 30px 70px -26px rgba(0,0,0,.5)",
-                    transition: anim
-                      ? `left .58s ${EASE}, top .58s ${EASE}, width .58s ${EASE}, height .58s ${EASE}, border-radius .58s ${EASE}, opacity .34s ease`
-                      : "none",
+                    transition: anim ? `transform .58s ${EASE}, opacity .34s ease` : "none",
                   }}
                 >
                   {t.image && (
