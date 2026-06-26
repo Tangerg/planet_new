@@ -22,7 +22,9 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
       <div className="px-10 pb-10 pt-[60px]">
         <div className="mb-1.5 text-[36px] font-extralight">Charts</div>
         <div className="mlabel mb-[26px] text-tx-3">Ranked by plays · refreshed daily</div>
-        <div className="grid grid-cols-3 gap-[14px]">
+        {/* 5-up grid of square tiles; each tile lifts on its own hover
+            (neighbours stay put). */}
+        <div className="grid grid-cols-5 gap-[16px]">
           {charts.map((c) => (
             <ChartCard
               key={c.id}
