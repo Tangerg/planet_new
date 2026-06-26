@@ -1,6 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import React from "react";
 import { cn } from "@/lib/cn";
+import "./Button.css";
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   /** Render onto the child element (Radix Slot) instead of a <button>. */
@@ -10,8 +11,8 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 /**
  * Base button: the reset + keyboard `:focus-visible` ring + tactile `:active`
  * press that every control should share (the hand-rolled `<button>`s had none).
- * The per-context look stays inline / in vibe.css and is passed through via
- * `style`/`className` — `.btn` only adds behavior, so adopting it is visually
+ * The per-context look stays inline / in Tailwind classes and is passed through
+ * via `style`/`className` — `.btn` only adds behavior, so adopting it is visually
  * non-destructive. `asChild` (Radix Slot) lets non-button triggers reuse it.
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(

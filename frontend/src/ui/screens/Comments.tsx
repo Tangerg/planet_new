@@ -28,12 +28,8 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
     });
   return (
     <FadeIn
-      style={{
-        height: "100%",
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 0.78fr) minmax(0, 1.22fr)",
-        background: "var(--surf-0)",
-      }}
+      className="grid h-full bg-surf-0"
+      style={{ gridTemplateColumns: "minmax(0, 0.78fr) minmax(0, 1.22fr)" }}
     >
       <Art
         seed={track?.coverSeed || 0}
@@ -42,140 +38,59 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
         images={track?.images}
         mono={mono}
         data-hero="1"
-        style={{ height: "100%" }}
+        className="h-full"
       >
         <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            background: "linear-gradient(180deg, rgba(8,8,11,.25), rgba(8,8,11,.6))",
-          }}
+          className="absolute inset-0 z-[2]"
+          style={{ background: "linear-gradient(180deg, rgba(8,8,11,.25), rgba(8,8,11,.6))" }}
         />
         {/* Top tags + bottom title via flow (space-between column), not absolute. */}
-        <div
-          style={{
-            position: "relative",
-            zIndex: 4,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            padding: "60px 48px 44px",
-            boxSizing: "border-box",
-          }}
-        >
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}
-          >
+        <div className="relative z-[4] flex h-full flex-col items-start justify-between px-12 pb-[44px] pt-[60px]">
+          <div className="flex flex-col items-start gap-[14px]">
             <Button
               onClick={toggleLike}
-              style={{
-                background: "none",
-                border: 0,
-                cursor: "pointer",
-                color: accent,
-                padding: 0,
-                filter: `drop-shadow(0 4px 12px ${accent}88)`,
-              }}
+              className="p-0"
+              style={{ color: accent, filter: `drop-shadow(0 4px 12px ${accent}88)` }}
             >
               <Icon.heart size={30} filled={liked} />
             </Button>
             <span className="pill-accent">{track?.quality || "SQ"}</span>
             <span className="tag">30.88K Comments</span>
           </div>
-          <div style={{ maxWidth: "100%" }}>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 300,
-                borderBottom: "1px solid rgba(255,255,255,.3)",
-                paddingBottom: 10,
-                maxWidth: "100%",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "inline-block",
-              }}
-            >
+          <div className="max-w-full">
+            <div className="inline-block max-w-full truncate border-b border-white/30 pb-2.5 text-[28px] font-light">
               {track?.title}
             </div>
-            <div
-              style={{
-                fontSize: 15,
-                fontWeight: 300,
-                color: "var(--tx-3)",
-                marginTop: 10,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {track?.artist}
-            </div>
+            <div className="mt-2.5 truncate text-[15px] font-light text-tx-3">{track?.artist}</div>
           </div>
         </div>
       </Art>
-      <div className="scroll" style={{ height: "100%", padding: "60px 48px 40px" }}>
+      <div className="scroll h-full px-12 pb-10 pt-[60px]">
         <div
-          style={{
-            fontSize: 28,
-            fontWeight: 200,
-            letterSpacing: ".06em",
-            borderBottom: `2px solid ${accent}`,
-            paddingBottom: 12,
-            display: "inline-block",
-            marginBottom: 24,
-          }}
+          className="mb-6 inline-block pb-3 text-[28px] font-extralight tracking-[0.06em]"
+          style={{ borderBottom: `2px solid ${accent}` }}
         >
           Hot Comments
         </div>
         {MOCK.comments.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              display: "flex",
-              gap: 16,
-              padding: "18px 0",
-              borderBottom: "1px solid var(--line)",
-            }}
-          >
+          <div key={c.id} className="flex gap-4 border-b border-line py-[18px]">
             <Art
               seed={c.seed}
               grad={["#1b1033", accent]}
-              style={{ width: 44, height: 44, borderRadius: "50%", flex: "0 0 auto" }}
+              className="h-11 w-11 flex-none rounded-full"
             />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 400, fontSize: 15 }}>{c.text}</div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginTop: 12,
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-normal">{c.text}</div>
+              <div className="mt-3 flex items-center justify-between">
                 <Button
                   onClick={() => tl(c.id)}
-                  style={{
-                    background: "none",
-                    border: 0,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    color: likedC.has(c.id) ? accent : "var(--tx-3)",
-                  }}
+                  className="flex items-center gap-[7px]"
+                  style={{ color: likedC.has(c.id) ? accent : "var(--tx-3)" }}
                 >
                   <Icon.heart size={15} filled={likedC.has(c.id)} />
-                  <span className="mlabel" style={{ fontSize: 10 }}>
-                    {c.likes + (likedC.has(c.id) ? 1 : 0)}
-                  </span>
+                  <span className="mlabel text-[10px]">{c.likes + (likedC.has(c.id) ? 1 : 0)}</span>
                 </Button>
-                <span className="mlabel" style={{ color: "var(--tx-4)", fontSize: 10 }}>
-                  {c.time}
-                </span>
+                <span className="mlabel text-[10px] text-tx-4">{c.time}</span>
               </div>
             </div>
           </div>

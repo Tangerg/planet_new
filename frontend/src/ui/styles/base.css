@@ -1,0 +1,191 @@
+@reference "../../index.css";
+
+/* ============================================================
+   Sonance — global base: design tokens + reset + native-feel.
+   Co-located split of the former monolithic vibe.css; this file owns only the
+   truly app-wide concerns (tokens, reset, scroll, focus, console feel). Per
+   concern lives next to its component. Tokens here are the short-name layer the
+   ported components read via `var(--…)`; `index.css` `@theme` mirrors them under
+   `--color-*` so Tailwind utilities map to the same values.
+   ============================================================ */
+:root {
+  --accent: #ff2188; /* hot magenta */
+  --accent-soft: #ff62a8;
+  --ink: #0a0a0c; /* near-black */
+  --ink-2: #141417;
+  --paper: #faf9f8; /* warm off-white */
+  --paper-2: #f0eeec;
+  --muted: rgba(255, 255, 255, 0.55);
+  --muted-d: rgba(10, 10, 12, 0.45);
+  --glass-blur: 30px;
+
+  --sans: "Jost", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ---- Spotify-derived token layer (systematic depth) ---- */
+  --surf-0: #08080b; /* page, deepest */
+  --surf-1: #131317; /* cards / rails */
+  --surf-2: #1b1b20; /* raised */
+  --surf-3: #232329; /* elevated */
+  --surf-4: #2b2b32; /* hover elevated */
+  --tx: #ffffff;
+  --tx-2: rgba(255, 255, 255, 0.66);
+  --tx-3: rgba(255, 255, 255, 0.44);
+  --tx-4: rgba(255, 255, 255, 0.28);
+  --line: rgba(255, 255, 255, 0.09);
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --r-sm: 3px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-pill: 500px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.26), 0 14px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.3), 0 30px 70px -22px rgba(0, 0, 0, 0.72);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: radial-gradient(120% 90% at 50% -10%, #2a2a30 0%, #161619 45%, #0c0c0e 100%);
+  font-family: var(--sans);
+  color: #fff;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+#root {
+  height: 100%;
+}
+
+/* refined finishing: selection */
+::selection {
+  /* accent-tinted wash (not a solid block) so selected text stays readable on
+     any accent — solid neon green/cyan + white was low-contrast. */
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
+  color: #fff;
+}
+
+/* ============================================================
+   NATIVE FEEL — strip the web defaults so it reads like a console
+   system app: no text selection, tap highlight, scrollbars, or
+   rubber-band; momentum scroll; focus as a soft system glow.
+   ============================================================ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  cursor: default;
+}
+/* text entry stays selectable / editable */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
+}
+/* art never ghost-drags like a web image */
+img,
+image-slot,
+[data-art] {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* focus is a soft system halo, not a hard web outline (keyboard nav still clear) */
+button,
+input,
+[tabindex] {
+  outline: none;
+}
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid transparent; /* keep a transparent outline for forced-colors mode */
+  box-shadow:
+    0 0 0 2px rgba(6, 6, 10, 0.65),
+    0 0 0 3.5px var(--accent),
+    0 0 20px -2px var(--accent);
+}
+/* text fields keep only their own underline — never a ring/box */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* every interactive element settles with the same console easing + tactile press */
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition:
+      transform 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
+      opacity 0.16s ease,
+      box-shadow 0.2s ease;
+  }
+  .pill-accent,
+  .chip,
+  .tab,
+  .gtile {
+    transition:
+      color 0.15s,
+      background 0.15s,
+      border-color 0.15s,
+      transform 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 0.2s;
+  }
+  .pill-accent:active,
+  .chip:active,
+  .tile:active,
+  .mcard:active {
+    transform: scale(0.97);
+  }
+  .gtile:active {
+    transform: translateY(-2px) scale(0.99);
+  }
+}
+
+/* ---- scrollbars: a console UI shows none; content still scrolls with momentum.
+   The thin-thumb rules are kept as a graceful fallback for engines that ignore
+   `scrollbar-width: none`. ---- */
+.scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.scroll-d {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.scroll::-webkit-scrollbar,
+.scroll-d::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

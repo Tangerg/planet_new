@@ -53,30 +53,23 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const openTile = (t: VibeCollection) =>
     t.artist && t.kind === "Album" ? openAlbum(t) : openPlaylist(t);
 
-  if (!featured) return <FadeIn style={{ height: "100%" }} />;
+  if (!featured) return <FadeIn className="h-full" />;
 
   return (
     <ScreenScaffold
       background="#08080b"
       backdrop={{ image: featured.image, seed: featured.coverSeed, grad: featured.gradient }}
     >
-      <div style={{ padding: "60px 56px 50px" }}>
+      <div className="px-14 pb-[50px] pt-[60px]">
         {/* greeting + chips */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 30,
-          }}
-        >
+        <div className="mb-[30px] flex items-end justify-between">
           <div>
-            <div className="mlabel" style={{ color: accent, marginBottom: 8 }}>
+            <div className="mlabel mb-2" style={{ color: accent }}>
               {greeting}
             </div>
-            <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: ".01em" }}>For You</div>
+            <div className="text-[36px] font-extralight tracking-[0.01em]">For You</div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className="flex gap-2.5">
             {["All", "Music", "Mixes", "Charts"].map((c) => (
               <Button
                 key={c}
@@ -96,17 +89,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
           onPlay={() => openPlaylist(featured)}
         />
 
-        {/* quick tiles */}
-        <div
-          style={{
-            display: "grid",
-            // minmax(0,1fr) (not bare 1fr): a long tile name must not blow the
-            // track past its share and push the grid wider than the viewport.
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 10,
-            marginBottom: 44,
-          }}
-        >
+        {/* quick tiles — grid-cols-4 is repeat(4, minmax(0,1fr)): a long tile name
+            must not blow its track past its share and push the grid past the viewport. */}
+        <div className="mb-[44px] grid grid-cols-4 gap-2.5">
           {tiles.map((t) => (
             <CardShell
               key={t.id}

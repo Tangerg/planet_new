@@ -7,6 +7,7 @@ import { LiftButton } from "@/components/lift";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { MOCK } from "@/model/mock";
+import "./Browse.css";
 
 type BrowseScreenProps = {
   onOpenGenre: (name: string) => void;
@@ -24,28 +25,22 @@ export function BrowseScreen({ onOpenGenre }: BrowseScreenProps) {
   ];
   return (
     <FadeIn
-      className="scroll"
-      style={{
-        height: "100%",
-        background: "radial-gradient(120% 80% at 50% -5%, #16161d, var(--surf-0))",
-      }}
+      className="scroll h-full"
+      style={{ background: "radial-gradient(120% 80% at 50% -5%, #16161d, var(--surf-0))" }}
     >
-      <div style={{ padding: "62px 48px 40px" }}>
-        <div style={{ fontSize: 36, fontWeight: 200, marginBottom: 6 }}>Browse</div>
-        <div className="mlabel" style={{ color: "var(--tx-3)", marginBottom: 30 }}>
+      <div className="px-12 pb-10 pt-[62px]">
+        <div className="mb-1.5 text-[36px] font-extralight">Browse</div>
+        <div className="mlabel mb-[30px] text-tx-3">
           Filter by language, genre, scene, mood &amp; theme
         </div>
         {sections.map(([label, key]) => (
-          <section key={key} style={{ marginBottom: 34 }}>
+          <section key={key} className="mb-[34px]">
             <div className="sech" style={{ marginBottom: 14 }}>
               <h2 style={{ fontSize: 20 }}>{label}</h2>
             </div>
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
-                gap: 14,
-              }}
+              className="grid gap-[14px]"
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))" }}
             >
               {C[key].map((g, i) => {
                 const [name, color] = g;

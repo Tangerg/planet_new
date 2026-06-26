@@ -62,44 +62,27 @@ export function ArtistScreen({
   const [followed, setFollowed] = useState(true);
 
   return (
-    <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
+    <FadeIn className="relative h-full bg-[#0a0a0d]">
       <HeroBackdrop image={artist.image} seed={artist.coverSeed} grad={artist.gradient} />
-      <div
-        ref={scrollRef}
-        className="scroll"
-        style={{ position: "relative", zIndex: 2, height: "100%" }}
-      >
+      <div ref={scrollRef} className="scroll relative z-[2] h-full">
         <ScrollProvider value={scrollRef}>
           {/* header — atmospheric circle: blurred backdrop + seeded colour wash +
               a large circular portrait with a soft halo carry identity. */}
-          <div style={{ position: "relative", padding: "88px 48px 32px" }}>
+          <div className="relative px-12 pb-8 pt-[88px]">
             <div
               aria-hidden
+              className="pointer-events-none absolute inset-0 z-0"
               style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 0,
-                pointerEvents: "none",
                 background: `radial-gradient(86% 140% at 14% -16%, ${b}4d, transparent 62%)`,
               }}
             />
-            <div
-              style={{
-                position: "relative",
-                zIndex: 1,
-                display: "flex",
-                alignItems: "center",
-                gap: 40,
-              }}
-            >
+            <div className="relative z-[1] flex items-center gap-10">
               {/* circular portrait + soft colour halo */}
-              <div style={{ position: "relative", flex: "0 0 auto" }}>
+              <div className="relative flex-none">
                 <div
                   aria-hidden
+                  className="absolute -inset-7 rounded-full"
                   style={{
-                    position: "absolute",
-                    inset: -28,
-                    borderRadius: "50%",
                     background: `radial-gradient(closest-side, ${b}66, transparent 72%)`,
                     filter: "blur(28px)",
                   }}
@@ -124,47 +107,19 @@ export function ArtistScreen({
                 />
               </div>
               {/* name + stats */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 60,
-                    fontWeight: 200,
-                    letterSpacing: ".01em",
-                    lineHeight: 1.02,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    overflowWrap: "anywhere",
-                  }}
-                >
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 text-[60px] font-extralight leading-[1.02] tracking-[0.01em] [overflow-wrap:anywhere]">
                   {artist.name}
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    marginTop: 24,
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  }}
-                >
+                <div className="mt-6 flex flex-wrap items-center gap-[14px]">
                   <Button
                     onClick={() => onPlay(tracks[0])}
                     aria-label="Play"
+                    className="mr-1 grid h-[54px] w-[54px] flex-none place-items-center rounded-full"
                     style={{
-                      flex: "0 0 auto",
-                      width: 54,
-                      height: 54,
-                      borderRadius: "50%",
-                      border: 0,
-                      cursor: "pointer",
                       background: accent,
                       color: "#06060a",
-                      display: "grid",
-                      placeItems: "center",
                       boxShadow: `0 10px 30px -6px ${accent}`,
-                      marginRight: 4,
                     }}
                   >
                     {playing && tracks.some((t) => t.id === current?.id) ? (
@@ -175,11 +130,8 @@ export function ArtistScreen({
                   </Button>
                   <Button
                     onClick={() => setFollowed((f) => !f)}
-                    className="tag"
+                    className="tag rounded-full"
                     style={{
-                      cursor: "pointer",
-                      borderRadius: 999,
-                      border: 0,
                       background: followed
                         ? `linear-gradient(90deg, ${accent}, ${b})`
                         : "rgba(255,255,255,.14)",
@@ -207,18 +159,8 @@ export function ArtistScreen({
           </div>
 
           {/* tabs + content */}
-          <div
-            style={{
-              padding: "26px 48px 40px",
-              maxWidth: 1320,
-              margin: "0 auto",
-              boxSizing: "border-box",
-            }}
-          >
-            <div
-              className="tabs"
-              style={{ marginBottom: 24, display: "flex", alignItems: "flex-start" }}
-            >
+          <div className="mx-auto box-border max-w-[1320px] px-12 pb-10 pt-[26px]">
+            <div className="tabs mb-6 items-start">
               <ToggleGroup
                 ariaLabel="Artist section"
                 className="tabgroup"
@@ -279,7 +221,7 @@ export function ArtistScreen({
                 />
               )}
               {tab === "top" && view === "flow" && (
-                <div style={{ height: 480, margin: "0 -48px" }}>
+                <div className="-mx-12 h-[480px]">
                   <CoverFlow
                     items={trackFlowItems(tracks)}
                     center={Math.min(flowCenter, tracks.length - 1)}
@@ -330,7 +272,7 @@ export function ArtistScreen({
                 />
               )}
               {tab === "albums" && view === "flow" && (
-                <div style={{ height: 480, margin: "0 -48px" }}>
+                <div className="-mx-12 h-[480px]">
                   <CoverFlow
                     items={collectionFlowItems(albums, (al) => String(al.year ?? ""))}
                     center={Math.min(flowCenter, albums.length - 1)}

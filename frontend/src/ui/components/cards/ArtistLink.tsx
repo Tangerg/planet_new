@@ -33,17 +33,8 @@ export function ArtistLink({
   };
   return (
     <Button
-      style={{
-        cursor: "pointer",
-        transition: "color .2s",
-        background: "none",
-        border: 0,
-        padding: 0,
-        font: "inherit",
-        color,
-        textAlign: "left",
-        ...style,
-      }}
+      className="p-0 text-left transition-colors duration-200"
+      style={{ font: "inherit", color, ...style }}
       onClick={open}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {

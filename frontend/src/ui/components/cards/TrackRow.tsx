@@ -50,59 +50,33 @@ export function TrackRow({
   const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
   const unavailable = track.available === false;
   const isChart = rank != null;
-  const badge: React.CSSProperties = {
-    fontFamily: "var(--mono)",
-    fontSize: 8.5,
-    letterSpacing: ".08em",
-    textTransform: "uppercase",
-    padding: "2px 5px",
-    borderRadius: 3,
-    flex: "0 0 auto",
-    lineHeight: 1.3,
-  };
+  // Shared chart/version/VIP badge chrome (colours added per badge inline).
+  const badgeCls =
+    "flex-none rounded-sm px-[5px] py-[2px] font-mono text-[8.5px] uppercase leading-[1.3] tracking-[0.08em]";
   const Trend = () => {
     if (delta == null)
       return (
-        <span
-          style={{
-            color: accent,
-            fontFamily: "var(--mono)",
-            fontSize: 8.5,
-            letterSpacing: ".06em",
-          }}
-        >
+        <span className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: accent }}>
           NEW
         </span>
       );
     if (delta > 0)
       return (
-        <span
-          style={{
-            color: "#1ed98a",
-            fontSize: 11,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          ▲<span style={{ fontSize: 9 }}>{delta}</span>
+        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#1ed98a" }}>
+          ▲<span className="text-[9px]">{delta}</span>
         </span>
       );
     if (delta < 0)
       return (
-        <span
-          style={{
-            color: "#ff6b6b",
-            fontSize: 11,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          ▼<span style={{ fontSize: 9 }}>{-delta}</span>
+        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#ff6b6b" }}>
+          ▼<span className="text-[9px]">{-delta}</span>
         </span>
       );
-    return <span style={{ color: sub, fontSize: 12 }}>–</span>;
+    return (
+      <span className="text-[12px]" style={{ color: sub }}>
+        –
+      </span>
+    );
   };
   return (
     <div
@@ -134,11 +108,8 @@ export function TrackRow({
           onPlay(track);
         }
       }}
+      className="flex items-center gap-4 px-[14px] py-[11px] transition-[background] duration-150"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "11px 14px",
         cursor: unavailable ? "default" : "pointer",
         opacity: unavailable ? 0.42 : 1,
         background: selected
@@ -149,15 +120,11 @@ export function TrackRow({
               : "rgba(0,0,0,.04)"
             : "transparent",
         boxShadow: selected ? `inset 2px 0 0 ${accent}` : "none",
-        transition: "background .15s",
       }}
     >
-      <div style={{ width: isChart ? 30 : 22, textAlign: "center", flex: "0 0 auto" }}>
+      <div className="flex-none text-center" style={{ width: isChart ? 30 : 22 }}>
         {isChart ? (
-          <span
-            className="mlabel"
-            style={{ color: isCur ? accent : col, fontSize: 16, fontWeight: 500 }}
-          >
+          <span className="mlabel text-[16px] font-medium" style={{ color: isCur ? accent : col }}>
             {rank}
           </span>
         ) : isCur && playing ? (
@@ -167,7 +134,7 @@ export function TrackRow({
             <Icon.play size={15} />
           </span>
         ) : (
-          <span className="mlabel" style={{ color: sub, fontSize: 12 }}>
+          <span className="mlabel text-[12px]" style={{ color: sub }}>
             {index}
           </span>
         )}
@@ -177,39 +144,43 @@ export function TrackRow({
         grad={track.gradient}
         image={track.image}
         images={track.images}
-        style={{ width: 44, height: 44, flex: "0 0 auto" }}
+        className="flex-none"
+        style={{ width: 44, height: 44 }}
       />
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
           <span
-            className="truncate"
-            style={{ fontSize: 15, fontWeight: 400, color: isCur ? accent : col }}
+            className="truncate text-[15px] font-normal"
+            style={{ color: isCur ? accent : col }}
           >
             {track.title}
           </span>
           {track.version && track.version !== "studio" && (
             <span
-              style={{
-                ...badge,
-                color: "rgba(255,255,255,.7)",
-                border: "1px solid rgba(255,255,255,.22)",
-              }}
+              className={badgeCls}
+              style={{ color: "rgba(255,255,255,.7)", border: "1px solid rgba(255,255,255,.22)" }}
             >
               {track.version}
             </span>
           )}
           {track.vipOnly && (
-            <span style={{ ...badge, color: "#06060a", background: accent, fontWeight: 700 }}>
+            <span
+              className={badgeCls + " font-bold"}
+              style={{ color: "#06060a", background: accent }}
+            >
               VIP
             </span>
           )}
           {unavailable && (
-            <span style={{ ...badge, color: sub, border: "1px solid rgba(255,255,255,.18)" }}>
+            <span
+              className={badgeCls}
+              style={{ color: sub, border: "1px solid rgba(255,255,255,.18)" }}
+            >
               Unavailable
             </span>
           )}
         </div>
-        <div className="truncate" style={{ fontSize: 12.5, fontWeight: 300, color: sub }}>
+        <div className="truncate text-[12.5px] font-light" style={{ color: sub }}>
           <ArtistLink
             name={track.artist}
             artistId={track.artistId}
@@ -220,7 +191,7 @@ export function TrackRow({
         </div>
       </div>
       {isChart && (
-        <span style={{ width: 38, textAlign: "center", flex: "0 0 auto" }}>
+        <span className="w-[38px] flex-none text-center">
           <Trend />
         </span>
       )}
@@ -230,20 +201,12 @@ export function TrackRow({
           toggleLike(track.id);
         }}
         aria-label="Like"
-        style={{
-          background: "none",
-          border: 0,
-          cursor: "pointer",
-          padding: 4,
-          color: liked.has(track.id) ? accent : hover ? col : "transparent",
-        }}
+        className="p-1"
+        style={{ color: liked.has(track.id) ? accent : hover ? col : "transparent" }}
       >
         <Icon.heart size={17} filled={liked.has(track.id)} />
       </Button>
-      <span
-        className="mlabel"
-        style={{ color: sub, fontSize: 11, width: 42, textAlign: "right", flex: "0 0 auto" }}
-      >
+      <span className="mlabel w-[42px] flex-none text-right text-[11px]" style={{ color: sub }}>
         {track.duration}
       </span>
     </div>

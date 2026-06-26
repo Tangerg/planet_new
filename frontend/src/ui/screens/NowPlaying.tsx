@@ -5,6 +5,7 @@ import type { VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art, artBg, artPair } from "@/components/primitives";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
+import { Sheet } from "@/components/Sheet";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { MOCK } from "@/model/mock";
@@ -51,18 +52,10 @@ function LyricLines({
   }, [active, scrollRef]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 26,
-        textAlign: "center",
-        padding: "40% 12% 60%",
-      }}
-    >
+    <div className="flex flex-col gap-[26px] px-[12%] pb-[60%] pt-[40%] text-center">
       {lines.map((l, i) => {
         const on = i === active;
-        if (!l.line) return <div key={i} style={{ height: 2 }} />;
+        if (!l.line) return <div key={i} className="h-0.5" />;
         return (
           <div
             key={i}
@@ -101,29 +94,12 @@ function TagStack({
   extra?: React.ReactNode;
 }) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 64,
-        left: 48,
-        zIndex: 6,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        alignItems: "flex-start",
-      }}
-    >
+    <div className="absolute left-12 top-16 z-[6] flex flex-col items-start gap-[14px]">
       <Button
         onClick={toggleLike}
         aria-label="Like"
-        style={{
-          background: "none",
-          border: 0,
-          cursor: "pointer",
-          color: accent,
-          padding: 0,
-          filter: `drop-shadow(0 4px 12px ${accent}88)`,
-        }}
+        className="p-0"
+        style={{ color: accent, filter: `drop-shadow(0 4px 12px ${accent}88)` }}
       >
         <Icon.heart size={30} filled={liked} />
       </Button>
@@ -133,7 +109,9 @@ function TagStack({
 }
 
 // ============================================================
-// ModeTag — clickable pill tag (mode toggle), keyboard-accessible
+// ModeTag — clickable pill tag (mode toggle). A native <button> (Button
+// primitive) — no hand-rolled role="button"/keyboard; Enter/Space + focus ring
+// come for free.
 // ============================================================
 function ModeTag({
   cls = "tag",
@@ -145,22 +123,9 @@ function ModeTag({
   children: React.ReactNode;
 }) {
   return (
-    <span
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-      role="button"
-      tabIndex={0}
-      className={cls}
-      style={{ cursor: "pointer" }}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-    >
+    <Button className={cls + " cursor-pointer"} onClick={onClick}>
       {children}
-    </span>
+    </Button>
   );
 }
 
@@ -204,6 +169,8 @@ export const NowPlaying = React.memo(function NowPlaying({
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
   const touch = useRef<{ x: number; y: number } | null>(null);
   const queueScrollRef = useRef<HTMLDivElement>(null);
+  // Portal target for the queue Sheet — keeps it positioned within this screen.
+  const rootRef = useRef<HTMLDivElement>(null);
   // Memoized so the lyric auto-advance effect below depends on a stable value
   // (the fallback array literal would otherwise be new every render).
   const lines = useMemo(
@@ -271,7 +238,8 @@ export const NowPlaying = React.memo(function NowPlaying({
 
   return (
     <FadeIn
-      style={{ height: "100%", position: "relative", background: "#08080b", overflow: "hidden" }}
+      ref={rootRef}
+      className="relative h-full overflow-hidden bg-[#08080b]"
       onTouchStart={(e: React.TouchEvent) => {
         const t = e.touches[0];
         touch.current = { x: t.clientX, y: t.clientY };
@@ -302,17 +270,7 @@ export const NowPlaying = React.memo(function NowPlaying({
       <Button
         onClick={onClose}
         aria-label="Close"
-        style={{
-          position: "absolute",
-          top: 18,
-          right: 56,
-          zIndex: 30,
-          background: "none",
-          border: 0,
-          color: "rgba(255,255,255,.7)",
-          cursor: "pointer",
-          padding: 4,
-        }}
+        className="absolute right-14 top-[18px] z-30 p-1 text-white/70"
       >
         <Icon.close size={20} />
       </Button>
@@ -327,10 +285,8 @@ export const NowPlaying = React.memo(function NowPlaying({
         style={{ position: "absolute", inset: 0, height: "100%" }}
       >
         <div
+          className="absolute inset-0 z-[2]"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
             background: "radial-gradient(60% 60% at 50% 50%, transparent 0%, rgba(6,6,9,.55) 100%)",
           }}
         />
@@ -343,9 +299,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               <>
                 <span className="tag">{track?.quality || "SQ"}</span>
                 {track?.version && track.version !== "studio" && (
-                  <span className="tag" style={{ textTransform: "capitalize" }}>
-                    {track.version}
-                  </span>
+                  <span className="tag capitalize">{track.version}</span>
                 )}
                 {track?.vipOnly && <span className="pill-accent">VIP</span>}
                 <ModeTag onClick={() => setMode("lyrics")}>Lyrics</ModeTag>
@@ -363,39 +317,11 @@ export const NowPlaying = React.memo(function NowPlaying({
             )
           }
         />
-        <div
-          style={{
-            position: "absolute",
-            left: 48,
-            bottom: 44,
-            zIndex: 6,
-            maxWidth: "min(46%, 540px)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 30,
-              fontWeight: 300,
-              letterSpacing: ".02em",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              overflowWrap: "anywhere",
-            }}
-          >
+        <div className="absolute bottom-[44px] left-12 z-[6] max-w-[min(46%,540px)]">
+          <div className="line-clamp-2 text-[30px] font-light tracking-[0.02em] [overflow-wrap:anywhere]">
             {track?.title}
           </div>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 300,
-              color: "rgba(255,255,255,.6)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div className="truncate text-[16px] font-light text-white/60">
             <ArtistLink
               name={track?.artist}
               artistId={track?.artistId}
@@ -411,10 +337,7 @@ export const NowPlaying = React.memo(function NowPlaying({
             />
           </div>
           {track?.credits && (
-            <div
-              className="mlabel"
-              style={{ color: "rgba(255,255,255,.4)", marginTop: 7, fontSize: 10 }}
-            >
+            <div className="mlabel mt-[7px] text-[10px] text-white/40">
               Written by {track.credits.music} · Produced by {track.credits.producer}
             </div>
           )}
@@ -458,27 +381,14 @@ export const NowPlaying = React.memo(function NowPlaying({
               src={track.image}
               alt=""
               draggable={false}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              className="absolute inset-0 h-full w-full object-cover"
             />
           )}
           {/* vinyl centre — subtle spindle detail */}
           <div
             aria-hidden
+            className="absolute left-1/2 top-1/2 -ml-[30px] -mt-[30px] h-[60px] w-[60px] rounded-full"
             style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 60,
-              height: 60,
-              marginLeft: -30,
-              marginTop: -30,
-              borderRadius: "50%",
               background:
                 "radial-gradient(circle, rgba(0,0,0,.5), rgba(0,0,0,.18) 60%, transparent 72%)",
               boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)",
@@ -486,31 +396,15 @@ export const NowPlaying = React.memo(function NowPlaying({
           />
           <div
             aria-hidden
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 12,
-              height: 12,
-              marginLeft: -6,
-              marginTop: -6,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,.16)",
-            }}
+            className="absolute left-1/2 top-1/2 -ml-1.5 -mt-1.5 h-3 w-3 rounded-full bg-white/[0.16]"
           />
         </motion.div>
       </div>
 
       {/* side panel — lyrics or comments — slides in from the right over a blurred tint */}
       <div
+        className="absolute right-0 top-0 z-[5] h-full w-[58%] overflow-hidden"
         style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          height: "100%",
-          width: "58%",
-          zIndex: 5,
-          overflow: "hidden",
           transform: panelOpen ? "translateX(0)" : "translateX(100%)",
           opacity: panelOpen ? 1 : 0,
           pointerEvents: panelOpen ? "auto" : "none",
@@ -519,89 +413,50 @@ export const NowPlaying = React.memo(function NowPlaying({
         }}
       >
         <div
-          className="grain"
+          className="grain absolute inset-0 z-0"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
             backdropFilter: "blur(40px)",
             WebkitBackdropFilter: "blur(40px)",
             background: "rgba(10,12,18,.35)",
           }}
         />
-        <NpSwap key={mode} style={{ position: "relative", zIndex: 2, height: "100%" }}>
+        <NpSwap key={mode} className="relative z-[2] h-full">
           {commentsMode ? (
-            <div className="scroll" style={{ height: "100%", padding: "58px 48px 40px" }}>
+            <div className="scroll h-full px-12 pb-10 pt-[58px]">
               <div
-                style={{
-                  fontSize: 26,
-                  fontWeight: 200,
-                  letterSpacing: ".06em",
-                  borderBottom: `2px solid ${accent}`,
-                  paddingBottom: 12,
-                  display: "inline-block",
-                  marginBottom: 22,
-                }}
+                className="mb-[22px] inline-block pb-3 text-[26px] font-extralight tracking-[0.06em]"
+                style={{ borderBottom: `2px solid ${accent}` }}
               >
                 Hot Comments
               </div>
               {comments.map((c) => (
-                <div
-                  key={c.id}
-                  style={{
-                    display: "flex",
-                    gap: 16,
-                    padding: "16px 0",
-                    borderBottom: "1px solid rgba(255,255,255,.1)",
-                  }}
-                >
+                <div key={c.id} className="flex gap-4 border-b border-white/10 py-4">
                   <Art
                     seed={c.seed}
                     grad={["#1b1033", accent]}
-                    style={{ width: 42, height: 42, borderRadius: "50%", flex: "0 0 auto" }}
+                    className="h-[42px] w-[42px] flex-none rounded-full"
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 400, fontSize: 15, color: "rgba(255,255,255,.92)" }}>
-                      {c.text}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginTop: 10,
-                      }}
-                    >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15px] font-normal text-white/[0.92]">{c.text}</div>
+                    <div className="mt-2.5 flex items-center justify-between">
                       <Button
                         onClick={() => toggleC(c.id)}
-                        style={{
-                          background: "none",
-                          border: 0,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 7,
-                          color: likedC.has(c.id) ? accent : "rgba(255,255,255,.5)",
-                        }}
+                        className="flex items-center gap-[7px]"
+                        style={{ color: likedC.has(c.id) ? accent : "rgba(255,255,255,.5)" }}
                       >
                         <Icon.heart size={14} filled={likedC.has(c.id)} />
-                        <span className="mlabel" style={{ fontSize: 10 }}>
+                        <span className="mlabel text-[10px]">
                           {c.likes + (likedC.has(c.id) ? 1 : 0)}
                         </span>
                       </Button>
-                      <span
-                        className="mlabel"
-                        style={{ color: "rgba(255,255,255,.3)", fontSize: 10 }}
-                      >
-                        {c.time}
-                      </span>
+                      <span className="mlabel text-[10px] text-white/30">{c.time}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div ref={lyricScrollRef} className="scroll" style={{ height: "100%" }}>
+            <div ref={lyricScrollRef} className="scroll h-full">
               <LyricLines
                 lines={lines}
                 accent={accent}
@@ -618,48 +473,33 @@ export const NowPlaying = React.memo(function NowPlaying({
         <Button
           onClick={() => setQueueOpen(true)}
           aria-label="Up Next"
+          className="absolute bottom-[22px] left-1/2 z-[9] flex -translate-x-1/2 items-center gap-[9px] rounded-full px-[18px] py-[9px] text-white/[0.82]"
           style={{
-            position: "absolute",
-            bottom: 22,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 9,
-            display: "flex",
-            alignItems: "center",
-            gap: 9,
-            padding: "9px 18px",
-            cursor: "pointer",
             background: "rgba(14,14,18,.5)",
             border: "1px solid rgba(255,255,255,.14)",
-            borderRadius: 999,
             backdropFilter: "blur(14px)",
             WebkitBackdropFilter: "blur(14px)",
-            color: "rgba(255,255,255,.82)",
             boxShadow: "inset 0 1px 0 rgba(255,255,255,.1), 0 8px 24px -10px rgba(0,0,0,.7)",
           }}
         >
-          <span className="mlabel" style={{ fontSize: 10 }}>
-            Up Next · {queue.length}
-          </span>
-          <span style={{ display: "grid", placeItems: "center", transform: "rotate(90deg)" }}>
+          <span className="mlabel text-[10px]">Up Next · {queue.length}</span>
+          <span className="grid rotate-90 place-items-center">
             <Icon.back size={14} />
           </span>
         </Button>
       )}
 
-      {/* queue sheet — slides up from the bottom */}
-      <div
-        ref={queueScrollRef}
-        className="scroll"
+      {/* queue sheet — Radix Dialog (Escape / click-outside / scroll-lock), Motion slide */}
+      <Sheet
+        open={queueOpen}
+        onOpenChange={setQueueOpen}
+        container={rootRef.current}
+        label="Up Next"
+        contentRef={queueScrollRef}
+        className="z-[22] h-[70%]"
+        overlayClassName="z-[21]"
+        durationSec={0.58}
         style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: "70%",
-          zIndex: 22,
-          transform: queueOpen ? "translateY(0)" : "translateY(102%)",
-          transition: `transform .58s ${NP_EASE}`,
           background: `linear-gradient(180deg, ${a}26, rgba(8,8,11,.97) 20%)`,
           backdropFilter: "blur(34px)",
           WebkitBackdropFilter: "blur(34px)",
@@ -667,48 +507,22 @@ export const NowPlaying = React.memo(function NowPlaying({
           boxShadow: "0 -34px 90px rgba(0,0,0,.62)",
         }}
       >
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           aria-label="Collapse queue"
           onClick={() => setQueueOpen(false)}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setQueueOpen(false);
-            }
-          }}
-          style={{
-            display: "grid",
-            placeItems: "center",
-            padding: "13px 0 4px",
-            cursor: "pointer",
-          }}
+          className="btn grid w-full cursor-pointer place-items-center pb-1 pt-[13px]"
         >
-          <div
-            style={{ width: 44, height: 4, borderRadius: 3, background: "rgba(255,255,255,.28)" }}
-          ></div>
-        </div>
-        <div style={{ padding: "8px 44px 44px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 13, marginBottom: 16 }}>
-            <span style={{ fontSize: 24, fontWeight: 200, letterSpacing: ".05em" }}>Up Next</span>
-            <span className="mlabel" style={{ color: "rgba(255,255,255,.4)" }}>
-              {queue.length} tracks
-            </span>
+          <div className="h-1 w-11 rounded-sm bg-white/[0.28]"></div>
+        </button>
+        <div className="px-11 pb-11 pt-2">
+          <div className="mb-4 flex items-baseline gap-[13px]">
+            <span className="text-[24px] font-extralight tracking-[0.05em]">Up Next</span>
+            <span className="mlabel text-white/40">{queue.length} tracks</span>
           </div>
           {/* now playing */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              padding: "10px 0 14px",
-              borderBottom: "1px solid rgba(255,255,255,.1)",
-              marginBottom: 8,
-            }}
-          >
-            <span style={{ width: 18, display: "grid", placeItems: "center" }}>
+          <div className="mb-2 flex items-center gap-[14px] border-b border-white/10 pb-[14px] pt-2.5">
+            <span className="grid w-[18px] place-items-center">
               <Equalizer playing color={accent} size={15} />
             </span>
             <Art
@@ -716,30 +530,14 @@ export const NowPlaying = React.memo(function NowPlaying({
               grad={grad}
               image={track?.image}
               images={track?.images}
-              style={{ width: 44, height: 44, flex: "0 0 auto" }}
+              className="flex-none"
+              style={{ width: 44, height: 44 }}
             />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: accent,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px]" style={{ color: accent }}>
                 {track?.title}
               </div>
-              <div
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 300,
-                  color: "rgba(255,255,255,.5)",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+              <div className="truncate text-[12.5px] font-light text-white/50">
                 <ArtistLink
                   name={track?.artist}
                   artistId={track?.artistId}
@@ -755,9 +553,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                 />
               </div>
             </div>
-            <span className="mlabel" style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>
-              Now
-            </span>
+            <span className="mlabel text-[10px] text-white/40">Now</span>
           </div>
           {queue.length > 0 ? (
             <VirtualList
@@ -781,24 +577,9 @@ export const NowPlaying = React.memo(function NowPlaying({
                       }
                     }}
                     onContextMenu={(e: React.MouseEvent) => trackMenu(e, t)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      padding: "9px 0",
-                      cursor: "pointer",
-                    }}
+                    className="flex cursor-pointer items-center gap-[14px] py-[9px]"
                   >
-                    <span
-                      className="mlabel"
-                      style={{
-                        width: 18,
-                        textAlign: "center",
-                        color: "rgba(255,255,255,.32)",
-                        fontSize: 11,
-                        flex: "0 0 auto",
-                      }}
-                    >
+                    <span className="mlabel w-[18px] flex-none text-center text-[11px] text-white/[0.32]">
                       {vi + 1}
                     </span>
                     <Art
@@ -806,36 +587,16 @@ export const NowPlaying = React.memo(function NowPlaying({
                       grad={t.gradient}
                       image={t.image}
                       images={t.images}
-                      style={{ width: 40, height: 40, flex: "0 0 auto" }}
+                      className="flex-none"
+                      style={{ width: 40, height: 40 }}
                     />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {t.title}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 300,
-                          color: "rgba(255,255,255,.45)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[14px]">{t.title}</div>
+                      <div className="truncate text-[12px] font-light text-white/45">
                         {t.artist}
                       </div>
                     </div>
-                    <span
-                      className="mlabel"
-                      style={{ color: "rgba(255,255,255,.32)", fontSize: 10, flex: "0 0 auto" }}
-                    >
+                    <span className="mlabel flex-none text-[10px] text-white/[0.32]">
                       {t.duration}
                     </span>
                   </div>
@@ -843,12 +604,10 @@ export const NowPlaying = React.memo(function NowPlaying({
               }}
             />
           ) : (
-            <div style={{ padding: 30, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
-              Queue is empty.
-            </div>
+            <div className="p-[30px] font-light text-white/40">Queue is empty.</div>
           )}
         </div>
-      </div>
+      </Sheet>
     </FadeIn>
   );
 });

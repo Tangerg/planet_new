@@ -21,25 +21,10 @@ function SetToggle({
   onClick: () => void;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "16px 0",
-        borderBottom: "1px solid rgba(255,255,255,.08)",
-      }}
-    >
+    <div className="flex items-center justify-between border-b border-white/[0.08] py-4">
       <div>
-        <div style={{ fontSize: 16, fontWeight: 300 }}>{label}</div>
-        {sub && (
-          <div
-            className="mlabel"
-            style={{ color: "rgba(255,255,255,.4)", marginTop: 5, fontSize: 10 }}
-          >
-            {sub}
-          </div>
-        )}
+        <div className="text-[16px] font-light">{label}</div>
+        {sub && <div className="mlabel mt-[5px] text-[10px] text-white/40">{sub}</div>}
       </div>
       <Switch checked={on} onCheckedChange={() => onClick()} aria-label={label} />
     </div>
@@ -58,8 +43,8 @@ function SetSeg({
   onChange: (o: string) => void;
 }) {
   return (
-    <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-      <div style={{ fontSize: 16, fontWeight: 300, marginBottom: 12 }}>{label}</div>
+    <div className="border-b border-white/[0.08] py-4">
+      <div className="mb-3 text-[16px] font-light">{label}</div>
       <ToggleGroup
         ariaLabel={label}
         className="seg"
@@ -91,49 +76,32 @@ export function SettingsScreen({
     setSettings((prev) => ({ ...prev, [k]: v }));
   return (
     <FadeIn
-      className="scroll"
-      style={{
-        height: "100%",
-        background: "radial-gradient(120% 90% at 80% 0%, #14161d, #0a0a0d)",
-      }}
+      className="scroll h-full"
+      style={{ background: "radial-gradient(120% 90% at 80% 0%, #14161d, #0a0a0d)" }}
     >
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "70px 40px 60px" }}>
-        <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: ".02em" }}>Preferences</div>
-        <div className="mlabel" style={{ color: "rgba(255,255,255,.4)", marginTop: 8 }}>
-          Personalize Sonance
-        </div>
+      <div className="mx-auto max-w-[620px] px-10 pb-[60px] pt-[70px]">
+        <div className="text-[36px] font-extralight tracking-[0.02em]">Preferences</div>
+        <div className="mlabel mt-2 text-white/40">Personalize Sonance</div>
 
-        <div style={{ marginTop: 38 }}>
-          <div className="mlabel" style={{ color: accent, marginBottom: 4 }}>
+        <div className="mt-[38px]">
+          <div className="mlabel mb-1" style={{ color: accent }}>
             Accent
           </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              padding: "16px 0",
-              borderBottom: "1px solid rgba(255,255,255,.08)",
-            }}
-          >
+          <div className="flex gap-3 border-b border-white/[0.08] py-4">
             {accentOptions.map((col) => (
               <Button
                 key={col}
                 onClick={() => setAccent(col)}
                 aria-label={col}
+                className="grid h-[38px] w-[38px] place-items-center rounded-full"
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
                   background: col,
-                  cursor: "pointer",
                   border: accent === col ? "2px solid #fff" : "2px solid transparent",
                   boxShadow: accent === col ? `0 0 18px -2px ${col}` : "none",
-                  display: "grid",
-                  placeItems: "center",
                 }}
               >
                 {accent === col && (
-                  <span style={{ color: "#06060a" }}>
+                  <span className="text-[#06060a]">
                     <Icon.check size={16} />
                   </span>
                 )}
@@ -142,8 +110,8 @@ export function SettingsScreen({
           </div>
         </div>
 
-        <div style={{ marginTop: 30 }}>
-          <div className="mlabel" style={{ color: accent, marginBottom: 4 }}>
+        <div className="mt-[30px]">
+          <div className="mlabel mb-1" style={{ color: accent }}>
             Playback
           </div>
           <SetSeg
@@ -171,8 +139,8 @@ export function SettingsScreen({
           />
         </div>
 
-        <div style={{ marginTop: 30 }}>
-          <div className="mlabel" style={{ color: accent, marginBottom: 4 }}>
+        <div className="mt-[30px]">
+          <div className="mlabel mb-1" style={{ color: accent }}>
             Interface
           </div>
           <SetToggle

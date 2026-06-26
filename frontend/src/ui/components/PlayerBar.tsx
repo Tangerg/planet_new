@@ -4,11 +4,13 @@
 // with always-visible times · utilities. Dark to match the app shell.
 // ============================================================
 import React, { useState, useRef, useEffect } from "react";
+import "./PlayerBar.css";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { AnimatePresence, motion } from "motion/react";
 import type { VibeTrack } from "@/model/adapt";
 import { Slider } from "@/components/controls/Slider";
 import { Button } from "@/components/controls/Button";
+import { Toggle } from "@/components/controls/Toggle";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
 import { ArtistLink } from "@/components/cards/ArtistLink";
@@ -84,38 +86,18 @@ export const PlayerBar = React.memo(function PlayerBar({
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const pos = scrub ?? Math.min(positionSec, dur);
 
-  const txtBtn: React.CSSProperties = {
-    fontFamily: "var(--mono)",
-    fontSize: 11,
-    letterSpacing: ".12em",
-    textTransform: "uppercase",
-    color: "rgba(20,20,24,.62)",
-    background: "none",
-    border: 0,
-    cursor: "pointer",
-    padding: "6px 2px",
-    borderBottom: "1.5px solid rgba(20,20,24,.35)",
-  };
-  const ctlBtn = (on: boolean): React.CSSProperties => ({
-    appearance: "none",
-    border: 0,
-    background: "none",
-    cursor: "pointer",
-    padding: 5,
+  // Text utility button (LRC) — chrome (bg/border/cursor) comes from `.btn`.
+  const txtBtnCls =
+    "border-b-[1.5px] border-[rgba(20,20,24,0.35)] px-0.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[rgba(20,20,24,0.62)]";
+  // Icon control button: static grid layout in the class, the on/off accent in style.
+  const ctlCls = "grid place-items-center p-[5px]";
+  const ctlColor = (on: boolean): React.CSSProperties => ({
     color: on ? accent : "rgba(20,20,24,.78)",
-    display: "grid",
-    placeItems: "center",
   });
   // Mono time labels flanking the scrubber; fixed width so digit changes
   // (9:59 → 10:00) don't nudge the layout.
-  const timeStyle: React.CSSProperties = {
-    fontFamily: "var(--mono)",
-    fontSize: 11,
-    letterSpacing: ".04em",
-    color: "rgba(20,20,24,.5)",
-    flex: "0 0 auto",
-    minWidth: 42,
-  };
+  const timeCls =
+    "min-w-[42px] flex-none font-mono text-[11px] tracking-[0.04em] text-[rgba(20,20,24,0.5)]";
 
   // Open the full-screen now-playing view, measuring the cover art as the morph
   // origin so the shared-element transition flies from the bar's artwork.
@@ -126,10 +108,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   };
 
   return (
-    <div
-      className="glassbar"
-      style={{ color: "#141418", display: "flex", alignItems: "center", gap: 6 }}
-    >
+    <div className="glassbar gap-1.5" style={{ color: "#141418" }}>
       {/* bounded frosted backdrop — blur lives here so it can't flicker */}
       <div
         className="glass-frost"
@@ -155,40 +134,23 @@ export const PlayerBar = React.memo(function PlayerBar({
             openNowPlaying(e.currentTarget);
           }
         }}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 11,
-          paddingLeft: 18,
-          paddingRight: 6,
-          minWidth: 0,
-          flex: "0 0 auto",
-          width: 224,
-          cursor: "pointer",
-          position: "relative",
-          zIndex: 1,
-        }}
+        className="relative z-[1] flex w-[224px] min-w-0 flex-none cursor-pointer items-center gap-[11px] pl-[18px] pr-1.5"
       >
         <Art
           seed={track?.coverSeed || 0}
           grad={track?.gradient}
           image={track?.image}
           images={track?.images}
+          className="flex-none"
           style={{
             width: 54,
             height: 54,
-            flex: "0 0 auto",
             boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
           }}
         />
-        <div style={{ minWidth: 0 }}>
-          <div className="truncate" style={{ fontSize: 16, fontWeight: 400 }}>
-            {track?.title || "—"}
-          </div>
-          <div
-            className="truncate"
-            style={{ fontSize: 13, color: "rgba(20,20,24,.55)", fontWeight: 300 }}
-          >
+        <div className="min-w-0">
+          <div className="truncate text-[16px] font-normal">{track?.title || "—"}</div>
+          <div className="truncate text-[13px] font-light text-[rgba(20,20,24,0.55)]">
             <ArtistLink
               name={track?.artist || ""}
               artistId={track?.artistId}
@@ -201,32 +163,20 @@ export const PlayerBar = React.memo(function PlayerBar({
       </div>
 
       {/* ── transport (left-aligned; white play button is the focal point) ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          flex: "0 0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <Button style={ctlBtn(false)} onClick={() => onPrev && onPrev()} aria-label="Previous">
+      <div className="relative z-[1] flex flex-none items-center gap-1">
+        <Button
+          className={ctlCls}
+          style={ctlColor(false)}
+          onClick={() => onPrev && onPrev()}
+          aria-label="Previous"
+        >
           <Icon.prev size={21} />
         </Button>
         <Button
+          className="mx-0.5 grid h-11 w-11 place-items-center rounded-full"
           style={{
-            appearance: "none",
-            border: 0,
-            cursor: "pointer",
-            display: "grid",
-            placeItems: "center",
             background: accent,
             color: "#06060a",
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            margin: "0 2px",
             boxShadow: `0 6px 18px -4px ${accent}`,
           }}
           onClick={() => setPlaying(!playing)}
@@ -234,25 +184,19 @@ export const PlayerBar = React.memo(function PlayerBar({
         >
           {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
         </Button>
-        <Button style={ctlBtn(false)} onClick={() => onNext && onNext()} aria-label="Next">
+        <Button
+          className={ctlCls}
+          style={ctlColor(false)}
+          onClick={() => onNext && onNext()}
+          aria-label="Next"
+        >
           <Icon.next size={21} />
         </Button>
       </div>
 
       {/* ── inline scrubber: current time · slider · total time (always shown) ── */}
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 14px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <span style={{ ...timeStyle, textAlign: "right" }}>{fmt(Math.round(pos))}</span>
+      <div className="relative z-[1] flex min-w-0 flex-1 items-center gap-3 px-[14px]">
+        <span className={timeCls + " text-right"}>{fmt(Math.round(pos))}</span>
         <Slider
           min={0}
           max={dur}
@@ -309,36 +253,45 @@ export const PlayerBar = React.memo(function PlayerBar({
             },
           }}
         />
-        <span style={{ ...timeStyle, textAlign: "left" }}>{fmt(Math.round(dur))}</span>
+        <span className={timeCls + " text-left"}>{fmt(Math.round(dur))}</span>
       </div>
 
       {/* ── right: utilities ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          paddingRight: 18,
-          flex: "0 0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <Button style={ctlBtn(liked)} onClick={toggleLike} aria-label="Like">
+      <div className="relative z-[1] flex flex-none items-center gap-1 pr-[18px]">
+        <Toggle
+          className={ctlCls}
+          style={ctlColor(liked)}
+          pressed={liked}
+          onPressedChange={() => toggleLike()}
+          aria-label="Like"
+        >
           <Icon.heart size={18} filled={liked} />
-        </Button>
-        <Button style={ctlBtn(shuffle)} onClick={() => setShuffle(!shuffle)} aria-label="Shuffle">
+        </Toggle>
+        <Toggle
+          className={ctlCls}
+          style={ctlColor(shuffle)}
+          pressed={shuffle}
+          onPressedChange={setShuffle}
+          aria-label="Shuffle"
+        >
           <Icon.shuffle size={18} />
-        </Button>
-        <Button style={ctlBtn(repeat)} onClick={onToggleRepeat} aria-label="Repeat">
+        </Toggle>
+        <Toggle
+          className={ctlCls}
+          style={ctlColor(repeat)}
+          pressed={repeat}
+          onPressedChange={() => onToggleRepeat()}
+          aria-label="Repeat"
+        >
           <Icon.loop size={18} />
-        </Button>
+        </Toggle>
         {/* volume — Radix HoverCard owns the hover-open + the trigger→content
             safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
         <HoverCard.Root open={volOpen} onOpenChange={setVolOpen} openDelay={0} closeDelay={120}>
           <HoverCard.Trigger asChild>
             <Button
-              style={{ ...ctlBtn(false), opacity: volume === 0 ? 0.4 : 1 }}
+              className={ctlCls}
+              style={{ ...ctlColor(false), opacity: volume === 0 ? 0.4 : 1 }}
               aria-label="Volume"
               onClick={() => onVolume(volume > 0 ? 0 : 80)}
             >
@@ -350,42 +303,24 @@ export const PlayerBar = React.memo(function PlayerBar({
               <HoverCard.Portal forceMount>
                 <HoverCard.Content side="top" align="center" sideOffset={12} asChild forceMount>
                   <motion.div
-                    className="volpop"
+                    className="volpop z-[9000] flex flex-col items-center gap-3 rounded-[14px] px-[13px] pb-[13px] pt-[15px]"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
                     transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "15px 13px 13px",
-                      zIndex: 9000,
                       // Same frosted material as the bar (tint + base + blur) so the
                       // popup reads as part of the control bar, not a foreign surface.
                       background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.86)`,
                       border: "0.5px solid rgba(255,255,255,.6)",
-                      borderRadius: 14,
                       WebkitBackdropFilter: "blur(22px) saturate(180%)",
                       backdropFilter: "blur(22px) saturate(180%)",
                       boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--mono)",
-                        fontSize: 9.5,
-                        letterSpacing: ".1em",
-                        color: "rgba(20,20,24,.5)",
-                        // Fixed footprint + tabular figures: 1–3 digits (7→71→100)
-                        // never change the popup width.
-                        display: "block",
-                        width: 30,
-                        textAlign: "center",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
+                    {/* Fixed footprint + tabular figures: 1–3 digits (7→71→100)
+                        never change the popup width. */}
+                    <span className="block w-[30px] text-center font-mono text-[9.5px] tracking-[0.1em] text-[rgba(20,20,24,0.5)] tabular-nums">
                       {Math.round(volume)}
                     </span>
                     <Slider
@@ -446,11 +381,12 @@ export const PlayerBar = React.memo(function PlayerBar({
             )}
           </AnimatePresence>
         </HoverCard.Root>
-        <Button style={txtBtn} onClick={onOpenLyrics} aria-label="Lyrics">
+        <Button className={txtBtnCls} onClick={onOpenLyrics} aria-label="Lyrics">
           LRC
         </Button>
         <Button
-          style={ctlBtn(dragOver)}
+          className={ctlCls}
+          style={ctlColor(dragOver)}
           onClick={onOpenQueue}
           aria-label="Up next"
           onDragOver={(e) => {
@@ -469,7 +405,12 @@ export const PlayerBar = React.memo(function PlayerBar({
         >
           <Icon.list size={18} />
         </Button>
-        <Button style={ctlBtn(false)} onClick={onOpenComments} aria-label="Comments">
+        <Button
+          className={ctlCls}
+          style={ctlColor(false)}
+          onClick={onOpenComments}
+          aria-label="Comments"
+        >
           <Icon.comment size={18} />
         </Button>
       </div>

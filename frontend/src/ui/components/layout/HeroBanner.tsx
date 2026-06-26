@@ -21,16 +21,12 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
   const open = useMorphOpen();
   return (
     <LiftCard
-      className="grain"
+      className="grain relative mb-10 h-[320px] overflow-hidden"
       scale={1.02}
       liftY={-4}
       style={{
-        position: "relative",
-        height: 320,
-        overflow: "hidden",
         background: artBg(playlist.coverSeed, playlist.gradient),
         boxShadow: "0 24px 60px -20px rgba(0,0,0,.7)",
-        marginBottom: 40,
       }}
     >
       {playlist.image && (
@@ -39,103 +35,38 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             src={playlist.image}
             alt=""
             aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 1,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              filter: "blur(40px) saturate(1.2)",
-              transform: "scale(1.18)",
-              opacity: 0.6,
-            }}
+            className="absolute inset-0 z-[1] h-full w-full scale-[1.18] object-cover opacity-60 blur-[40px] saturate-[1.2]"
           />
           <img
             src={playlist.image}
             alt=""
             aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 2,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              objectPosition: "right center",
-            }}
+            className="absolute inset-0 z-[2] h-full w-full object-contain object-right"
           />
         </>
       )}
       <div
+        className="absolute inset-0 z-[3]"
         style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 3,
           background: `linear-gradient(90deg, rgba(6,6,10,.82) 0%, rgba(6,6,10,.45) 55%, transparent 100%)`,
         }}
       />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 4,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "0 56px",
-          maxWidth: 640,
-        }}
-      >
-        <span
-          className="tag"
-          style={{ alignSelf: "flex-start", background: accent, color: "#06060a" }}
-        >
+      <div className="absolute inset-0 z-[4] flex max-w-[640px] flex-col justify-center px-14">
+        <span className="tag self-start" style={{ background: accent, color: "#06060a" }}>
           Featured
         </span>
-        <div
-          style={{
-            fontSize: 46,
-            fontWeight: 200,
-            lineHeight: 1.04,
-            letterSpacing: ".005em",
-            margin: "16px 0 14px",
-            // Real playlist names run long; clamp so the fixed-height banner holds.
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            overflowWrap: "anywhere",
-          }}
-        >
+        {/* Real playlist names run long; clamp so the fixed-height banner holds. */}
+        <div className="mb-[14px] mt-4 line-clamp-2 text-[46px] font-extralight leading-[1.04] tracking-[0.005em] [overflow-wrap:anywhere]">
           {playlist.name}
         </div>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 300,
-            color: "rgba(255,255,255,.72)",
-            maxWidth: 460,
-            lineHeight: 1.55,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
+        <div className="line-clamp-2 max-w-[460px] text-[15px] font-light leading-[1.55] text-white/[0.72]">
           {playlist.description}
         </div>
-        <div style={{ display: "flex", gap: 14, marginTop: 26, alignItems: "center" }}>
+        <div className="mt-[26px] flex items-center gap-[14px]">
           <Button
-            className="pill-accent"
+            className="pill-accent inline-flex items-center gap-2.5"
             onClick={onPlay}
-            style={{
-              fontSize: 12,
-              padding: "13px 30px",
-              display: "inline-flex",
-              gap: 10,
-              alignItems: "center",
-            }}
+            style={{ fontSize: 12, padding: "13px 30px" }}
           >
             <Icon.play size={15} /> Play
           </Button>
@@ -152,9 +83,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
           >
             Open
           </Button>
-          <span className="mlabel" style={{ color: "rgba(255,255,255,.5)", marginLeft: 6 }}>
-            {playlist.tracks.length} tracks
-          </span>
+          <span className="mlabel ml-1.5 text-white/50">{playlist.tracks.length} tracks</span>
         </div>
       </div>
     </LiftCard>

@@ -65,12 +65,12 @@ export function CardRail({
 
   return (
     <div ref={ref} className={cn("hrail", className)} style={style}>
-      {start > 0 && <div aria-hidden style={{ width: lead, flex: "0 0 auto" }} />}
+      {start > 0 && <div aria-hidden className="flex-none" style={{ width: lead }} />}
       {Array.from({ length: Math.max(0, end - start) }, (_, k) => {
         const i = start + k;
         return <React.Fragment key={itemKey ? itemKey(i) : i}>{renderItem(i)}</React.Fragment>;
       })}
-      {end < count && <div aria-hidden style={{ width: tail, flex: "0 0 auto" }} />}
+      {end < count && <div aria-hidden className="flex-none" style={{ width: tail }} />}
     </div>
   );
 }

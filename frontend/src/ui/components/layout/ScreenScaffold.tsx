@@ -32,7 +32,7 @@ export function ScreenScaffold({
 }: ScreenScaffoldProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   return (
-    <FadeIn style={{ height: "100%", position: "relative", background, ...rootStyle }}>
+    <FadeIn className="relative h-full" style={{ background, ...rootStyle }}>
       {backdrop && (
         <HeroBackdrop
           image={backdrop.image}
@@ -43,8 +43,8 @@ export function ScreenScaffold({
       )}
       <div
         ref={scrollRef}
-        className={cn("scroll", className)}
-        style={{ position: "relative", zIndex: 2, height: "100%", ...scrollStyle }}
+        className={cn("scroll relative z-[2] h-full", className)}
+        style={scrollStyle}
       >
         <ScrollProvider value={scrollRef}>{children}</ScrollProvider>
       </div>

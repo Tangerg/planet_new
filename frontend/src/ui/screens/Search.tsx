@@ -82,38 +82,19 @@ export function SearchScreen({
   const chips = SEARCH_SUGGESTIONS;
   const top = artists[0] || null;
   const emptyMsg = (text: string) => (
-    <div
-      style={{
-        textAlign: "center",
-        padding: 90,
-        color: "var(--tx-3)",
-        fontWeight: 300,
-        fontSize: 22,
-      }}
-    >
-      {text}
-    </div>
+    <div className="p-[90px] text-center text-[22px] font-light text-tx-3">{text}</div>
   );
 
   return (
     <FadeIn
-      className="scroll"
-      style={{
-        height: "100%",
-        background: "radial-gradient(120% 80% at 30% -5%, #16161d, var(--surf-0))",
-      }}
+      className="scroll h-full"
+      style={{ background: "radial-gradient(120% 80% at 30% -5%, #16161d, var(--surf-0))" }}
     >
-      <div style={{ padding: "60px 48px 44px" }}>
+      <div className="px-12 pb-[44px] pt-[60px]">
         {/* input */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            borderBottom: `1.5px solid ${accent}`,
-            paddingBottom: 14,
-            maxWidth: 640,
-          }}
+          className="flex max-w-[640px] items-center gap-4 pb-[14px]"
+          style={{ borderBottom: `1.5px solid ${accent}` }}
         >
           <span style={{ color: accent }}>
             <Icon.search size={26} />
@@ -124,28 +105,15 @@ export function SearchScreen({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search tracks, artists, albums…"
-            style={{
-              flex: 1,
-              border: 0,
-              outline: 0,
-              background: "none",
-              fontFamily: "var(--sans)",
-              fontWeight: 300,
-              fontSize: 28,
-              letterSpacing: ".01em",
-              color: "#fff",
-            }}
+            className="flex-1 border-0 bg-transparent font-sans text-[28px] font-light tracking-[0.01em] text-white outline-none"
           />
           {q && (
-            <Button
-              onClick={() => setQ("")}
-              style={{ background: "none", border: 0, color: "var(--tx-3)", cursor: "pointer" }}
-            >
+            <Button onClick={() => setQ("")} className="text-tx-3">
               <Icon.close size={20} />
             </Button>
           )}
         </div>
-        <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" }}>
+        <div className="mt-[22px] flex flex-wrap gap-2.5">
           {chips.map((c) => (
             <Button
               key={c}
@@ -165,12 +133,8 @@ export function SearchScreen({
           emptyMsg(`Nothing for “${q}”…`)
         ) : (
           <div
-            style={{
-              marginTop: 40,
-              display: "grid",
-              gridTemplateColumns: "minmax(280px, 0.9fr) minmax(0, 1.1fr)",
-              gap: 48,
-            }}
+            className="mt-10 grid gap-12"
+            style={{ gridTemplateColumns: "minmax(280px, 0.9fr) minmax(0, 1.1fr)" }}
           >
             {/* top result */}
             <div>
@@ -188,47 +152,21 @@ export function SearchScreen({
                       run: () => openArtist(top),
                     })
                   }
-                  className="grain"
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    textAlign: "left",
-                    border: 0,
-                    cursor: "pointer",
-                    background: "var(--surf-2)",
-                    padding: 24,
-                    overflow: "hidden",
-                    display: "block",
-                  }}
+                  className="grain relative block w-full overflow-hidden border-0 bg-surf-2 p-6 text-left"
                 >
                   <Art
                     seed={top.coverSeed}
                     grad={top.gradient}
                     image={top.image}
                     images={top.images}
-                    style={{
-                      width: 96,
-                      height: 96,
-                      borderRadius: "50%",
-                      boxShadow: "0 12px 30px rgba(0,0,0,.5)",
-                    }}
+                    className="rounded-full"
+                    style={{ width: 96, height: 96, boxShadow: "0 12px 30px rgba(0,0,0,.5)" }}
                     mono
                   />
-                  <div
-                    style={{
-                      fontSize: 30,
-                      fontWeight: 300,
-                      marginTop: 20,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                      overflowWrap: "anywhere",
-                    }}
-                  >
+                  <div className="mt-5 line-clamp-2 text-[30px] font-light [overflow-wrap:anywhere]">
                     {top.name}
                   </div>
-                  <span className="tag" style={{ marginTop: 14, display: "inline-block" }}>
+                  <span className="tag mt-[14px]" style={{ display: "inline-block" }}>
                     Artist
                   </span>
                 </LiftButton>
@@ -256,7 +194,7 @@ export function SearchScreen({
         )}
 
         {artists.length > 0 && (
-          <section style={{ marginTop: 44 }}>
+          <section className="mt-[44px]">
             <SectionHead title="Artists" />
             <CardRail
               count={artists.length}
@@ -279,7 +217,7 @@ export function SearchScreen({
           </section>
         )}
         {albums.length > 0 && (
-          <section style={{ marginTop: 24 }}>
+          <section className="mt-6">
             <SectionHead title="Albums" />
             <CardRail
               count={albums.length}

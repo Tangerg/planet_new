@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
 import React from "react";
 import "./index.css";
+import "@/styles/base.css";
+import "@/styles/text.css";
+import "@/components/cards/cards.css";
+import "@/components/layout/SectionHead.css";
+import "@/components/layout/CardRail.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { engine } from "./app/planet";

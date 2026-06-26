@@ -28,7 +28,6 @@ export default defineConfig({
             if (id.includes("/react-dom/") || id.includes("/react/")) return "vendor-react";
             if (id.includes("/@radix-ui/")) return "vendor-radix";
             if (id.includes("/@tanstack/")) return "vendor-tanstack";
-            if (id.includes("/lucide-react/")) return "vendor-icons";
             if (id.includes("/zustand/") || id.includes("/ky/")) return "vendor-state";
           }
         },

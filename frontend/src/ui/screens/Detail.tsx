@@ -8,7 +8,7 @@ import { sortTracks, trackFlowItems, type SortMode, type FlowItem } from "@/mode
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
-import { Icon, Art, artBg, artPair, HeroBackdrop } from "@/components/primitives";
+import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { FadeIn, Rise, XFade } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { CoverFlow } from "@/components/CoverFlow";
@@ -101,16 +101,8 @@ export function PlaylistDetailScreen({
       {/* sticky condensed header on scroll */}
       <div
         ref={stickyRef}
+        className="absolute inset-x-0 top-0 z-30 flex items-center gap-[14px] py-[14px] pl-[100px] pr-12"
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "14px 48px 14px 100px",
           background: "rgba(12,12,16,.72)",
           backdropFilter: "blur(22px)",
           WebkitBackdropFilter: "blur(22px)",
@@ -124,58 +116,31 @@ export function PlaylistDetailScreen({
         <Button
           onClick={playFirst}
           aria-label="Play"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: 0,
-            flex: "0 0 auto",
-            cursor: "pointer",
-            background: accent,
-            color: "#06060a",
-            display: "grid",
-            placeItems: "center",
-            boxShadow: `0 6px 18px -4px ${accent}`,
-          }}
+          className="grid h-10 w-10 flex-none place-items-center rounded-full"
+          style={{ background: accent, color: "#06060a", boxShadow: `0 6px 18px -4px ${accent}` }}
         >
           <Icon.play size={16} />
         </Button>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 6,
-            flex: "0 0 auto",
-            background: artBg(p.coverSeed, p.gradient),
-            boxShadow: "0 4px 12px rgba(0,0,0,.4)",
-          }}
+        <Art
+          seed={p.coverSeed}
+          grad={p.gradient}
+          image={p.image}
+          images={p.images}
+          px={34}
+          className="h-[34px] w-[34px] flex-none"
+          style={{ boxShadow: "0 4px 12px rgba(0,0,0,.4)" }}
         />
-        <span className="truncate" style={{ fontSize: 20, fontWeight: 300, flex: 1, minWidth: 0 }}>
-          {p.name}
-        </span>
+        <span className="truncate min-w-0 flex-1 text-[20px] font-light">{p.name}</span>
       </div>
 
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="scroll"
-        style={{ position: "relative", zIndex: 2, height: "100%" }}
-      >
+      <div ref={scrollRef} onScroll={handleScroll} className="scroll relative z-[2] h-full">
         <ScrollProvider value={scrollRef}>
           {/* HERO banner — cover + meta side by side. minHeight (not height): real
               titles/descriptions run far longer than the example's, so the
               bottom-aligned column grows DOWN instead of overflowing UP. */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: 34,
-              minHeight: HERO,
-              padding: "0 48px 32px",
-              maxWidth: 1320,
-              margin: "0 auto",
-              boxSizing: "border-box",
-            }}
+            className="mx-auto box-border flex max-w-[1320px] items-end gap-[34px] px-12 pb-8"
+            style={{ minHeight: HERO }}
           >
             <Art
               seed={p.coverSeed}
@@ -183,19 +148,12 @@ export function PlaylistDetailScreen({
               image={p.image}
               images={p.images}
               data-hero="1"
-              style={{
-                width: 248,
-                height: 248,
-                flex: "0 0 auto",
-                borderRadius: 8,
-                boxShadow: "0 30px 70px -10px rgba(0,0,0,.7)",
-              }}
+              className="flex-none"
+              style={{ width: 248, height: 248, boxShadow: "0 30px 70px -10px rgba(0,0,0,.7)" }}
               glow={b1}
             />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <span className="mlabel" style={{ color: "rgba(255,255,255,.7)" }}>
-                {p.kind || "Playlist"}
-              </span>
+            <div className="min-w-0 flex-1">
+              <span className="mlabel text-white/70">{p.kind || "Playlist"}</span>
               <TextReveal
                 lines={2}
                 full={<span style={{ fontSize: 20, fontWeight: 300 }}>{p.name}</span>}
@@ -226,19 +184,13 @@ export function PlaylistDetailScreen({
                   {p.description}
                 </TextReveal>
               )}
-              <div className="mlabel" style={{ color: "rgba(255,255,255,.5)", marginTop: 14 }}>
+              <div className="mlabel mt-[14px] text-white/50">
                 {p.owner} · {total} tracks
               </div>
-              <div style={{ display: "flex", gap: 14, marginTop: 26 }}>
+              <div className="mt-[26px] flex gap-[14px]">
                 <Button
-                  className="pill-accent"
-                  style={{
-                    fontSize: 12,
-                    padding: "12px 26px",
-                    display: "inline-flex",
-                    gap: 10,
-                    alignItems: "center",
-                  }}
+                  className="pill-accent inline-flex items-center gap-2.5"
+                  style={{ fontSize: 12, padding: "12px 26px" }}
                   onClick={playFirst}
                 >
                   <Icon.play size={15} /> Play
@@ -252,31 +204,15 @@ export function PlaylistDetailScreen({
 
           {/* CONTENT — width-capped, centered, with view toggle */}
           <div
-            style={{
-              maxWidth: 1320,
-              margin: "0 auto",
-              padding: view === "flow" ? "8px 48px 30px" : "8px 48px 40px",
-              boxSizing: "border-box",
-            }}
+            className="mx-auto box-border max-w-[1320px]"
+            style={{ padding: view === "flow" ? "8px 48px 30px" : "8px 48px 40px" }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 14,
-              }}
-            >
+            <div className="mb-[14px] flex items-center justify-between">
               <SectionHead title="Tracks" size={22} />
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div className="flex items-center gap-4">
                 {view === "list" && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span
-                      className="mlabel"
-                      style={{ color: "rgba(255,255,255,.35)", fontSize: 10, marginRight: 4 }}
-                    >
-                      Sort
-                    </span>
+                  <div className="flex items-center gap-1">
+                    <span className="mlabel mr-1 text-[10px] text-white/35">Sort</span>
                     <ToggleGroup
                       ariaLabel="Sort tracks"
                       className="sortseg"
@@ -340,7 +276,7 @@ export function PlaylistDetailScreen({
                 />
               )}
               {view === "flow" && (
-                <div style={{ height: 520, margin: "0 -48px" }}>
+                <div className="-mx-12 h-[520px]">
                   <CoverFlow
                     items={trackFlowItems(p.tracks)}
                     center={Math.min(flowCenter, total - 1)}
@@ -361,69 +297,34 @@ export function PlaylistDetailScreen({
         // Flex-centred strip: the bar travels up via <Rise> (Motion owns its
         // transform), so the old translateX(-50%) centring would clash — centre
         // it with the wrapper instead. Strip is click-through; bar re-enables it.
-        <div
-          style={{
-            position: "absolute",
-            bottom: 26,
-            left: 0,
-            right: 0,
-            zIndex: 40,
-            display: "flex",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}
-        >
+        <div className="pointer-events-none absolute inset-x-0 bottom-[26px] z-40 flex justify-center">
           <Rise
+            className="pointer-events-auto flex items-center gap-[18px] rounded-full py-3 pl-[22px] pr-[14px]"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 18,
-              padding: "12px 14px 12px 22px",
               background: "rgba(20,20,24,.92)",
-              borderRadius: 999,
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               border: "1px solid rgba(255,255,255,.12)",
               boxShadow: "0 18px 50px -12px rgba(0,0,0,.7)",
-              pointerEvents: "auto",
             }}
           >
-            <span className="mlabel" style={{ color: "#fff", fontSize: 11 }}>
-              {sel.size} selected
-            </span>
+            <span className="mlabel text-[11px] text-white">{sel.size} selected</span>
             <Button
-              className="mlabel"
+              className="mlabel rounded-full px-[14px] py-2 text-[10px]"
               onClick={() => {
                 p.tracks.filter((t) => sel.has(t.id)).forEach((t) => enqueue(t.id));
                 setSel(new Set());
               }}
-              style={{
-                fontSize: 10,
-                padding: "8px 14px",
-                borderRadius: 999,
-                border: 0,
-                cursor: "pointer",
-                background: accent,
-                color: "#06060a",
-              }}
+              style={{ background: accent, color: "#06060a" }}
             >
               Add to queue
             </Button>
             <Button
-              className="mlabel"
+              className="mlabel rounded-full border border-white/20 bg-transparent px-[14px] py-2 text-[10px] text-white"
               onClick={() => {
                 const first = p.tracks.find((t) => sel.has(t.id));
                 if (first) onPlay(first);
                 setSel(new Set());
-              }}
-              style={{
-                fontSize: 10,
-                padding: "8px 14px",
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,.2)",
-                cursor: "pointer",
-                background: "transparent",
-                color: "#fff",
               }}
             >
               Play
@@ -431,15 +332,7 @@ export function PlaylistDetailScreen({
             <Button
               onClick={() => setSel(new Set())}
               aria-label="Clear"
-              style={{
-                background: "none",
-                border: 0,
-                cursor: "pointer",
-                color: "rgba(255,255,255,.6)",
-                display: "grid",
-                placeItems: "center",
-                padding: 4,
-              }}
+              className="grid place-items-center p-1 text-white/60"
             >
               <Icon.close size={16} />
             </Button>

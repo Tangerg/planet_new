@@ -37,8 +37,8 @@ export function CardGrid({
   if (!scroller) {
     return (
       <div
+        className="grid"
         style={{
-          display: "grid",
           gridTemplateColumns: `repeat(auto-fill, minmax(${minColumnWidth}px, 1fr))`,
           gap,
         }}

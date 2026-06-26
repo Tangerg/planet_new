@@ -1,0 +1,20 @@
+@reference "../../../index.css";
+
+/* Radix-backed switch; visuals match the former hand-rolled toggle. */
+.vswitch {
+  @apply relative h-[26px] w-[46px] flex-none cursor-pointer rounded-full border-0 p-0;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.2s;
+}
+.vswitch[data-state="checked"] {
+  background: var(--accent);
+}
+.vswitch-thumb {
+  @apply absolute left-[3px] top-[3px] block h-5 w-5 rounded-full bg-white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+  will-change: transform;
+}
+.vswitch-thumb[data-state="checked"] {
+  transform: translateX(20px);
+}

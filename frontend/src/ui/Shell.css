@@ -1,0 +1,48 @@
+@reference "../index.css";
+
+/* ---- desktop window shell ----
+   No native frame: .win fills the entire client window; the in-page traffic
+   lights + top bar are the faux decoration. The OS owns the window size; the
+   interior follows it 100%. */
+.win-stage {
+  @apply h-full w-full;
+}
+.win {
+  @apply relative flex h-full w-full flex-col overflow-hidden rounded-none bg-ink isolate;
+}
+.traffic {
+  @apply absolute left-[18px] top-[18px] z-[60] flex gap-2;
+}
+/* dots are native <button> (Button primitive) — real window actions, native
+   keyboard/focus; .btn (base layer) supplies the chrome reset, the colour wins. */
+.traffic button {
+  @apply block h-3 w-3 rounded-full;
+}
+.traffic .r {
+  background: #ff5f57;
+}
+.traffic .y {
+  background: #febc2e;
+}
+.traffic .g {
+  background: #28c840;
+}
+.traffic.muted button {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.win-tools {
+  @apply absolute right-[18px] top-4 z-[60] flex items-center gap-4;
+  color: rgba(255, 255, 255, 0.7);
+}
+.win-tools.dark {
+  color: rgba(10, 10, 12, 0.45);
+}
+.win-tools button {
+  @apply grid cursor-pointer appearance-none place-items-center rounded-md border-0 bg-transparent p-1;
+  color: inherit;
+  transition: opacity 0.15s;
+}
+.win-tools button:hover {
+  opacity: 0.6;
+}
