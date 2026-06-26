@@ -2,6 +2,11 @@
 .idea
 .vscode
 
+# —— Agent / 工具链（本地，不入库） —— #
+.agents
+.claude
+skills-lock.json
+
 # —— 构建产物 —— #
 build/bin
 frontend/dist
