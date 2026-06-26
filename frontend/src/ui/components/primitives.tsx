@@ -9,6 +9,7 @@ import React from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { pickImageUrl, type Image } from "@domain/model/image";
+import "./primitives.css";
 
 /* ---- icons (clean geometric, stroke-based) ---- */
 export type IconProps = React.SVGProps<SVGSVGElement> & {
@@ -231,21 +232,14 @@ export function Equalizer({
 }) {
   const bars = [0, 1, 2, 3];
   return (
-    <span
-      style={{ display: "inline-flex", alignItems: "flex-end", gap: 2, height: size, width: size }}
-    >
+    <span className="inline-flex items-end gap-0.5" style={{ height: size, width: size }}>
       {bars.map((i) => (
         // Full-height bar scaled from the bottom — scaleY is GPU-composited, so it
         // doesn't thrash layout the way the old `height` keyframe did.
         <motion.span
           key={i}
-          style={{
-            width: 2.5,
-            background: color,
-            borderRadius: 2,
-            height: "100%",
-            transformOrigin: "bottom",
-          }}
+          className="h-full w-[2.5px] origin-bottom rounded-[2px]"
+          style={{ background: color }}
           initial={false}
           animate={playing ? { scaleY: [0.3, 1, 0.3] } : { scaleY: 0.4 }}
           transition={
@@ -335,6 +329,10 @@ export function Art({
     <div
       className={"grain " + className}
       {...rest}
+      // position/overflow stay INLINE (not utilities) so a consumer can flip
+      // position to absolute via its own style spread (e.g. full-bleed bg / hero
+      // covers) — a `position` utility here would tie with the consumer's and the
+      // winner would hinge on Tailwind's emission order.
       style={{ position: "relative", overflow: "hidden", background: bg, ...style }}
     >
       {src && (
@@ -348,15 +346,8 @@ export function Art({
           // the gradient→image fill are unaffected.
           loading="lazy"
           decoding="async"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: mono ? "grayscale(1) contrast(1.05)" : "none",
-            zIndex: 0,
-          }}
+          className="absolute inset-0 z-0 h-full w-full object-cover"
+          style={{ filter: mono ? "grayscale(1) contrast(1.05)" : "none" }}
         />
       )}
       {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real
@@ -364,16 +355,13 @@ export function Art({
          it once an image is present. */}
       {glow && !src && (
         <div
+          className="pointer-events-none absolute inset-0 z-[2]"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            pointerEvents: "none",
             background: `radial-gradient(45% 45% at 50% 50%, ${glow}55 0%, transparent 70%)`,
           }}
         />
       )}
-      <div style={{ position: "relative", zIndex: 3, height: "100%" }}>{children}</div>
+      <div className="relative z-[3] h-full">{children}</div>
     </div>
   );
 }
@@ -453,7 +441,7 @@ export function HeroBackdrop({
         {layer("b")}
         <div className="herobg-grain" />
       </div>
-      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, background: scrim }} />
+      <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: scrim }} />
     </>
   );
 }

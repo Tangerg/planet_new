@@ -1,0 +1,19 @@
+@reference "../../index.css";
+
+/* Frosted-glass player bar. The bounded `.glass-frost` layer carries the
+   backdrop blur so it never flickers; the WKWebView shell needs the -webkit-
+   prefix, so the backdrop-filter stays raw rather than going through Tailwind. */
+.glassbar {
+  @apply relative z-50 flex h-[84px] shrink-0 grow-0 basis-[84px] items-center overflow-visible isolate;
+  /* a hairline of light along the top edge */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+.glassbar > .glass-frost {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  transition: background 0.45s ease;
+}

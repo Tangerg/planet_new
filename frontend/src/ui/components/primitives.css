@@ -1,0 +1,87 @@
+/* ============================================================
+   Art primitives — grain overlay, the living HeroBackdrop, the <image-slot>
+   web-component slot, and the [data-hero] stage sheen. All of these are pure
+   "complex visual" rules (pseudo-elements, SVG-noise data-URIs, mix-blend-mode,
+   heavy blur/saturate filters, ::part) that have no Tailwind utility equivalent,
+   so they stay raw CSS. `.grain` is also a morph query target (the flying tile),
+   so its class name must stay a literal global selector.
+   ============================================================ */
+
+/* grain overlay — a fine film-noise wash on cover art */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- HeroBackdrop: living ambient artwork ----------------------------------
+   Two blurred copies of the cover, sampled from different regions and drifting
+   in opposite directions, make the dominant hues slowly cross — the page reads
+   as alive rather than one static smear. A fine grain layer kills gradient
+   banding for a filmic finish. Heavy blur is rasterised once; only the
+   GPU-composited transform animates (driven by Motion in primitives.tsx), so the
+   loop is cheap. */
+.herobg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.herobg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform: translateZ(0);
+}
+.herobg-a {
+  filter: blur(46px) saturate(1.55);
+  opacity: 0.72;
+}
+.herobg-b {
+  object-position: 72% 28%;
+  filter: blur(82px) saturate(1.5);
+  opacity: 0.44;
+}
+.herobg-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* <image-slot> web component: when empty, show only the gradient art — no dark
+   caption/icon clutter bleeding through on lighter covers. */
+image-slot {
+  --is-bg: transparent;
+  --is-border: none;
+}
+image-slot::part(empty) {
+  opacity: 0;
+}
+
+/* any hero surface becomes a lit focal stage (top-down screen sheen) */
+[data-hero] {
+  position: relative;
+}
+[data-hero]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(72% 60% at 50% 8%, rgba(255, 255, 255, 0.08), transparent 60%);
+  mix-blend-mode: screen;
+}

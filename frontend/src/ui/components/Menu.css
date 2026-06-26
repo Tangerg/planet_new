@@ -1,0 +1,33 @@
+@reference "../../index.css";
+
+/* Right-click context menu (Radix). Gradient fill, frosted backdrop and the
+   layered drop/inset shadow stay raw; layout/type go through Tailwind. */
+.ctxmenu {
+  @apply rounded-[12px] border border-white/12 p-1.5;
+  background: linear-gradient(180deg, rgba(28, 28, 34, 0.97), rgba(14, 14, 18, 0.97));
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 24px 60px -16px rgba(0, 0, 0, 0.8);
+}
+.ctxitem {
+  @apply flex w-full cursor-pointer items-center gap-3 rounded-[8px] border-0 bg-transparent px-3 py-[9px] text-left text-[13.5px] text-white;
+  transition: background 0.12s;
+}
+.ctxitem:hover,
+.ctxitem[data-highlighted] {
+  background: rgba(255, 255, 255, 0.09);
+}
+.ctxico {
+  @apply grid flex-none place-items-center;
+}
+.ctxlabel {
+  @apply flex-1 whitespace-nowrap;
+}
+.ctxhint {
+  @apply font-mono text-[10px] text-white/35;
+}
+.ctxsep {
+  @apply mx-2 my-[5px] h-px bg-white/10;
+}

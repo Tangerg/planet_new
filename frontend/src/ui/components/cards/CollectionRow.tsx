@@ -47,25 +47,17 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
         }
       }}
       onContextMenu={(e) => collMenu(e, item)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "9px 14px",
-        cursor: "pointer",
-        background: hover ? "rgba(255,255,255,.06)" : "transparent",
-        transition: "background .15s",
-        borderRadius: 8,
-      }}
+      className="flex cursor-pointer items-center gap-4 rounded-[8px] px-[14px] py-[9px] transition-[background] duration-150"
+      style={{ background: hover ? "rgba(255,255,255,.06)" : "transparent" }}
     >
-      <div style={{ position: "relative", flex: "0 0 auto" }}>
+      <div className="relative flex-none">
         <Art
           className="clrt"
           seed={item.coverSeed}
           grad={item.gradient}
           image={item.image}
           images={item.images}
-          style={{ width: 48, height: 48, borderRadius: round ? "50%" : 4 }}
+          style={{ width: 48, height: 48, borderRadius: round ? "50%" : 0 }}
         />
         {onPlay && hover && (
           <Button
@@ -74,55 +66,18 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
               onPlay();
             }}
             aria-label="Play"
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "grid",
-              placeItems: "center",
-              background: "rgba(0,0,0,.42)",
-              border: 0,
-              color: "#fff",
-              cursor: "pointer",
-              borderRadius: round ? "50%" : 4,
-            }}
+            className="absolute inset-0 grid place-items-center text-white"
+            style={{ background: "rgba(0,0,0,.42)", borderRadius: round ? "50%" : 0 }}
           >
             <Icon.play size={18} />
           </Button>
         )}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 400,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {item.name}
-        </div>
-        <div
-          style={{
-            fontSize: 12.5,
-            fontWeight: 300,
-            color: "rgba(255,255,255,.5)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {sub}
-        </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[15px] font-normal">{item.name}</div>
+        <div className="truncate text-[12.5px] font-light text-white/50">{sub}</div>
       </div>
-      {meta && (
-        <span
-          className="mlabel"
-          style={{ color: "rgba(255,255,255,.4)", fontSize: 11, flex: "0 0 auto" }}
-        >
-          {meta}
-        </span>
-      )}
+      {meta && <span className="mlabel flex-none text-[11px] text-white/40">{meta}</span>}
     </div>
   );
 }

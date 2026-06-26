@@ -1,0 +1,24 @@
+@reference "../../../index.css";
+
+/* Text-reveal popover: the full text of any clamped label. Frosted glass that
+   lets the atmospheric backdrop bleed through (blur + saturate pick up the page
+   hue); edges feathered to transparent (mask) so it melts into the page. Shown
+   only when the source text overflows. The gradient fill, backdrop-filter, mask
+   and Radix transform-origin have no Tailwind equivalent, so they stay raw. */
+.textpop {
+  @apply max-w-[400px] text-[14px] font-light;
+  max-height: min(58vh, 460px);
+  padding: 20px 26px 22px;
+  line-height: 1.62;
+  letter-spacing: 0.004em;
+  color: rgba(255, 255, 255, 0.93);
+  background: linear-gradient(180deg, rgba(24, 24, 31, 0.6), rgba(15, 15, 21, 0.66));
+  -webkit-backdrop-filter: blur(60px) saturate(132%) brightness(0.94);
+  backdrop-filter: blur(60px) saturate(132%) brightness(0.94);
+  -webkit-mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
+  mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
+  /* enter/exit are Motion (TextReveal.tsx); origin points at Radix's computed
+     value so the scale grows from the side the card opens on. */
+  transform-origin: var(--radix-hover-card-content-transform-origin);
+  z-index: 9000;
+}

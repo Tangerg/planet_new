@@ -38,7 +38,7 @@ export function HistoryScreen({
 
   const Group = ({ label, items }: { label: string; items: VibeTrack[] }) =>
     items.length ? (
-      <div style={{ marginBottom: 36 }}>
+      <div className="mb-9">
         <SectionHead title={label} style={{ marginBottom: 6 }} />
         {items.map((t, i) => (
           <TrackRow
@@ -58,60 +58,36 @@ export function HistoryScreen({
     ) : null;
 
   return (
-    <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
+    <FadeIn className="relative h-full bg-[#0a0a0d]">
       <HeroBackdrop image={hero?.image} seed={hero?.coverSeed || 0} grad={hero?.gradient} />
-      <div className="scroll" style={{ position: "relative", zIndex: 2, height: "100%" }}>
-        <div style={{ padding: "70px 56px 30px", maxWidth: 1180, margin: "0 auto" }}>
+      <div className="scroll relative z-[2] h-full">
+        <div className="mx-auto max-w-[1180px] px-14 pb-[30px] pt-[70px]">
           {/* header */}
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 30, marginBottom: 46 }}>
+          <div className="mb-[46px] flex items-end gap-[30px]">
             <Art
               seed={hero?.coverSeed || 0}
               grad={hero?.gradient}
               image={hero?.image}
               data-hero="1"
-              style={{
-                width: 168,
-                height: 168,
-                flex: "0 0 auto",
-                boxShadow: "0 30px 70px -18px rgba(0,0,0,.6)",
-              }}
+              className="flex-none"
+              style={{ width: 168, height: 168, boxShadow: "0 30px 70px -18px rgba(0,0,0,.6)" }}
               glow={artPair(hero?.coverSeed || 0, hero?.gradient)[1]}
             />
-            <div style={{ minWidth: 0, paddingBottom: 6 }}>
+            <div className="min-w-0 pb-1.5">
               <span className="mlabel" style={{ color: accent, letterSpacing: ".2em" }}>
                 Consumption
               </span>
-              <div
-                style={{
-                  fontSize: 56,
-                  fontWeight: 200,
-                  letterSpacing: "-.015em",
-                  lineHeight: 1,
-                  margin: "12px 0 16px",
-                }}
-              >
+              <div className="mb-4 mt-3 text-[56px] font-extralight leading-none tracking-[-0.015em]">
                 History
               </div>
-              <div style={{ fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,.55)" }}>
+              <div className="text-[14px] font-light text-white/[0.55]">
                 Everything you've played recently · {total} tracks
               </div>
               {hero && (
                 <Button
                   onClick={() => onPlay(hero)}
-                  className="pill-accent"
-                  style={{
-                    marginTop: 22,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 9,
-                    border: 0,
-                    cursor: "pointer",
-                    padding: "11px 22px",
-                    borderRadius: 999,
-                    background: accent,
-                    color: "#06060a",
-                    fontWeight: 500,
-                  }}
+                  className="pill-accent mt-[22px] inline-flex items-center gap-[9px] font-medium"
+                  style={{ padding: "11px 22px", color: "#06060a" }}
                 >
                   <Icon.play size={16} /> Resume listening
                 </Button>
@@ -122,11 +98,7 @@ export function HistoryScreen({
           <Group label="Today" items={today} />
           <Group label="Earlier this week" items={week} />
           <Group label="Earlier" items={earlier} />
-          {!total && (
-            <div style={{ padding: 50, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
-              Nothing played yet.
-            </div>
-          )}
+          {!total && <div className="p-[50px] font-light text-white/40">Nothing played yet.</div>}
         </div>
       </div>
     </FadeIn>

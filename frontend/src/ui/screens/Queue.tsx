@@ -33,29 +33,15 @@ export function QueueScreen({
   const scrollRef = useRef<HTMLDivElement>(null);
   return (
     <FadeIn
-      style={{
-        height: "100%",
-        position: "relative",
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
-        background: "#0a0a0d",
-      }}
+      className="relative grid h-full bg-[#0a0a0d]"
+      style={{ gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)" }}
     >
       <HeroBackdrop
         image={current?.image}
         seed={current?.coverSeed || 0}
         grad={current?.gradient}
       />
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          padding: "70px 48px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
+      <div className="relative z-[2] flex flex-col justify-center px-12 py-[70px]">
         <span className="mlabel" style={{ color: accent }}>
           Now Playing
         </span>
@@ -65,51 +51,19 @@ export function QueueScreen({
           image={current?.image}
           images={current?.images}
           data-hero="1"
-          style={{
-            width: 220,
-            height: 220,
-            marginTop: 22,
-            boxShadow: "0 30px 70px rgba(0,0,0,.55)",
-          }}
+          className="mt-[22px]"
+          style={{ width: 220, height: 220, boxShadow: "0 30px 70px rgba(0,0,0,.55)" }}
           glow={artPair(current?.coverSeed || 0, current?.gradient)[1]}
         />
-        <div
-          style={{
-            fontSize: 30,
-            fontWeight: 300,
-            marginTop: 26,
-            maxWidth: "100%",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            overflowWrap: "anywhere",
-          }}
-        >
+        <div className="mt-[26px] line-clamp-2 max-w-full text-[30px] font-light [overflow-wrap:anywhere]">
           {current?.title}
         </div>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 300,
-            color: "rgba(255,255,255,.55)",
-            maxWidth: "100%",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
+        <div className="max-w-full truncate text-[15px] font-light text-white/[0.55]">
           {current?.artist}
         </div>
       </div>
-      <div
-        className="scroll"
-        ref={scrollRef}
-        style={{ position: "relative", zIndex: 2, padding: "64px 24px 30px" }}
-      >
-        <div className="mlabel" style={{ color: "rgba(255,255,255,.5)", padding: "0 14px 14px" }}>
-          Up Next · {queue.length}
-        </div>
+      <div className="scroll relative z-[2] px-6 pb-[30px] pt-16" ref={scrollRef}>
+        <div className="mlabel px-[14px] pb-[14px] text-white/50">Up Next · {queue.length}</div>
         {queue.length > 0 ? (
           <ScrollProvider value={scrollRef}>
             <VList
@@ -132,9 +86,7 @@ export function QueueScreen({
             />
           </ScrollProvider>
         ) : (
-          <div style={{ padding: 40, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>
-            Queue is empty.
-          </div>
+          <div className="p-10 font-light text-white/40">Queue is empty.</div>
         )}
       </div>
     </FadeIn>

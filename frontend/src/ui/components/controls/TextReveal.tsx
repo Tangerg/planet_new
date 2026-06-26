@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import React, { useLayoutEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/cn";
+import "./TextReveal.css";
 
 type Props = {
   /** The text to show — clamped in place, revealed in full on hover when it overflows. */

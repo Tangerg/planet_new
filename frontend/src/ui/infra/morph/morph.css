@@ -1,0 +1,40 @@
+/* ============================================================
+   Morph engine styles — private to the shared-element transition. The resident
+   container (`.view`), the frozen outgoing layer (`.t-from`) and the content
+   settle (`.view-emerge`) are load-bearing for the page-to-page morph; they are
+   NOT Tailwind-ified (keyframes + the `!important` animation freeze have no
+   utility equivalent and any drift would break the transition). The flying
+   tile's `.grain` overlay is owned by primitives.css (the Art component).
+   ============================================================ */
+.view {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The outgoing-screen layer freezes its in-page Motion/CSS animations while it
+   morphs out (belt-and-suspenders alongside useMorphFrozen). */
+.t-from,
+.t-from * {
+  animation: none !important;
+}
+
+/* content settle paired with the container-transform overlay */
+.view-emerge {
+  height: 100%;
+  animation: viewEmerge 0.42s ease 0.04s both;
+}
+@keyframes viewEmerge {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .view-emerge {
+    animation: none;
+  }
+}

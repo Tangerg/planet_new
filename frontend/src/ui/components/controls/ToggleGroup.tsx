@@ -1,5 +1,6 @@
 import * as RTG from "@radix-ui/react-toggle-group";
 import React from "react";
+import "./ToggleGroup.css";
 
 export type ToggleItem = {
   value: string;

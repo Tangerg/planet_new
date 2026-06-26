@@ -1,5 +1,6 @@
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { Icon } from "@/components/primitives";
+import "./ViewToggle.css";
 
 type ViewToggleProps = {
   value: string;

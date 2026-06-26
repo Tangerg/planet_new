@@ -1,0 +1,20 @@
+@reference "../../../index.css";
+
+/* Shared <Button> primitive: the chrome reset every control repeated, plus a
+   tactile :active press. Font/color stay per-button (inheriting here would shift
+   bare text buttons); the keyboard focus halo is global (base.css).
+
+   In `@layer base` ON PURPOSE — it's a RESET, so it must sit BELOW the
+   `components`-layer vocabulary (`.pill-accent`/`.pill-ghost`/`.chip`): a
+   `<Button className="pill-accent">` needs the pill's `background`/`border` to
+   win over this reset's `bg-transparent`/`border-0`. (Layer order: base <
+   components < utilities, so utilities still override the pill too.) */
+@layer base {
+  .btn {
+    @apply cursor-pointer appearance-none border-0 bg-transparent;
+    transition: transform 0.08s ease;
+  }
+  .btn:active {
+    transform: translateY(0.5px) scale(0.96);
+  }
+}

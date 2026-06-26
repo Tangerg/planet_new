@@ -1,0 +1,71 @@
+@reference "../../../index.css";
+
+/* Radix ToggleGroup variants, keyed off [data-state]:
+   .tabs/.tab — artist/profile/library section tabs (centred accent underline);
+   .seg      — settings segmented control (accent fill);
+   .sortseg  — detail track sort selector. Underline pseudo + accent fills + the
+   hover/state colours stay raw; layout/type go through Tailwind. */
+.tabs {
+  @apply flex gap-7 border-b border-line;
+}
+/* inner row of tabs so a view toggle can sit beside it while .tabs keeps the
+   full-width underline */
+.tabgroup {
+  @apply flex gap-7;
+}
+.tab {
+  @apply relative cursor-pointer border-0 bg-transparent pb-[14px] font-mono text-[12px] uppercase tracking-[0.14em] text-tx-3;
+  transition: color 0.2s;
+}
+.tab:hover {
+  color: var(--tx-2);
+}
+.tab[data-state="on"] {
+  color: var(--tx);
+}
+/* short centred accent underline (Listen1-style) — old shrinks, new grows */
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  height: 2px;
+  width: 22px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  box-shadow: 0 0 10px -1px var(--accent);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.tab[data-state="on"]::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.seg {
+  @apply inline-flex border border-[rgba(255,255,255,0.18)];
+}
+.seg button {
+  @apply cursor-pointer border-0 bg-transparent px-[18px] py-[9px] font-mono text-[11px] uppercase tracking-[0.1em] text-white/60;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.seg button[data-state="on"] {
+  background: var(--accent);
+  color: #06060a;
+}
+
+.sortseg {
+  @apply inline-flex;
+}
+.sortseg button {
+  @apply cursor-pointer rounded-md border-0 bg-transparent px-[9px] py-[5px] font-mono text-[10px] uppercase tracking-[0.18em] text-white/45;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.sortseg button[data-state="on"] {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}

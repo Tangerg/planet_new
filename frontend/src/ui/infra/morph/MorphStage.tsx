@@ -1,6 +1,7 @@
 import React from "react";
 import type { RefObject } from "react";
 
+import "./morph.css";
 import { MorphFrozen } from "./context";
 import { EASE, layerStyle, type Transition } from "./useMorphTransition";
 

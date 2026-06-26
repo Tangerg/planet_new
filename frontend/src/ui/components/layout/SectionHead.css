@@ -1,0 +1,31 @@
+@reference "../../../index.css";
+
+/* Section heading row: title + optional "see all" action. The signature short
+   accent tick (::before) and the accent hover stay raw. */
+.sech {
+  @apply mb-4 flex items-baseline justify-between;
+}
+.sech h2 {
+  @apply relative m-0 pl-[14px] text-[25px] font-light text-white;
+  letter-spacing: -0.012em;
+}
+/* short accent tick to the left of every section heading (Listen1-style) */
+.sech h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0.82em;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px -1px var(--accent);
+}
+.sech .all {
+  @apply cursor-pointer border-0 bg-transparent font-mono text-[11px] uppercase tracking-[0.14em] text-white/45;
+  transition: color 0.15s;
+}
+.sech .all:hover {
+  color: var(--accent);
+}

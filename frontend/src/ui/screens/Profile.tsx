@@ -24,7 +24,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
   }));
   const [active, setActive] = useState(1);
   return (
-    <FadeIn style={{ height: "100%", position: "relative" }}>
+    <FadeIn className="relative h-full">
       <Art
         seed={3}
         grad={["#16161c", "#2a2a33"]}
@@ -32,64 +32,42 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
         style={{ position: "absolute", inset: 0 }}
       >
         <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(180deg, rgba(8,8,11,.4), rgba(8,8,11,.7))",
-          }}
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(8,8,11,.4), rgba(8,8,11,.7))" }}
         />
       </Art>
       <div
-        style={{
-          position: "relative",
-          zIndex: 4,
-          height: "100%",
-          display: "grid",
-          // minmax(0,…) so the panels shrink on a narrow window instead of clipping.
-          gridTemplateColumns: "minmax(0, 300px) minmax(0, 280px) minmax(0, 1fr)",
-          gap: 0,
-          padding: "70px 56px 40px",
-          alignItems: "start",
-        }}
+        // minmax(0,…) so the panels shrink on a narrow window instead of clipping.
+        className="relative z-[4] grid h-full items-start gap-0 px-14 pb-10 pt-[70px]"
+        style={{ gridTemplateColumns: "minmax(0, 300px) minmax(0, 280px) minmax(0, 1fr)" }}
       >
         {/* identity panel */}
         <div
-          className="grain"
-          style={{
-            background: `linear-gradient(160deg, ${accent}, ${b})`,
-            color: "#fff",
-            padding: "34px 30px",
-            minHeight: 320,
-          }}
+          className="grain min-h-[320px] px-[30px] py-[34px] text-white"
+          style={{ background: `linear-gradient(160deg, ${accent}, ${b})` }}
         >
-          <div className="mlabel" style={{ opacity: 0.8 }}>
-            Name
+          <div className="mlabel opacity-80">Name</div>
+          <div className="mb-7 mt-2 text-[26px] font-light">Lily Tran</div>
+          <div className="flex items-baseline gap-2.5">
+            <span className="text-[40px] font-extralight">598</span>
+            <span className="mlabel opacity-85">Followers</span>
           </div>
-          <div style={{ fontSize: 26, fontWeight: 300, margin: "8px 0 28px" }}>Lily Tran</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ fontSize: 40, fontWeight: 200 }}>598</span>
-            <span className="mlabel" style={{ opacity: 0.85 }}>
-              Followers
-            </span>
+          <div className="mt-[18px] flex items-baseline gap-2.5">
+            <span className="text-[40px] font-extralight">6</span>
+            <span className="mlabel opacity-85">Following</span>
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 18 }}>
-            <span style={{ fontSize: 40, fontWeight: 200 }}>6</span>
-            <span className="mlabel" style={{ opacity: 0.85 }}>
-              Following
-            </span>
-          </div>
-          <div style={{ marginTop: 30, fontWeight: 300, fontSize: 15, opacity: 0.9 }}>
+          <div className="mt-[30px] text-[15px] font-light opacity-90">
             Chasing reverb &amp; slow choruses.
           </div>
         </div>
         {/* photo */}
-        <Art seed={9} grad={["#241003", "#ffb02e"]} mono style={{ height: 380, marginLeft: -1 }} />
+        <Art seed={9} grad={["#241003", "#ffb02e"]} mono className="-ml-px h-[380px]" />
         {/* playlists */}
-        <div className="scroll" style={{ height: "100%", maxHeight: 420, paddingLeft: 44 }}>
-          <span className="tag" style={{ marginBottom: 18, display: "inline-block" }}>
+        <div className="scroll h-full max-h-[420px] pl-11">
+          <span className="tag mb-[18px]" style={{ display: "inline-block" }}>
             Playlist
           </span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 14 }}>
+          <div className="mt-[14px] flex flex-col gap-1">
             {items.map((p, i) => (
               <Button
                 key={p.id}
@@ -104,34 +82,16 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
                     },
                   })
                 }
+                className="px-[14px] py-3 text-left text-white"
                 style={{
                   background:
                     i === active ? `linear-gradient(90deg, ${accent}cc, transparent)` : "none",
-                  border: 0,
-                  textAlign: "left",
-                  cursor: "pointer",
-                  padding: "12px 14px",
-                  color: "#fff",
                 }}
               >
+                <div className="truncate text-[19px] font-light">{p.name}</div>
                 <div
-                  style={{
-                    fontSize: 19,
-                    fontWeight: 300,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {p.name}
-                </div>
-                <div
-                  className="mlabel"
-                  style={{
-                    color: i === active ? "#06060a" : "var(--tx-3)",
-                    marginTop: 5,
-                    fontSize: 10,
-                  }}
+                  className="mlabel mt-[5px] text-[10px]"
+                  style={{ color: i === active ? "#06060a" : "var(--tx-3)" }}
                 >
                   {p.plays} played
                 </div>

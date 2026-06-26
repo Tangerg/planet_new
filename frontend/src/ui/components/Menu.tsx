@@ -2,11 +2,12 @@ import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { motion } from "motion/react";
 import { Icon } from "@/components/primitives";
+import "./Menu.css";
 
 // ============================================================
 // ContextMenu — right-click menu using Radix DropdownMenu primitives.
 // Edge-aware positioning, keyboard navigation, and ARIA accessibility
-// are handled by Radix; styling reuses the existing vibe.css classes.
+// are handled by Radix; styling lives in the co-located Menu.css.
 // ============================================================
 type MenuItem = {
   label?: string;
@@ -33,17 +34,15 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
       <DropdownMenu.Trigger asChild>
         <span
           aria-hidden
-          style={{ position: "fixed", left: x, top: y, width: 0, height: 0, pointerEvents: "none" }}
+          className="pointer-events-none fixed h-0 w-0"
+          style={{ left: x, top: y }}
         />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="ctxmenu" sideOffset={0} collisionPadding={10} asChild>
           <motion.div
-            style={{
-              zIndex: 9000,
-              minWidth: 212,
-              transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)",
-            }}
+            className="z-[9000] min-w-[212px]"
+            style={{ transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)" }}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.14, ease: [0.32, 0.72, 0, 1] }}

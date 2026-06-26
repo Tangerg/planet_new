@@ -11,6 +11,7 @@ import type { VibeTrack } from "@/model/adapt";
 import type { FlowItem } from "@/model/derive";
 import { Icon, Art, artPair, artBg } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
+import { Sheet } from "@/components/Sheet";
 import { TextReveal } from "@/components/controls/TextReveal";
 import { FadeIn } from "@/components/motion";
 import { useScreenActions } from "@/hooks/screenActions";
@@ -50,6 +51,8 @@ export function CoverFlow({
   // at scale; window them too. Small lists (≤ 2*win+1) still render every dot.
   const COVER_DOT_WINDOW = 20;
   const drag = useRef<any>(null);
+  // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
+  const rootRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
 
   const clamp = (n: number) => Math.max(0, Math.min(items.length - 1, n));
@@ -160,22 +163,13 @@ export function CoverFlow({
 
   return (
     <div
+      ref={rootRef}
       onWheel={onWheel}
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerLeave={onUp}
-      style={{
-        position: "relative",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-        cursor: "grab",
-        userSelect: "none",
-      }}
+      className="relative flex h-full cursor-grab select-none flex-col items-center justify-center overflow-hidden"
     >
       <motion.div
         // preserve-3d here too: this element carries the scene `perspective` AND
@@ -267,23 +261,15 @@ export function CoverFlow({
                         onPlay(it);
                       }}
                       aria-label="Play"
+                      className="absolute z-[5] grid h-[52px] w-[52px] place-items-center rounded-full"
                       style={{
-                        position: "absolute",
                         // On a circle the square corner sits outside the disc, so
                         // pull the button inward to rest on the lower-right edge.
                         right: round ? 30 : 16,
                         bottom: round ? 30 : 16,
-                        width: 52,
-                        height: 52,
-                        borderRadius: "50%",
-                        border: 0,
-                        cursor: "pointer",
                         background: accent,
                         color: "#06060a",
-                        display: "grid",
-                        placeItems: "center",
                         boxShadow: `0 10px 26px -6px ${accent}`,
-                        zIndex: 5,
                       }}
                     >
                       <Icon.play size={20} />
@@ -320,13 +306,7 @@ export function CoverFlow({
                       src={it.image}
                       alt=""
                       draggable={false}
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
+                      className="absolute inset-0 h-full w-full object-cover"
                     />
                   )}
                 </div>
@@ -339,11 +319,9 @@ export function CoverFlow({
       {/* meta */}
       <FadeIn
         key={cur?.id}
+        className="relative z-[400] text-center"
         style={{
-          textAlign: "center",
           marginTop: expanded ? -COVER * 0.66 : -COVER * 0.42,
-          zIndex: 400,
-          position: "relative",
           transition: `margin-top .5s ${NP_EASE}`,
         }}
       >
@@ -384,9 +362,7 @@ export function CoverFlow({
 
       {/* progress dots */}
       {!expanded && (
-        <div
-          style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 22, zIndex: 400 }}
-        >
+        <div className="z-[400] mt-[22px] flex justify-center gap-[7px]">
           {items.map((_, i) => {
             if (Math.abs(i - center) > COVER_DOT_WINDOW) return null;
             return (
@@ -394,15 +370,10 @@ export function CoverFlow({
                 key={i}
                 onClick={() => setCenter(i)}
                 aria-label={"Go to " + (i + 1)}
+                className="h-[7px] rounded-full p-0 transition-all duration-300"
                 style={{
                   width: i === center ? 22 : 7,
-                  height: 7,
-                  borderRadius: 99,
-                  border: 0,
-                  cursor: "pointer",
                   background: i === center ? accent : "rgba(255,255,255,.25)",
-                  transition: "all .3s",
-                  padding: 0,
                 }}
               />
             );
@@ -410,98 +381,45 @@ export function CoverFlow({
         </div>
       )}
 
-      {/* tracklist sheet — expands in place below the center cover */}
+      {/* tracklist sheet — Radix Dialog (Escape / click-outside), Motion slide */}
       {tracksFor && (
-        <motion.div
-          className="scroll"
-          animate={{ y: expanded ? "0%" : "102%" }}
-          transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
+        <Sheet
+          open={expanded}
+          onOpenChange={setExpanded}
+          container={rootRef.current}
+          label="Tracklist"
+          className="z-[500] h-[56%]"
+          overlayClassName="z-[499]"
+          durationSec={0.52}
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "56%",
-            zIndex: 500,
             background: `linear-gradient(180deg, ${artPair(cur?.seed, cur?.grad)[1]}22, rgba(8,8,11,.97) 22%)`,
             backdropFilter: "blur(34px)",
             WebkitBackdropFilter: "blur(34px)",
             borderTop: "1px solid rgba(255,255,255,.13)",
-            boxShadow: expanded ? "0 -30px 80px rgba(0,0,0,.6)" : "none",
+            boxShadow: "0 -30px 80px rgba(0,0,0,.6)",
           }}
         >
-          <div
-            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             aria-label="Collapse"
             onClick={() => setExpanded(false)}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setExpanded(false);
-              }
-            }}
-            style={{
-              display: "grid",
-              placeItems: "center",
-              padding: "12px 0 4px",
-              cursor: "pointer",
-            }}
+            className="btn grid w-full cursor-pointer place-items-center pb-1 pt-3"
           >
-            <div
-              style={{ width: 44, height: 4, borderRadius: 3, background: "rgba(255,255,255,.28)" }}
-            ></div>
-          </div>
-          <div style={{ padding: "6px 40px 30px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 12,
-                  flex: "1 1 auto",
-                  minWidth: 0,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 21,
-                    fontWeight: 200,
-                    letterSpacing: ".03em",
-                    minWidth: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+            <div className="h-1 w-11 rounded-sm bg-white/[0.28]"></div>
+          </button>
+          <div className="px-10 pb-[30px] pt-1.5">
+            <div className="mb-3 flex items-center justify-between gap-[14px]">
+              <div className="flex min-w-0 flex-auto items-baseline gap-3">
+                <span className="truncate text-[21px] font-extralight tracking-[0.03em]">
                   {cur?.name}
                 </span>
-                <span
-                  className="mlabel"
-                  style={{ color: "rgba(255,255,255,.4)", flex: "0 0 auto", whiteSpace: "nowrap" }}
-                >
+                <span className="mlabel flex-none whitespace-nowrap text-white/40">
                   {sheetTracks.length} tracks
                 </span>
               </div>
               <Button
-                className="pill-accent"
-                style={{
-                  fontSize: 11,
-                  padding: "9px 18px",
-                  display: "inline-flex",
-                  gap: 8,
-                  alignItems: "center",
-                  flex: "0 0 auto",
-                }}
+                className="pill-accent inline-flex flex-none items-center gap-2"
+                style={{ fontSize: 11, padding: "9px 18px" }}
                 onClick={() => onOpen(cur)}
               >
                 Open
@@ -522,61 +440,20 @@ export function CoverFlow({
                   }
                 }}
                 onContextMenu={(e) => trackMenu(e, t)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  padding: "9px 0",
-                  cursor: "pointer",
-                  borderBottom: "1px solid rgba(255,255,255,.06)",
-                }}
+                className="flex cursor-pointer items-center gap-[14px] border-b border-white/[0.06] py-[9px]"
               >
-                <span
-                  className="mlabel"
-                  style={{
-                    width: 18,
-                    textAlign: "center",
-                    color: "rgba(255,255,255,.32)",
-                    fontSize: 11,
-                    flex: "0 0 auto",
-                  }}
-                >
+                <span className="mlabel w-[18px] flex-none text-center text-[11px] text-white/[0.32]">
                   {i + 1}
                 </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {t.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 300,
-                      color: "rgba(255,255,255,.45)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {t.artist}
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px]">{t.title}</div>
+                  <div className="truncate text-[12px] font-light text-white/45">{t.artist}</div>
                 </div>
-                <span
-                  className="mlabel"
-                  style={{ color: "rgba(255,255,255,.32)", fontSize: 10, flex: "0 0 auto" }}
-                >
-                  {t.duration}
-                </span>
+                <span className="mlabel flex-none text-[10px] text-white/[0.32]">{t.duration}</span>
               </div>
             ))}
           </div>
-        </motion.div>
+        </Sheet>
       )}
     </div>
   );

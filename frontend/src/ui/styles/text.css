@@ -1,0 +1,76 @@
+@reference "../../index.css";
+
+/* ============================================================
+   Shared editorial vocabulary — the monospace label / tag / pill / chip system
+   reused across ~15 screens. A genuine cross-cutting style language, so it stays
+   a small set of semantic classes (DRY) rather than repeated utility strings.
+   Static type/layout is expressed via @apply; transitions, hover, backdrop-blur
+   (WKWebView needs the -webkit- prefix) and accent-driven shadows stay raw.
+
+   These live in `@layer components` ON PURPOSE: that layer sits BELOW `utilities`
+   in the cascade, so a per-instance utility (`className="mlabel text-[10px]"`,
+   `tag capitalize`, …) overrides the class's baked-in default. Were these
+   unlayered, they'd beat utilities and the override would silently no-op.
+   ============================================================ */
+@layer components {
+  /* monospace micro-label */
+  .mlabel {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em];
+  }
+
+  /* flat editorial tag — translucent dark slab, frosted */
+  .tag {
+    @apply inline-flex items-center gap-2 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.14em] text-white;
+    padding: 7px 12px;
+    background: rgba(12, 12, 16, 0.78);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  /* primary CTA pill — glows softly as the focal point. No `display` on purpose
+     (matches the original): icon+label callers add `inline-flex items-center`. */
+  .pill-accent {
+    @apply cursor-pointer rounded-full border-0 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-white;
+    background: var(--accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 6px 22px -10px var(--accent);
+  }
+  .pill-accent:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 8px 26px -8px var(--accent);
+  }
+
+  /* secondary hero action — a quiet outline pill that pairs with .pill-accent */
+  .pill-ghost {
+    @apply inline-flex cursor-pointer items-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-[22px] py-3 font-mono text-[11px] uppercase tracking-[0.14em];
+    color: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition:
+      background 0.15s,
+      border-color 0.15s,
+      color 0.15s;
+  }
+  .pill-ghost:hover {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+  }
+
+  /* filter chips */
+  .chip {
+    @apply cursor-pointer whitespace-nowrap rounded-full border border-white/20 bg-transparent px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/65;
+    transition: all 0.15s;
+  }
+  .chip:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+  }
+  .chip.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #06060a;
+  }
+}

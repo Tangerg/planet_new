@@ -13,6 +13,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import "./Shell.css";
+
 import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg, Equalizer, Icon } from "@/components/primitives";
@@ -915,15 +917,8 @@ export default function Shell() {
             {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
             <div
               aria-hidden
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 30,
-                zIndex: 55,
-                ...dragStyle,
-              }}
+              className="absolute inset-x-0 top-0 z-[55] h-[30px]"
+              style={dragStyle}
             />
 
             <div className="traffic" style={noDragStyle}>
@@ -934,21 +929,11 @@ export default function Shell() {
                   ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
                 ] as const
               ).map(([cls, label, action]) => (
-                <i
+                <Button
                   key={cls}
-                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-                  role="button"
-                  tabIndex={0}
                   aria-label={label}
                   className={cls}
-                  style={{ cursor: "pointer" }}
                   onClick={action}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      action();
-                    }
-                  }}
                   title={label}
                 />
               ))}
@@ -1003,15 +988,7 @@ export default function Shell() {
                     y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
                     opacity: { duration: 0.3 },
                   }}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    zIndex: 30,
-                    overflow: "visible",
-                    willChange: "transform",
-                  }}
+                  className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
                 >
                   <PlayerBar
                     track={current}

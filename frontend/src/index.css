@@ -1,21 +1,19 @@
 /* Sonance Vibe — global style entry.
-   Tailwind v4 is activated WITHOUT Preflight on purpose: vibe.css already owns
-   the base reset (box-sizing, body, focus rings), and Preflight's reset would
-   shift the hand-tuned spacing/borders the player depends on. We pull in only
-   the theme + utilities layers, so Tailwind utilities are available while the
-   existing UI renders byte-for-byte as before. The design system still lives in
-   vibe.css (fonts, glass, grid, the morph keyframes); the @theme below mirrors
-   its tokens so Tailwind classes (bg-surf-1, text-tx-2, rounded-lg, ...) map to
-   the exact same values during the migration. */
+   Tailwind v4 is activated WITHOUT Preflight on purpose: base.css owns the
+   reset (box-sizing, body, focus rings), and Preflight's reset would shift the
+   hand-tuned spacing/borders the player depends on. We pull in only the theme +
+   utilities layers. The design system (formerly the monolithic vibe.css) is now
+   split into co-located stylesheets: the global base + shared editorial
+   vocabulary live in `ui/styles/` (JS-imported from main.tsx) and component
+   rules sit next to their component (imported there). Those files `@reference`
+   this entry so their `@apply` resolves against the same theme. The `@theme`
+   below mirrors base.css's `:root` tokens so Tailwind classes (bg-surf-1,
+   text-tx-2, rounded-lg, …) map to the exact same values. */
 @layer theme, base, components, utilities;
 @import url("https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
-@import "./ui/vibe.css";
-
-/* Tailwind tokens mirrored from vibe.css `:root`, so utilities share the same
-   visual language as the ported design system. */
 @theme {
   --color-surf-0: #08080b;
   --color-surf-1: #131317;

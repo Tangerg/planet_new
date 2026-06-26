@@ -48,14 +48,7 @@ function FlowWaves({ accent }: { accent: string }) {
     <svg
       viewBox="0 0 1280 736"
       preserveAspectRatio="none"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        zIndex: 2,
-        pointerEvents: "none",
-      }}
+      className="pointer-events-none absolute inset-0 z-[2] h-full w-full"
     >
       <defs>
         <linearGradient id="wv" x1="0" y1="0" x2="1" y2="0">
@@ -187,26 +180,15 @@ function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: 
   );
   return (
     <div
+      className="relative flex items-center"
       style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
         gap: active ? 22 : 18,
         filter: `blur(${blur}px)`,
         opacity: op,
         transition: `opacity .55s ${XMB_EASE}, filter .55s ease`,
       }}
     >
-      <div
-        style={{
-          width: 60,
-          display: "grid",
-          placeItems: "center",
-          flex: "0 0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
+      <div className="relative z-[1] grid w-[60px] flex-none place-items-center">
         <motion.div
           data-art="1"
           data-xmb-active-art={active ? "1" : undefined}
@@ -231,13 +213,7 @@ function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: 
               src={item.image}
               alt=""
               draggable={false}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              className="absolute inset-0 h-full w-full object-cover"
             />
           )}
           {item.icon &&
@@ -247,7 +223,7 @@ function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: 
               : null)}
         </motion.div>
       </div>
-      <div style={{ minWidth: 0, position: "relative", zIndex: 1 }}>
+      <div className="relative z-[1] min-w-0">
         <div
           style={{
             fontSize: active ? 27 : 18,
@@ -270,29 +246,12 @@ function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: 
         </div>
         {active && (
           <FadeIn
-            style={{
-              height: 2,
-              width: 42,
-              marginTop: 10,
-              borderRadius: 2,
-              background: "var(--accent)",
-              boxShadow: "0 0 12px -1px var(--accent)",
-            }}
+            className="mt-2.5 h-0.5 w-[42px] rounded-[2px] bg-accent"
+            style={{ boxShadow: "0 0 12px -1px var(--accent)" }}
           />
         )}
         {active && item.sub && (
-          <FadeIn
-            className="mlabel"
-            style={{
-              marginTop: 9,
-              fontSize: 10.5,
-              color: "rgba(255,255,255,.55)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              maxWidth: 600,
-            }}
-          >
+          <FadeIn className="mlabel mt-[9px] max-w-[600px] truncate text-[10.5px] text-white/[0.55]">
             {item.sub}
           </FadeIn>
         )}
@@ -415,7 +374,7 @@ export const XMB = React.memo(function XMB({
   }, []);
 
   return (
-    <FadeIn style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#06060a" }}>
+    <FadeIn className="absolute inset-0 overflow-hidden bg-[#06060a]">
       {/* Ambient stage backdrop driven by the NOW-PLAYING cover (not the selected
           item), so it no longer thrashes colour on every nav — it only shifts when
           the song changes. Same living drift as the detail pages. Nothing playing
@@ -429,10 +388,8 @@ export const XMB = React.memo(function XMB({
         />
       ) : (
         <div
+          className="absolute inset-0 z-0"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
             background:
               "radial-gradient(120% 120% at 50% 36%, #0c0d13 0%, #07070b 58%, #050507 100%)",
           }}
@@ -528,46 +485,25 @@ export const XMB = React.memo(function XMB({
       </div>
 
       {/* category title — top-left, one line, with the same accent tick as section heads */}
-      <div style={{ position: "absolute", left: 84, top: 84, zIndex: 8 }}>
+      <div className="absolute left-[84px] top-[84px] z-[8]">
         <div
-          style={{
-            fontSize: 54,
-            fontWeight: 300,
-            color: "#fff",
-            letterSpacing: ".005em",
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-            textShadow: "0 2px 24px rgba(0,0,0,.45)",
-          }}
+          className="whitespace-nowrap text-[54px] font-light leading-none tracking-[0.005em] text-white"
+          style={{ textShadow: "0 2px 24px rgba(0,0,0,.45)" }}
         >
           {cat.label}
         </div>
       </div>
 
       {/* control hint — bottom-right, clear of the left-aligned item column */}
-      <div
-        style={{
-          position: "absolute",
-          right: 44,
-          bottom: 22,
-          zIndex: 8,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 26,
-        }}
-      >
+      <div className="absolute bottom-[22px] right-11 z-[8] flex justify-end gap-[26px]">
         {[
           ["◀ ▶", "Category"],
           ["▲ ▼", "Browse"],
           ["↵", "Open"],
         ].map(([k, l]) => (
-          <span key={l} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--accent)" }}>
-              {k}
-            </span>
-            <span className="mlabel" style={{ color: "rgba(255,255,255,.45)", fontSize: 10 }}>
-              {l}
-            </span>
+          <span key={l} className="flex items-center gap-2">
+            <span className="font-mono text-[12px] text-accent">{k}</span>
+            <span className="mlabel text-[10px] text-white/45">{l}</span>
           </span>
         ))}
       </div>

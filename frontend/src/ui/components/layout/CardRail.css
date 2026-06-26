@@ -1,0 +1,20 @@
+@reference "../../../index.css";
+
+/* Horizontal scroll rail. Generous vertical padding because rail cards lift on
+   hover (Motion) and overflow-y is clipped (x-scroll forces it). Scrollbars are
+   hidden console-style; scroll-snap stays raw (no Tailwind equivalent). */
+.hrail {
+  @apply flex gap-[18px] overflow-x-auto overflow-y-hidden px-0.5 pb-6 pt-5;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.hrail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.hrail > * {
+  @apply flex-none;
+  scroll-snap-align: start;
+}

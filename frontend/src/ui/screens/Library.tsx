@@ -84,27 +84,22 @@ export function LibraryScreen({
   return (
     <FadeIn
       ref={scrollRef}
-      className={flowMode ? undefined : "scroll"}
+      className={`${flowMode ? "" : "scroll "}flex h-full flex-col`}
       style={{
-        height: "100%",
         overflow: flowMode ? "hidden" : undefined,
-        display: "flex",
-        flexDirection: "column",
         background: "radial-gradient(120% 80% at 70% -5%, #15161d, var(--surf-0))",
       }}
     >
       <ScrollProvider value={scrollRef}>
         <div
+          className="flex min-h-0 flex-col"
           style={{
             padding: flowMode ? "60px 48px 0" : "60px 48px 40px",
             flex: flowMode ? "0 0 auto" : "1",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
           }}
         >
-          <div style={{ fontSize: 36, fontWeight: 200, marginBottom: 22 }}>Your Library</div>
-          <div className="tabs" style={{ marginBottom: 30 }}>
+          <div className="mb-[22px] text-[36px] font-extralight">Your Library</div>
+          <div className="tabs mb-[30px]">
             <ToggleGroup
               ariaLabel="Library section"
               className="tabgroup"
@@ -136,7 +131,7 @@ export function LibraryScreen({
             }
           >
             {cardTab && view === "flow" && (
-              <div style={{ flex: 1, minHeight: 0, margin: "0 -48px" }}>
+              <div className="-mx-12 min-h-0 flex-1">
                 <CoverFlow
                   items={flowItems}
                   round={round}
@@ -195,13 +190,7 @@ export function LibraryScreen({
               />
             )}
             {tab === "songs" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-                  columnGap: 40,
-                }}
-              >
+              <div className="grid grid-cols-2 gap-x-10">
                 <VList
                   count={half}
                   estimateSize={66}

@@ -133,8 +133,8 @@ export function useMorphTransition(
       clearAll();
       const o = relRect(rect);
       // Round sources (artist circles) pass radius "50%" so the tile flies as a
-      // circle the whole way; default to a small square radius otherwise.
-      const origin = { ...o, borderRadius: item.radius ?? 6 };
+      // circle the whole way; everything else is sharp (media art is square-cornered).
+      const origin = { ...o, borderRadius: item.radius ?? 0 };
       const vw = viewRef.current.getBoundingClientRect();
       const px = o.left + o.width / 2,
         py = o.top + o.height / 2;
