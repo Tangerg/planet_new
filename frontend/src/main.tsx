@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { engine } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
-import Shell from "@/vibe/Shell";
+import Shell from "@/Shell";
 
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
