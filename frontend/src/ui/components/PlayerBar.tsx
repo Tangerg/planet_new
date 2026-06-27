@@ -236,17 +236,17 @@ export const PlayerBar = React.memo(function PlayerBar({
                 position: "absolute",
                 height: "100%",
                 borderRadius: 999,
-                background: `linear-gradient(90deg, ${accent}, ${b})`,
+                background: accent,
               },
             },
             thumb: {
               style: {
                 display: "block",
-                width: 12,
-                height: 12,
+                width: 9,
+                height: 9,
                 borderRadius: "50%",
                 background: "#fff",
-                boxShadow: `0 0 0 2px ${accent}, 0 2px 6px rgba(0,0,0,.45)`,
+                boxShadow: `0 0 0 1.5px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
               },
             },
           }}
@@ -364,11 +364,11 @@ export const PlayerBar = React.memo(function PlayerBar({
                         thumb: {
                           style: {
                             display: "block",
-                            width: 12,
-                            height: 12,
+                            width: 9,
+                            height: 9,
                             borderRadius: "50%",
                             background: "#fff",
-                            boxShadow: `0 0 0 2px ${accent}, 0 1px 3px rgba(0,0,0,.35)`,
+                            boxShadow: `0 0 0 1.5px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
                           },
                         },
                       }}
