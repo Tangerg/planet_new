@@ -24,8 +24,13 @@ export type VibeTrack = {
   index?: number;
   title: string;
   name: string;
+  /** Credited artists as one display string (", "-joined). */
   artist: string;
+  /** Primary artist id (lead) — the single-link fallback target. */
   artistId?: string;
+  /** Every credited artist as {id,name}, so a group credit can navigate to ANY
+   *  member, not just the lead. Entries without an id render as plain text. */
+  artists?: ArtistRef[];
   album?: string;
   albumId?: string;
   image?: string;
@@ -157,6 +162,10 @@ export function seedOf(id: string | number | undefined): number {
 // ── Domain → Presentation ────────────────────────────────────────────
 
 export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
+  // Mirror Track.artistNames' fallback (track artists, else the album's) so the
+  // clickable list matches the displayed string. Keep only named entries; ones
+  // without an id stay (rendered as plain, unclickable text).
+  const credited = real.artists?.length ? real.artists : (real.album?.artists ?? []);
   return {
     id: String(real.id ?? ""),
     index: real.index ?? i,
@@ -164,6 +173,9 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
     name: real.name ?? "",
     artist: Track.artistNames(real),
     artistId: Track.primaryArtist(real)?.id,
+    artists: credited
+      .map((a) => ({ id: a?.id ? String(a.id) : "", name: a?.name ?? "" }))
+      .filter((a) => a.name),
     album: real.album?.name,
     albumId: real.album?.id,
     image: Track.coverUrl(real),

@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
-import { ArtistLink } from "@/components/cards/ArtistLink";
+import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { activateOnKey } from "@/lib/keys";
 
@@ -179,9 +179,10 @@ export function TrackRow({
           )}
         </div>
         <div className="truncate text-[12.5px] font-light" style={{ color: sub }}>
-          <ArtistLink
-            name={track.artist}
-            artistId={track.artistId}
+          <ArtistLinks
+            artists={track.artists}
+            fallback={track.artist}
+            fallbackId={track.artistId}
             accent={accent}
             color={sub}
             onOpenArtist={onOpenArtist}
