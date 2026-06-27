@@ -9,6 +9,7 @@ import { Icon, Equalizer, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
+import { activateOnKey } from "@/lib/keys";
 
 type TrackRowProps = {
   track: VibeTrack;
@@ -102,12 +103,9 @@ export function TrackRow({
         }
         onPlay(track);
       }}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (!unavailable && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onPlay(track);
-        }
-      }}
+      onKeyDown={activateOnKey(() => {
+        if (!unavailable) onPlay(track);
+      })}
       className="flex items-center gap-4 px-[14px] py-[11px] transition-[background] duration-150"
       style={{
         cursor: unavailable ? "default" : "pointer",

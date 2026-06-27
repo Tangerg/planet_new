@@ -6,6 +6,7 @@
 // ============================================================
 import React from "react";
 import { Button } from "@/components/controls/Button";
+import { activateOnKey } from "@/lib/keys";
 
 type ArtistLinkProps = {
   /** Display name. */
@@ -36,12 +37,7 @@ export function ArtistLink({
       className="p-0 text-left transition-colors duration-200"
       style={{ font: "inherit", color, ...style }}
       onClick={open}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          open(e);
-        }
-      }}
+      onKeyDown={activateOnKey(open)}
       onMouseEnter={(e) => {
         e.currentTarget.style.color = accent;
       }}
