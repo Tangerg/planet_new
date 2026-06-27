@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import { VirtualList } from "@/components/layout/VirtualList";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art, artBg, artPair } from "@/components/primitives";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
@@ -146,7 +146,7 @@ type Props = {
   onPrev?: () => void;
   /** Current playback position in seconds (from the kernel). */
   progressSec?: number;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export const NowPlaying = React.memo(function NowPlaying({

@@ -4,7 +4,7 @@
 // a detail screen). Composed from CardShell + Art + PlayFab + ArtistLink.
 // ============================================================
 import React from "react";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Art, Icon } from "@/components/primitives";
 import { RiseFab } from "@/components/lift";
 import { CardShell } from "@/components/cards/CardShell";
@@ -15,7 +15,7 @@ type TrackCardProps = {
   track: VibeTrack;
   onPlay: (track: VibeTrack) => void;
   accent: string;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {

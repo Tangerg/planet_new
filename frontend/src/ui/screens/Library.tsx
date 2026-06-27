@@ -3,7 +3,7 @@
 // Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
-import type { ScreenData, VibeTrack, VibeCollection } from "@/model/adapt";
+import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/adapt";
 import { collectionSub, collectionMeta, collectionFlowItems, type FlowItem } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
@@ -24,7 +24,7 @@ type LibraryScreenProps = {
   accent: string;
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
-  openArtist: (artist: { id: string; name: string }) => void;
+  openArtist: (artist: ArtistRef) => void;
   liked: Set<string>;
   toggleLike: (id: string) => void;
   // Controlled by Shell so the active tab/view survives a back-navigation round-trip.

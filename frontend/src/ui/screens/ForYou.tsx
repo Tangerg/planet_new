@@ -2,7 +2,7 @@
 // ForYou — rich editorial home: hero · quick tiles · card rails.
 // ============================================================
 import React, { useState } from "react";
-import type { ScreenData, VibeCollection } from "@/model/adapt";
+import type { ArtistRef, ScreenData, VibeCollection } from "@/model/adapt";
 import { Icon, Art } from "@/components/primitives";
 import { CardShell } from "@/components/cards/CardShell";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -18,7 +18,7 @@ type ForYouScreenProps = {
   data: ScreenData;
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
-  openArtist: (artist: { id: string; name: string }) => void;
+  openArtist: (artist: ArtistRef) => void;
   onNav: (view: string) => void;
   accent: string;
 };

@@ -3,7 +3,7 @@
 // Groups are small/bounded (≤14 each) so plain rows, not windowed.
 // ============================================================
 import React from "react";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { groupHistory } from "@/model/derive";
 import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
@@ -20,7 +20,7 @@ type HistoryScreenProps = {
   liked: Set<string>;
   toggleLike: (id: string) => void;
   accent: string;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function HistoryScreen({

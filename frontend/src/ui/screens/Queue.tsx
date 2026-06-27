@@ -2,7 +2,7 @@
 // Queue — "Up Next": now-playing hero on the left, windowed queue on the right.
 // ============================================================
 import React, { useRef } from "react";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { TrackRow } from "@/components/cards/TrackRow";
@@ -17,7 +17,7 @@ type QueueScreenProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (id: string) => void;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function QueueScreen({

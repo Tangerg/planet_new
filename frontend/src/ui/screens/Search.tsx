@@ -2,7 +2,7 @@
 // Search — taxonomy results: top artist · songs · artist/album rails.
 // ============================================================
 import React, { useState, useEffect } from "react";
-import type { VibeTrack, VibeArtist, VibeCollection } from "@/model/adapt";
+import type { ArtistRef, VibeTrack, VibeArtist, VibeCollection } from "@/model/adapt";
 import { SEARCH_SUGGESTIONS } from "@/model/defaults";
 import { Icon, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
@@ -26,7 +26,7 @@ type SearchScreenProps = {
   // Controlled by Shell so the typed query survives a back-navigation round-trip.
   query: string;
   onQuery: (q: string) => void;
-  openArtist: (artist: { id: string; name: string }) => void;
+  openArtist: (artist: ArtistRef) => void;
   openAlbum: (a: VibeCollection) => void;
   liked: Set<string>;
   toggleLike: (id: string) => void;

@@ -4,7 +4,7 @@
 // Playlist/Album detail, Queue, History, Search and Library songs.
 // ============================================================
 import React, { useState } from "react";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { ArtistLink } from "@/components/cards/ArtistLink";
@@ -25,7 +25,7 @@ type TrackRowProps = {
   delta?: number;
   selected?: boolean;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function TrackRow({
