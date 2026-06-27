@@ -301,6 +301,10 @@ export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   px?: number;
   mono?: boolean;
   glow?: string;
+  /** Film-grain overlay (the `.grain::before` mix-blend layer). Default on; turn
+   *  OFF for fast-animating surfaces (e.g. CoverFlow) where ~N moving mix-blend
+   *  layers re-blend against the backdrop every frame and drop frames. */
+  grain?: boolean;
 };
 
 export function Art({
@@ -310,6 +314,7 @@ export function Art({
   images,
   px,
   mono = false,
+  grain = true,
   className = "",
   style = {},
   children,
@@ -327,7 +332,7 @@ export function Art({
   const src = images && images.length ? pickImageUrl(images, target) : image;
   return (
     <div
-      className={"grain " + className}
+      className={(grain ? "grain " : "") + className}
       {...rest}
       // position/overflow stay INLINE (not utilities) so a consumer can flip
       // position to absolute via its own style spread (e.g. full-bleed bg / hero

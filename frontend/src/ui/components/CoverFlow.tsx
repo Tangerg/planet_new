@@ -244,7 +244,10 @@ export function CoverFlow({
                   grad={it.grad}
                   image={it.image}
                   images={it.images}
-                  className="grain"
+                  // No grain here: ~13 covers + their reflections each carry a
+                  // mix-blend grain layer, and re-blending them all against the
+                  // backdrop every frame dropped frames during fast flips.
+                  grain={false}
                   style={{
                     width: COVER,
                     height: COVER,
@@ -282,7 +285,6 @@ export function CoverFlow({
                     flip also mirrors the mask, the gradient is `to top` so the
                     edge touching the cover stays brightest and fades downward. */}
                 <div
-                  className="grain"
                   aria-hidden
                   style={{
                     width: COVER,
@@ -316,9 +318,10 @@ export function CoverFlow({
         </div>
       </motion.div>
 
-      {/* meta */}
+      {/* meta — NOT keyed on cur.id: re-mounting per step re-ran each TextReveal's
+          layout measure + HoverCard + the FadeIn on every flip, which stalled the
+          main thread (the "lag" on fast switching). Content updates in place. */}
       <FadeIn
-        key={cur?.id}
         className="relative z-[400] text-center"
         style={{
           marginTop: expanded ? -COVER * 0.66 : -COVER * 0.42,
