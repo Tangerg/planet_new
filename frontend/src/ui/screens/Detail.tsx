@@ -184,7 +184,7 @@ export function PlaylistDetailScreen({
                   {p.description}
                 </TextReveal>
               )}
-              <div className="mlabel mt-[14px] text-white/50">
+              <div className="mlabel mt-[14px] truncate text-white/50">
                 {p.owner} · {total} tracks
               </div>
               <div className="mt-[26px] flex gap-[14px]">
