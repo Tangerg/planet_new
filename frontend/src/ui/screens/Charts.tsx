@@ -5,7 +5,6 @@ import React from "react";
 import type { VibeCollection } from "@/model/adapt";
 import { ChartCard } from "@/components/cards/ChartCard";
 import { FadeIn } from "@/components/motion";
-import { MOCK } from "@/model/mock";
 
 type ChartsScreenProps = {
   data: { charts: VibeCollection[] };
@@ -13,7 +12,7 @@ type ChartsScreenProps = {
 };
 
 export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
-  const charts = data.charts?.length ? data.charts : MOCK.charts;
+  const charts = data.charts ?? [];
   return (
     <FadeIn
       className="scroll h-full"
@@ -30,8 +29,7 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
               key={c.id}
               title={c.title ?? c.name}
               time={c.updatedAt ? "Updated " + c.updatedAt : "Top chart"}
-              // mock charts carry `seed`; real (toplists) carry `coverSeed`.
-              seed={c.coverSeed ?? (c as { seed?: number }).seed ?? 0}
+              seed={c.coverSeed ?? 0}
               grad={c.gradient}
               image={c.image}
               onOpen={() => onOpenChart(c)}

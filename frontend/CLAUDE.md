@@ -76,7 +76,7 @@
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `hooks.ts` / `adapt.ts` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
-- **无后端能力的屏幕用 MOCK**(`vibe/mockCatalog.ts`):Browse 分类 / Comments / Profile / Radio 等暂走 mock,**明确是 mock,不伪装成真实**;等 provider 有了对应 capability 再接真。
+- **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。唯一的假数据源是 **Mock provider**(`providers/Mock.ts`,`VITE_PROVIDER=mock`,走真实取数路径);**不维护任何 UI 端 mock 目录**(已删 `ui/model/mock.ts`)。等 provider 有了对应 capability 再接真。
 - **加文档先问**:不主动建 `*.md`,除非用户明确要。
 
 ---
@@ -94,6 +94,6 @@
 
 ## 6 · 工作流
 
-- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 QQ API:`~/Desktop/qq-music-api` 跑 `yarn dev`(:3200);后端没起时 provider 取数失败,UI 自动回退 MOCK,仍可浏览。
+- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 QQ API:`~/Desktop/qq-music-api` 跑 `yarn dev`(:3200);后端没起时 provider 取数失败,相关屏显示诚实空态;想要有数据的 dev 体验用 `VITE_PROVIDER=mock`(Mock provider 走真实路径供数据)。
 - **质量门禁**(在 `frontend/` 跑):`yarn typecheck` + `yarn build`(tsc + vite)+ `yarn test`(vitest)+ `yarn lint`(oxlint `--deny-warnings`)+ `yarn knip` + `yarn check:layers` + `yarn check:circular`(聚合:`yarn check`);全绿才往下走。会漂的数字直接跑命令查,不硬编码。**husky + lint-staged 预提交**会对暂存的 `.ts/.tsx` 跑 prettier + oxlint `--deny-warnings` —— 所以**碰任何一屏(哪怕只改一行)都会触发该文件全量 lint**,需连带消化它的告警;vibe 屏(尤以 `Shell.tsx` morph 引擎、`XMB.tsx` 方向键导航)仍有成片 jsx-a11y / exhaustive-deps 旧债,逐屏迁移时一并清(exhaustive-deps 用带说明的局部 disable,不盲改依赖)。
 - **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。

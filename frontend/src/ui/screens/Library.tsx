@@ -15,7 +15,6 @@ import { VList } from "@/components/layout/VList";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
-import { MOCK } from "@/model/mock";
 
 type LibraryScreenProps = {
   data: ScreenData;
@@ -65,14 +64,10 @@ export function LibraryScreen({
   // the screen never touches collection-specific fields on the artist branch.
   const coll: VibeCollection[] =
     tab === "albums"
-      ? data.albums.length
-        ? data.albums
-        : MOCK.albums
+      ? data.albums
       : tab === "artists"
-        ? ((data.artists.length ? data.artists : MOCK.artists) as unknown as VibeCollection[])
-        : data.playlists.length
-          ? data.playlists
-          : MOCK.playlists;
+        ? (data.artists as unknown as VibeCollection[])
+        : data.playlists;
   const openOf = (o: VibeCollection) =>
     tab === "albums" ? openAlbum(o) : tab === "artists" ? openArtist(o) : openPlaylist(o);
   const tracksOf = (o: VibeCollection) =>

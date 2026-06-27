@@ -71,8 +71,8 @@
 
 ## 10. 节奏与纪律 —— 详见 CLAUDE.md §3 + §6
 
-- **破坏性改动先算"爆炸半径"**:改 `IProvider` 形状 / store schema / vibe 屏幕 props 前,先 grep 所有消费方(跨 provider、跨屏、跨 hook),列影响面再动。
-- **承认审计误报**:深入看后发现某"坏味道"其实是有意设计(切换引擎的结构性嵌套、内核/UI 的单向边界、内聚的大文件、无后端能力时刻意走 MOCK),就 skip 并写明理由 —— 正常 false positive,别为"清干净"去动 morph 引擎这类正确性敏感处。
+- **破坏性改动先算"爆炸半径"**:改 `MusicProvider` 形状 / store schema / vibe 屏幕 props 前,先 grep 所有消费方(跨 provider、跨屏、跨 hook),列影响面再动。
+- **承认审计误报**:深入看后发现某"坏味道"其实是有意设计(切换引擎的结构性嵌套、内核/UI 的单向边界、内聚的大文件、无后端能力的屏幕走诚实空态),就 skip 并写明理由 —— 正常 false positive,别为"清干净"去动 morph 引擎这类正确性敏感处。
 
 ---
 
