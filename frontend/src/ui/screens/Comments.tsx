@@ -7,6 +7,7 @@ import type { VibeTrack } from "@/model/adapt";
 import { Icon, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
+import { useT } from "@/i18n";
 
 type CommentsScreenProps = {
   track?: VibeTrack;
@@ -17,6 +18,7 @@ type CommentsScreenProps = {
 };
 
 export function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScreenProps) {
+  const t = useT();
   return (
     <FadeIn
       className="grid h-full bg-surf-0"
@@ -60,9 +62,9 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
           className="mb-6 inline-block pb-3 text-[28px] font-extralight tracking-[0.06em]"
           style={{ borderBottom: `2px solid ${accent}` }}
         >
-          Hot Comments
+          {t("comments.title")}
         </div>
-        <div className="py-[50px] font-light text-tx-4">No comments yet.</div>
+        <div className="py-[50px] font-light text-tx-4">{t("comments.empty")}</div>
       </div>
     </FadeIn>
   );

@@ -8,6 +8,7 @@ import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
+import { useT } from "@/i18n";
 
 // A synced-lyric line: text + optional timestamp (ms). The "No lyrics" fallback
 // line carries no `t`.
@@ -177,6 +178,7 @@ export const NowPlaying = React.memo(function NowPlaying({
     [lyrics],
   );
   const [active, setActive] = useState(0);
+  const t = useT();
 
   // Sync active lyric line to real playback progress.
   // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
@@ -414,9 +416,9 @@ export const NowPlaying = React.memo(function NowPlaying({
                 className="mb-[22px] inline-block pb-3 text-[26px] font-extralight tracking-[0.06em]"
                 style={{ borderBottom: `2px solid ${accent}` }}
               >
-                Hot Comments
+                {t("comments.title")}
               </div>
-              <div className="py-[50px] font-light text-white/40">No comments yet.</div>
+              <div className="py-[50px] font-light text-white/40">{t("comments.empty")}</div>
             </div>
           ) : (
             <div ref={lyricScrollRef} className="scroll h-full">
