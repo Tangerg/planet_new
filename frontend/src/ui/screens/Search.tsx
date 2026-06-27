@@ -16,6 +16,8 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 
 type SearchResults = { tracks: VibeTrack[]; artists: VibeArtist[]; albums: VibeCollection[] };
 
+const EMPTY_RESULTS: SearchResults = { tracks: [], artists: [], albums: [] };
+
 type SearchScreenProps = {
   onPlay: (track: VibeTrack) => void;
   current?: VibeTrack;
@@ -46,20 +48,20 @@ export function SearchScreen({
   search,
 }: SearchScreenProps) {
   const open = useMorphOpen();
-  const [results, setResults] = useState<SearchResults>({ tracks: [], artists: [], albums: [] });
+  const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS);
   const [loading, setLoading] = useState(false);
   // Debounce input 320ms, then call provider.search; an empty query clears results.
   useEffect(() => {
     const term = q.trim();
     if (!term) {
-      setResults({ tracks: [], artists: [], albums: [] });
+      setResults(EMPTY_RESULTS);
       setLoading(false);
       return;
     }
     let alive = true;
     setLoading(true);
     const id = setTimeout(() => {
-      const fn = search ?? (async () => ({ tracks: [], artists: [], albums: [] }));
+      const fn = search ?? (async () => EMPTY_RESULTS);
       fn(term)
         .then((r) => {
           if (alive) {
