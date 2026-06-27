@@ -59,7 +59,8 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
           images={item.images}
           style={{ width: 48, height: 48, borderRadius: round ? "50%" : 0 }}
         />
-        {onPlay && hover && (
+        {/* artists (round) are people, not playable — no cover play fab */}
+        {onPlay && !round && hover && (
           <Button
             onClick={(e) => {
               e.stopPropagation();

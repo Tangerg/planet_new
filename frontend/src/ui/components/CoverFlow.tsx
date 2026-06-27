@@ -57,6 +57,10 @@ export function CoverFlow({
 
   const clamp = (n: number) => Math.max(0, Math.min(items.length - 1, n));
   const cur = items[center];
+  // Artists (round) are people, not playable collections: no in-place tracklist
+  // and no play fab — clicking a cover just opens the artist. So the expand
+  // behaviour is gated off for round covers (clicks fall through to onOpen).
+  const expandable = round ? undefined : tracksFor;
 
   // refs capture latest values for the stable effect below
   const centerRef = useRef(center);
@@ -70,7 +74,7 @@ export function CoverFlow({
   centerRef.current = center;
   expandedRef.current = expanded;
   itemsRef.current = items;
-  tracksForRef.current = tracksFor;
+  tracksForRef.current = expandable;
   onOpenRef.current = onOpen;
   setExpandedRef.current = setExpanded;
   setCenterRef.current = setCenter;
@@ -83,7 +87,7 @@ export function CoverFlow({
   }, [center]);
 
   const NP_EASE = "cubic-bezier(.16,1,.3,1)";
-  const sheetTracks = expanded && tracksFor && cur ? tracksFor(cur) || [] : [];
+  const sheetTracks = expanded && expandable && cur ? expandable(cur) || [] : [];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -205,14 +209,14 @@ export function CoverFlow({
                 tabIndex={0}
                 aria-label={it.name}
                 onClick={() =>
-                  isC ? (tracksFor ? setExpanded((e) => !e) : onOpen(it)) : setCenter(i)
+                  isC ? (expandable ? setExpanded((e) => !e) : onOpen(it)) : setCenter(i)
                 }
                 onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key !== "Enter" && e.key !== " ") return;
                   e.preventDefault();
                   if (!isC) {
                     setCenter(i);
-                  } else if (tracksFor) {
+                  } else if (expandable) {
                     setExpanded((x) => !x);
                   } else {
                     onOpen(it);
@@ -257,7 +261,7 @@ export function CoverFlow({
                       : "0 20px 50px -16px rgba(0,0,0,.7)",
                   }}
                 >
-                  {isC && (
+                  {isC && !round && (
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();

@@ -183,7 +183,7 @@ export function LibraryScreen({
                       sub={collectionSub(o, tab)}
                       meta={collectionMeta(o, tab)}
                       onOpen={() => openOf(o)}
-                      onPlay={() => openOf(o)}
+                      onPlay={tab === "artists" ? undefined : () => openOf(o)}
                     />
                   );
                 }}
