@@ -18,7 +18,7 @@ export class Volume extends Plugin {
     return Volume.id;
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     this.preVolume = 0;
     this.curVolume = 0;
     this.context.hooks.off("change_volume", this.change);

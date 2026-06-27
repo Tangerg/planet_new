@@ -35,7 +35,7 @@ export class LyricPlugin extends Plugin {
     this.context.hooks.on("current_track_changed", this.onTrackChanged, this);
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     this.context.hooks.off("current_track_changed", this.onTrackChanged);
     this.lastTrackId = undefined;
     this.generation = 0;

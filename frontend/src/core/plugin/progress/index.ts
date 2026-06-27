@@ -19,7 +19,7 @@ export class Progress extends Plugin {
     return Progress.id;
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     this.context.audioElement.removeEventListener("timeupdate", this.onTimeUpdate);
     this.context.audioElement.removeEventListener("durationchange", this.onDurationChange);
     this.context.hooks.off("play_time_seek", this.seek);

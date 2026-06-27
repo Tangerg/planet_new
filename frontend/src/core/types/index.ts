@@ -2,7 +2,7 @@
 /* Common structural interfaces */
 /* -------------------------------------------------------------------------- */
 
-/** Anything with a stable id (Plugin / Manager entries rely on it for dedupe and lookup). */
+/** Anything with a stable id (Planet keys its plugin registry by it). */
 export interface Identifiable {
   get id(): string;
 }
