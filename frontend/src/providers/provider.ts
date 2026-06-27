@@ -1,6 +1,6 @@
 import { Plugin } from "@core";
 import { MUSIC_PROVIDER } from "@core/plugin";
-import { IProvider, ProviderCapability } from "@domain";
+import { MusicProvider, ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Lyric } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
@@ -17,7 +17,7 @@ import { Chart } from "@domain/model/chart";
  * picks the active one). The plugin id is derived per source from `name`, so
  * their lifecycle entries stay distinct.
  */
-export abstract class Provider extends Plugin implements IProvider {
+export abstract class Provider extends Plugin implements MusicProvider {
   get id(): string {
     return `provider:${this.name}`;
   }

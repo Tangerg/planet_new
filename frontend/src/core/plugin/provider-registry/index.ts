@@ -1,14 +1,14 @@
 import { Plugin, defineCapability } from "../../kernel";
-import type { IProvider } from "@domain";
+import type { MusicProvider } from "@domain";
 
 /** Every music source registers itself here; resolveAll yields them all. */
-export const MUSIC_PROVIDER = defineCapability<IProvider>("music-provider");
+export const MUSIC_PROVIDER = defineCapability<MusicProvider>("music-provider");
 
 export interface ProviderRegistryPort {
   /** The active provider, or null when none is registered. */
-  get active(): IProvider | null;
+  get active(): MusicProvider | null;
   /** All registered providers, in mount order. */
-  get providers(): readonly IProvider[];
+  get providers(): readonly MusicProvider[];
   /** Switch the active provider by name; no-op if unknown or unchanged. */
   setActive(name: string): void;
 }
@@ -45,11 +45,11 @@ export class ProviderRegistry extends Plugin implements ProviderRegistryPort {
     this.context.registry.provide(PROVIDER_REGISTRY, this);
   }
 
-  get providers(): readonly IProvider[] {
+  get providers(): readonly MusicProvider[] {
     return this.context.registry.resolveAll(MUSIC_PROVIDER);
   }
 
-  get active(): IProvider | null {
+  get active(): MusicProvider | null {
     const all = this.providers;
     return all.find((p) => p.name === this.activeName) ?? all[0] ?? null;
   }

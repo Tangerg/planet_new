@@ -41,7 +41,7 @@
      ② provider 插件(取数据);
      ③ zustand store(`StoreBridge` 把内核事件固化进 `usePlayQueueStore`,任何时刻 mount 的组件都读得到当前播放态)。
      **绝不在 UI 里复制一份播放态**(current / playing / queue / progress 全来自内核 store + hooks)。
-  2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `IProvider`(`packages/provider/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `types.ts` 加 capability + 给 `IProvider` 加方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
+  2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `MusicProvider`(`packages/provider/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `types.ts` 加 capability + 给 `MusicProvider` 加方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
   3. **导航 = 单页状态机 + 共享元素切换引擎**(`view/vibe/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
   4. **设计系统主体 = `ui/vibe/vibe.css`**(逐字搬自示例):class + 内联样式驱动,自带字体 / token / 玻璃 / 全部动画 keyframes —— 仍是「切换效果原样」的根因,**不机械全量改写、不破坏 morph**。在此之上 **Tailwind v4 已启用(无 Preflight,只引 theme+utilities 层)**作为工具类补充,`@theme` 镜像了 vibe.css 的 token;复用型交互件(Radix + Tailwind,经 `ui/lib/cn`)放 `ui/components/`(已落地 `Slider`、`VirtualList`)。详见 §2 / §5。
 
@@ -71,7 +71,7 @@
 
 ## 4 · 硬约定(违反 = 回归)
 
-- **取数走 provider**:任何外部数据都经 `IProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
+- **取数走 provider**:任何外部数据都经 `MusicProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
 - **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
@@ -85,7 +85,7 @@
 
 - ❌ **重新引入 TanStack Router / 任何「一屏一路由」**:会破坏共享元素 morph(新旧屏需在同一常驻容器共存测量),这正是当初去掉路由的原因。
 - ❌ **机械全量把 `vibe.css` / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Radix 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails dev` 里核对**,不盲目大面积重写。
-- ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `IProvider` 抽象 + mapper + React Query。
+- ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `MusicProvider` 抽象 + mapper + React Query。
 - ❌ **在 UI 里复制播放态**(本地 `useState` 存 current / queue / progress):唯一源是内核 store + hooks。
 - ❌ **加回原生窗口标题栏 / 系统红绿灯**:窗口无边框,装饰由页面 `.win` + 伪装红绿灯承担。
 - ❌ **换栈**(Zustand→Redux、React Query→SWR、Wails→Tauri、引 UI Kit / CSS-in-JS)—— 无收益。

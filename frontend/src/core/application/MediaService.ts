@@ -1,4 +1,4 @@
-import type { IProvider } from "@domain";
+import type { MusicProvider } from "@domain";
 import type { Personalized } from "@domain/model/personalized";
 import type { Playlist } from "@domain/model/playlist";
 import type { Album } from "@domain/model/album";
@@ -10,7 +10,7 @@ import type { ProviderCapability } from "@domain";
 /**
  * Application service for catalog / browse use cases — the single caller of the
  * provider for read data. The UI consumes this through its own cache transport
- * (React Query on the desktop shell) and never touches `IProvider`, so the view
+ * (React Query on the desktop shell) and never touches `MusicProvider`, so the view
  * holds no data-source reference and no fetch orchestration.
  *
  * Returns domain models; view-shape adaptation (→ VibeTrack etc.) stays in the
@@ -21,7 +21,7 @@ import type { ProviderCapability } from "@domain";
  * PlaybackService, which owns the command/playback use cases.
  */
 export class MediaService {
-  constructor(private readonly getProvider: () => IProvider) {}
+  constructor(private readonly getProvider: () => MusicProvider) {}
 
   /** Active provider name — the UI folds this into its cache keys. */
   get providerName(): string {

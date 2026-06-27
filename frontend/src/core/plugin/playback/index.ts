@@ -33,14 +33,14 @@ export class Playback extends Plugin {
 
   protected onInit(): void {
     this.context.registry.provide(TRANSPORT, this);
-    this.context.audioElement.addEventListener("ended", this.onPlayEnd);
-    this.context.hooks.on("queue:current-changed", this.changePlayTrack, this);
+    this.context.audioElement.addEventListener("ended", this.onEnded);
+    this.context.hooks.on("queue:current-changed", this.onCurrentChanged, this);
   }
 
   protected onDispose(): void {
     this.stop();
-    this.context.audioElement.removeEventListener("ended", this.onPlayEnd);
-    this.context.hooks.off("queue:current-changed", this.changePlayTrack);
+    this.context.audioElement.removeEventListener("ended", this.onEnded);
+    this.context.hooks.off("queue:current-changed", this.onCurrentChanged);
   }
 
   async resume(): Promise<void> {
@@ -59,11 +59,11 @@ export class Playback extends Plugin {
     this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
   }
 
-  private onPlayEnd = (): void => {
+  private onEnded = (): void => {
     this.context.hooks.emit("playback:track-ended");
   };
 
-  private changePlayTrack = async (track: Track | undefined): Promise<void> => {
+  private onCurrentChanged = async (track: Track | undefined): Promise<void> => {
     // No playable URL (cleared queue, mock provider, or a Spotify track with no
     // preview): stop and bail — the track metadata was already broadcast.
     if (!track?.playUrl) {

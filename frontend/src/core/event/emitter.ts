@@ -1,19 +1,21 @@
-import type { IEventEmitter, IEventListener, IEventMap } from "./types";
+import type { EventHandler, EventMap } from "./types";
+import type { Clearable } from "../types";
 
-type Listener = {
+type Subscription = {
   fn: Function;
   ctx: object;
   once: boolean;
 };
 
-export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
-  private readonly listeners: Map<keyof E, Listener[]>;
+/** Standard pub/sub bus; clear() removes all listeners at once. */
+export class EventEmitter<E extends EventMap> implements Clearable {
+  private readonly listeners: Map<keyof E, Subscription[]>;
 
   constructor() {
-    this.listeners = new Map<keyof E, Listener[]>();
+    this.listeners = new Map<keyof E, Subscription[]>();
   }
 
-  private getOrCreate(name: keyof E): Listener[] {
+  private getOrCreate(name: keyof E): Subscription[] {
     let list = this.listeners.get(name);
     if (!list) {
       list = [];
@@ -22,17 +24,17 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
     return list;
   }
 
-  on<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: object = this): IEventEmitter<E> {
+  on<K extends keyof E>(name: K, fn: EventHandler<E, K>, ctx: object = this): this {
     this.getOrCreate(name).push({ fn, ctx, once: false });
     return this;
   }
 
-  once<K extends keyof E>(name: K, fn: IEventListener<E, K>, ctx: object = this): IEventEmitter<E> {
+  once<K extends keyof E>(name: K, fn: EventHandler<E, K>, ctx: object = this): this {
     this.getOrCreate(name).push({ fn, ctx, once: true });
     return this;
   }
 
-  off<K extends keyof E>(name: K, fn?: IEventListener<E, K>): IEventEmitter<E> {
+  off<K extends keyof E>(name: K, fn?: EventHandler<E, K>): this {
     const list = this.listeners.get(name);
     if (!list) {
       return this;
@@ -59,7 +61,7 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
     for (const l of snapshot) {
       l.fn.call(l.ctx, arg);
       if (l.once) {
-        this.off(name, l.fn as IEventListener<E, K>);
+        this.off(name, l.fn as EventHandler<E, K>);
       }
     }
   }

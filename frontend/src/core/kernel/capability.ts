@@ -19,16 +19,7 @@ export function defineCapability<T>(key: string): Capability<T> {
  * and discover capabilities — there is no special-cased lookup. A capability may
  * have a single impl (resolve) or many (resolveAll, e.g. every music provider).
  */
-export interface ICapabilityRegistry {
-  provide<T>(cap: Capability<T>, impl: T): void;
-  revoke<T>(cap: Capability<T>, impl: T): void;
-  /** First registered impl, or null. */
-  resolve<T>(cap: Capability<T>): T | null;
-  /** All registered impls, in registration order. */
-  resolveAll<T>(cap: Capability<T>): readonly T[];
-}
-
-export class CapabilityRegistry implements ICapabilityRegistry {
+export class CapabilityRegistry {
   private readonly impls = new Map<string, unknown[]>();
 
   provide<T>(cap: Capability<T>, impl: T): void {

@@ -1,3 +1,3 @@
-import { IEventMap } from "../event";
+import { EventMap } from "../event";
 
-export interface PlanetEventMap extends IEventMap {}
+export interface PlanetEventMap extends EventMap {}

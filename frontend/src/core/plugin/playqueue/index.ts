@@ -60,23 +60,23 @@ export class PlayQueue extends Plugin {
     this.emitCurrent();
   }
 
-  selectTrack(track: Track): void {
+  select(track: Track): void {
     if (this.queue.select(track)) this.emitCurrent();
   }
 
-  addToQueue(track: Track): void {
+  add(track: Track): void {
     this.queue.add(track);
     this.emitQueue();
   }
 
-  removeFromQueue(track: Track): void {
+  remove(track: Track): void {
     const before = this.queue.current;
     this.queue.remove(track);
     this.emitQueue();
     if (this.queue.current !== before) this.emitCurrent();
   }
 
-  clearQueue(): void {
+  clear(): void {
     this.queue.clear();
     this.emitQueue();
     this.emitCurrent();
