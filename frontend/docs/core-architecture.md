@@ -177,7 +177,7 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
 
 ### Phase A — 充血领域 + 命令/事件分离(业务正确性,先落袋)
 - [x] **A1 内核 hygiene**:修 Plugin 生命周期(对称 `onInit/onDispose` + 清 context、删 `uninstall`)、删 `EventEmitter.emit("*")`、删 `manager/`(Planet 用私有 Map)。**无播放行为变更。**
-- [ ] **A2 充血 `@domain`**:落 `PlayQueue` 聚合 / `RepeatMode` / `Volume` 值对象 + 单测。**纯新增,未接线。**
+- [x] **A2 充血 `@domain`**:落 `PlayQueue` 聚合 / `RepeatMode` / `Volume` 值对象 + 单测。**纯新增,未接线。**
 - [ ] **A3 插件接聚合 + 命令/事件分离 + 补全能力**:插件改用 `@domain` 聚合;`PlaybackService` 补全 §3.1 全部方法(经 `getPlugin` 直调,**命令下总线**);补全 `selectTrack/clearQueue/addToQueue/removeFromQueue/toggleMute` 端到端;修监听泄漏。总线此后只剩事件。
 - [ ] **A4 scheme A 事件命名**:按 §3.2 改全部事件;更新 `store/bridge.ts` + `hooks/data.ts`。
 - [ ] **A5 命名收尾 + 性能**:`Control→Playback`、`LyricPlugin→Lyrics`、id 统一、`clamp`、去无谓 `async`;`Progress` 每秒节流挪到源头(格式化只 1 次/秒,而非 bridge 丢 3/4)。
