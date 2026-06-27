@@ -14,6 +14,7 @@ import { Toggle } from "@/components/controls/Toggle";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
+import { Marquee } from "@/components/Marquee";
 import { Icon, Art, artPair, fmt } from "@/components/primitives";
 import { activateOnKey } from "@/lib/keys";
 
@@ -145,8 +146,8 @@ export const PlayerBar = React.memo(function PlayerBar({
           }}
         />
         <div className="min-w-0">
-          <div className="truncate text-[16px] font-normal">{track?.title || "—"}</div>
-          <div className="truncate text-[13px] font-light text-[rgba(20,20,24,0.55)]">
+          <Marquee className="text-[16px] font-normal">{track?.title || "—"}</Marquee>
+          <Marquee className="text-[13px] font-light text-[rgba(20,20,24,0.55)]">
             <ArtistLinks
               artists={track?.artists}
               fallback={track?.artist || ""}
@@ -155,7 +156,7 @@ export const PlayerBar = React.memo(function PlayerBar({
               color="rgba(20,20,24,.55)"
               onOpenArtist={onOpenArtist}
             />
-          </div>
+          </Marquee>
         </div>
       </div>
 
