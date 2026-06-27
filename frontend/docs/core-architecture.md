@@ -206,5 +206,19 @@ functional `definePlugin` / 完整 SDK · sideload 加载器 · 能力沙箱 · 
 
 ---
 
+## 11. XMB 信息架构(导航的领域建模)
+
+XMB 是 L1 launcher。单领域(全是音乐)App 的横轴**既不能是内容类型**(PS3 那套)、**也不该是功能平铺**(每屏一列)。横轴建模为**限界上下文 / "用户与音乐的关系模式"**——一棵 **capability-aware 的优先级树**。
+
+- **L1 = 限界上下文"世界"**(互斥,少而稳):`Now Playing`(Playback)· `Discover`(Catalog)· `Library`(用户自有)· `You`(Identity)· `Settings`(System)。映射到 `PlaybackService` / `MediaService` / 未来的 Library/User context。
+- **L2 = 该世界的子目录**,**按优先级排列(最可能想要的在最上)**——让期望点击距离最小(Hick+Fitts)。`Now Playing` = Player · Up Next · History(会话的 现在/未来/过去);`Library` = Liked · Playlists · Albums · Artists(Cover Flow 降为 Albums 的视图模式)。
+- **L3 = 单个聚合根详情**(playlist/album/artist/chart),morph 落点;**L3 即菜单地板**,聚合内容平铺其中 + 播放。
+- **L4+ = 内容图的横向穿行**(album↔artist↔track):**每个实体在树里只有唯一"家",跨引用 = 传送到那个家,不长新枝**——树保持干净,内容仍互联。morph 承载 L2→L3 与 L3↔L3。
+- **能力门控**:只有"provider 供数"的项被 `media.supports(cap)` 门控(整个 Discover、以及 Lyrics/Comments);本地世界(Player/Queue/History、Library、You、Settings)恒在。**门控为空的世界整列隐藏**。
+- **Discover 优先级**:For You(`personalized`)· **Browse**(按维度,无 capability → 预留 #2、暂隐)· Charts(`toplist`)· Search(`search`)。
+- **Search**:与 Discover 同属 Catalog 域 → 放 Discover 下;高频访问靠**全局 `/` 或 ⌘/Ctrl+K 热键**(任意页面唤起),而非提到一级。
+
+---
+
 ## 一句话
-**薄内核 + 充血域 + 命令直调/事件广播;能力统一注册、宿主由插件拼装;借鉴只取思想,framework 机制按需后置。** 先 A(正确性)后 B(扩展性),逐步全绿。
+**薄内核 + 充血域 + 命令直调/事件广播;能力统一注册、宿主由插件拼装;借鉴只取思想,framework 机制按需后置。** 先 A(正确性)后 B(扩展性),逐步全绿。导航是 capability-aware 的优先级树:L1 限界上下文 → L2 优先级子目录 → L3 聚合详情 → 内容图横向穿行。

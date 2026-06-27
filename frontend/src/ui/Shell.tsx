@@ -46,7 +46,7 @@ import { ScreenActionsProvider } from "@/hooks/screenActions";
 
 import { PlayerBar } from "@/components/PlayerBar";
 import { Button } from "@/components/controls/Button";
-import { XMB, type XmbCat } from "@/screens/XMB";
+import { XMB, type XmbCat, type XmbItemModel } from "@/screens/XMB";
 import { ForYouScreen } from "@/screens/ForYou";
 import { NowPlaying } from "@/screens/NowPlaying";
 // ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
@@ -173,6 +173,12 @@ export default function Shell() {
     },
     [pushCurrent],
   );
+  // Open Search from anywhere (XMB entry + the global "/" hotkey). pushCurrent is a
+  // no-op at the launcher, so this is safe both from the XMB and from a screen.
+  const openSearch = useCallback(() => {
+    setSeedQuery("");
+    navigate("search");
+  }, [navigate]);
 
   /* ---- catalog / charts / search (real provider) ---- */
   const { catalog } = useCatalog();
@@ -348,15 +354,28 @@ export default function Shell() {
     lastTile.current = prev.lastTile;
   }, [startReverse, lastTile]);
 
-  /* Esc backs out one level (was the morph hook's job; centralised here so it
-     shares the back-stack instead of always jumping to the launcher). */
+  /* Global keys: Esc backs out one level (shares the back-stack, not always to the
+     launcher); "/" or ⌘/Ctrl+K opens Search from anywhere — unless typing in a field. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && view !== "xmb") goBack();
+      if (e.key === "Escape" && view !== "xmb") {
+        goBack();
+        return;
+      }
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) {
+        return;
+      }
+      const slash = e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey;
+      const cmdK = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
+      if ((slash || cmdK) && view !== "search") {
+        e.preventDefault();
+        openSearch();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, goBack]);
+  }, [view, goBack, openSearch]);
 
   /* ---- arrow-key spatial navigation (extracted hook) ---- */
   useSpatialNavigation(viewRef, view, goBack);
@@ -376,42 +395,66 @@ export default function Shell() {
     const pls = screenData.playlists;
     const als = screenData.albums;
     const ars = screenData.artists;
-    // Charts come from the provider (coverSeed) or the mock fallback (seed); read
-    // both through this loose shape at the boundary.
-    type ChartLike = {
-      id: string;
-      title?: string;
-      coverSeed?: number;
-      seed?: number;
-      gradient?: string[];
-      image?: string;
-      updatedAt?: string;
-    };
-    const chartSrc: ChartLike[] = toplists;
-    return [
-      // 1 · CONSUMPTION
+
+    // 2 · DISCOVER — Catalog (find music). Provider-capability gated, authored in
+    // priority order (most-likely-wanted first). Browse-by-facet has no provider
+    // capability yet, so it is reserved (priority #2) but omitted until one exists.
+    const discover: XmbItemModel[] = [];
+    if (media.supports("personalized")) {
+      discover.push({
+        key: "foryou",
+        label: "For You",
+        sub: "Your daily landing",
+        icon: "star",
+        seed: 7,
+        grad: ["#1b1033", "#ff2188"],
+        dest: "home",
+        run: () => setView("home"),
+      });
+    }
+    if (media.supports("toplist")) {
+      discover.push({
+        key: "charts",
+        label: "Charts",
+        sub: "Ranked by plays",
+        icon: "bars",
+        seed: 10,
+        grad: ["#240b04", "#ff8a3c"],
+        dest: "charts",
+        run: () => setView("charts"),
+      });
+    }
+    if (media.supports("search")) {
+      discover.push({
+        key: "search",
+        label: "Search",
+        sub: "Tracks, artists, albums",
+        icon: "search",
+        seed: 6,
+        grad: ["#021e24", "#36c5e0"],
+        dest: "search",
+        run: openSearch,
+      });
+    }
+
+    // A capability-aware priority tree: L1 = bounded-context "worlds"; L2 = that
+    // world's entries in priority order. Now Playing / Library / You / Settings are
+    // local (always present); only Discover is provider-gated. Empty worlds drop out.
+    const worlds: XmbCat[] = [
+      // 1 · NOW PLAYING — the live session: present (Player) · future (Up Next) · past (History).
       {
         id: "np",
         icon: "play",
         label: "Now Playing",
         items: [
           {
-            key: "cover",
+            key: "player",
             label: current?.title || "Now Playing",
             sub: current?.artist,
             icon: "play",
             seed: current?.coverSeed || 0,
             grad: current?.gradient,
             image: current?.image,
-            dest: "np",
-            run: () => setView("np"),
-          },
-          {
-            key: "lyrics",
-            label: "Lyrics",
-            sub: "Synced lyrics",
-            seed: (current?.coverSeed || 0) + 1,
-            grad: current?.gradient,
             dest: "np",
             run: () => setView("np"),
           },
@@ -425,15 +468,6 @@ export default function Shell() {
             run: () => setView("queue"),
           },
           {
-            key: "comments",
-            label: "Hot Comments",
-            sub: "On " + (current?.title || ""),
-            icon: "comment",
-            seed: 8,
-            dest: "comments",
-            run: () => setView("comments"),
-          },
-          {
             key: "history",
             label: "History",
             sub: "Recently played",
@@ -445,64 +479,14 @@ export default function Shell() {
           },
         ],
       },
-      // 2 · ORGANIZATION — playlists
+      // 2 · DISCOVER — Catalog (find music), provider-gated (built above).
       {
-        id: "foryou",
-        icon: "star",
-        label: "For You",
-        items: [
-          {
-            key: "overview",
-            label: "Overview",
-            sub: "Your daily landing",
-            icon: "note",
-            seed: 7,
-            grad: ["#1b1033", "#ff2188"],
-            dest: "home",
-            run: () => setView("home"),
-          },
-          ...pls.slice(0, 6).map((p) => ({
-            key: p.id,
-            label: p.name,
-            sub: "Made for you",
-            seed: p.coverSeed,
-            grad: p.gradient,
-            image: p.image,
-            dest: "detail",
-            run: () => openDetail(p),
-          })),
-        ],
+        id: "discover",
+        icon: "compass",
+        label: "Discover",
+        items: discover,
       },
-      // 3 · ORGANIZATION — charts (real charts)
-      {
-        id: "charts",
-        icon: "bars",
-        label: "Charts",
-        items: [
-          ...chartSrc.slice(0, 4).map((c) => ({
-            key: c.id,
-            label: c.title ?? "",
-            sub: c.updatedAt ? "Updated " + c.updatedAt : "Top chart",
-            icon: "bars",
-            seed: c.coverSeed ?? c.seed ?? 0,
-            grad: c.gradient,
-            image: c.image,
-            dest: "detail",
-            run: () => (c.coverSeed != null ? openChart(c as VibeCollection) : setView("charts")),
-          })),
-          {
-            key: "all",
-            label: "All charts",
-            sub: "Browse grid",
-            icon: "grid",
-            seed: 10,
-            grad: ["#240b04", "#ff8a3c"],
-            dest: "charts",
-            run: () => setView("charts"),
-          },
-        ],
-      },
-      // 4 · USER — library
+      // 3 · LIBRARY — the user's own world (local, never gated).
       {
         id: "library",
         icon: "stack",
@@ -520,7 +504,7 @@ export default function Shell() {
           },
           {
             key: "playlists",
-            label: "Your Playlists",
+            label: "Playlists",
             sub: pls.length + " playlists",
             icon: "list",
             seed: 1,
@@ -530,7 +514,7 @@ export default function Shell() {
           },
           {
             key: "albums",
-            label: "Saved Albums",
+            label: "Albums",
             sub: als.length + " albums",
             icon: "stack",
             seed: 2,
@@ -539,94 +523,18 @@ export default function Shell() {
             run: () => openLib("albums"),
           },
           {
-            key: "following",
-            label: "Following",
-            sub: ars.length + " artists",
+            key: "artists",
+            label: "Artists",
+            sub: ars.length + " following",
             icon: "user",
             seed: 4,
             grad: ["#06222b", "#19d3c5"],
             dest: "library",
             run: () => openLib("artists"),
           },
-          {
-            key: "flow",
-            label: "Cover Flow",
-            sub: "Flip through your albums",
-            icon: "flow",
-            seed: 6,
-            grad: ["#06222b", "#19d3c5"],
-            dest: "library",
-            run: () => openLib("albums", "flow"),
-          },
         ],
       },
-      // 5 · CLASSIFICATION — browse facets (static)
-      {
-        id: "browse",
-        icon: "compass",
-        label: "Browse",
-        items: [
-          {
-            key: "lang",
-            label: "Languages",
-            sub: "Mandarin · Western · J-Pop · K-Pop",
-            icon: "grid",
-            seed: 5,
-            grad: ["#13031f", "#b15cff"],
-            dest: "browse",
-            run: () => setView("browse"),
-          },
-          {
-            key: "genre",
-            label: "Genres",
-            sub: "Pop · Rock · Electronic · Jazz",
-            seed: 2,
-            grad: ["#0b1b3a", "#5b8cff"],
-            dest: "browse",
-            run: () => setView("browse"),
-          },
-          {
-            key: "scene",
-            label: "Scenes",
-            sub: "Commute · Workout · Study · Sleep",
-            seed: 6,
-            grad: ["#240b04", "#ff8a3c"],
-            dest: "browse",
-            run: () => setView("browse"),
-          },
-          {
-            key: "mood",
-            label: "Moods",
-            sub: "Calm · Happy · Melancholy · Hype",
-            seed: 8,
-            grad: ["#0a3a2a", "#1ed760"],
-            dest: "browse",
-            run: () => setView("browse"),
-          },
-        ],
-      },
-      // 6 · RETRIEVAL — search
-      {
-        id: "search",
-        icon: "search",
-        label: "Search",
-        items: [
-          {
-            key: "open",
-            label: "Search music",
-            sub: "Tracks, artists, albums",
-            icon: "search",
-            seed: 6,
-            grad: ["#021e24", "#36c5e0"],
-            dest: "search",
-            run: () => {
-              setSeedQuery("");
-              setView("search");
-            },
-          },
-        ],
-      },
-      // 7 · USER — account
+      // 4 · YOU — identity / taste (local).
       {
         id: "you",
         icon: "user",
@@ -654,7 +562,7 @@ export default function Shell() {
           },
         ],
       },
-      // 8 · SYSTEM — settings
+      // 5 · SETTINGS — the tool (local).
       {
         id: "settings",
         icon: "gear",
@@ -674,6 +582,7 @@ export default function Shell() {
             key: "about",
             label: "About Sonance",
             sub: "Version 2.0",
+            icon: "note",
             seed: 2,
             dest: "settings",
             run: () => setView("settings"),
@@ -681,8 +590,11 @@ export default function Shell() {
         ],
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats intentionally curates deps; the referenced callbacks (openDetail, openChart, openLib, likedDetail) are now memoized and stable, so they don't need to be deps here.
-  }, [current, queue, liked, screenData, toplists]);
+
+    // Never show an empty world (e.g. Discover when the provider supports none of its entries).
+    return worlds.filter((w) => w.items.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats curates deps; the referenced callbacks (openSearch, likedDetail, openLib) are memoized and stable, so they aren't listed.
+  }, [current, queue, liked, screenData, media]);
 
   /* ==========================================================================
      render screen
