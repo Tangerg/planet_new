@@ -2,7 +2,7 @@
 // Sonance Vibe — Shell
 // Resident shell + shared-element transition engine, ported verbatim from the
 // example Sonance Vibe.html App. The phase machine (trans / startForward /
-// startReverse / morph layers) is unchanged; only MOCK playback became the real kernel.
+// startReverse / morph layers) is unchanged; only the example's mock playback became the real kernel.
 //
 // The morph engine, spatial navigation, context menu, and likes/history state
 // have been extracted into dedicated hooks for clarity.
@@ -18,7 +18,6 @@ import "./Shell.css";
 import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg, Equalizer, Icon } from "@/components/primitives";
-import { MOCK } from "@/model/mock";
 import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,
@@ -109,7 +108,7 @@ export default function Shell() {
   const [xmbCategory, setXmbCategory] = useState(1);
   const [xmbRowByCategory, setXmbRowByCategory] = useState<Record<string, number>>({});
   const [detail, setDetail] = useState<DetailTarget | null>(null);
-  const [artistObj, setArtistObj] = useState<ArtistTarget>(MOCK.artists[0] as ArtistTarget);
+  const [artistObj, setArtistObj] = useState<ArtistTarget>({ id: "", name: "" });
   const [searchQuery, setSeedQuery] = useState("");
   const [libraryTab, setLibraryTab] = useState("playlists");
   const [libraryView, setLibraryView] = useState("grid");
@@ -122,7 +121,7 @@ export default function Shell() {
   const navStack = useRef<NavSnapshot[]>([]);
   const navSnapRef = useRef<NavSnapshot | null>(null);
 
-  /* ---- real kernel playback state (replaces the example MOCK + local useState) ---- */
+  /* ---- real kernel playback state (replaces the example's mock + local useState) ---- */
   const playback = useVibePlayback();
   // Destructure stable callbacks from playback (they are useCallback-ed in hooks.ts)
   const {
@@ -179,15 +178,14 @@ export default function Shell() {
   const { catalog } = useCatalog();
   const toplists = useToplists();
   const search = useProviderSearch();
-  // Fall back to the mock catalog when the provider returns nothing, so the XMB
-  // and browse screens always read populated data. Mock is untyped fixture data,
-  // MOCK is pre-typed to the view-models at its own boundary, so no cast here.
+  // Screens read provider data only; when the provider returns nothing they show
+  // their own empty states. For populated data in dev, run with VITE_PROVIDER=mock.
   const screenData = useMemo<ScreenData>(
     () => ({
-      playlists: catalog.playlists.length ? catalog.playlists : MOCK.playlists,
-      albums: catalog.albums.length ? catalog.albums : MOCK.albums,
-      artists: catalog.artists.length ? catalog.artists : MOCK.artists,
-      allTracks: catalog.allTracks.length ? catalog.allTracks : MOCK.data.allTracks,
+      playlists: catalog.playlists,
+      albums: catalog.albums,
+      artists: catalog.artists,
+      allTracks: catalog.allTracks,
     }),
     [catalog],
   );
@@ -272,14 +270,6 @@ export default function Shell() {
       }
     },
     [media, queryClient, pushCurrent],
-  );
-  const openGenre = useCallback(
-    (name?: string) => {
-      pushCurrent();
-      setSeedQuery(name || "");
-      setView("search");
-    },
-    [pushCurrent],
   );
   const openLib = useCallback(
     (tab: string, vw?: string) => {
@@ -397,7 +387,7 @@ export default function Shell() {
       image?: string;
       updatedAt?: string;
     };
-    const chartSrc: ChartLike[] = toplists.length ? toplists : MOCK.charts;
+    const chartSrc: ChartLike[] = toplists;
     return [
       // 1 · CONSUMPTION
       {
@@ -512,32 +502,7 @@ export default function Shell() {
           },
         ],
       },
-      // 4 · ORGANIZATION — radio (static)
-      {
-        id: "radio",
-        icon: "radio",
-        label: "Radio",
-        items: (
-          MOCK.radios as Array<{
-            id: string;
-            title: string;
-            sub?: string;
-            type?: string;
-            seed: number;
-            gradient?: string[];
-          }>
-        ).map((r) => ({
-          key: r.id,
-          label: r.title,
-          sub: r.sub,
-          icon: r.type === "podcast" ? "volume" : "radio",
-          seed: r.seed,
-          grad: r.gradient,
-          dest: "browse",
-          run: () => setView("browse"),
-        })),
-      },
-      // 5 · USER — library
+      // 4 · USER — library
       {
         id: "library",
         icon: "stack",
@@ -595,7 +560,7 @@ export default function Shell() {
           },
         ],
       },
-      // 6 · CLASSIFICATION — browse facets (static)
+      // 5 · CLASSIFICATION — browse facets (static)
       {
         id: "browse",
         icon: "compass",
@@ -640,7 +605,7 @@ export default function Shell() {
           },
         ],
       },
-      // 7 · RETRIEVAL — search
+      // 6 · RETRIEVAL — search
       {
         id: "search",
         icon: "search",
@@ -661,7 +626,7 @@ export default function Shell() {
           },
         ],
       },
-      // 8 · USER — account
+      // 7 · USER — account
       {
         id: "you",
         icon: "user",
@@ -689,7 +654,7 @@ export default function Shell() {
           },
         ],
       },
-      // 9 · SYSTEM — settings
+      // 8 · SYSTEM — settings
       {
         id: "settings",
         icon: "gear",
@@ -870,7 +835,7 @@ export default function Shell() {
           mono={heroTreatment === "mono"}
         />
       );
-    if (v === "browse") return <BrowseScreen onOpenGenre={openGenre} />;
+    if (v === "browse") return <BrowseScreen />;
     if (v === "comments")
       return (
         <CommentsScreen

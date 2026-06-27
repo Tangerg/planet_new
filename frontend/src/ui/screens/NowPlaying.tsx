@@ -8,7 +8,6 @@ import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
-import { MOCK } from "@/model/mock";
 
 // A synced-lyric line: text + optional timestamp (ms). The "No lyrics" fallback
 // line carries no `t`.
@@ -178,18 +177,6 @@ export const NowPlaying = React.memo(function NowPlaying({
     [lyrics],
   );
   const [active, setActive] = useState(0);
-  const [likedC, setLikedC] = useState<Set<string>>(new Set());
-  const toggleC = (id: string) =>
-    setLikedC((p) => {
-      const n = new Set(p);
-      if (n.has(id)) {
-        n.delete(id);
-      } else {
-        n.add(id);
-      }
-      return n;
-    });
-  const comments = MOCK.comments;
 
   // Sync active lyric line to real playback progress.
   // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
@@ -429,31 +416,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               >
                 Hot Comments
               </div>
-              {comments.map((c) => (
-                <div key={c.id} className="flex gap-4 border-b border-white/10 py-4">
-                  <Art
-                    seed={c.seed}
-                    grad={["#1b1033", accent]}
-                    className="h-[42px] w-[42px] flex-none rounded-full"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[15px] font-normal text-white/[0.92]">{c.text}</div>
-                    <div className="mt-2.5 flex items-center justify-between">
-                      <Button
-                        onClick={() => toggleC(c.id)}
-                        className="flex items-center gap-[7px]"
-                        style={{ color: likedC.has(c.id) ? accent : "rgba(255,255,255,.5)" }}
-                      >
-                        <Icon.heart size={14} filled={likedC.has(c.id)} />
-                        <span className="mlabel text-[10px]">
-                          {c.likes + (likedC.has(c.id) ? 1 : 0)}
-                        </span>
-                      </Button>
-                      <span className="mlabel text-[10px] text-white/30">{c.time}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <div className="py-[50px] font-light text-white/40">No comments yet.</div>
             </div>
           ) : (
             <div ref={lyricScrollRef} className="scroll h-full">

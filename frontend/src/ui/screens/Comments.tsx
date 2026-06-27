@@ -1,10 +1,9 @@
 // ============================================================
 // Comments — hot comments for the current track (left cover + right list).
-// Comments are mock (no provider capability yet); the list is bounded.
+// No provider exposes comments yet, so the list shows an honest empty state.
 // ============================================================
-import React, { useState } from "react";
+import React from "react";
 import type { VibeTrack } from "@/model/adapt";
-import { MOCK } from "@/model/mock";
 import { Icon, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
@@ -18,14 +17,6 @@ type CommentsScreenProps = {
 };
 
 export function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScreenProps) {
-  const [likedC, setLikedC] = useState(new Set<string>());
-  const tl = (id: string) =>
-    setLikedC((p) => {
-      const n = new Set(p);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
   return (
     <FadeIn
       className="grid h-full bg-surf-0"
@@ -55,7 +46,6 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
               <Icon.heart size={30} filled={liked} />
             </Button>
             <span className="pill-accent">{track?.quality || "SQ"}</span>
-            <span className="tag">30.88K Comments</span>
           </div>
           <div className="max-w-full">
             <div className="inline-block max-w-full truncate border-b border-white/30 pb-2.5 text-[28px] font-light">
@@ -72,29 +62,7 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
         >
           Hot Comments
         </div>
-        {MOCK.comments.map((c) => (
-          <div key={c.id} className="flex gap-4 border-b border-line py-[18px]">
-            <Art
-              seed={c.seed}
-              grad={["#1b1033", accent]}
-              className="h-11 w-11 flex-none rounded-full"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-normal">{c.text}</div>
-              <div className="mt-3 flex items-center justify-between">
-                <Button
-                  onClick={() => tl(c.id)}
-                  className="flex items-center gap-[7px]"
-                  style={{ color: likedC.has(c.id) ? accent : "var(--tx-3)" }}
-                >
-                  <Icon.heart size={15} filled={likedC.has(c.id)} />
-                  <span className="mlabel text-[10px]">{c.likes + (likedC.has(c.id) ? 1 : 0)}</span>
-                </Button>
-                <span className="mlabel text-[10px] text-tx-4">{c.time}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+        <div className="py-[50px] font-light text-tx-4">No comments yet.</div>
       </div>
     </FadeIn>
   );

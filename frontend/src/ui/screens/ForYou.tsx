@@ -13,7 +13,6 @@ import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
-import { MOCK } from "@/model/mock";
 
 type ForYouScreenProps = {
   data: ScreenData;
@@ -45,9 +44,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
           : "Good evening";
   })();
   const [chip, setChip] = useState("All");
-  const playlists = data.playlists.length ? data.playlists : MOCK.playlists;
-  const albums = data.albums.length ? data.albums : MOCK.albums;
-  const artists = data.artists.length ? data.artists : MOCK.artists;
+  const playlists = data.playlists;
+  const albums = data.albums;
+  const artists = data.artists;
   const featured = playlists[1] || playlists[0];
   const tiles = [...playlists, ...albums].slice(0, 8);
   const openTile = (t: VibeCollection) =>
