@@ -8,7 +8,7 @@ import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
-import { useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 // A synced-lyric line: text + optional timestamp (ms). The "No lyrics" fallback
 // line carries no `t`.
@@ -178,7 +178,7 @@ export const NowPlaying = React.memo(function NowPlaying({
     [lyrics],
   );
   const [active, setActive] = useState(0);
-  const t = useT();
+  const { t } = useTranslation();
 
   // Sync active lyric line to real playback progress.
   // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.

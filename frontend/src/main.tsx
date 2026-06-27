@@ -8,6 +8,8 @@ import "@/components/layout/SectionHead.css";
 import "@/components/layout/CardRail.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import "@/i18n"; // initialize i18next once (resources + active locale) before render
+
 import { engine } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
 import Shell from "@/Shell";

@@ -8,7 +8,8 @@ import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { Switch } from "@/components/controls/Switch";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
-import { useT, useLocaleStore, LOCALES, LOCALE_LABELS, type Locale } from "@/i18n";
+import { useTranslation } from "react-i18next";
+import { LOCALES, LOCALE_LABELS } from "@/i18n";
 
 function SetToggle({
   label,
@@ -75,9 +76,7 @@ export function SettingsScreen({
   settings,
   setSettings,
 }: SettingsScreenProps) {
-  const t = useT();
-  const locale = useLocaleStore((st) => st.locale);
-  const setLocale = useLocaleStore((st) => st.setLocale);
+  const { t, i18n } = useTranslation();
   const s = settings;
   const up = <K extends keyof Settings>(k: K, v: Settings[K]) =>
     setSettings((prev) => ({ ...prev, [k]: v }));
@@ -152,9 +151,9 @@ export function SettingsScreen({
           </div>
           <SetSeg
             label={t("settings.language")}
-            value={locale}
+            value={i18n.resolvedLanguage ?? "en"}
             options={LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l] }))}
-            onChange={(v) => setLocale(v as Locale)}
+            onChange={(v) => void i18n.changeLanguage(v)}
           />
           <SetToggle
             label={t("settings.waves")}
