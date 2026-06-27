@@ -30,7 +30,7 @@ export function getRandomIntExclude(min: number, max: number, exclude: number): 
  * @param max upper bound; returned when expect is larger
  * @param expect the desired value within the range
  */
-export function getNumberInRange(min: number, max: number, expect: number): number {
+export function clamp(min: number, max: number, expect: number): number {
   if (min > max) {
     throw new Error("min must be less than or equal to max");
   }

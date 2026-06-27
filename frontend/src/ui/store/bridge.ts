@@ -58,11 +58,8 @@ export class PlayQueueStoreBridge extends Plugin {
     usePlayQueueStore.setState((s) => ({ ...s, duration }));
   }
 
-  private lastProgressSecond = -1;
+  // The Progress plugin already throttles to ~1/sec at the source, so this is a plain pin.
   private onProgressChanged(progress: Progress): void {
-    const sec = Math.floor(progress.duration);
-    if (sec === this.lastProgressSecond) return;
-    this.lastProgressSecond = sec;
     usePlayQueueStore.setState((s) => ({ ...s, progress }));
   }
 }

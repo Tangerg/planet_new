@@ -20,7 +20,7 @@ declare module "../../kernel/event" {
  * (raised by the playback/audio plugin) to auto-advance.
  */
 export class PlayQueue extends Plugin {
-  public static readonly id = "PlayQueue";
+  public static readonly id = "play-queue";
   private readonly queue = new PlayQueueModel();
   private repeat = RepeatMode.OFF;
 

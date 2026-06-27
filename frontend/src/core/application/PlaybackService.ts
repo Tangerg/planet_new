@@ -1,7 +1,7 @@
 import type { IPlanet, IPlugin } from "../kernel";
 import type { IProvider } from "@domain";
 import type { Track } from "@domain/model/track";
-import { Control } from "../plugin/control";
+import { Playback } from "../plugin/playback";
 import { PlayQueue } from "../plugin/playqueue";
 import { Volume } from "../plugin/volume";
 import { Progress } from "../plugin/progress";
@@ -83,16 +83,16 @@ export class PlaybackService {
 
   /** Toggle play/pause; pass the current playing state to pick the direction. */
   togglePlay(isPlaying: boolean): void {
-    if (isPlaying) this.control.pause();
-    else void this.control.resume();
+    if (isPlaying) this.playback.pause();
+    else void this.playback.resume();
   }
 
   pause(): void {
-    this.control.pause();
+    this.playback.pause();
   }
 
   resume(): void {
-    void this.control.resume();
+    void this.playback.resume();
   }
 
   next(): void {
@@ -144,8 +144,8 @@ export class PlaybackService {
     return this.require<PlayQueue>(PlayQueue.id);
   }
 
-  private get control(): Control {
-    return this.require<Control>(Control.id);
+  private get playback(): Playback {
+    return this.require<Playback>(Playback.id);
   }
 
   private get volume(): Volume {

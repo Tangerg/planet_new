@@ -21,11 +21,11 @@ declare module "../../kernel/event" {
  * element's native `ended` into the `play_track_ended` choreography event the
  * queue plugin auto-advances on.
  */
-export class Control extends Plugin {
-  public static readonly id = "control";
+export class Playback extends Plugin {
+  public static readonly id = "playback";
 
   get id(): string {
-    return Control.id;
+    return Playback.id;
   }
 
   protected onInit(): void {

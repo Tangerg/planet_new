@@ -2,7 +2,7 @@ import { Plugin } from "../../kernel/plugin";
 import type { Progress as ProgressModel, FormattedDuration } from "@domain/model/duration";
 import { InfinityDuration } from "@domain/model/duration";
 import { formatDuration, Minute, Second } from "@shared/time";
-import { getNumberInRange } from "@shared/math";
+import { clamp } from "@shared/math";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
@@ -12,7 +12,10 @@ declare module "../../kernel/event" {
 }
 
 export class Progress extends Plugin {
-  public static readonly id = "Progress";
+  public static readonly id = "progress";
+
+  /** Last whole-second emitted — position updates throttle to ~1/sec at the source. */
+  private lastSecond = -1;
 
   get id(): string {
     return Progress.id;
@@ -53,6 +56,11 @@ export class Progress extends Plugin {
   }
 
   onTimeUpdate = (): void => {
+    // Throttle to one emit per whole second at the source, so the formatted
+    // Progress is built once/sec instead of ~4×/sec (the timeupdate cadence).
+    const sec = Math.floor(this.context.audioElement.currentTime);
+    if (sec === this.lastSecond) return;
+    this.lastSecond = sec;
     this.context.hooks.emit("progress:position-changed", this.current);
   };
 
@@ -66,6 +74,8 @@ export class Progress extends Plugin {
       return;
     }
     const t = (v / 100) * total;
-    this.context.audioElement.currentTime = getNumberInRange(0, total, t);
+    this.context.audioElement.currentTime = clamp(0, total, t);
+    // Force the next timeupdate to emit even within the same second as the seek.
+    this.lastSecond = -1;
   };
 }
