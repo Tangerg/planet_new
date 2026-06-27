@@ -20,6 +20,15 @@
   animation: none !important;
 }
 
+/* While the flying tile is in transit, the real hero it stands for is hidden so
+   the cover never appears twice (one parked, one mid-flight). Forward: the
+   destination hero in `.t-base`, revealed at the reveal phase as the tile fades
+   out. Reverse: the outgoing hero in `.t-from`, carried back to the card by the
+   tile. Toggled by MorphStage; getBoundingClientRect still measures at opacity 0. */
+.t-hide-hero [data-hero] {
+  opacity: 0;
+}
+
 /* content settle paired with the container-transform overlay */
 .view-emerge {
   height: 100%;
