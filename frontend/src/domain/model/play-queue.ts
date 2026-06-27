@@ -48,7 +48,7 @@ export class PlayQueue {
   /** Replace the queue and place the cursor at `start` (or the first track). */
   setTracks(tracks: readonly Track[], start?: Track): void {
     this.displayOrder = [...tracks];
-    this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
+    this.rebuildPlayOrder();
     if (this.playOrder.length === 0) {
       this.cursor = -1;
       return;
@@ -126,9 +126,14 @@ export class PlayQueue {
     this.shuffled = !this.shuffled;
     if (this.playOrder.length === 0) return this.shuffled;
     const keep = this.current!;
-    this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
+    this.rebuildPlayOrder();
     this.cursor = this.indexOf(keep);
     return this.shuffled;
+  }
+
+  /** Derive playOrder from displayOrder: a shuffle of it when shuffled, else a copy. */
+  private rebuildPlayOrder(): void {
+    this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
   }
 
   private indexOf(track: Track): number {
