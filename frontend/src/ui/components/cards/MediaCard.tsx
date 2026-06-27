@@ -62,7 +62,8 @@ export function MediaCard({
         className="art"
         glow={round ? undefined : artPair(item.coverSeed, item.gradient)[1]}
       >
-        {onPlay && <PlayFab className="playfab" onPlay={onPlay} />}
+        {/* artists (round) are people, not playable — no cover play fab */}
+        {onPlay && !round && <PlayFab className="playfab" onPlay={onPlay} />}
       </Art>
       <div className="ttl">{item.name}</div>
       {sub && <div className="sub">{sub}</div>}
