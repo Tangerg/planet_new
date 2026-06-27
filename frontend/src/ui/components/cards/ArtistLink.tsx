@@ -50,3 +50,60 @@ export function ArtistLink({
     </Button>
   );
 }
+
+type ArtistLinksProps = {
+  /** Every credited artist; each name is its own link, so a group credit lets
+   *  you jump to ANY member. Entries without an id degrade to plain text. */
+  artists?: ArtistRef[];
+  /** Joined names used when there's no per-artist list (provider gave a string). */
+  fallback?: string;
+  /** Primary artist id for that single fallback link. */
+  fallbackId?: string;
+  accent: string;
+  color: string;
+  onOpenArtist?: (artist: ArtistRef) => void;
+};
+
+/**
+ * A credited-artist line. Renders one ArtistLink per artist (", "-separated, the
+ * same join as Track.artistNames) so multi-artist tracks are individually
+ * navigable; falls back to a single link over `fallback` when no list is given.
+ * Overflow is the caller's job (a `truncate` container, or a marquee).
+ */
+export function ArtistLinks({
+  artists,
+  fallback,
+  fallbackId,
+  accent,
+  color,
+  onOpenArtist,
+}: ArtistLinksProps) {
+  const list = (artists ?? []).filter((a) => a.name);
+  if (list.length === 0) {
+    return (
+      <ArtistLink
+        name={fallback}
+        artistId={fallbackId}
+        accent={accent}
+        color={color}
+        onOpenArtist={onOpenArtist}
+      />
+    );
+  }
+  return (
+    <>
+      {list.map((a, i) => (
+        <React.Fragment key={(a.id || a.name) + i}>
+          {i > 0 && <span style={{ color }}>, </span>}
+          <ArtistLink
+            name={a.name}
+            artistId={a.id}
+            accent={accent}
+            color={color}
+            onOpenArtist={onOpenArtist}
+          />
+        </React.Fragment>
+      ))}
+    </>
+  );
+}

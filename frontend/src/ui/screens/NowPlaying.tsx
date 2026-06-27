@@ -6,7 +6,7 @@ import { Icon, Equalizer, Art, artBg, artPair } from "@/components/primitives";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
-import { ArtistLink } from "@/components/cards/ArtistLink";
+import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
 import { activateOnKey } from "@/lib/keys";
@@ -312,18 +312,13 @@ export const NowPlaying = React.memo(function NowPlaying({
             {track?.title}
           </div>
           <div className="truncate text-[16px] font-light text-white/60">
-            <ArtistLink
-              name={track?.artist}
-              artistId={track?.artistId}
+            <ArtistLinks
+              artists={track?.artists}
+              fallback={track?.artist}
+              fallbackId={track?.artistId}
               accent={accent}
               color="rgba(255,255,255,.6)"
               onOpenArtist={onOpenArtist}
-              style={{
-                maxWidth: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
             />
           </div>
           {track?.credits && (
@@ -504,18 +499,13 @@ export const NowPlaying = React.memo(function NowPlaying({
                 {track?.title}
               </div>
               <div className="truncate text-[12.5px] font-light text-white/50">
-                <ArtistLink
-                  name={track?.artist}
-                  artistId={track?.artistId}
+                <ArtistLinks
+                  artists={track?.artists}
+                  fallback={track?.artist}
+                  fallbackId={track?.artistId}
                   accent={accent}
                   color="rgba(255,255,255,.5)"
                   onOpenArtist={onOpenArtist}
-                  style={{
-                    maxWidth: "100%",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
                 />
               </div>
             </div>

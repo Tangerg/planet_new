@@ -8,7 +8,7 @@ import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Art, Icon } from "@/components/primitives";
 import { RiseFab } from "@/components/lift";
 import { CardShell } from "@/components/cards/CardShell";
-import { ArtistLink } from "@/components/cards/ArtistLink";
+import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 
 type TrackCardProps = {
@@ -53,9 +53,10 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
       </div>
       <div className="truncate mt-[11px] text-[14.5px] font-normal">{track.title}</div>
       <div className="truncate text-[12.5px] font-light text-white/50">
-        <ArtistLink
-          name={track.artist}
-          artistId={track.artistId}
+        <ArtistLinks
+          artists={track.artists}
+          fallback={track.artist}
+          fallbackId={track.artistId}
           accent={accent}
           color="rgba(255,255,255,.5)"
           onOpenArtist={onOpenArtist}

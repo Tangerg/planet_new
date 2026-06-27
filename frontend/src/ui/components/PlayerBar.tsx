@@ -13,7 +13,7 @@ import { Button } from "@/components/controls/Button";
 import { Toggle } from "@/components/controls/Toggle";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
-import { ArtistLink } from "@/components/cards/ArtistLink";
+import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Icon, Art, artPair, fmt } from "@/components/primitives";
 import { activateOnKey } from "@/lib/keys";
 
@@ -147,9 +147,10 @@ export const PlayerBar = React.memo(function PlayerBar({
         <div className="min-w-0">
           <div className="truncate text-[16px] font-normal">{track?.title || "—"}</div>
           <div className="truncate text-[13px] font-light text-[rgba(20,20,24,0.55)]">
-            <ArtistLink
-              name={track?.artist || ""}
-              artistId={track?.artistId}
+            <ArtistLinks
+              artists={track?.artists}
+              fallback={track?.artist || ""}
+              fallbackId={track?.artistId}
               accent={accent}
               color="rgba(20,20,24,.55)"
               onOpenArtist={onOpenArtist}
