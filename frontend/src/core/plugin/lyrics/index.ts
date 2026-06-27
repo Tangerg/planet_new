@@ -1,6 +1,5 @@
 import { Plugin } from "../../kernel";
-import type { IPlugin } from "../../kernel";
-import { type IProvider, PROVIDER_PLUGIN_ID } from "@domain";
+import { PROVIDER_REGISTRY, ProviderRegistry } from "../provider-registry";
 import type { Lyric } from "@domain/model/lyric";
 import type { Track } from "@domain/model/track";
 
@@ -11,16 +10,16 @@ declare module "../../kernel/event" {
 }
 
 /**
- * Reactive lyric source. Follows the current track: on current_track_changed it
- * resolves the provider (a sibling plugin) and fetches its lyrics, broadcasting
- * lyric_changed. The UI reads the current lyrics from the store and never
- * fetches them — it doesn't even know which track's lyrics to ask for. This is
- * the "reactive business → kernel plugin" pattern (vs. on-demand browse reads,
- * which stay in MediaService + the UI's React Query cache).
+ * Reactive lyric source. Follows the current track: on queue:current-changed it
+ * resolves the active provider (via the ProviderRegistry) and fetches its
+ * lyrics, broadcasting lyrics:changed. The UI reads the current lyrics from the
+ * store and never fetches them — it doesn't even know which track's lyrics to
+ * ask for. This is the "reactive business → kernel plugin" pattern (vs. on-demand
+ * browse reads, which stay in MediaService + the UI's React Query cache).
  */
 export class Lyrics extends Plugin {
   public static readonly id = "lyrics";
-  readonly dependsOn = [PROVIDER_PLUGIN_ID];
+  readonly dependsOn = [ProviderRegistry.ID];
 
   get id(): string {
     return Lyrics.id;
@@ -52,7 +51,7 @@ export class Lyrics extends Plugin {
       return;
     }
 
-    const provider = this.context.getPlugin<IProvider & IPlugin>(PROVIDER_PLUGIN_ID);
+    const provider = this.context.registry.resolve(PROVIDER_REGISTRY)?.active ?? null;
     let lyrics: Lyric[] = [];
     try {
       lyrics = provider ? await provider.lyric(id) : [];

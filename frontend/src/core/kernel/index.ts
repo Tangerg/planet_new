@@ -7,3 +7,6 @@ export type { IContext, IPlanet, IPlugin };
 export type { PlanetOption };
 
 export { Plugin, Planet };
+
+/** Capability registry: the typed handle + registry surface. */
+export * from "./capability";
