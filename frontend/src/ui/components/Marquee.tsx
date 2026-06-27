@@ -1,12 +1,14 @@
 // ============================================================
-// Marquee — a single-line text strip that gently scrolls horizontally ONLY when
-// its content overflows, then sits still. Used for now-playing title / artist on
-// the focused surfaces (player bar, Now Playing) so a long name is readable
-// instead of dead-truncated. Pauses on hover so the (clickable) artist links
-// underneath stay clickable, and holds still under prefers-reduced-motion.
+// Marquee — a single-line strip that, ONLY when its content overflows, scrolls
+// it leftward in a seamless one-way loop (the content exits left while a second
+// copy enters from the right, repeating) — not a left-right sway. Used for
+// now-playing title / artist so a long name reads instead of dead-truncating.
+// Pauses on hover (resuming from where it froze) so the clickable artist links
+// underneath stay clickable; holds still under prefers-reduced-motion.
 // ============================================================
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useAnimationControls, useReducedMotion } from "motion/react";
+import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import type { AnimationPlaybackControls } from "motion/react";
 
 type MarqueeProps = {
   children: React.ReactNode;
@@ -14,70 +16,84 @@ type MarqueeProps = {
   className?: string;
   /** Scroll speed in px/sec (default 40). */
   speed?: number;
-  /** Hold (pause) at each end, seconds (default 1.4). */
-  hold?: number;
 };
 
-export function Marquee({ children, className, speed = 40, hold = 1.4 }: MarqueeProps) {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimationControls();
+// Breathing room between the looping copies, so it reads as a repeat, not a smear.
+const GAP = 48;
+
+export function Marquee({ children, className, speed = 40 }: MarqueeProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLSpanElement>(null);
+  const x = useMotionValue(0);
+  const anim = useRef<AnimationPlaybackControls | null>(null);
   const reduce = useReducedMotion();
-  const [overflow, setOverflow] = useState(0);
+  const [single, setSingle] = useState(0);
+  const [box, setBox] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  // Track how far the content overruns its box; a ResizeObserver re-measures on
-  // both content changes (new track) and container resizes (window).
+  // Measure one copy's width vs the box; a ResizeObserver re-measures on content
+  // changes (new track) and container resizes (window).
   useEffect(() => {
-    const outer = outerRef.current;
-    const inner = innerRef.current;
-    if (!outer || !inner) return;
-    const measure = () => setOverflow(Math.max(0, inner.scrollWidth - outer.clientWidth));
+    const c = containerRef.current;
+    const cp = copyRef.current;
+    if (!c || !cp) return;
+    const measure = () => {
+      setSingle(cp.scrollWidth);
+      setBox(c.clientWidth);
+    };
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(outer);
-    ro.observe(inner);
+    ro.observe(c);
+    ro.observe(cp);
     return () => ro.disconnect();
   }, []);
 
+  const overflow = single > box + 1;
+  const distance = single + GAP; // one full loop translates by exactly this
+
+  // Drive the loop. Translating by `distance` lands the second copy precisely
+  // where the first began, so the repeat snap (loop) is visually seamless.
   useEffect(() => {
-    if (reduce || overflow <= 0) {
-      controls.set({ x: 0 });
+    if (reduce || !overflow) {
+      x.set(0);
+      anim.current = null;
       return;
     }
-    if (paused) {
-      // Freeze in place so a link currently in view stays clickable.
-      controls.stop();
-      return;
-    }
-    const scroll = overflow / speed; // seconds each direction
-    const total = 2 * scroll + 2 * hold;
-    void controls.start({
-      x: [0, 0, -overflow, -overflow, 0],
-      transition: {
-        duration: total,
-        // hold · scroll-out · hold · scroll-back
-        times: [0, hold / total, (hold + scroll) / total, (2 * hold + scroll) / total, 1],
-        ease: "linear",
-        repeat: Infinity,
-      },
+    const controls = animate(x, [0, -distance], {
+      ease: "linear",
+      duration: distance / speed,
+      repeat: Infinity,
+      repeatType: "loop",
     });
-  }, [overflow, paused, reduce, speed, hold, controls]);
+    anim.current = controls;
+    return () => controls.stop();
+  }, [overflow, distance, reduce, speed, x]);
+
+  // Pause/resume in place on hover (re-applied after the loop is (re)built).
+  useEffect(() => {
+    if (paused) anim.current?.pause();
+    else anim.current?.play();
+  }, [paused, overflow, distance, reduce]);
 
   return (
     <div
-      ref={outerRef}
+      ref={containerRef}
       className={className}
       style={{ overflow: "hidden" }}
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >
       <motion.div
-        ref={innerRef}
-        animate={controls}
-        style={{ display: "inline-block", whiteSpace: "nowrap", willChange: "transform" }}
+        style={{ x, display: "inline-flex", whiteSpace: "nowrap", willChange: "transform" }}
       >
-        {children}
+        <span ref={copyRef} style={{ flex: "0 0 auto" }}>
+          {children}
+        </span>
+        {overflow && (
+          <span aria-hidden style={{ flex: "0 0 auto", paddingLeft: GAP }}>
+            {children}
+          </span>
+        )}
       </motion.div>
     </div>
   );
