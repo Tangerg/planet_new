@@ -101,7 +101,7 @@ export function PlaylistDetailScreen({
       {/* sticky condensed header on scroll */}
       <div
         ref={stickyRef}
-        className="absolute inset-x-0 top-0 z-30 flex items-center gap-[14px] py-[14px] pl-[100px] pr-12"
+        className="absolute inset-x-0 top-0 z-30 py-[14px]"
         style={{
           background: "rgba(12,12,16,.72)",
           backdropFilter: "blur(22px)",
@@ -113,24 +113,26 @@ export function PlaylistDetailScreen({
           pointerEvents: "none",
         }}
       >
-        <Button
-          onClick={playFirst}
-          aria-label="Play"
-          className="grid h-10 w-10 flex-none place-items-center rounded-full"
-          style={{ background: accent, color: "#06060a", boxShadow: `0 6px 18px -4px ${accent}` }}
-        >
-          <Icon.play size={16} />
-        </Button>
-        <Art
-          seed={p.coverSeed}
-          grad={p.gradient}
-          image={p.image}
-          images={p.images}
-          px={34}
-          className="h-[34px] w-[34px] flex-none"
-          style={{ boxShadow: "0 4px 12px rgba(0,0,0,.4)" }}
-        />
-        <span className="truncate min-w-0 flex-1 text-[20px] font-light">{p.name}</span>
+        <div className="mx-auto flex max-w-[1320px] items-center gap-[14px] pl-[100px] pr-12 2xl:pl-12">
+          <Button
+            onClick={playFirst}
+            aria-label="Play"
+            className="grid h-10 w-10 flex-none place-items-center rounded-full"
+            style={{ background: accent, color: "#06060a", boxShadow: `0 6px 18px -4px ${accent}` }}
+          >
+            <Icon.play size={16} />
+          </Button>
+          <Art
+            seed={p.coverSeed}
+            grad={p.gradient}
+            image={p.image}
+            images={p.images}
+            px={34}
+            className="h-[34px] w-[34px] flex-none"
+            style={{ boxShadow: "0 4px 12px rgba(0,0,0,.4)" }}
+          />
+          <span className="truncate min-w-0 flex-1 text-[20px] font-light">{p.name}</span>
+        </div>
       </div>
 
       <div ref={scrollRef} onScroll={handleScroll} className="scroll relative z-[2] h-full">
