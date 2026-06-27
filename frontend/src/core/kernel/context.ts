@@ -1,19 +1,24 @@
-import { IContext } from "./types";
 import { PlanetEventMap } from "./event";
-import { EventEmitter, IEventEmitter } from "../event";
-import { ICapabilityRegistry } from "./capability";
+import { EventEmitter } from "../event";
+import { CapabilityRegistry } from "./capability";
 
-export class Context implements IContext {
+/**
+ * Runtime context injected into every Plugin: the shared audio element, the
+ * event bus, and the capability registry. A plugin publishes what it offers via
+ * `registry.provide(CAP, impl)` and reaches siblings via `registry.resolve` —
+ * the one mechanism for both core and third-party capabilities.
+ */
+export class PluginContext {
   private readonly _audioElement: HTMLAudioElement;
   private readonly _audioContext: AudioContext;
-  private readonly eventEmitter: EventEmitter<PlanetEventMap>;
-  private readonly _registry: ICapabilityRegistry;
+  private readonly _hooks: EventEmitter<PlanetEventMap>;
+  private readonly _registry: CapabilityRegistry;
 
   /** @param registry the kernel capability registry, shared with every plugin. */
-  constructor(registry: ICapabilityRegistry) {
+  constructor(registry: CapabilityRegistry) {
     this._audioElement = new Audio();
     this._audioContext = new AudioContext();
-    this.eventEmitter = new EventEmitter<PlanetEventMap>();
+    this._hooks = new EventEmitter<PlanetEventMap>();
     this._registry = registry;
   }
 
@@ -25,11 +30,11 @@ export class Context implements IContext {
     return this._audioContext;
   }
 
-  get hooks(): IEventEmitter<PlanetEventMap> {
-    return this.eventEmitter;
+  get hooks(): EventEmitter<PlanetEventMap> {
+    return this._hooks;
   }
 
-  get registry(): ICapabilityRegistry {
+  get registry(): CapabilityRegistry {
     return this._registry;
   }
 }

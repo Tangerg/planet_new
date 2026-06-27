@@ -1,20 +1,21 @@
-import { IEventEmitter } from "../event";
+import { EventEmitter } from "../event";
+import { Disposable } from "../types";
 import { PlanetEventMap } from "./event";
-import { IPlanet, IContext, IPlugin } from "./types";
-import { Context } from "./context";
+import { Plugin } from "./plugin";
+import { PluginContext } from "./context";
 import { Capability, CapabilityRegistry } from "./capability";
 import { warn } from "@shared/debug";
 
 export type PlanetOption = {
-  plugins?: IPlugin[];
+  plugins?: Plugin[];
 };
 
 /**
  * Topologically sort plugins by dependsOn, returning install order.
  * @throws on a missing or cyclic dependency
  */
-function topoSort(plugins: IPlugin[]): IPlugin[] {
-  const byId = new Map<string, IPlugin>();
+function topoSort(plugins: Plugin[]): Plugin[] {
+  const byId = new Map<string, Plugin>();
   for (const p of plugins) {
     if (byId.has(p.id)) {
       throw new Error(`duplicate plugin id: ${p.id}`);
@@ -41,8 +42,8 @@ function topoSort(plugins: IPlugin[]): IPlugin[] {
   }
 
   // Kahn algorithm; keep original array order as the stable tiebreak at equal indegree
-  const queue: IPlugin[] = plugins.filter((p) => (indegree.get(p.id) ?? 0) === 0);
-  const sorted: IPlugin[] = [];
+  const queue: Plugin[] = plugins.filter((p) => (indegree.get(p.id) ?? 0) === 0);
+  const sorted: Plugin[] = [];
   while (queue.length > 0) {
     const head = queue.shift()!;
     sorted.push(head);
@@ -66,20 +67,20 @@ function topoSort(plugins: IPlugin[]): IPlugin[] {
   return sorted;
 }
 
-export class Planet implements IPlanet {
-  private readonly context: IContext;
+export class Planet implements Disposable {
+  private readonly context: PluginContext;
   // Insertion-ordered registry, keyed by plugin id. topoSort already guarantees
   // id uniqueness, so a plain Map is enough — no separate manager abstraction.
-  private readonly plugins = new Map<string, IPlugin>();
-  // Capability registry, shared into the Context so plugins publish/discover.
+  private readonly plugins = new Map<string, Plugin>();
+  // Capability registry, shared into the PluginContext so plugins publish/discover.
   private readonly capabilities = new CapabilityRegistry();
 
   constructor(opt?: PlanetOption) {
-    this.context = new Context(this.capabilities);
+    this.context = new PluginContext(this.capabilities);
 
     if (opt?.plugins?.length) {
       const sorted = topoSort(opt.plugins);
-      const installed: IPlugin[] = [];
+      const installed: Plugin[] = [];
       try {
         for (const plugin of sorted) {
           plugin.init(this.context);
@@ -103,7 +104,7 @@ export class Planet implements IPlanet {
     }
   }
 
-  get hooks(): IEventEmitter<PlanetEventMap> {
+  get hooks(): EventEmitter<PlanetEventMap> {
     return this.context.hooks;
   }
 

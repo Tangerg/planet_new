@@ -73,7 +73,7 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
       └─▶ Lyrics(跟随当前曲取词)
 
 @domain(充血、纯、可独立单测,无 audio / 无事件)
-  PlayQueue 聚合 · RepeatMode · Volume 值对象 · 实体(Track/Album/…)+ 端口(IProvider)
+  PlayQueue 聚合 · RepeatMode · Volume 值对象 · 实体(Track/Album/…)+ 端口(MusicProvider)
 
 @shared(框架无关纯工具,最内,零依赖)
 ```
@@ -142,7 +142,7 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
 - **生命周期(治本)**:对称模板——`init(ctx)` 注入 + 调 `onInit()`;`dispose()` 调 `onDispose()` + **清 `_context`/`_installed`**。子类只实现 `onInit`/`onDispose` 钩子。**删 `uninstall()`**。Planet 挂载/卸载只认 `init`/`dispose`。
 - **事件总线**:`EventEmitter` 保留 `on/once/off/emit/clear`;**删 `emit("*")` 通配分支**(类型 API 不可达、无调用)。快照派发(防 emit 中改监听)保留。
 - **能力注册表(Phase B)**:`register<T>(capability, impl)` / `resolve<T>(capability)` / `resolveAll<T>(capability)`,取代写死的 `getPlugin(FIXED_ID)`。内置与第三方同一写法。
-- **删 `manager/` 模块**:`Planet` 直接用私有 `Map<string, IPlugin>`(去重已由 `topoSort` 保证;`Manager.apply/remove/has/size` 全无使用方)。`IPlugin extends Identifiable, Disposable`。
+- **删 `manager/` 模块**:`Planet` 直接用私有 `Map<string, Plugin>`(去重已由 `topoSort` 保证;`Manager.apply/remove/has/size` 全无使用方)。抽象基类 `Plugin implements Identifiable, Disposable`(单实现接口已折叠进类,无 `I` 前缀)。
 
 ---
 
@@ -161,6 +161,12 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
 - **类名**:`Control → Playback`(驱动 `<audio>`;与应用层 `PlaybackService` 以 `-Service` 后缀区分层)。`LyricPlugin → Lyrics`(去掉别人没有的 `Plugin` 后缀;复数 = 歌词源,区别于 `Lyric` 单行模型)。其余 `PlayQueue/Volume/Progress` 保留。
 - **方法/工具**:`getNumberInRange → clamp`(call sites:Volume/Progress);插件内无谓的 `async`(Volume.change / muteOrUnmute)去掉。
 - `@shared` 其余工具(`Timer`/`sleep`/`debounce`/`getRandomIntExclude`,仅测试引用)**本次不动**(非本次焦点,且属通用工具非领域能力)。
+- **接口命名(无 `I` 前缀,按本质二分)**:
+  - **单实现、与同名类成对的接口 → 折叠进类**,不保留接口:`EventEmitter` / `CapabilityRegistry` / `Plugin`(抽象基类)/ `Planet` / `PluginContext`(原 `Context`,与 `AudioContext` 区分)。类即契约,接口是 YAGNI。
+  - **跨层真端口 / 插件对外能力面 → 留接口,按角色命名**:领域端口用领域名词(`@domain/ports/` 的 `MusicProvider`,目录已表"port"语义,不加后缀);`@core` 插件对外能力面用 `XxxPort`(`ProviderRegistryPort` / `AnalyserPort`,与各自插件类 `ProviderRegistry` / `AudioEngine` 区分)。
+  - 结构性角色接口保持无前缀:`Identifiable` / `Disposable` / `Clearable` / `Capability` / `EventMap` / `EventHandler`。
+  - **handler 命名统一** `on<Event>`:`onCurrentChanged`(原 `changePlayTrack`)/ `onEnded`(原 `onPlayEnd`)/ `onTrackEnded` / `onTrackChanged`。
+  - **去 stutter**:`PlayQueue` 插件内队列操作用裸动词 `add/remove/clear/select`(对象本身即 queue);对外 `PlaybackService` 的 UI 命令仍用 `addToQueue/removeFromQueue/clearQueue/selectTrack`(读作意图)。
 
 ---
 
@@ -183,7 +189,7 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
 - [x] **A5 命名收尾 + 性能**:`Control→Playback`、`LyricPlugin→Lyrics`、id 统一、`clamp`、去无谓 `async`;`Progress` 每秒节流挪到源头(格式化只 1 次/秒,而非 bridge 丢 3/4)。
 
 ### Phase B — 能力注册表 + 多 provider + 可视化 seam(扩展底座,右尺寸)
-- [x] **B1 能力注册表**:内核加 typed `Capability<T>` + `provide/resolve/resolveAll`(`CapabilityRegistry`,经 `Context.registry` 注入插件、`Planet.resolve` 暴露)。**所有解析统一走注册表,一个机制**:transport/queue/volume/progress 各发能力 token(`TRANSPORT/PLAY_QUEUE/VOLUME_CONTROL/PROGRESS`)、`onInit` 自注册,`PlaybackService` 经 token `resolve`;provider 经 `MUSIC_PROVIDER`+ProviderRegistry。**删除 `Planet.getPlugin`**(已无消费方;Planet 内部仍用 id-keyed Map 做生命周期)。(原 B1 曾保留 getPlugin 做"右尺寸",重构 pass 复审后判定双机制是 wart,统一更简、更贴"同一注册方式"准则。)
+- [x] **B1 能力注册表**:内核加 typed `Capability<T>` + `provide/resolve/resolveAll`(`CapabilityRegistry`,经 `PluginContext.registry` 注入插件、`Planet.resolve` 暴露)。**所有解析统一走注册表,一个机制**:transport/queue/volume/progress 各发能力 token(`TRANSPORT/PLAY_QUEUE/VOLUME_CONTROL/PROGRESS`)、`onInit` 自注册,`PlaybackService` 经 token `resolve`;provider 经 `MUSIC_PROVIDER`+ProviderRegistry。**删除 `Planet.getPlugin`**(已无消费方;Planet 内部仍用 id-keyed Map 做生命周期)。(原 B1 曾保留 getPlugin 做"右尺寸",重构 pass 复审后判定双机制是 wart,统一更简、更贴"同一注册方式"准则。)
 - [x] **B2 多 provider**:provider 独立 id(`provider:<name>`)+ `MUSIC_PROVIDER` 能力(`onInit` 自注册);加 `ProviderRegistry` 插件(`active`/`providers`/`setActive` + `provider:changed`);`Engine`/`Lyrics`/services 经注册表取**活跃** provider;组合根注册全部可用 provider、按 `VITE_PROVIDER` 选活跃(缺省/缺凭据回退 Mock)。删 `PROVIDER_PLUGIN_ID`。
 - [x] **B3 audio-analyser seam**:`AudioEngine` 能力插件**惰性**独占 `MediaElementSource`、暴露 `AnalyserNode` tap(**不建可视化 UI**;惰性=未被请求前不碰音频链,零回归风险),给均衡器/可视化留口。
 - [x] **B4 宿主按域挂能力**:`Engine` 把已解析能力以命名空间访问器显式暴露(`engine.providers`;未来 `engine.analyser`),**不上自动代理/条件类型机制**。

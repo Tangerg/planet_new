@@ -1,5 +1,5 @@
-import type { Capability, IPlanet } from "../kernel";
-import type { IProvider } from "@domain";
+import type { Capability, Planet } from "../kernel";
+import type { MusicProvider } from "@domain";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
@@ -28,8 +28,8 @@ export class PlaybackService {
   private playGeneration = 0;
 
   constructor(
-    private readonly planet: IPlanet,
-    private readonly getProvider: () => IProvider,
+    private readonly planet: Planet,
+    private readonly getProvider: () => MusicProvider,
   ) {}
 
   // ── Queue + play ──────────────────────────────────────────────────
@@ -65,19 +65,19 @@ export class PlaybackService {
   }
 
   selectTrack(track: Track): void {
-    this.queue.selectTrack(track);
+    this.queue.select(track);
   }
 
   addToQueue(track: Track): void {
-    this.queue.addToQueue(track);
+    this.queue.add(track);
   }
 
   removeFromQueue(track: Track): void {
-    this.queue.removeFromQueue(track);
+    this.queue.remove(track);
   }
 
   clearQueue(): void {
-    this.queue.clearQueue();
+    this.queue.clear();
   }
 
   // ── Transport ─────────────────────────────────────────────────────

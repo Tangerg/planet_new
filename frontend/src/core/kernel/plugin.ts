@@ -1,9 +1,11 @@
-import { IContext, IPlugin } from "./types";
+import { PluginContext } from "./context";
+import { Disposable, Identifiable } from "../types";
 import { warn } from "@shared/debug";
 
 /**
  * Abstract plugin base. Subclasses implement only:
  *   - id: unique identifier
+ *   - dependsOn (optional): ids of plugins that must mount first (Planet topo-sorts on it)
  *   - onInit() (optional): subscribe to events / attach audio listeners once context is injected
  *   - onDispose() (optional): release whatever onInit acquired
  *
@@ -13,14 +15,17 @@ import { warn } from "@shared/debug";
  *   unmount: dispose()  -> onDispose() -> clear context
  * Subclasses never touch the installed/context fields and never override init/dispose.
  */
-export abstract class Plugin implements IPlugin {
+export abstract class Plugin implements Identifiable, Disposable {
   private installed = false;
-  private ctx: IContext | undefined;
+  private ctx: PluginContext | undefined;
 
   abstract get id(): string;
 
+  /** Ids of plugins that must mount before this one; Planet mounts in topological order. */
+  declare readonly dependsOn?: readonly string[];
+
   /** The injected context; available only between init() and dispose(). */
-  get context(): IContext {
+  get context(): PluginContext {
     if (!this.installed || !this.ctx) {
       throw new Error(`Plugin ${this.id} not installed`);
     }
@@ -31,7 +36,7 @@ export abstract class Plugin implements IPlugin {
    * Called by Planet at mount to inject context and run onInit.
    * Subclasses put init logic in onInit, not here.
    */
-  init(ctx: IContext): void {
+  init(ctx: PluginContext): void {
     if (this.installed) {
       warn(`plugin ${this.id} should be installed only once`);
       return;

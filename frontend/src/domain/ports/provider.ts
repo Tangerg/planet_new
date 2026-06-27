@@ -26,7 +26,7 @@ export type ProviderCapability =
   | "fullPlayback" // can provide a full playable track URL
   | "previewPlayback"; // 30s preview clip only (e.g. Spotify preview_url)
 
-export interface IProvider {
+export interface MusicProvider {
   get name(): string;
 
   /** Capabilities this provider supports. */

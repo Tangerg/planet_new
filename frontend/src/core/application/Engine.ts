@@ -1,5 +1,5 @@
-import type { IPlanet } from "../kernel";
-import type { IProvider } from "@domain";
+import type { Planet } from "../kernel";
+import type { MusicProvider } from "@domain";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { PlaybackService } from "./PlaybackService";
 import { MediaService } from "./MediaService";
@@ -20,8 +20,8 @@ export class Engine {
   readonly playback: PlaybackService;
   readonly media: MediaService;
 
-  constructor(private readonly planet: IPlanet) {
-    const getProvider = (): IProvider => {
+  constructor(private readonly planet: Planet) {
+    const getProvider = (): MusicProvider => {
       const provider = this.providers.active;
       if (!provider) {
         throw new Error("No music provider is registered on the Planet.");
@@ -33,7 +33,7 @@ export class Engine {
   }
 
   /** The kernel event bus — UI store-bridges subscribe here for playback/state. */
-  get events(): IPlanet["hooks"] {
+  get events(): Planet["hooks"] {
     return this.planet.hooks;
   }
 
