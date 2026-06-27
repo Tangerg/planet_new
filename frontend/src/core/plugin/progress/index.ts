@@ -1,4 +1,5 @@
 import { Plugin } from "../../kernel/plugin";
+import { defineCapability } from "../../kernel";
 import type { Progress as ProgressModel, FormattedDuration } from "@domain/model/duration";
 import { InfinityDuration } from "@domain/model/duration";
 import { formatDuration, Minute, Second } from "@shared/time";
@@ -10,6 +11,9 @@ declare module "../../kernel/event" {
     "progress:position-changed": ProgressModel;
   }
 }
+
+/** Playback position: seek. */
+export const PROGRESS = defineCapability<Progress>("progress");
 
 export class Progress extends Plugin {
   public static readonly id = "progress";
@@ -27,6 +31,7 @@ export class Progress extends Plugin {
   }
 
   protected onInit(): void {
+    this.context.registry.provide(PROGRESS, this);
     this.context.audioElement.addEventListener("timeupdate", this.onTimeUpdate);
     this.context.audioElement.addEventListener("durationchange", this.onDurationChange);
     this.onDurationChange();

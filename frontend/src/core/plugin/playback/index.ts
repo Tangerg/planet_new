@@ -1,4 +1,4 @@
-import { Plugin } from "../../kernel";
+import { Plugin, defineCapability } from "../../kernel";
 import { Track } from "@domain/model/track";
 
 export enum PlayState {
@@ -14,12 +14,15 @@ declare module "../../kernel/event" {
   }
 }
 
+/** Audio transport (resume/pause/stop). */
+export const TRANSPORT = defineCapability<Playback>("transport");
+
 /**
  * Drives the shared <audio> element. Transport commands (resume/pause) arrive as
  * direct method calls from PlaybackService. It reacts to the internal
- * `current_track_changed` fact by loading + playing the new track, and turns the
- * element's native `ended` into the `play_track_ended` choreography event the
- * queue plugin auto-advances on.
+ * `queue:current-changed` fact by loading + playing the new track, and turns the
+ * element's native `ended` into the `playback:track-ended` choreography event
+ * the queue plugin auto-advances on.
  */
 export class Playback extends Plugin {
   public static readonly id = "playback";
@@ -29,6 +32,7 @@ export class Playback extends Plugin {
   }
 
   protected onInit(): void {
+    this.context.registry.provide(TRANSPORT, this);
     this.context.audioElement.addEventListener("ended", this.onPlayEnd);
     this.context.hooks.on("queue:current-changed", this.changePlayTrack, this);
   }

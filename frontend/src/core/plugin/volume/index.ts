@@ -1,4 +1,4 @@
-import { Plugin } from "../../kernel";
+import { Plugin, defineCapability } from "../../kernel";
 import { Volume as VolumeModel } from "@domain/model/volume";
 
 declare module "../../kernel/event" {
@@ -6,6 +6,9 @@ declare module "../../kernel/event" {
     "volume:changed": number;
   }
 }
+
+/** Volume control: setVolume / toggleMute. */
+export const VOLUME_CONTROL = defineCapability<Volume>("volume");
 
 /**
  * Owns the volume value object and mirrors it onto the <audio> element.
@@ -23,6 +26,7 @@ export class Volume extends Plugin {
   }
 
   protected onInit(): void {
+    this.context.registry.provide(VOLUME_CONTROL, this);
     this.volume = VolumeModel.of(Math.round(this.context.audioElement.volume * 100));
     // The element defaults to full volume but doesn't broadcast it; seed the UI.
     this.emit();
