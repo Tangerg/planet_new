@@ -8,27 +8,7 @@ import { Icon, artBg, artPair, HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
-
-/** One XMB sub-item (a launcher tile under a category). */
-export type XmbItemModel = {
-  key: string;
-  label: string;
-  sub?: string;
-  icon?: string;
-  seed: number;
-  grad?: string[];
-  image?: string;
-  dest: string;
-  run?: () => void;
-};
-
-/** One XMB category column: an icon + a vertical list of items. */
-export type XmbCat = {
-  id: string;
-  icon: string;
-  label: string;
-  items: XmbItemModel[];
-};
+import type { XmbCat, XmbItemModel } from "@/model/navigation";
 
 const XMB_CAT_GAP = 172; // horizontal spacing between category icons
 const XMB_ANCHOR = "26%"; // x of the active category column (icon + its sub-item list)

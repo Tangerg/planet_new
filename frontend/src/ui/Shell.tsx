@@ -45,7 +45,8 @@ import { ScreenActionsProvider } from "@/hooks/screenActions";
 
 import { PlayerBar } from "@/components/PlayerBar";
 import { Button } from "@/components/controls/Button";
-import { XMB, type XmbCat, type XmbItemModel } from "@/screens/XMB";
+import { XMB } from "@/screens/XMB";
+import { buildWorlds } from "@/model/navigation";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { ForYouScreen } from "@/screens/ForYou";
 import { NowPlaying } from "@/screens/NowPlaying";
@@ -427,212 +428,28 @@ export default function Shell() {
   const showBar = !npView && !!playback.current;
 
   /* ==========================================================================
-     XMB model -- built from the real catalog + static categories (mirrors the example domain partitions)
+     XMB model — the navigation IA tree, projected from catalog + provider
+     capabilities + session state (see @/model/navigation, docs §11).
      ========================================================================== */
-  const cats = useMemo<XmbCat[]>(() => {
-    const pls = catalog.playlists;
-    const als = catalog.albums;
-    const ars = catalog.artists;
-
-    // 2 · DISCOVER — Catalog (find music). Provider-capability gated, authored in
-    // priority order (most-likely-wanted first). Browse-by-facet has no provider
-    // capability yet, so it is reserved (priority #2) but omitted until one exists.
-    const discover: XmbItemModel[] = [];
-    if (media.supports("personalized")) {
-      discover.push({
-        key: "foryou",
-        label: "For You",
-        sub: "Your daily landing",
-        icon: "star",
-        seed: 7,
-        grad: ["#1b1033", "#ff2188"],
-        dest: "home",
-        run: () => setView("home"),
-      });
-    }
-    if (media.supports("toplist")) {
-      discover.push({
-        key: "charts",
-        label: "Charts",
-        sub: "Ranked by plays",
-        icon: "bars",
-        seed: 10,
-        grad: ["#240b04", "#ff8a3c"],
-        dest: "charts",
-        run: () => setView("charts"),
-      });
-    }
-    if (media.supports("search")) {
-      discover.push({
-        key: "search",
-        label: "Search",
-        sub: "Tracks, artists, albums",
-        icon: "search",
-        seed: 6,
-        grad: ["#021e24", "#36c5e0"],
-        dest: "search",
-        run: openSearch,
-      });
-    }
-
-    // A capability-aware priority tree: L1 = bounded-context "worlds"; L2 = that
-    // world's entries in priority order. Now Playing / Library / You / Settings are
-    // local (always present); only Discover is provider-gated. Empty worlds drop out.
-    const worlds: XmbCat[] = [
-      // 1 · NOW PLAYING — the live session: present (Player) · future (Up Next) · past (History).
-      {
-        id: "np",
-        icon: "play",
-        label: "Now Playing",
-        items: [
-          {
-            key: "player",
-            label: current?.title || "Now Playing",
-            sub: current?.artist,
-            icon: "play",
-            seed: current?.coverSeed || 0,
-            grad: current?.gradient,
-            image: current?.image,
-            dest: "np",
-            run: () => setView("np"),
-          },
-          {
-            key: "queue",
-            label: "Up Next",
-            sub: queue.length + " tracks queued",
-            icon: "list",
-            seed: 5,
-            dest: "queue",
-            run: () => setView("queue"),
-          },
-          {
-            key: "history",
-            label: "History",
-            sub: "Recently played",
-            icon: "clock",
-            seed: 12,
-            grad: ["#161320", "#8a7bff"],
-            dest: "history",
-            run: () => setView("history"),
-          },
-        ],
-      },
-      // 2 · DISCOVER — Catalog (find music), provider-gated (built above).
-      {
-        id: "discover",
-        icon: "compass",
-        label: "Discover",
-        items: discover,
-      },
-      // 3 · LIBRARY — the user's own world (local, never gated).
-      {
-        id: "library",
-        icon: "stack",
-        label: "Library",
-        items: [
-          {
-            key: "liked",
-            label: "Liked Songs",
-            sub: liked.size + " tracks",
-            icon: "heart",
-            seed: 0,
-            grad: ["#2a0420", "#ff4fa3"],
-            dest: "detail",
-            run: likedDetail,
-          },
-          {
-            key: "playlists",
-            label: "Playlists",
-            sub: pls.length + " playlists",
-            icon: "list",
-            seed: 1,
-            grad: ["#1a0d3a", "#7755ff"],
-            dest: "library",
-            run: () => openLib("playlists"),
-          },
-          {
-            key: "albums",
-            label: "Albums",
-            sub: als.length + " albums",
-            icon: "stack",
-            seed: 2,
-            grad: ["#3a0d10", "#f3727f"],
-            dest: "library",
-            run: () => openLib("albums"),
-          },
-          {
-            key: "artists",
-            label: "Artists",
-            sub: ars.length + " following",
-            icon: "user",
-            seed: 4,
-            grad: ["#06222b", "#19d3c5"],
-            dest: "library",
-            run: () => openLib("artists"),
-          },
-        ],
-      },
-      // 4 · YOU — identity / taste (local).
-      {
-        id: "you",
-        icon: "user",
-        label: "You",
-        items: [
-          {
-            key: "profile",
-            label: "Profile",
-            sub: "You",
-            icon: "user",
-            seed: 3,
-            grad: ["#1b1033", "#ff2188"],
-            dest: "profile",
-            run: () => setView("profile"),
-          },
-          {
-            key: "stats",
-            label: "Listening",
-            sub: "Your top artists & minutes",
-            icon: "bars",
-            seed: 9,
-            grad: ["#2a0420", "#ff4fa3"],
-            dest: "profile",
-            run: () => setView("profile"),
-          },
-        ],
-      },
-      // 5 · SETTINGS — the tool (local).
-      {
-        id: "settings",
-        icon: "gear",
-        label: "Settings",
-        items: [
-          {
-            key: "prefs",
-            label: "Preferences",
-            sub: "Audio, theme, interface",
-            icon: "gear",
-            seed: 9,
-            grad: ["#13031f", "#b15cff"],
-            dest: "settings",
-            run: () => setView("settings"),
-          },
-          {
-            key: "about",
-            label: "About Sonance",
-            sub: "Version 2.0",
-            icon: "note",
-            seed: 2,
-            dest: "settings",
-            run: () => setView("settings"),
-          },
-        ],
-      },
-    ];
-
-    // Never show an empty world (e.g. Discover when the provider supports none of its entries).
-    return worlds.filter((w) => w.items.length > 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cats curates deps; the referenced callbacks (openSearch, likedDetail, openLib) are memoized and stable, so they aren't listed.
-  }, [current, queue, liked, catalog, media]);
+  const cats = useMemo(
+    () =>
+      buildWorlds(
+        {
+          catalog,
+          supports: (cap) => media.supports(cap),
+          liked,
+          current,
+          queueLength: queue.length,
+        },
+        {
+          goto: setView,
+          openSearch,
+          openLibrary: openLib,
+          openLikedSongs: likedDetail,
+        },
+      ),
+    [catalog, media, liked, current, queue, openSearch, openLib, likedDetail],
+  );
 
   /* ==========================================================================
      render screen
