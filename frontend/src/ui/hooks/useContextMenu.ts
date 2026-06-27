@@ -6,7 +6,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import type { VibeTrack, VibeCollection } from "@/model/adapt";
+import type { ArtistTarget, CardItem, VibeTrack } from "@/model/adapt";
 import type { ScreenActions } from "@/hooks/screenActions";
 
 type MenuItem = {
@@ -23,10 +23,23 @@ type MenuState = {
   items: MenuItem[];
 } | null;
 
+/** Shared "Go to artist" entry, present only when the item carries an artist.
+ *  The `id` param narrows to string in the truthy branch (and stays narrowed in
+ *  the deferred onClick), so openArtist gets a well-typed ArtistTarget. */
+function artistMenuItem(
+  openArtist: (ar: ArtistTarget) => void,
+  id: string | undefined,
+  name: string | undefined,
+): MenuItem | null {
+  return id
+    ? { label: "Go to artist", icon: "user", onClick: () => openArtist({ id, name: name ?? "" }) }
+    : null;
+}
+
 export function useContextMenu(opts: {
   onPlay: (track: VibeTrack | undefined) => void;
-  openDetail: (item: VibeCollection) => void;
-  openArtist: (ar: any) => void;
+  openDetail: (item: CardItem) => void;
+  openArtist: (ar: ArtistTarget) => void;
   toggleLike: (id: string) => void;
   liked: Set<string>;
 }) {
@@ -48,11 +61,7 @@ export function useContextMenu(opts: {
         icon: "heart",
         onClick: () => toggleLike(track.id),
       },
-      track.artistId && {
-        label: "Go to artist",
-        icon: "user",
-        onClick: () => openArtist({ id: track.artistId, name: track.artist }),
-      },
+      artistMenuItem(openArtist, track.artistId, track.artist),
     ].filter(Boolean) as MenuItem[];
     setMenu({ x: e.clientX, y: e.clientY, items });
   }, []);
@@ -63,11 +72,7 @@ export function useContextMenu(opts: {
     e.stopPropagation();
     const items: MenuItem[] = [
       { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
-      item.artistId && {
-        label: "Go to artist",
-        icon: "user",
-        onClick: () => openArtist({ id: item.artistId, name: item.artist }),
-      },
+      artistMenuItem(openArtist, item.artistId, item.artist),
     ].filter(Boolean) as MenuItem[];
     setMenu({ x: e.clientX, y: e.clientY, items });
   }, []);

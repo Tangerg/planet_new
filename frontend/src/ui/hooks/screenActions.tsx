@@ -1,5 +1,7 @@
 import { createContext, useContext } from "react";
 
+import type { CardItem, VibeTrack } from "@/model/adapt";
+
 type MenuEvent = React.MouseEvent | MouseEvent;
 
 /**
@@ -9,8 +11,10 @@ type MenuEvent = React.MouseEvent | MouseEvent;
  * a typed React context (provided by the Shell, fed from useContextMenu).
  */
 export type ScreenActions = {
-  trackMenu: (e: MenuEvent, track: any) => void;
-  collMenu: (e: MenuEvent, item: any) => void;
+  /** Track row/card → its menu also offers Play (so it needs the full VibeTrack). */
+  trackMenu: (e: MenuEvent, track: VibeTrack) => void;
+  /** Collection/artist card → only needs the shared cover-bearing CardItem shape. */
+  collMenu: (e: MenuEvent, item: CardItem) => void;
   /** Add a track to the play queue (no-op until the queue write path lands). */
   enqueue: (trackId: string, next?: boolean) => void;
 };
