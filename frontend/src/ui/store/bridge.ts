@@ -29,7 +29,7 @@ export class PlayQueueStoreBridge extends Plugin {
     hooks.on("lyric_changed", this.onLyricChanged, this);
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     const { hooks } = this.context;
     hooks.off("play_queue_changed", this.onPlayQueueChanged);
     hooks.off("current_track_changed", this.onCurrentTrackChanged);

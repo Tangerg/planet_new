@@ -2,7 +2,6 @@ import { IEventEmitter } from "../event";
 import { PlanetEventMap } from "./event";
 import { IPlanet, IContext, IPlugin } from "./types";
 import { Context } from "./context";
-import { IManager, Manager } from "../manager";
 import { warn } from "@shared/debug";
 
 export type PlanetOption = {
@@ -68,13 +67,14 @@ function topoSort(plugins: IPlugin[]): IPlugin[] {
 
 export class Planet implements IPlanet {
   private readonly context: IContext;
-  private readonly pluginManager: IManager<IPlugin>;
+  // Insertion-ordered registry, keyed by plugin id. topoSort already guarantees
+  // id uniqueness, so a plain Map is enough — no separate manager abstraction.
+  private readonly plugins = new Map<string, IPlugin>();
 
   constructor(opt?: PlanetOption) {
-    this.pluginManager = new Manager();
     // Wire sibling-plugin resolution into the context (read at runtime, by which
     // point every plugin is mounted) so reactive plugins can reach the provider.
-    this.context = new Context((id) => this.pluginManager.get(id));
+    this.context = new Context((id) => this.plugins.get(id) ?? null);
 
     if (opt?.plugins?.length) {
       const sorted = topoSort(opt.plugins);
@@ -82,19 +82,19 @@ export class Planet implements IPlanet {
       try {
         for (const plugin of sorted) {
           plugin.init(this.context);
-          this.pluginManager.add(plugin);
+          this.plugins.set(plugin.id, plugin);
           installed.push(plugin);
         }
       } catch (e) {
         // If a plugin init throws, dispose already-mounted plugins in reverse to avoid a half-built state
-        for (const p of installed.slice().reverse()) {
+        for (const p of [...installed].reverse()) {
           try {
             p.dispose();
           } catch (err) {
             warn(`rollback dispose ${p.id} failed: ${(err as Error).message}`);
           }
         }
-        this.pluginManager.clear();
+        this.plugins.clear();
         this.context.hooks.clear();
         throw e;
       }
@@ -106,20 +106,19 @@ export class Planet implements IPlanet {
   }
 
   getPlugin<T extends IPlugin = IPlugin>(id: string): T | null {
-    return this.pluginManager.get(id) as T | null;
+    return (this.plugins.get(id) as T | undefined) ?? null;
   }
 
   dispose(): void {
     // Unmount in reverse, symmetric with init order
-    const plugins = this.pluginManager.all().slice().reverse();
-    for (const plugin of plugins) {
+    for (const plugin of [...this.plugins.values()].reverse()) {
       try {
         plugin.dispose();
       } catch (e) {
         warn(`dispose plugin ${plugin.id} failed: ${(e as Error).message}`);
       }
     }
-    this.pluginManager.clear();
+    this.plugins.clear();
     this.context.hooks.clear();
   }
 }

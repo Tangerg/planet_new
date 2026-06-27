@@ -4,71 +4,71 @@ import { warn } from "@shared/debug";
 /**
  * Abstract plugin base. Subclasses implement only:
  *   - id: unique identifier
- *   - dispose(): clean up subscriptions / remove audio listeners
- *   - onInit() (optional): initialization once context is injected (subscribe to events, set audio listeners)
+ *   - onInit() (optional): subscribe to events / attach audio listeners once context is injected
+ *   - onDispose() (optional): release whatever onInit acquired
  *
- * Planet scheduling:
- *   mount:   planet.constructor -> forEach plugin.init(ctx) (-> onInit)
- *   unmount: planet.dispose() -> plugin.dispose() in reverse + clear _context
+ * Planet drives a symmetric lifecycle; the base owns the context bookkeeping so
+ * a teardown can never leave a half-mounted plugin behind:
+ *   mount:   init(ctx)  -> set context -> onInit()
+ *   unmount: dispose()  -> onDispose() -> clear context
+ * Subclasses never touch the installed/context fields and never override init/dispose.
  */
 export abstract class Plugin implements IPlugin {
-  private _installed: boolean = false;
-  private _context: IContext | undefined;
+  private installed = false;
+  private ctx: IContext | undefined;
 
   abstract get id(): string;
 
-  /**
-   * The injected context; available only after the plugin is initialized.
-   */
+  /** The injected context; available only between init() and dispose(). */
   get context(): IContext {
-    if (!this._installed || !this._context) {
+    if (!this.installed || !this.ctx) {
       throw new Error(`Plugin ${this.id} not installed`);
     }
-    return this._context;
+    return this.ctx;
   }
 
   /**
-   * Called by Planet to inject context and trigger onInit.
-   * Subclasses should not override this; put init logic in onInit.
+   * Called by Planet at mount to inject context and run onInit.
+   * Subclasses put init logic in onInit, not here.
    */
   init(ctx: IContext): void {
-    if (this._installed) {
+    if (this.installed) {
       warn(`plugin ${this.id} should be installed only once`);
       return;
     }
-    this._context = ctx;
-    this._installed = true;
+    this.ctx = ctx;
+    this.installed = true;
     try {
       this.onInit();
     } catch (e) {
-      // On init failure, roll back the injected context to avoid a half-built state
-      this._installed = false;
-      this._context = undefined;
+      // Roll back the injected context on a failed onInit so a half-built plugin never lingers.
+      this.installed = false;
+      this.ctx = undefined;
       throw e;
     }
   }
 
   /**
-   * Subclass hook: context is available; subscribe to events / listen to audio.
+   * Called by Planet at unmount: run onDispose (context still valid), then
+   * release it — always, even if onDispose throws. Subclasses put cleanup in
+   * onDispose, not here.
    */
-  protected onInit(): void {}
-
-  abstract dispose(): void;
-
-  /**
-   * Called by Planet: dispose first, then clear context, so side effects are always released.
-   * Subclasses should not override this; put cleanup in dispose.
-   */
-  uninstall(): void {
-    if (!this._installed) {
+  dispose(): void {
+    if (!this.installed) {
       warn(`plugin ${this.id} is not installed`);
       return;
     }
     try {
-      this.dispose();
+      this.onDispose();
     } finally {
-      this._context = undefined;
-      this._installed = false;
+      this.ctx = undefined;
+      this.installed = false;
     }
   }
+
+  /** Subclass hook: context is available; subscribe to events / attach audio listeners. */
+  protected onInit(): void {}
+
+  /** Subclass hook: symmetric teardown; release whatever onInit acquired (context still valid). */
+  protected onDispose(): void {}
 }

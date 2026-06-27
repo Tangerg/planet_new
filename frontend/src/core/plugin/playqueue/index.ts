@@ -41,7 +41,7 @@ export class PlayQueue extends Plugin {
     return PlayQueue.id;
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     this.clear();
 
     this.displayQueue.off("tracks_changed", this.tracksChanged);

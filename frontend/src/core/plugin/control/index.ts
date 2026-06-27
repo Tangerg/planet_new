@@ -23,7 +23,7 @@ export class Control extends Plugin {
     return Control.id;
   }
 
-  dispose(): void {
+  protected onDispose(): void {
     this.stop();
     this.context.audioElement.removeEventListener("ended", this.onPlayEnd);
     this.context.hooks.off("play", this.play);

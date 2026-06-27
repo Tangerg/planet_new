@@ -49,30 +49,19 @@ export class EventEmitter<E extends IEventMap> implements IEventEmitter<E> {
     return this;
   }
 
-  private emitByName<T extends keyof E>(name: T, arg?: E[T]): void {
+  emit<K extends keyof E>(name: K, arg?: E[K]): void {
     const list = this.listeners.get(name);
     if (!list || list.length === 0) {
       return;
     }
-    // on/off/once inside a listener during emit affects the new array; this dispatch uses the snapshot
+    // on/off/once inside a listener during emit must not mutate this dispatch: iterate a snapshot.
     const snapshot = list.slice();
     for (const l of snapshot) {
       l.fn.call(l.ctx, arg);
       if (l.once) {
-        this.off(name, l.fn as IEventListener<E, T>);
+        this.off(name, l.fn as IEventListener<E, K>);
       }
     }
-  }
-
-  emit<T extends keyof E>(name: T, arg?: E[T]): void {
-    if (name === "*") {
-      // Wildcard dispatch: hand the same arg to all listeners of every event name
-      for (const key of Array.from(this.listeners.keys())) {
-        this.emitByName(key, arg as E[typeof key]);
-      }
-      return;
-    }
-    this.emitByName(name, arg);
   }
 
   clear(): void {

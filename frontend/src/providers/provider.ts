@@ -22,10 +22,6 @@ export abstract class Provider extends Plugin implements IProvider {
     return Provider.PLUGIN_ID;
   }
 
-  dispose(): void {
-    // No side effects by default; subclasses override as needed.
-  }
-
   abstract get name(): string;
 
   abstract get capabilities(): ReadonlySet<ProviderCapability>;
