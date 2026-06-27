@@ -59,14 +59,15 @@ export function LibraryScreen({
   const half = Math.ceil(tracks.length / 2);
   const cardTab = tab === "playlists" || tab === "albums" || tab === "artists";
 
-  // the active collection, normalised so grid / list / flow share one source
-  // Artists are read through the unified collection shape (cover fields only);
-  // the screen never touches collection-specific fields on the artist branch.
+  // the active collection, normalised so grid / list / flow share one source.
+  // Artists are projected into the collection shape (an honest map, not a cast):
+  // only cover fields + id/name are read on the artist branch, so empty tracks +
+  // an "Artist" kind suffice; openOf/tracksOf special-case the tab anyway.
   const coll: VibeCollection[] =
     tab === "albums"
       ? data.albums
       : tab === "artists"
-        ? (data.artists as unknown as VibeCollection[])
+        ? data.artists.map((a): VibeCollection => ({ ...a, kind: "Artist", tracks: [] }))
         : data.playlists;
   const openOf = (o: VibeCollection) =>
     tab === "albums" ? openAlbum(o) : tab === "artists" ? openArtist(o) : openPlaylist(o);
