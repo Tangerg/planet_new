@@ -8,6 +8,7 @@ import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { Switch } from "@/components/controls/Switch";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
+import { useT, useLocaleStore, LOCALES, LOCALE_LABELS, type Locale } from "@/i18n";
 
 function SetToggle({
   label,
@@ -39,7 +40,7 @@ function SetSeg({
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: { value: string; label: string }[];
   onChange: (o: string) => void;
 }) {
   return (
@@ -50,11 +51,14 @@ function SetSeg({
         className="seg"
         value={value}
         onValueChange={onChange}
-        items={options.map((o) => ({ value: o, label: o }))}
+        items={options}
       />
     </div>
   );
 }
+
+/** Plain string options (token values shown as-is, e.g. STD / HQ / SQ). */
+const seg = (...values: string[]) => values.map((v) => ({ value: v, label: v }));
 
 type SettingsScreenProps = {
   accent: string;
@@ -71,6 +75,9 @@ export function SettingsScreen({
   settings,
   setSettings,
 }: SettingsScreenProps) {
+  const t = useT();
+  const locale = useLocaleStore((st) => st.locale);
+  const setLocale = useLocaleStore((st) => st.setLocale);
   const s = settings;
   const up = <K extends keyof Settings>(k: K, v: Settings[K]) =>
     setSettings((prev) => ({ ...prev, [k]: v }));
@@ -80,12 +87,12 @@ export function SettingsScreen({
       style={{ background: "radial-gradient(120% 90% at 80% 0%, #14161d, #0a0a0d)" }}
     >
       <div className="mx-auto max-w-[620px] px-10 pb-[60px] pt-[70px]">
-        <div className="text-[36px] font-extralight tracking-[0.02em]">Preferences</div>
-        <div className="mlabel mt-2 text-white/40">Personalize Sonance</div>
+        <div className="text-[36px] font-extralight tracking-[0.02em]">{t("settings.title")}</div>
+        <div className="mlabel mt-2 text-white/40">{t("settings.subtitle")}</div>
 
         <div className="mt-[38px]">
           <div className="mlabel mb-1" style={{ color: accent }}>
-            Accent
+            {t("settings.accent")}
           </div>
           <div className="flex gap-3 border-b border-white/[0.08] py-4">
             {accentOptions.map((col) => (
@@ -112,28 +119,28 @@ export function SettingsScreen({
 
         <div className="mt-[30px]">
           <div className="mlabel mb-1" style={{ color: accent }}>
-            Playback
+            {t("settings.playback")}
           </div>
           <SetSeg
-            label="Audio quality"
+            label={t("settings.audioQuality")}
             value={s.quality}
-            options={["STD", "HQ", "SQ"]}
+            options={seg("STD", "HQ", "SQ")}
             onChange={(v) => up("quality", v)}
           />
           <SetSeg
-            label="Now Playing opens"
+            label={t("settings.npOpens")}
             value={s.npMode}
-            options={["COVER", "LYRICS"]}
+            options={seg("COVER", "LYRICS")}
             onChange={(v) => up("npMode", v)}
           />
           <SetToggle
-            label="Crossfade tracks"
-            sub="8 second blend"
+            label={t("settings.crossfade")}
+            sub={t("settings.crossfadeSub")}
             on={s.crossfade}
             onClick={() => up("crossfade", !s.crossfade)}
           />
           <SetToggle
-            label="Gapless playback"
+            label={t("settings.gapless")}
             on={s.gapless}
             onClick={() => up("gapless", !s.gapless)}
           />
@@ -141,21 +148,27 @@ export function SettingsScreen({
 
         <div className="mt-[30px]">
           <div className="mlabel mb-1" style={{ color: accent }}>
-            Interface
+            {t("settings.interface")}
           </div>
+          <SetSeg
+            label={t("settings.language")}
+            value={locale}
+            options={LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l] }))}
+            onChange={(v) => setLocale(v as Locale)}
+          />
           <SetToggle
-            label="Flowing waves"
-            sub="Animated XMB background"
+            label={t("settings.waves")}
+            sub={t("settings.wavesSub")}
             on={s.waves}
             onClick={() => up("waves", !s.waves)}
           />
           <SetToggle
-            label="Show hot comments"
+            label={t("settings.showComments")}
             on={s.comments}
             onClick={() => up("comments", !s.comments)}
           />
           <SetToggle
-            label="Reduce motion"
+            label={t("settings.reduceMotion")}
             on={s.reduceMotion}
             onClick={() => up("reduceMotion", !s.reduceMotion)}
           />
