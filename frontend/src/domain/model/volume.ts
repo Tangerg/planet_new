@@ -1,4 +1,4 @@
-import { getNumberInRange } from "@shared/math";
+import { clamp } from "@shared/math";
 
 /** Restore target on unmute when there is no remembered non-zero level. */
 const DEFAULT_UNMUTE_LEVEL = 30;
@@ -45,5 +45,5 @@ export class Volume {
 }
 
 function clampLevel(level: number): number {
-  return getNumberInRange(0, 100, Math.round(level));
+  return clamp(0, 100, Math.round(level));
 }

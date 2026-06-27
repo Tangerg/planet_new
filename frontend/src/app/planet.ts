@@ -1,5 +1,5 @@
 import { Engine, Planet } from "@core";
-import { Control, Volume, PlayQueue, Progress, LyricPlugin } from "@core/plugin";
+import { Playback, Volume, PlayQueue, Progress, Lyrics } from "@core/plugin";
 import { Mock, NeteaseCloudMusic, Provider, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
@@ -37,11 +37,11 @@ function createProvider(): Provider {
 const planet = new Planet({
   plugins: [
     createProvider(),
-    new Control(),
+    new Playback(),
     new PlayQueue(),
     new Volume(),
     new Progress(),
-    new LyricPlugin(),
+    new Lyrics(),
     new PlayQueueStoreBridge(),
   ],
 });

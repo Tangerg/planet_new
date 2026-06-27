@@ -18,12 +18,12 @@ declare module "../../kernel/event" {
  * the "reactive business → kernel plugin" pattern (vs. on-demand browse reads,
  * which stay in MediaService + the UI's React Query cache).
  */
-export class LyricPlugin extends Plugin {
-  public static readonly id = "lyric";
+export class Lyrics extends Plugin {
+  public static readonly id = "lyrics";
   readonly dependsOn = [PROVIDER_PLUGIN_ID];
 
   get id(): string {
-    return LyricPlugin.id;
+    return Lyrics.id;
   }
 
   /** Last track id fetched — skip refetch when the track hasn't actually changed. */

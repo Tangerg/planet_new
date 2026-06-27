@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getNumberInRange, getRandomInt, getRandomIntExclude } from "./math";
+import { clamp, getRandomInt, getRandomIntExclude } from "./math";
 
 describe("getRandomInt", () => {
   test("stays within the half-open range", () => {
@@ -27,19 +27,19 @@ describe("getRandomIntExclude", () => {
   });
 });
 
-describe("getNumberInRange", () => {
+describe("clamp", () => {
   test("clamps to the range", () => {
-    expect(getNumberInRange(0, 5, 10)).toBe(5);
-    expect(getNumberInRange(0, 5, -10)).toBe(0);
-    expect(getNumberInRange(0, 5, 3)).toBe(3);
+    expect(clamp(0, 5, 10)).toBe(5);
+    expect(clamp(0, 5, -10)).toBe(0);
+    expect(clamp(0, 5, 3)).toBe(3);
   });
 
   test("returns the bound when the range is a single point", () => {
-    expect(getNumberInRange(1, 1, 2)).toBe(1);
-    expect(getNumberInRange(1, 1, 1)).toBe(1);
+    expect(clamp(1, 1, 2)).toBe(1);
+    expect(clamp(1, 1, 1)).toBe(1);
   });
 
   test("throws when min > max", () => {
-    expect(() => getNumberInRange(1, 0, 1)).toThrow("min must be less than or equal to max");
+    expect(() => clamp(1, 0, 1)).toThrow("min must be less than or equal to max");
   });
 });
