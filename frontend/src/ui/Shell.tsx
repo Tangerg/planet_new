@@ -34,7 +34,6 @@ import {
   type ArtistTarget,
   type DetailTarget,
   type OpenTarget,
-  type ScreenData,
   type VibeCollection,
   type VibeTrack,
 } from "@/model/adapt";
@@ -63,7 +62,6 @@ import { HistoryScreen } from "@/screens/History";
 import { SettingsScreen } from "@/screens/Settings";
 import { ArtistScreen } from "@/screens/Artist";
 import { ProfileScreen } from "@/screens/Profile";
-import { BrowseScreen } from "@/screens/Browse";
 import { CommentsScreen } from "@/screens/Comments";
 import {
   ACCENT_OPTIONS,
@@ -185,17 +183,6 @@ export default function Shell() {
   const { catalog } = useCatalog();
   const toplists = useToplists();
   const search = useProviderSearch();
-  // Screens read provider data only; when the provider returns nothing they show
-  // their own empty states. For populated data in dev, run with VITE_PROVIDER=mock.
-  const screenData = useMemo<ScreenData>(
-    () => ({
-      playlists: catalog.playlists,
-      albums: catalog.albums,
-      artists: catalog.artists,
-      allTracks: catalog.allTracks,
-    }),
-    [catalog],
-  );
 
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
@@ -298,9 +285,9 @@ export default function Shell() {
         gradient: ["#2a0420", "#ff4fa3"],
         _real: false,
         description: "Everything you've hearted, in one place.",
-        tracks: screenData.allTracks.filter((t) => liked.has(t.id)),
+        tracks: catalog.allTracks.filter((t) => liked.has(t.id)),
       }),
-    [openDetail, screenData, liked],
+    [openDetail, catalog, liked],
   );
 
   /* ---- right-click context menu (extracted hook) ---- */
@@ -380,9 +367,9 @@ export default function Shell() {
      XMB model -- built from the real catalog + static categories (mirrors the example domain partitions)
      ========================================================================== */
   const cats = useMemo<XmbCat[]>(() => {
-    const pls = screenData.playlists;
-    const als = screenData.albums;
-    const ars = screenData.artists;
+    const pls = catalog.playlists;
+    const als = catalog.albums;
+    const ars = catalog.artists;
 
     // 2 · DISCOVER — Catalog (find music). Provider-capability gated, authored in
     // priority order (most-likely-wanted first). Browse-by-facet has no provider
@@ -582,7 +569,7 @@ export default function Shell() {
     // Never show an empty world (e.g. Discover when the provider supports none of its entries).
     return worlds.filter((w) => w.items.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cats curates deps; the referenced callbacks (openSearch, likedDetail, openLib) are memoized and stable, so they aren't listed.
-  }, [current, queue, liked, screenData, media]);
+  }, [current, queue, liked, catalog, media]);
 
   /* ==========================================================================
      render screen
@@ -614,7 +601,7 @@ export default function Shell() {
     if (v === "home")
       return (
         <ForYouScreen
-          data={screenData}
+          data={catalog}
           accent={accent}
           openPlaylist={openDetail}
           openAlbum={albumDetail}
@@ -639,14 +626,14 @@ export default function Shell() {
         />
       );
     if (v === "charts") return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
-    if (v === "library" || v === "made")
+    if (v === "library")
       return (
         <LibraryScreen
           tab={libraryTab}
           view={libraryView}
           onTab={setLibraryTab}
           onView={setLibraryView}
-          data={screenData}
+          data={catalog}
           onPlay={onPlay}
           current={current}
           playing={playing}
@@ -688,7 +675,7 @@ export default function Shell() {
       return (
         <HistoryScreen
           history={history}
-          all={screenData.allTracks}
+          all={catalog.allTracks}
           onPlay={onPlay}
           current={current}
           playing={playing}
@@ -714,7 +701,7 @@ export default function Shell() {
           artist={artistObj}
           tracks={artistObj?.tracks ?? []}
           albums={[]}
-          similar={screenData.artists.filter((a) => a.id !== artistObj?.id)}
+          similar={catalog.artists.filter((a) => a.id !== artistObj?.id)}
           onPlay={onPlay}
           current={current}
           playing={playing}
@@ -730,12 +717,11 @@ export default function Shell() {
       return (
         <ProfileScreen
           accent={accent}
-          playlists={screenData.playlists}
+          playlists={catalog.playlists}
           onOpenPlaylist={openDetail}
           mono={heroTreatment === "mono"}
         />
       );
-    if (v === "browse") return <BrowseScreen />;
     if (v === "comments")
       return (
         <CommentsScreen
