@@ -5,11 +5,13 @@
 import React from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { groupHistory } from "@/model/derive";
-import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
+import { Icon, HeroBackdrop } from "@/components/primitives";
+import { HeroArt } from "@/components/HeroArt";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
+import { Empty } from "@/components/layout/Empty";
 
 type HistoryScreenProps = {
   history: VibeTrack[];
@@ -64,14 +66,12 @@ export function HistoryScreen({
         <div className="mx-auto max-w-[1180px] px-14 pb-[30px] pt-[70px]">
           {/* header */}
           <div className="mb-[46px] flex items-end gap-[30px]">
-            <Art
+            <HeroArt
               seed={hero?.coverSeed || 0}
               grad={hero?.gradient}
               image={hero?.image}
-              data-hero="1"
+              size={168}
               className="flex-none"
-              style={{ width: 168, height: 168, boxShadow: "0 30px 70px -18px rgba(0,0,0,.6)" }}
-              glow={artPair(hero?.coverSeed || 0, hero?.gradient)[1]}
             />
             <div className="min-w-0 pb-1.5">
               <span className="mlabel" style={{ color: accent, letterSpacing: ".2em" }}>
@@ -98,7 +98,7 @@ export function HistoryScreen({
           <Group label="Today" items={today} />
           <Group label="Earlier this week" items={week} />
           <Group label="Earlier" items={earlier} />
-          {!total && <div className="p-[50px] font-light text-white/40">Nothing played yet.</div>}
+          {!total && <Empty className="p-[50px]">Nothing played yet.</Empty>}
         </div>
       </div>
     </FadeIn>

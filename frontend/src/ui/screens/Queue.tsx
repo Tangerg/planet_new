@@ -3,10 +3,12 @@
 // ============================================================
 import React, { useRef } from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
-import { Art, artPair, HeroBackdrop } from "@/components/primitives";
+import { HeroBackdrop } from "@/components/primitives";
+import { HeroArt } from "@/components/HeroArt";
 import { FadeIn } from "@/components/motion";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { VList } from "@/components/layout/VList";
+import { Empty } from "@/components/layout/Empty";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 
 type QueueScreenProps = {
@@ -45,15 +47,13 @@ export function QueueScreen({
         <span className="mlabel" style={{ color: accent }}>
           Now Playing
         </span>
-        <Art
+        <HeroArt
           seed={current?.coverSeed || 0}
           grad={current?.gradient}
           image={current?.image}
           images={current?.images}
-          data-hero="1"
+          size={220}
           className="mt-[22px]"
-          style={{ width: 220, height: 220, boxShadow: "0 30px 70px rgba(0,0,0,.55)" }}
-          glow={artPair(current?.coverSeed || 0, current?.gradient)[1]}
         />
         <div className="mt-[26px] line-clamp-2 max-w-full text-[30px] font-light [overflow-wrap:anywhere]">
           {current?.title}
@@ -86,7 +86,7 @@ export function QueueScreen({
             />
           </ScrollProvider>
         ) : (
-          <div className="p-10 font-light text-white/40">Queue is empty.</div>
+          <Empty>Queue is empty.</Empty>
         )}
       </div>
     </FadeIn>

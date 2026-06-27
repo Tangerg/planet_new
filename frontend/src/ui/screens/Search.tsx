@@ -11,6 +11,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { CardRail } from "@/components/layout/CardRail";
+import { Empty } from "@/components/layout/Empty";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 
@@ -84,7 +85,7 @@ export function SearchScreen({
   const chips = SEARCH_SUGGESTIONS;
   const top = artists[0] || null;
   const emptyMsg = (text: string) => (
-    <div className="p-[90px] text-center text-[22px] font-light text-tx-3">{text}</div>
+    <Empty className="p-[90px] text-center text-[22px]">{text}</Empty>
   );
 
   return (

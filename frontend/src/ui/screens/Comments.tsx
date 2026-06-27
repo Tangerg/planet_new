@@ -4,9 +4,10 @@
 // ============================================================
 import React from "react";
 import type { VibeTrack } from "@/model/adapt";
-import { Icon, Art } from "@/components/primitives";
-import { Button } from "@/components/controls/Button";
+import { Art } from "@/components/primitives";
+import { LikeHeart } from "@/components/controls/LikeHeart";
 import { FadeIn } from "@/components/motion";
+import { Empty } from "@/components/layout/Empty";
 import { useTranslation } from "react-i18next";
 
 type CommentsScreenProps = {
@@ -40,13 +41,7 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
         {/* Top tags + bottom title via flow (space-between column), not absolute. */}
         <div className="relative z-[4] flex h-full flex-col items-start justify-between px-12 pb-[44px] pt-[60px]">
           <div className="flex flex-col items-start gap-[14px]">
-            <Button
-              onClick={toggleLike}
-              className="p-0"
-              style={{ color: accent, filter: `drop-shadow(0 4px 12px ${accent}88)` }}
-            >
-              <Icon.heart size={30} filled={liked} />
-            </Button>
+            <LikeHeart liked={liked} onToggle={toggleLike} accent={accent} />
             <span className="pill-accent">{track?.quality || "SQ"}</span>
           </div>
           <div className="max-w-full">
@@ -64,7 +59,7 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
         >
           {t("comments.title")}
         </div>
-        <div className="py-[50px] font-light text-tx-4">{t("comments.empty")}</div>
+        <Empty className="py-[50px]">{t("comments.empty")}</Empty>
       </div>
     </FadeIn>
   );

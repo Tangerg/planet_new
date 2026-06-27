@@ -5,9 +5,11 @@ import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art, artBg, artPair } from "@/components/primitives";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
+import { LikeHeart } from "@/components/controls/LikeHeart";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
+import { Empty } from "@/components/layout/Empty";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
 import { activateOnKey } from "@/lib/keys";
@@ -97,14 +99,7 @@ function TagStack({
 }) {
   return (
     <div className="absolute left-12 top-16 z-[6] flex flex-col items-start gap-[14px]">
-      <Button
-        onClick={toggleLike}
-        aria-label="Like"
-        className="p-0"
-        style={{ color: accent, filter: `drop-shadow(0 4px 12px ${accent}88)` }}
-      >
-        <Icon.heart size={30} filled={liked} />
-      </Button>
+      <LikeHeart liked={liked} onToggle={toggleLike} accent={accent} />
       {extra}
     </div>
   );
@@ -413,7 +408,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               >
                 {t("comments.title")}
               </div>
-              <div className="py-[50px] font-light text-white/40">{t("comments.empty")}</div>
+              <Empty className="py-[50px]">{t("comments.empty")}</Empty>
             </div>
           ) : (
             <div ref={lyricScrollRef} className="scroll h-full">
@@ -554,7 +549,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               }}
             />
           ) : (
-            <div className="p-[30px] font-light text-white/40">Queue is empty.</div>
+            <Empty className="p-[30px]">Queue is empty.</Empty>
           )}
         </div>
       </Sheet>
