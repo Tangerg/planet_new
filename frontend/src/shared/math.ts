@@ -10,21 +10,6 @@ export function getRandomInt(min: number, max: number): number {
 }
 
 /**
- * Random integer in [min, max), excluding a specific value.
- * @throws if `exclude` is the only remaining candidate in the range
- */
-export function getRandomIntExclude(min: number, max: number, exclude: number): number {
-  if (max - min <= 1 && Math.floor(exclude) === Math.floor(min)) {
-    throw new Error("no candidate available after exclusion");
-  }
-  let random = getRandomInt(min, max);
-  while (random === exclude) {
-    random = getRandomInt(min, max);
-  }
-  return random;
-}
-
-/**
  * Clamp `expect` into the closed range [min, max].
  * @param min lower bound; returned when expect is smaller
  * @param max upper bound; returned when expect is larger
