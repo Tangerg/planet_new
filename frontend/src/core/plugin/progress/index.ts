@@ -6,7 +6,6 @@ import { getNumberInRange } from "@shared/math";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    play_time_seek: number;
     track_duration_changed: FormattedDuration;
     play_time_changed: ProgressModel;
   }
@@ -22,13 +21,11 @@ export class Progress extends Plugin {
   protected onDispose(): void {
     this.context.audioElement.removeEventListener("timeupdate", this.onTimeUpdate);
     this.context.audioElement.removeEventListener("durationchange", this.onDurationChange);
-    this.context.hooks.off("play_time_seek", this.seek);
   }
 
   protected onInit(): void {
     this.context.audioElement.addEventListener("timeupdate", this.onTimeUpdate);
     this.context.audioElement.addEventListener("durationchange", this.onDurationChange);
-    this.context.hooks.on("play_time_seek", this.seek, this);
     this.onDurationChange();
     this.onTimeUpdate();
   }

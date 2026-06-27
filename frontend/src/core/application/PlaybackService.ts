@@ -1,46 +1,44 @@
-import type { IPlanet } from "../kernel";
+import type { IPlanet, IPlugin } from "../kernel";
 import type { IProvider } from "@domain";
 import type { Track } from "@domain/model/track";
+import { Control } from "../plugin/control";
+import { PlayQueue } from "../plugin/playqueue";
+import { Volume } from "../plugin/volume";
+import { Progress } from "../plugin/progress";
 
 /**
- * Application service for playback use cases.
+ * The playback command API — the single door the UI calls for every playback
+ * intent. Commands are direct, typed method calls into the kernel plugins (the
+ * runtime adapters over the rich domain), never events on the bus: a command has
+ * exactly one receiver, so routing it through fire-and-forget pub/sub would only
+ * lose the receiver and the result. State flows back the other way, as events.
  *
- * Encapsulates play-URL resolution and kernel command emission so that UI
- * components never touch the provider or the event bus directly. The service
- * is constructed with a Planet (kernel) and a provider getter (domain port);
- * it never imports concrete providers or React.
- *
- * Dependency direction: core/application → core/kernel + domain (inner layers).
+ * The service resolves its plugins by id from the Planet on each call (they're
+ * always mounted by the time the UI issues a command). It never imports concrete
+ * providers or React; provider play-URL resolution comes through the domain port.
+ * Dependency direction: core/application → core/kernel + core/plugin + domain.
  */
 export class PlaybackService {
+  /**
+   * Generation guard for play(): a newer play() bumps the counter, so a slow
+   * playUrls() resolve from an older call is discarded instead of overwriting
+   * the queue with a stale track when the user switches tracks rapidly.
+   */
+  private playGeneration = 0;
+
   constructor(
     private readonly planet: IPlanet,
     private readonly getProvider: () => IProvider,
   ) {}
 
-  /**
-   * Monotonically increasing generation counter for the play() method.
-   * Each call increments before the await; after the await resolves the
-   * counter is checked against the captured generation. If they differ, a
-   * newer play() call has superseded this one and the stale result is
-   * discarded. This prevents a slow playUrls() resolution from overwriting
-   * the queue with an outdated track after the user has already requested
-   * a different track.
-   */
-  private playGeneration = 0;
-
   // ── Queue + play ──────────────────────────────────────────────────
 
   /**
-   * Set the play queue and start at the given track.
-   * Resolves playable URLs via the provider before emitting to the kernel.
-   * Tracks are cloned internally so the original domain objects are never
-   * mutated — the kernel holds its own copies.
-   *
-   * A generation counter guards against a stale `playUrls()` resolve
-   * overwriting the queue when `play()` is called twice rapidly.
+   * Set the play queue and start at the given track. Resolves playable URLs via
+   * the provider first; tracks are cloned so the caller's domain objects are
+   * never mutated.
    */
-  async play(tracks: Track[], track: Track, key = "vibe"): Promise<void> {
+  async play(tracks: Track[], track: Track): Promise<void> {
     const gen = ++this.playGeneration;
     const items = tracks.length ? tracks : [track];
     const queue = items.map((t) => ({ ...t }));
@@ -55,59 +53,106 @@ export class PlaybackService {
         // Provider has no play-URL support: stay silent; the UI still switches track.
       }
     }
-
-    // Stale guard: if a newer play() call has already incremented the
-    // generation, discard this result — only the latest call may emit.
+    // A newer play() superseded this one while awaiting — drop the stale result.
     if (gen !== this.playGeneration) return;
 
     for (const u of urls) {
       const t = queue.find((x) => x.id === u.id);
       if (t) t.playUrl = u.playUrl;
     }
+    this.queue.playNow(queue, current);
+  }
 
-    this.planet.hooks.emit("change_play_queue", { key, tracks: queue, track: current });
+  selectTrack(track: Track): void {
+    this.queue.selectTrack(track);
+  }
+
+  addToQueue(track: Track): void {
+    this.queue.addToQueue(track);
+  }
+
+  removeFromQueue(track: Track): void {
+    this.queue.removeFromQueue(track);
+  }
+
+  clearQueue(): void {
+    this.queue.clearQueue();
   }
 
   // ── Transport ─────────────────────────────────────────────────────
 
-  /** Toggle play/pause. Pass the current playing state to determine direction. */
+  /** Toggle play/pause; pass the current playing state to pick the direction. */
   togglePlay(isPlaying: boolean): void {
-    this.planet.hooks.emit(isPlaying ? "pause" : "play");
+    if (isPlaying) this.control.pause();
+    else void this.control.resume();
   }
 
-  /** Skip to the next track in the queue. */
+  pause(): void {
+    this.control.pause();
+  }
+
+  resume(): void {
+    void this.control.resume();
+  }
+
   next(): void {
-    this.planet.hooks.emit("next_track");
+    this.queue.next();
   }
 
-  /** Skip to the previous track in the queue. */
   previous(): void {
-    this.planet.hooks.emit("previous_track");
+    this.queue.previous();
   }
-
-  // ── Progress ──────────────────────────────────────────────────────
 
   /** Seek to a position (0..100 percent of the track duration). */
   seek(percent: number): void {
-    this.planet.hooks.emit("play_time_seek", percent);
+    this.progress.seek(percent);
   }
 
   // ── Volume ────────────────────────────────────────────────────────
 
-  /** Set the volume (0..100 on the kernel scale). */
-  setVolume(volume: number): void {
-    this.planet.hooks.emit("change_volume", volume);
+  /** Set the volume (0..100). */
+  setVolume(level: number): void {
+    this.volume.setVolume(level);
   }
 
-  // ── Shuffle / Repeat ──────────────────────────────────────────────
+  toggleMute(): void {
+    this.volume.toggleMute();
+  }
 
-  /** Toggle shuffle mode. */
+  // ── Shuffle / repeat ──────────────────────────────────────────────
+
   toggleShuffle(): void {
-    this.planet.hooks.emit("change_shuffle_enable");
+    this.queue.toggleShuffle();
   }
 
-  /** Cycle through repeat modes (OFF → ALL → ONE → OFF). */
-  toggleRepeat(): void {
-    this.planet.hooks.emit("change_repeat_mode");
+  /** Cycle repeat mode (Off → All → One → Off). */
+  cycleRepeat(): void {
+    this.queue.cycleRepeat();
+  }
+
+  // ── Plugin resolution ─────────────────────────────────────────────
+
+  private require<T extends IPlugin>(id: string): T {
+    const plugin = this.planet.getPlugin<T>(id);
+    if (!plugin) {
+      throw new Error(`Playback requires the "${id}" plugin, which is not registered.`);
+    }
+    return plugin;
+  }
+
+  private get queue(): PlayQueue {
+    return this.require<PlayQueue>(PlayQueue.id);
+  }
+
+  private get control(): Control {
+    return this.require<Control>(Control.id);
+  }
+
+  private get volume(): Volume {
+    return this.require<Volume>(Volume.id);
+  }
+
+  private get progress(): Progress {
+    return this.require<Progress>(Progress.id);
   }
 }

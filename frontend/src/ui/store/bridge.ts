@@ -1,6 +1,5 @@
 import { Plugin } from "@core";
 import type { FormattedDuration, Progress } from "@domain/model/duration";
-import type { PlayQueue } from "@domain/model/playqueue";
 import type { Track } from "@domain/model/track";
 import type { Lyric } from "@domain/model/lyric";
 import type { PlayState } from "@core/plugin";
@@ -39,11 +38,11 @@ export class PlayQueueStoreBridge extends Plugin {
     hooks.off("lyric_changed", this.onLyricChanged);
   }
 
-  private onPlayQueueChanged(queue: PlayQueue): void {
-    usePlayQueueStore.setState((s) => ({ ...s, tracks: queue.tracks ?? [] }));
+  private onPlayQueueChanged(tracks: readonly Track[]): void {
+    usePlayQueueStore.setState((s) => ({ ...s, tracks }));
   }
 
-  private onCurrentTrackChanged(track: Track): void {
+  private onCurrentTrackChanged(track: Track | undefined): void {
     usePlayQueueStore.setState((s) => ({ ...s, track }));
   }
 

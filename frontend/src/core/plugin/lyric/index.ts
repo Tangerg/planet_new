@@ -41,7 +41,7 @@ export class LyricPlugin extends Plugin {
     this.generation = 0;
   }
 
-  private onTrackChanged = async (track: Track): Promise<void> => {
+  private onTrackChanged = async (track: Track | undefined): Promise<void> => {
     const id = track?.id ? String(track.id) : "";
     if (id === this.lastTrackId) return;
     this.lastTrackId = id;
