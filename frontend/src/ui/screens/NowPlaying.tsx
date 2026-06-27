@@ -7,6 +7,7 @@ import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
+import { Marquee } from "@/components/Marquee";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
 import { activateOnKey } from "@/lib/keys";
@@ -308,10 +309,8 @@ export const NowPlaying = React.memo(function NowPlaying({
           }
         />
         <div className="absolute bottom-[44px] left-12 z-[6] max-w-[min(46%,540px)]">
-          <div className="line-clamp-2 text-[30px] font-light tracking-[0.02em] [overflow-wrap:anywhere]">
-            {track?.title}
-          </div>
-          <div className="truncate text-[16px] font-light text-white/60">
+          <Marquee className="text-[30px] font-light tracking-[0.02em]">{track?.title}</Marquee>
+          <Marquee className="mt-0.5 text-[16px] font-light text-white/60">
             <ArtistLinks
               artists={track?.artists}
               fallback={track?.artist}
@@ -320,7 +319,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               color="rgba(255,255,255,.6)"
               onOpenArtist={onOpenArtist}
             />
-          </div>
+          </Marquee>
           {track?.credits && (
             <div className="mlabel mt-[7px] text-[10px] text-white/40">
               Written by {track.credits.music} · Produced by {track.credits.producer}
