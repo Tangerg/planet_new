@@ -19,7 +19,7 @@ export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
  * Owns the play-queue aggregate (the rules) + the repeat mode, and the runtime
  * wiring around it. Commands arrive as direct method calls from PlaybackService;
  * the plugin mutates the aggregate and broadcasts the resulting facts. The only
- * thing it subscribes to is the internal `play_track_ended` choreography event
+ * thing it subscribes to is the internal `playback:track-ended` choreography event
  * (raised by the playback/audio plugin) to auto-advance.
  */
 export class PlayQueue extends Plugin {

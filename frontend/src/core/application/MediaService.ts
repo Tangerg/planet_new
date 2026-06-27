@@ -54,7 +54,7 @@ export class MediaService {
   }
 
   /* Lyrics are not a browse read — they follow the current track. The Lyric
-     kernel plugin owns that (emits lyric_changed); the UI reads it from the
+     kernel plugin owns that (emits lyrics:changed); the UI reads it from the
      store. So no lyric() here on purpose. */
 
   /** All charts (list items, without tracks). */
