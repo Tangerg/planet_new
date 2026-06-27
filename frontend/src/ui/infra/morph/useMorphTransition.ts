@@ -50,8 +50,11 @@ export type Transition = {
   measured: boolean;
 };
 
-/** Style for the outgoing-screen layer (`.t-from`): fades + blurs out, unless
- *  it's the start frame or a clip reveal (`hero === false`). Pure fn of EASE. */
+/** Style for the outgoing-screen layer (`.t-from`): fades + scales out, unless
+ *  it's the start frame or a clip reveal (`hero === false`). Pure fn of EASE.
+ *  Only opacity+transform animate — both compositor-only. A `filter: blur` tween
+ *  was dropped: it re-rasterised the WHOLE outgoing screen every frame (no GPU
+ *  path in WKWebView), the single biggest stutter on every page transition. */
 export function layerStyle(t: Transition): React.CSSProperties {
   const begin = t.phase === "start" || t.hero === false;
   return {
@@ -62,9 +65,9 @@ export function layerStyle(t: Transition): React.CSSProperties {
     zIndex: 20,
     opacity: begin ? 1 : 0,
     transform: begin ? "scale(1)" : "scale(.985)",
-    filter: begin ? "blur(0px)" : "blur(3px)",
     transformOrigin: "center",
-    transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}, filter .46s ${EASE}`,
+    willChange: "transform, opacity",
+    transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}`,
   };
 }
 
