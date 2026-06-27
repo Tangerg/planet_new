@@ -129,8 +129,12 @@ export type OpenTarget = CardItem & {
 };
 export type DetailTarget = OpenTarget & { tracks: VibeTrack[] };
 
+/** The minimal artist reference a card/row/bar hands to `openArtist` — just
+ *  enough to navigate (id + display name); the screen fetches the rest. */
+export type ArtistRef = { id: string; name: string };
+
 /** An artist handed to openArtist — id/name always; the rest fills in on fetch. */
-export type ArtistTarget = { id: string; name: string } & Partial<VibeArtist>;
+export type ArtistTarget = ArtistRef & Partial<VibeArtist>;
 
 /** The catalog slice every browse screen consumes (home / library / search). */
 export type ScreenData = {

@@ -5,6 +5,7 @@
 // callers can always use it in place of a bare `{track.artist}`.
 // ============================================================
 import React from "react";
+import type { ArtistRef } from "@/model/adapt";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
 
@@ -15,7 +16,7 @@ type ArtistLinkProps = {
   accent: string;
   /** Resting colour (varies per surface); hover goes to `accent`. */
   color: string;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
   style?: React.CSSProperties;
 };
 

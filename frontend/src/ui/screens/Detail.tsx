@@ -3,7 +3,7 @@
 // list · grid · flow views, multi-select action bar. List/grid are windowed.
 // ============================================================
 import React, { useState, useRef } from "react";
-import type { DetailTarget, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/adapt";
 import { sortTracks, trackFlowItems, type SortMode, type FlowItem } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
@@ -28,7 +28,7 @@ type PlaylistDetailScreenProps = {
   liked: Set<string>;
   toggleLike: (id: string) => void;
   accent: string;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function PlaylistDetailScreen({

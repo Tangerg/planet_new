@@ -7,7 +7,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./PlayerBar.css";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { AnimatePresence, motion } from "motion/react";
-import type { VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Slider } from "@/components/controls/Slider";
 import { Button } from "@/components/controls/Button";
 import { Toggle } from "@/components/controls/Toggle";
@@ -42,7 +42,7 @@ type Props = {
   /** Volume on the kernel's 0..100 scale, with its setter. */
   volume: number;
   onVolume: (v: number) => void;
-  onOpenArtist?: (artist: { id: string; name: string }) => void;
+  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export const PlayerBar = React.memo(function PlayerBar({

@@ -3,7 +3,7 @@
 // list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
-import type { ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
 import { collectionFlowItems, trackFlowItems, type FlowItem } from "@/model/derive";
 import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
@@ -32,7 +32,7 @@ type ArtistScreenProps = {
   toggleLike: (id: string) => void;
   accent: string;
   onOpenAlbum: (album: VibeCollection) => void;
-  onOpenArtist: (artist: { id: string; name: string }) => void;
+  onOpenArtist: (artist: ArtistRef) => void;
   mono: boolean;
 };
 
