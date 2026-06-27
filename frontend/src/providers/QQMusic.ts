@@ -198,7 +198,7 @@ export class QQMusic extends Provider {
 
   async search(query: string): Promise<SearchResult> {
     const q = query.trim();
-    if (!q) return { tracks: [], artists: [], albums: [], playlists: [] };
+    if (!q) return SearchResult.empty();
     // The old client_search_cp was retired upstream (500); use smartbox suggest, which returns songs/singers/albums in one call.
     const res = await this.http
       .get("getSmartbox", { searchParams: { key: q } })

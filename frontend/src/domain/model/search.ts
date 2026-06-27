@@ -13,3 +13,11 @@ export type SearchResult = {
   albums: Partial<Album>[];
   playlists: Partial<Playlist>[];
 };
+
+export const SearchResult = {
+  /** No matches across every dimension — the shape providers return for a blank
+   *  query or an unsupported search, so the one empty literal lives here. */
+  empty(): SearchResult {
+    return { tracks: [], artists: [], albums: [], playlists: [] };
+  },
+};
