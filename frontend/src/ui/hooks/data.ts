@@ -65,13 +65,13 @@ export function useVibePlayback() {
 
   useEffect(() => {
     const { events } = engine;
-    events.on("shuffle_enable_changed", setShuffleState);
-    events.on("repeat_mode_changed", setRepeatState);
-    events.on("volume_changed", setVolumeState);
+    events.on("queue:shuffle-changed", setShuffleState);
+    events.on("queue:repeat-changed", setRepeatState);
+    events.on("volume:changed", setVolumeState);
     return () => {
-      events.off("shuffle_enable_changed", setShuffleState);
-      events.off("repeat_mode_changed", setRepeatState);
-      events.off("volume_changed", setVolumeState);
+      events.off("queue:shuffle-changed", setShuffleState);
+      events.off("queue:repeat-changed", setRepeatState);
+      events.off("volume:changed", setVolumeState);
     };
   }, [engine]);
 
@@ -167,8 +167,8 @@ export function useProviderSearch() {
 
 /**
  * Current-track lyrics in the NowPlaying { line, t } shape ([] when none).
- * Pure read of kernel-owned reactive state: the Lyric plugin follows
- * current_track_changed and pins lyric_changed into the store. The UI doesn't
+ * Pure read of kernel-owned reactive state: the Lyrics plugin follows
+ * queue:current-changed and pins lyrics:changed into the store. The UI doesn't
  * fetch lyrics or pass a track id — it just renders what's current.
  */
 export function useLyric() {

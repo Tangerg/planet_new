@@ -5,10 +5,10 @@ import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    play_queue_changed: readonly Track[];
-    current_track_changed: Track | undefined;
-    repeat_mode_changed: RepeatMode;
-    shuffle_enable_changed: boolean;
+    "queue:changed": readonly Track[];
+    "queue:current-changed": Track | undefined;
+    "queue:repeat-changed": RepeatMode;
+    "queue:shuffle-changed": boolean;
   }
 }
 
@@ -29,11 +29,11 @@ export class PlayQueue extends Plugin {
   }
 
   protected onInit(): void {
-    this.context.hooks.on("play_track_ended", this.onTrackEnded, this);
+    this.context.hooks.on("playback:track-ended", this.onTrackEnded, this);
   }
 
   protected onDispose(): void {
-    this.context.hooks.off("play_track_ended", this.onTrackEnded);
+    this.context.hooks.off("playback:track-ended", this.onTrackEnded);
     this.queue.clear();
   }
 
@@ -79,12 +79,12 @@ export class PlayQueue extends Plugin {
   }
 
   toggleShuffle(): void {
-    this.context.hooks.emit("shuffle_enable_changed", this.queue.toggleShuffle());
+    this.context.hooks.emit("queue:shuffle-changed", this.queue.toggleShuffle());
   }
 
   cycleRepeat(): void {
     this.repeat = nextRepeatMode(this.repeat);
-    this.context.hooks.emit("repeat_mode_changed", this.repeat);
+    this.context.hooks.emit("queue:repeat-changed", this.repeat);
   }
 
   // ── Internal choreography ──────────────────────────────────────────
@@ -96,10 +96,10 @@ export class PlayQueue extends Plugin {
   };
 
   private emitQueue(): void {
-    this.context.hooks.emit("play_queue_changed", this.queue.tracks);
+    this.context.hooks.emit("queue:changed", this.queue.tracks);
   }
 
   private emitCurrent(): void {
-    this.context.hooks.emit("current_track_changed", this.queue.current);
+    this.context.hooks.emit("queue:current-changed", this.queue.current);
   }
 }

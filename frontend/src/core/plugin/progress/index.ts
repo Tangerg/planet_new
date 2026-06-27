@@ -6,8 +6,8 @@ import { getNumberInRange } from "@shared/math";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    track_duration_changed: FormattedDuration;
-    play_time_changed: ProgressModel;
+    "progress:duration-changed": FormattedDuration;
+    "progress:position-changed": ProgressModel;
   }
 }
 
@@ -53,11 +53,11 @@ export class Progress extends Plugin {
   }
 
   onTimeUpdate = (): void => {
-    this.context.hooks.emit("play_time_changed", this.current);
+    this.context.hooks.emit("progress:position-changed", this.current);
   };
 
   onDurationChange = (): void => {
-    this.context.hooks.emit("track_duration_changed", this.duration);
+    this.context.hooks.emit("progress:duration-changed", this.duration);
   };
 
   seek = (v: number): void => {
