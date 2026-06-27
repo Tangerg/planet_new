@@ -1,19 +1,20 @@
-import { IContext, IPlugin } from "./types";
+import { IContext } from "./types";
 import { PlanetEventMap } from "./event";
 import { EventEmitter, IEventEmitter } from "../event";
+import { ICapabilityRegistry } from "./capability";
 
 export class Context implements IContext {
   private readonly _audioElement: HTMLAudioElement;
   private readonly _audioContext: AudioContext;
   private readonly eventEmitter: EventEmitter<PlanetEventMap>;
-  private readonly resolvePlugin: (id: string) => IPlugin | null;
+  private readonly _registry: ICapabilityRegistry;
 
-  /** @param resolvePlugin sibling-plugin resolver, wired by Planet to its manager. */
-  constructor(resolvePlugin: (id: string) => IPlugin | null) {
+  /** @param registry the kernel capability registry, shared with every plugin. */
+  constructor(registry: ICapabilityRegistry) {
     this._audioElement = new Audio();
     this._audioContext = new AudioContext();
     this.eventEmitter = new EventEmitter<PlanetEventMap>();
-    this.resolvePlugin = resolvePlugin;
+    this._registry = registry;
   }
 
   get audioElement(): HTMLAudioElement {
@@ -28,7 +29,7 @@ export class Context implements IContext {
     return this.eventEmitter;
   }
 
-  getPlugin<T extends IPlugin = IPlugin>(id: string): T | null {
-    return this.resolvePlugin(id) as T | null;
+  get registry(): ICapabilityRegistry {
+    return this._registry;
   }
 }

@@ -86,11 +86,3 @@ export interface IProvider {
    */
   toplistDetail(id: string): Promise<Playlist>;
 }
-
-/**
- * Well-known kernel plugin id under which the active provider is registered.
- * Exactly one provider is mounted at a time, so the id is fixed. Lives in the
- * domain so the UI can resolve the provider through its port without importing
- * the concrete `@providers` infrastructure.
- */
-export const PROVIDER_PLUGIN_ID = "provider";

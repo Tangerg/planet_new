@@ -2,6 +2,7 @@ import { IEventEmitter } from "../event";
 import { PlanetEventMap } from "./event";
 import { IPlanet, IContext, IPlugin } from "./types";
 import { Context } from "./context";
+import { Capability, CapabilityRegistry } from "./capability";
 import { warn } from "@shared/debug";
 
 export type PlanetOption = {
@@ -70,11 +71,11 @@ export class Planet implements IPlanet {
   // Insertion-ordered registry, keyed by plugin id. topoSort already guarantees
   // id uniqueness, so a plain Map is enough — no separate manager abstraction.
   private readonly plugins = new Map<string, IPlugin>();
+  // Capability registry, shared into the Context so plugins publish/discover.
+  private readonly capabilities = new CapabilityRegistry();
 
   constructor(opt?: PlanetOption) {
-    // Wire sibling-plugin resolution into the context (read at runtime, by which
-    // point every plugin is mounted) so reactive plugins can reach the provider.
-    this.context = new Context((id) => this.plugins.get(id) ?? null);
+    this.context = new Context(this.capabilities);
 
     if (opt?.plugins?.length) {
       const sorted = topoSort(opt.plugins);
@@ -95,6 +96,7 @@ export class Planet implements IPlanet {
           }
         }
         this.plugins.clear();
+        this.capabilities.clear();
         this.context.hooks.clear();
         throw e;
       }
@@ -109,6 +111,14 @@ export class Planet implements IPlanet {
     return (this.plugins.get(id) as T | undefined) ?? null;
   }
 
+  resolve<T>(cap: Capability<T>): T | null {
+    return this.capabilities.resolve(cap);
+  }
+
+  resolveAll<T>(cap: Capability<T>): readonly T[] {
+    return this.capabilities.resolveAll(cap);
+  }
+
   dispose(): void {
     // Unmount in reverse, symmetric with init order
     for (const plugin of [...this.plugins.values()].reverse()) {
@@ -119,6 +129,7 @@ export class Planet implements IPlanet {
       }
     }
     this.plugins.clear();
+    this.capabilities.clear();
     this.context.hooks.clear();
   }
 }
