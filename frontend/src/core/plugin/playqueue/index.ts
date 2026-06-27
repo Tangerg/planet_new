@@ -1,165 +1,105 @@
 import { Plugin } from "../../kernel";
-import { Queue } from "./queue";
 import { Track } from "@domain/model/track";
-import { PlayQueue as PlayQueueModel } from "@domain/model/playqueue";
-import { shuffleArray } from "@shared/array";
-import { Repeat, RepeatMode } from "./repeat";
+import { PlayQueue as PlayQueueModel } from "@domain/model/play-queue";
+import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    change_play_queue: PlayQueueModel;
-    play_queue_changed: PlayQueueModel;
-    next_track: never;
-    previous_track: never;
-    select_track: Track;
-    current_track_changed: Track;
-    clean_play_queue: never;
-    play_queue_cleaned: never;
-    change_repeat_mode: never;
+    play_queue_changed: readonly Track[];
+    current_track_changed: Track | undefined;
     repeat_mode_changed: RepeatMode;
-    change_shuffle_enable: never;
     shuffle_enable_changed: boolean;
   }
 }
 
+/**
+ * Owns the play-queue aggregate (the rules) + the repeat mode, and the runtime
+ * wiring around it. Commands arrive as direct method calls from PlaybackService;
+ * the plugin mutates the aggregate and broadcasts the resulting facts. The only
+ * thing it subscribes to is the internal `play_track_ended` choreography event
+ * (raised by the playback/audio plugin) to auto-advance.
+ */
 export class PlayQueue extends Plugin {
   public static readonly id = "PlayQueue";
-  private readonly playQueue: Queue;
-  private readonly displayQueue: Queue;
-  private readonly repeat: Repeat;
-  private shuffleEnable: boolean = false;
-  private playQueueKey: string = "";
-
-  constructor() {
-    super();
-    this.displayQueue = new Queue();
-    this.playQueue = new Queue();
-    this.repeat = new Repeat();
-  }
+  private readonly queue = new PlayQueueModel();
+  private repeat = RepeatMode.OFF;
 
   get id(): string {
     return PlayQueue.id;
   }
 
-  protected onDispose(): void {
-    this.clear();
-
-    this.displayQueue.off("tracks_changed", this.tracksChanged);
-    this.displayQueue.off("tracks_cleaned", this.tracksCleaned);
-    this.displayQueue.off("current_track_changed", this.currentTrackChanged);
-
-    this.context.hooks.off("change_play_queue", this.apply);
-    this.context.hooks.off("change_repeat_mode", this.changeRepeatMode);
-    this.context.hooks.off("change_shuffle_enable", this.changeShuffleEnable);
-    this.context.hooks.off("play_track_ended", this.autoNext);
-  }
-
   protected onInit(): void {
-    this.displayQueue.on("tracks_changed", this.tracksChanged, this);
-    this.displayQueue.on("tracks_cleaned", this.tracksCleaned, this);
-    this.displayQueue.on("current_track_changed", this.currentTrackChanged, this);
-
-    this.context.hooks.on("change_play_queue", this.apply, this);
-    this.context.hooks.on("change_repeat_mode", this.changeRepeatMode, this);
-    this.context.hooks.on("change_shuffle_enable", this.changeShuffleEnable, this);
-    this.context.hooks.on("next_track", this.next, this);
-    this.context.hooks.on("previous_track", this.previous, this);
-    this.context.hooks.on("select_track", this.select, this);
-    this.context.hooks.on("play_track_ended", this.autoNext, this);
+    this.context.hooks.on("play_track_ended", this.onTrackEnded, this);
   }
 
-  changeRepeatMode(): void {
-    this.context.hooks.emit("repeat_mode_changed", this.repeat.next());
+  protected onDispose(): void {
+    this.context.hooks.off("play_track_ended", this.onTrackEnded);
+    this.queue.clear();
   }
 
-  changeShuffleEnable(): void {
-    this.shuffleEnable = !this.shuffleEnable;
-    if (!this.displayQueue.size || !this.displayQueue.current) {
-      this.context.hooks.emit("shuffle_enable_changed", this.shuffleEnable);
-      return;
-    }
-    const playTracks = this.shuffleEnable
-      ? shuffleArray(this.displayQueue.tracks)
-      : this.displayQueue.tracks;
-    this.playQueue.apply(playTracks);
-    this.playQueue.select(this.displayQueue.current);
-    this.context.hooks.emit("shuffle_enable_changed", this.shuffleEnable);
+  // ── Commands (called directly by PlaybackService) ──────────────────
+
+  /** Replace the queue and start at `start` (or the first track). */
+  playNow(tracks: readonly Track[], start?: Track): void {
+    this.queue.setTracks(tracks, start);
+    this.emitQueue();
+    this.emitCurrent();
   }
 
-  tracksChanged() {
-    this.context.hooks.emit("play_queue_changed", {
-      tracks: this.displayQueue.tracks,
-    });
+  next(): void {
+    this.queue.next();
+    this.emitCurrent();
   }
 
-  tracksCleaned(): void {
-    this.context.hooks.emit("play_queue_cleaned");
+  previous(): void {
+    this.queue.previous();
+    this.emitCurrent();
   }
 
-  currentTrackChanged() {
-    this.context.hooks.emit("current_track_changed", this.displayQueue.current);
+  selectTrack(track: Track): void {
+    if (this.queue.select(track)) this.emitCurrent();
   }
 
-  clear(): void {
-    this.playQueueKey = "";
-    this.playQueue.clear();
-    this.displayQueue.clear();
+  addToQueue(track: Track): void {
+    this.queue.add(track);
+    this.emitQueue();
   }
 
-  apply(queue: PlayQueueModel): void {
-    this.clear();
-
-    this.playQueueKey = queue.key ? queue.key : this.playQueueKey;
-    const tracks = queue.tracks ?? [];
-    const playTracks = this.shuffleEnable ? shuffleArray(tracks) : tracks;
-    this.playQueue.apply(playTracks);
-
-    let playTrack = tracks[0];
-    if (queue.track && this.playQueue.has(queue.track)) {
-      playTrack = queue.track;
-    }
-
-    this.playQueue.select(playTrack);
-    this.displayQueue.apply(tracks);
-    this.displayQueue.select(this.playQueue.current!);
+  removeFromQueue(track: Track): void {
+    const before = this.queue.current;
+    this.queue.remove(track);
+    this.emitQueue();
+    if (this.queue.current !== before) this.emitCurrent();
   }
 
-  add(queue: PlayQueueModel): void {
-    if (!this.playQueue.size) {
-      this.playQueueKey = queue.key ? queue.key : this.playQueueKey;
-    }
-    this.playQueue.add(queue.track!);
-    this.displayQueue.add(queue.track!);
+  clearQueue(): void {
+    this.queue.clear();
+    this.emitQueue();
+    this.emitCurrent();
   }
 
-  remove(track: Track): void {
-    this.playQueue.remove(track);
-    this.displayQueue.remove(track);
+  toggleShuffle(): void {
+    this.context.hooks.emit("shuffle_enable_changed", this.queue.toggleShuffle());
   }
 
-  autoNext() {
-    if (this.repeat.current === RepeatMode.ONE) {
-      this.context.hooks.emit("current_track_changed", this.displayQueue.current);
-      return;
-    }
-    if (this.playQueue.isLast && this.repeat.current === RepeatMode.OFF) {
-      return;
-    }
-    this.next();
+  cycleRepeat(): void {
+    this.repeat = nextRepeatMode(this.repeat);
+    this.context.hooks.emit("repeat_mode_changed", this.repeat);
   }
 
-  next() {
-    this.playQueue.next();
-    this.displayQueue.select(this.playQueue.current!);
+  // ── Internal choreography ──────────────────────────────────────────
+
+  private onTrackEnded = (): void => {
+    // "replay" re-emits the same current track (re-loads + restarts it);
+    // "advanced" emits the new one; "stopped" leaves playback where it ended.
+    if (this.queue.advance(this.repeat) !== "stopped") this.emitCurrent();
+  };
+
+  private emitQueue(): void {
+    this.context.hooks.emit("play_queue_changed", this.queue.tracks);
   }
 
-  previous() {
-    this.playQueue.previous();
-    this.displayQueue.select(this.playQueue.current!);
-  }
-
-  select(track: Track): void {
-    this.playQueue.select(track);
-    this.displayQueue.select(this.playQueue.current!);
+  private emitCurrent(): void {
+    this.context.hooks.emit("current_track_changed", this.queue.current);
   }
 }

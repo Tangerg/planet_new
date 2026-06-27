@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { Personalized } from "@domain/model/personalized";
 import { PlayState } from "@core/plugin";
-import { RepeatMode } from "@core/plugin/playqueue/repeat";
+import { RepeatMode } from "@domain/model/repeat";
 
 import { useEngine } from "@/hooks/useEngine";
 import { useMediaService } from "@/hooks/useMediaService";
@@ -79,10 +79,10 @@ export function useVibePlayback() {
 
   /** Set vibe tracks as the play queue and start at the given track. */
   const play = useCallback(
-    async (list: VibeTrack[], track: VibeTrack, key = "vibe") => {
+    async (list: VibeTrack[], track: VibeTrack) => {
       const domainList = (list?.length ? list : [track]).map(toTrack);
       const domainTrack = toTrack(track);
-      await playbackService.play(domainList, domainTrack, key);
+      await playbackService.play(domainList, domainTrack);
     },
     [playbackService],
   );
@@ -94,7 +94,7 @@ export function useVibePlayback() {
   const next = useCallback(() => playbackService.next(), [playbackService]);
   const prev = useCallback(() => playbackService.previous(), [playbackService]);
   const toggleShuffle = useCallback(() => playbackService.toggleShuffle(), [playbackService]);
-  const toggleRepeat = useCallback(() => playbackService.toggleRepeat(), [playbackService]);
+  const toggleRepeat = useCallback(() => playbackService.cycleRepeat(), [playbackService]);
   const seek = useCallback((pct: number) => playbackService.seek(pct), [playbackService]);
   const setVolume = useCallback((v: number) => playbackService.setVolume(v), [playbackService]);
 

@@ -19,7 +19,7 @@ import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg, Equalizer, Icon } from "@/components/primitives";
 import { MOCK } from "@/model/mock";
-import { RepeatMode } from "@core/plugin/playqueue/repeat";
+import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,
   useLyric,
