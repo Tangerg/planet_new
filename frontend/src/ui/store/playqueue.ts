@@ -12,7 +12,7 @@ import { withSelectors } from "./selector";
 /* -------------------------------------------------------------------------- */
 
 export interface PlayQueueState {
-  /** Current track list (from the latest change_play_queue). */
+  /** Current track list (from the latest queue:changed). */
   tracks: readonly Track[];
   /** The currently playing track. */
   track: Track | undefined;
