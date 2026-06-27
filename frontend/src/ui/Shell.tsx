@@ -354,7 +354,7 @@ export default function Shell() {
      editing (e.g. ⌘← = line-start) inside the search box. */
   useHotkey("Escape", () => void (view !== "xmb" && goBack()));
   useHotkey("/", () => void (view !== "search" && openSearch()));
-  useHotkey("Mod+K", () => void (view !== "search" && openSearch()));
+  useHotkey("Mod+F", () => void (view !== "search" && openSearch()));
   // Transport / library — NetEase-style
   useHotkey("Mod+ArrowLeft", () => playPrev(), HK_IGNORE_INPUTS);
   useHotkey("Mod+ArrowRight", () => playNext(), HK_IGNORE_INPUTS);
