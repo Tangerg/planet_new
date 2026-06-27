@@ -1,15 +1,19 @@
 // ============================================================
 // Sonance Vibe — Shell
-// Resident shell + shared-element transition engine, ported verbatim from the
-// example Sonance Vibe.html App. The phase machine (trans / startForward /
-// startReverse / morph layers) is unchanged; only the example's mock playback became the real kernel.
+// Resident shell, ported verbatim from the example Sonance Vibe.html App; only
+// the example's mock playback became the real kernel.
 //
-// The morph engine, spatial navigation, context menu, and likes/history state
-// have been extracted into dedicated hooks for clarity.
-// Shell remains the composition root: it owns navigation state, data fetching
-// (openDetail / openArtist), the XMB category model, and screen rendering.
+// Shell is the composition root: it wires the kernel playback state, catalog
+// data, likes, and the navigation machine (useShellNavigation — view state,
+// morph engine, back-stack), then renders the active screen, the player bar,
+// and the window chrome. The heavy lifting lives in dedicated hooks/modules:
+//   - useShellNavigation  navigation state machine + shared-element morph
+//   - useGlobalShortcuts   discrete app-wide keyboard shortcuts
+//   - useSpatialNavigation arrow-key spatial nav
+//   - useContextMenu       right-click menu
+//   - buildWorlds          the XMB navigation IA tree (@/model/navigation)
 // ============================================================
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -26,21 +30,12 @@ import {
   useToplists,
   useVibePlayback,
 } from "@/hooks/data";
-import {
-  toVibeAlbum,
-  toVibeArtist,
-  toVibePlaylist,
-  toVibeTracks,
-  type ArtistTarget,
-  type DetailTarget,
-  type OpenTarget,
-  type VibeCollection,
-  type VibeTrack,
-} from "@/model/adapt";
+import { type VibeTrack } from "@/model/adapt";
 import { useLikes } from "@/hooks/useLikes";
-import { useMorphTransition, MorphStage, MorphProvider } from "@/infra/morph";
+import { MorphStage, MorphProvider } from "@/infra/morph";
 import { useSpatialNavigation } from "@/hooks/useSpatialNavigation";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { useShellNavigation } from "@/hooks/useShellNavigation";
 import { ScreenActionsProvider } from "@/hooks/screenActions";
 
 import { PlayerBar } from "@/components/PlayerBar";
@@ -71,23 +66,6 @@ import {
   PLACEHOLDER_TRACK,
 } from "@/model/defaults";
 
-// One frame of navigation state — enough to rebuild any screen on "back".
-// Screen rendering reads several independent Shell state slices (detail /
-// artistObj / library tab+view / search seed), so a back-stack entry must
-// snapshot all of them, not just the `view` string.
-type NavSnapshot = {
-  view: string;
-  detail: DetailTarget | null;
-  artistObj: ArtistTarget;
-  libraryTab: string;
-  libraryView: string;
-  searchQuery: string;
-  playContext: VibeTrack[];
-  // The morph origin tile active while on this screen — restored so a later
-  // collapse-to-launcher flies from the right place after a deep back-walk.
-  lastTile: unknown;
-};
-
 export default function Shell() {
   const media = useMediaService();
   const queryClient = useQueryClient();
@@ -103,23 +81,11 @@ export default function Shell() {
     document.documentElement.style.setProperty("--glass-blur", glass + "px");
   }, [accent, glass]);
 
-  /* ---- navigation / view state (kept as-is) ---- */
-  const [view, setView] = useState("xmb");
+  /* ---- XMB launcher cursor (highlighted column/row): transient screen state
+     Shell holds so it survives the XMB's mount/unmount; not part of the
+     navigation back-stack (which the nav hook owns). ---- */
   const [xmbCategory, setXmbCategory] = useState(1);
   const [xmbRowByCategory, setXmbRowByCategory] = useState<Record<string, number>>({});
-  const [detail, setDetail] = useState<DetailTarget | null>(null);
-  const [artistObj, setArtistObj] = useState<ArtistTarget>({ id: "", name: "" });
-  const [searchQuery, setSeedQuery] = useState("");
-  const [libraryTab, setLibraryTab] = useState("playlists");
-  const [libraryView, setLibraryView] = useState("grid");
-
-  /* ---- back-stack: each forward hop remembers the screen it left, so "back"
-     pops one level instead of always collapsing to the XMB launcher. The
-     launcher boundary itself stays the morph engine's job (startReverse), so
-     we never push "xmb" — an empty stack means "morph home". Held in a ref:
-     it only drives the goBack branch, never rendering. ---- */
-  const navStack = useRef<NavSnapshot[]>([]);
-  const navSnapRef = useRef<NavSnapshot | null>(null);
 
   /* ---- real kernel playback state (replaces the example's mock + local useState) ---- */
   const playback = useVibePlayback();
@@ -144,42 +110,6 @@ export default function Shell() {
   const playNext = useCallback(() => playNextFn(), [playNextFn]);
   const playPrev = useCallback(() => playPrevFn(), [playPrevFn]);
 
-  /* Current playable context (filled once a detail/artist loads); onPlay(track) plays within this list. */
-  const playContext = useRef<VibeTrack[]>([]);
-  const onPlay = useCallback(
-    (track: VibeTrack | undefined) => {
-      if (!track) return;
-      const ctx = playContext.current;
-      // Use the context list as the queue only when it actually contains this track; otherwise play the single track (e.g. a search result).
-      const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
-      playFn(list, track);
-    },
-    [playFn],
-  );
-
-  // Remember the current screen before a forward hop. No-op at the launcher:
-  // the XMB↔screen boundary is the morph engine's (startReverse), not the stack's.
-  // Reads navSnapRef at call time (populated each render, after the morph hook).
-  const pushCurrent = useCallback(() => {
-    const snap = navSnapRef.current;
-    if (!snap || snap.view === "xmb") return;
-    navStack.current.push(snap);
-  }, []);
-  // Forward navigation to a bare view: push the current screen, then switch.
-  const navigate = useCallback(
-    (v: string) => {
-      pushCurrent();
-      setView(v);
-    },
-    [pushCurrent],
-  );
-  // Open Search from anywhere (XMB entry + the global "/" hotkey). pushCurrent is a
-  // no-op at the launcher, so this is safe both from the XMB and from a screen.
-  const openSearch = useCallback(() => {
-    setSeedQuery("");
-    navigate("search");
-  }, [navigate]);
-
   /* ---- catalog / charts / search (real provider) ---- */
   const { catalog } = useCatalog();
   const toplists = useToplists();
@@ -192,89 +122,50 @@ export default function Shell() {
   // just reads them. [] when none — NowPlaying shows "No lyrics" on its own.
   const lyrics = useLyric();
 
-  /* ---- open detail: fetch the real collection async (switch screen + skeleton now, backfill tracks when data lands) ---- */
-  const openDetail = useCallback(
-    (input: OpenTarget) => {
-      pushCurrent();
-      // Detail screens assume tracks is always an array (they read p.tracks.length);
-      // a summary (charts especially) may lack it, so default it.
-      const obj: DetailTarget = { ...input, tracks: input.tracks ?? [] };
-      setDetail(obj);
-      playContext.current = obj.tracks;
-      setView("detail");
-      // Real playlist/collection summaries carry no tracks -> fetch detail to backfill.
-      if (obj.id && obj._real !== false && obj.tracks.length === 0) {
-        const kind = obj.kind;
-        const fetcher =
-          kind === "Album"
-            ? () => media.albumDetail(obj.id).then(toVibeAlbum)
-            : kind === "Chart"
-              ? () => media.toplistDetail(obj.id).then(toVibePlaylist)
-              : () => media.playlistDetail(obj.id).then(toVibePlaylist);
-        queryClient
-          .fetchQuery({ queryKey: ["detail", kind, media.providerName, obj.id], queryFn: fetcher })
-          .then((full) => {
-            // detail wins by default; keep the summary's identity fields when the
-            // detail lacks them (charts especially).
-            const merged: DetailTarget = {
-              ...obj,
-              ...full,
-              name: full.name || obj.name,
-              image: full.image || obj.image,
-              coverSeed: obj.coverSeed ?? full.coverSeed,
-              kind: obj.kind ?? full.kind,
-              tracks: full.tracks?.length ? full.tracks : obj.tracks,
-            };
-            playContext.current = merged.tracks;
-            setDetail(merged);
-          })
-          .catch(() => {});
-      }
+  /* ---- navigation + shared-element transition machine (extracted hook) ----
+     Owns the view string, every nav-significant screen slice, the morph engine,
+     and the back-stack. Shell composes onPlay / likedDetail / menu / shortcuts /
+     the XMB tree on top of what it returns. */
+  const {
+    view,
+    setView,
+    detail,
+    artistObj,
+    libraryTab,
+    libraryView,
+    searchQuery,
+    setLibraryTab,
+    setLibraryView,
+    setSeedQuery,
+    playContext,
+    navigate,
+    goBack,
+    openSearch,
+    openDetail,
+    albumDetail,
+    openChart,
+    openArtist,
+    openLib,
+    viewRef,
+    trans,
+    startForward,
+    morph,
+  } = useShellNavigation(media, queryClient);
+
+  /* Play a track within the current browse context (the open collection); a
+     track not in that list (e.g. a lone search result) plays on its own. */
+  const onPlay = useCallback(
+    (track: VibeTrack | undefined) => {
+      if (!track) return;
+      const ctx = playContext.current;
+      const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
+      playFn(list, track);
     },
-    [media, queryClient, pushCurrent],
+    [playFn, playContext],
   );
-  const albumDetail = useCallback(
-    (al: VibeCollection) => openDetail({ ...al, kind: "Album" }),
-    [openDetail],
-  );
-  const openChart = useCallback(
-    (c: VibeCollection) => openDetail({ ...c, kind: "Chart", _real: true }),
-    [openDetail],
-  );
-  const openArtist = useCallback(
-    (ar: ArtistTarget) => {
-      pushCurrent();
-      setArtistObj(ar);
-      playContext.current = ar.tracks ?? [];
-      setView("artist");
-      if (ar.id && (!ar.tracks || ar.tracks.length === 0)) {
-        queryClient
-          .fetchQuery({
-            queryKey: ["artist", media.providerName, ar.id],
-            queryFn: () => media.artistDetail(ar.id),
-          })
-          .then((full) => {
-            const mapped: ArtistTarget = {
-              ...toVibeArtist(full),
-              tracks: toVibeTracks(full.topTracks),
-            };
-            playContext.current = mapped.tracks ?? [];
-            setArtistObj(mapped);
-          })
-          .catch(() => {});
-      }
-    },
-    [media, queryClient, pushCurrent],
-  );
-  const openLib = useCallback(
-    (tab: string, vw?: string) => {
-      pushCurrent();
-      setLibraryTab(tab);
-      setLibraryView(vw || "grid");
-      setView("library");
-    },
-    [pushCurrent],
-  );
+
+  // "Liked Songs" is a synthetic playlist projected from the like set; it routes
+  // through openDetail like any collection (but never fetches — _real: false).
   const likedDetail = useCallback(
     () =>
       openDetail({
@@ -299,49 +190,6 @@ export default function Shell() {
     toggleLike,
     liked,
   });
-
-  /* ---- page-to-page transition engine (UI-layer infra: @/infra/morph) ---- */
-  const viewRef = useRef<HTMLDivElement | null>(null);
-  const { trans, startForward, startReverse, lastTile, morph } = useMorphTransition(
-    viewRef,
-    view,
-    setView,
-  );
-
-  /* Mirror the live navigation state so a back-stack push captures the screen
-     being left without stale closures. Written during render (pure mirror);
-     placed after the morph hook so lastTile is in scope. A card morph mutates
-     lastTile only inside the click handler that follows this render, so the
-     value captured here is still the origin tile of the *current* screen. */
-  navSnapRef.current = {
-    view,
-    detail,
-    artistObj,
-    libraryTab,
-    libraryView,
-    searchQuery,
-    playContext: playContext.current,
-    lastTile: lastTile.current,
-  };
-
-  /* Back: pop one screen off the stack and restore its full data snapshot;
-     when the stack is empty we're at a launcher-level screen, so hand off to
-     the morph engine to collapse home. */
-  const goBack = useCallback(() => {
-    const prev = navStack.current.pop();
-    if (!prev) {
-      startReverse();
-      return;
-    }
-    setView(prev.view);
-    setDetail(prev.detail);
-    setArtistObj(prev.artistObj);
-    setLibraryTab(prev.libraryTab);
-    setLibraryView(prev.libraryView);
-    setSeedQuery(prev.searchQuery);
-    playContext.current = prev.playContext;
-    lastTile.current = prev.lastTile;
-  }, [startReverse, lastTile]);
 
   /* ---- global keyboard shortcuts (extracted hook) ---- */
   useGlobalShortcuts({
@@ -390,7 +238,7 @@ export default function Shell() {
           openLikedSongs: likedDetail,
         },
       ),
-    [catalog, media, liked, current, queue, openSearch, openLib, likedDetail],
+    [catalog, media, liked, current, queue, setView, openSearch, openLib, likedDetail],
   );
 
   /* ==========================================================================
