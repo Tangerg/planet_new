@@ -162,11 +162,6 @@ export function SettingsScreen({
             onClick={() => up("waves", !s.waves)}
           />
           <SetToggle
-            label={t("settings.showComments")}
-            on={s.comments}
-            onClick={() => up("comments", !s.comments)}
-          />
-          <SetToggle
             label={t("settings.reduceMotion")}
             on={s.reduceMotion}
             onClick={() => up("reduceMotion", !s.reduceMotion)}

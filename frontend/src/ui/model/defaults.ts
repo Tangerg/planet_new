@@ -32,7 +32,6 @@ export type Settings = {
   crossfade: boolean;
   gapless: boolean;
   waves: boolean;
-  comments: boolean;
   reduceMotion: boolean;
 };
 
@@ -42,6 +41,5 @@ export const DEFAULT_SETTINGS: Settings = {
   crossfade: true,
   gapless: false,
   waves: true,
-  comments: true,
   reduceMotion: false,
 };
