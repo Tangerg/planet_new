@@ -143,7 +143,10 @@ function XmbCategory({
           boxShadow: active ? catShadow : "none",
           // box-shadow is Motion-driven (catShadow); transition the rest only, or
           // the CSS transition would fight the per-frame shadow updates.
-          transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, color .55s ${XMB_EASE}, background .55s ${XMB_EASE}, border .55s ${XMB_EASE}, backdrop-filter .55s ${XMB_EASE}`,
+          // backdrop-filter is deliberately NOT animated: tweening blur re-samples
+          // and re-blurs the area behind every icon each frame (no GPU path) — the
+          // frost just toggles, masked by the animated background/colour swap.
+          transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, color .55s ${XMB_EASE}, background .55s ${XMB_EASE}, border .55s ${XMB_EASE}`,
         }}
       >
         <I size={active ? 40 : 26} />
@@ -153,6 +156,7 @@ function XmbCategory({
 }
 
 const XMB_EASE = "cubic-bezier(.22,1,.28,1)"; // soft easeOut, gentle settle
+const XMB_EASE_ARR = [0.22, 1, 0.28, 1] as const; // same curve for Motion (array form)
 
 function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: number }) {
   // one vertical column: passed items rise above the bar, upcoming sink below
@@ -467,18 +471,17 @@ export const XMB = React.memo(function XMB({
                     Math.min(10, Math.round(Math.atan2(slopeMag, XMB_CAT_GAP) * 57.3 * 0.95)),
                   );
             return (
-              <div
+              // y + rotate via Motion (compositor) instead of animating `top`
+              // (layout) — same arc, no per-frame reflow of the category row.
+              <motion.div
                 key={cc.id}
-                style={{
-                  position: "absolute",
-                  left: i * XMB_CAT_GAP,
-                  top: cy,
-                  transform: `rotate(${rot}deg)`,
-                  transition: `top .62s ${XMB_EASE}, transform .62s ${XMB_EASE}`,
-                }}
+                style={{ position: "absolute", left: i * XMB_CAT_GAP, top: 0 }}
+                initial={false}
+                animate={{ y: cy, rotate: rot }}
+                transition={{ duration: 0.62, ease: XMB_EASE_ARR }}
               >
                 <XmbCategory cat={cc} active={i === c} dim={0.3} onClick={() => setC(i)} />
-              </div>
+              </motion.div>
             );
           })}
         </div>

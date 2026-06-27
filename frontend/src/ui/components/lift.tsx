@@ -68,20 +68,43 @@ type MotionButtonProps = Omit<
 >;
 
 /** Play fab inside a LiftCard — rises from below on the card's hover. */
-export const RiseFab = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
-  function RiseFab(props, ref) {
-    return <MotionButton ref={ref} variants={fabVariants} whileTap={{ scale: 0.9 }} {...props} />;
-  },
-);
+export const RiseFab = React.forwardRef<HTMLButtonElement, MotionButtonProps>(function RiseFab(
+  { style, ...props },
+  ref,
+) {
+  return (
+    <MotionButton
+      ref={ref}
+      variants={fabVariants}
+      whileTap={{ scale: 0.9 }}
+      {...props}
+      // Motion owns the rise (transform) + opacity + the tap press, so kill the
+      // `.btn` `transition: transform 0.08s` — otherwise that CSS transition
+      // double-animates Motion's per-frame transform writes and the fab snaps/
+      // flashes as it settles at the end of the rise.
+      style={{ ...style, transition: "none" }}
+    />
+  );
+});
 
 /** The lift on a real <button> (chart banners, genre tiles) — no fab to rise. */
-export function LiftButton({ scale = 1.08, liftY = -6, ...rest }: MotionButtonProps & LiftTuning) {
+export function LiftButton({
+  scale = 1.08,
+  liftY = -6,
+  style,
+  ...rest
+}: MotionButtonProps & LiftTuning) {
   return (
     <MotionButton
       variants={liftVariants(scale, liftY)}
       initial="rest"
       whileHover="hover"
+      // Motion owns the lift transform + the tap press, so kill the `.btn`
+      // `transition: transform` — otherwise it double-animates Motion's per-frame
+      // transform writes (a subtle smear/snap on the lift's settle).
+      whileTap={{ scale: 0.96 }}
       {...rest}
+      style={{ ...style, transition: "none" }}
     />
   );
 }
