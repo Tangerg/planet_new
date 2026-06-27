@@ -9,8 +9,8 @@ export enum PlayState {
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    play_state_changed: PlayState;
-    play_track_ended: never;
+    "playback:state-changed": PlayState;
+    "playback:track-ended": never;
   }
 }
 
@@ -30,33 +30,33 @@ export class Control extends Plugin {
 
   protected onInit(): void {
     this.context.audioElement.addEventListener("ended", this.onPlayEnd);
-    this.context.hooks.on("current_track_changed", this.changePlayTrack, this);
+    this.context.hooks.on("queue:current-changed", this.changePlayTrack, this);
   }
 
   protected onDispose(): void {
     this.stop();
     this.context.audioElement.removeEventListener("ended", this.onPlayEnd);
-    this.context.hooks.off("current_track_changed", this.changePlayTrack);
+    this.context.hooks.off("queue:current-changed", this.changePlayTrack);
   }
 
   async resume(): Promise<void> {
     await this.context.audioElement.play();
-    this.context.hooks.emit("play_state_changed", PlayState.PLAYING);
+    this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
   }
 
   pause(): void {
     this.context.audioElement.pause();
-    this.context.hooks.emit("play_state_changed", PlayState.PAUSED);
+    this.context.hooks.emit("playback:state-changed", PlayState.PAUSED);
   }
 
   stop(): void {
     this.context.audioElement.pause();
     this.context.audioElement.src = "";
-    this.context.hooks.emit("play_state_changed", PlayState.STOPPED);
+    this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
   }
 
   private onPlayEnd = (): void => {
-    this.context.hooks.emit("play_track_ended");
+    this.context.hooks.emit("playback:track-ended");
   };
 
   private changePlayTrack = async (track: Track | undefined): Promise<void> => {

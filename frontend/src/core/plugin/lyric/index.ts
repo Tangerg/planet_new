@@ -6,7 +6,7 @@ import type { Track } from "@domain/model/track";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    lyric_changed: Lyric[];
+    "lyrics:changed": Lyric[];
   }
 }
 
@@ -32,11 +32,11 @@ export class LyricPlugin extends Plugin {
   private generation = 0;
 
   protected onInit(): void {
-    this.context.hooks.on("current_track_changed", this.onTrackChanged, this);
+    this.context.hooks.on("queue:current-changed", this.onTrackChanged, this);
   }
 
   protected onDispose(): void {
-    this.context.hooks.off("current_track_changed", this.onTrackChanged);
+    this.context.hooks.off("queue:current-changed", this.onTrackChanged);
     this.lastTrackId = undefined;
     this.generation = 0;
   }
@@ -48,7 +48,7 @@ export class LyricPlugin extends Plugin {
     const gen = ++this.generation;
 
     if (!id) {
-      this.context.hooks.emit("lyric_changed", []);
+      this.context.hooks.emit("lyrics:changed", []);
       return;
     }
 
@@ -63,6 +63,6 @@ export class LyricPlugin extends Plugin {
 
     // Stale guard: a newer track changed since this fetch began — drop the result.
     if (gen !== this.generation) return;
-    this.context.hooks.emit("lyric_changed", lyrics);
+    this.context.hooks.emit("lyrics:changed", lyrics);
   };
 }

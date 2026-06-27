@@ -3,7 +3,7 @@ import { Volume as VolumeModel } from "@domain/model/volume";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
-    volume_changed: number;
+    "volume:changed": number;
   }
 }
 
@@ -45,6 +45,6 @@ export class Volume extends Plugin {
   }
 
   private emit(): void {
-    this.context.hooks.emit("volume_changed", this.volume.level);
+    this.context.hooks.emit("volume:changed", this.volume.level);
   }
 }

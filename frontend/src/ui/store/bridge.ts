@@ -20,22 +20,22 @@ export class PlayQueueStoreBridge extends Plugin {
 
   protected onInit(): void {
     const { hooks } = this.context;
-    hooks.on("play_queue_changed", this.onPlayQueueChanged, this);
-    hooks.on("current_track_changed", this.onCurrentTrackChanged, this);
-    hooks.on("play_state_changed", this.onPlayStateChanged, this);
-    hooks.on("track_duration_changed", this.onDurationChanged, this);
-    hooks.on("play_time_changed", this.onProgressChanged, this);
-    hooks.on("lyric_changed", this.onLyricChanged, this);
+    hooks.on("queue:changed", this.onPlayQueueChanged, this);
+    hooks.on("queue:current-changed", this.onCurrentTrackChanged, this);
+    hooks.on("playback:state-changed", this.onPlayStateChanged, this);
+    hooks.on("progress:duration-changed", this.onDurationChanged, this);
+    hooks.on("progress:position-changed", this.onProgressChanged, this);
+    hooks.on("lyrics:changed", this.onLyricChanged, this);
   }
 
   protected onDispose(): void {
     const { hooks } = this.context;
-    hooks.off("play_queue_changed", this.onPlayQueueChanged);
-    hooks.off("current_track_changed", this.onCurrentTrackChanged);
-    hooks.off("play_state_changed", this.onPlayStateChanged);
-    hooks.off("track_duration_changed", this.onDurationChanged);
-    hooks.off("play_time_changed", this.onProgressChanged);
-    hooks.off("lyric_changed", this.onLyricChanged);
+    hooks.off("queue:changed", this.onPlayQueueChanged);
+    hooks.off("queue:current-changed", this.onCurrentTrackChanged);
+    hooks.off("playback:state-changed", this.onPlayStateChanged);
+    hooks.off("progress:duration-changed", this.onDurationChanged);
+    hooks.off("progress:position-changed", this.onProgressChanged);
+    hooks.off("lyrics:changed", this.onLyricChanged);
   }
 
   private onPlayQueueChanged(tracks: readonly Track[]): void {
