@@ -4,10 +4,10 @@
 // ============================================================
 import React from "react";
 import { FadeIn } from "@/components/motion";
-import { useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 export function BrowseScreen() {
-  const t = useT();
+  const { t } = useTranslation();
   return (
     <FadeIn
       className="scroll h-full"

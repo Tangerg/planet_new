@@ -7,7 +7,7 @@ import type { VibeTrack } from "@/model/adapt";
 import { Icon, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
-import { useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 type CommentsScreenProps = {
   track?: VibeTrack;
@@ -18,7 +18,7 @@ type CommentsScreenProps = {
 };
 
 export function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScreenProps) {
-  const t = useT();
+  const { t } = useTranslation();
   return (
     <FadeIn
       className="grid h-full bg-surf-0"

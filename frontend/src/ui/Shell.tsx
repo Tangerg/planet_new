@@ -47,6 +47,7 @@ import { ScreenActionsProvider } from "@/hooks/screenActions";
 import { PlayerBar } from "@/components/PlayerBar";
 import { Button } from "@/components/controls/Button";
 import { XMB, type XmbCat, type XmbItemModel } from "@/screens/XMB";
+import { useHotkeys } from "@tanstack/react-hotkeys";
 import { ForYouScreen } from "@/screens/ForYou";
 import { NowPlaying } from "@/screens/NowPlaying";
 // ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
@@ -354,28 +355,15 @@ export default function Shell() {
     lastTile.current = prev.lastTile;
   }, [startReverse, lastTile]);
 
-  /* Global keys: Esc backs out one level (shares the back-stack, not always to the
-     launcher); "/" or ⌘/Ctrl+K opens Search from anywhere — unless typing in a field. */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && view !== "xmb") {
-        goBack();
-        return;
-      }
-      const el = e.target as HTMLElement | null;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) {
-        return;
-      }
-      const slash = e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey;
-      const cmdK = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
-      if ((slash || cmdK) && view !== "search") {
-        e.preventDefault();
-        openSearch();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [view, goBack, openSearch]);
+  /* Global keyboard shortcuts via TanStack Hotkeys. Its smart defaults fit us:
+     Escape / Mod-combos fire even inside inputs, single keys ("/") are ignored while
+     typing, and preventDefault is on. Spatial arrow navigation stays in
+     useSpatialNavigation (it's directional movement, not a discrete shortcut). */
+  useHotkeys([
+    { hotkey: "Escape", callback: () => void (view !== "xmb" && goBack()) },
+    { hotkey: "/", callback: () => void (view !== "search" && openSearch()) },
+    { hotkey: "Mod+K", callback: () => void (view !== "search" && openSearch()) },
+  ]);
 
   /* ---- arrow-key spatial navigation (extracted hook) ---- */
   useSpatialNavigation(viewRef, view, goBack);
