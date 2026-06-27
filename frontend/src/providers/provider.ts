@@ -50,7 +50,7 @@ export abstract class Provider extends Plugin implements MusicProvider {
        providers override these and declare them in `capabilities`. */
 
   async search(_query: string): Promise<SearchResult> {
-    return { tracks: [], artists: [], albums: [], playlists: [] };
+    return SearchResult.empty();
   }
 
   async toplists(): Promise<Chart[]> {

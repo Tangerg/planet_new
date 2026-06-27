@@ -184,7 +184,7 @@ export class NeteaseCloudMusic extends Provider {
 
   async search(query: string): Promise<SearchResult> {
     const q = query.trim();
-    if (!q) return { tracks: [], artists: [], albums: [], playlists: [] };
+    if (!q) return SearchResult.empty();
     // /cloudsearch returns full song nodes (al/ar/dt); one call per type, in
     // parallel. type 1=songs · 100=artists · 10=albums · 1000=playlists.
     const byType = (type: number) =>
