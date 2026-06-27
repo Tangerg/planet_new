@@ -1,4 +1,4 @@
-import { Plugin } from "../../kernel";
+import { Plugin, defineCapability } from "../../kernel";
 import { Track } from "@domain/model/track";
 import { PlayQueue as PlayQueueModel } from "@domain/model/play-queue";
 import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
@@ -11,6 +11,9 @@ declare module "../../kernel/event" {
     "queue:shuffle-changed": boolean;
   }
 }
+
+/** Queue commands: set/select/add/remove/clear/next/previous/shuffle/repeat. */
+export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
 
 /**
  * Owns the play-queue aggregate (the rules) + the repeat mode, and the runtime
@@ -29,6 +32,7 @@ export class PlayQueue extends Plugin {
   }
 
   protected onInit(): void {
+    this.context.registry.provide(PLAY_QUEUE, this);
     this.context.hooks.on("playback:track-ended", this.onTrackEnded, this);
   }
 

@@ -107,10 +107,6 @@ export class Planet implements IPlanet {
     return this.context.hooks;
   }
 
-  getPlugin<T extends IPlugin = IPlugin>(id: string): T | null {
-    return (this.plugins.get(id) as T | undefined) ?? null;
-  }
-
   resolve<T>(cap: Capability<T>): T | null {
     return this.capabilities.resolve(cap);
   }

@@ -39,9 +39,6 @@ export interface IPlugin extends Identifiable, Disposable {
 export interface IPlanet extends Disposable {
   get hooks(): IEventEmitter<PlanetEventMap>;
 
-  /** Resolve a specific singleton plugin by id (kernel-internal wiring). */
-  getPlugin<T extends IPlugin = IPlugin>(id: string): T | null;
-
   /** Resolve the (first) impl of a capability, or null. */
   resolve<T>(cap: Capability<T>): T | null;
 

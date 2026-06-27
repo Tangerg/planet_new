@@ -183,7 +183,7 @@ PlaybackService(命令式门面 = 充血域对外 API)   MediaService(浏览/取
 - [x] **A5 命名收尾 + 性能**:`Control→Playback`、`LyricPlugin→Lyrics`、id 统一、`clamp`、去无谓 `async`;`Progress` 每秒节流挪到源头(格式化只 1 次/秒,而非 bridge 丢 3/4)。
 
 ### Phase B — 能力注册表 + 多 provider + 可视化 seam(扩展底座,右尺寸)
-- [x] **B1 能力注册表**:内核加 typed `Capability<T>` + `provide/resolve/resolveAll`(`CapabilityRegistry`,经 `Context.registry` 注入插件、`Planet.resolve` 暴露)。**右尺寸细化**:扩展型/多实例能力(provider、未来 analyser/第三方)走注册表;`PlaybackService` 解析 transport/queue/volume/progress 这几个**内部单例**仍用 `planet.getPlugin(id)`(与命令门面紧耦合是有意的,无多实例需求,套能力只是无谓样板)。`Engine`/`Lyrics` 的 provider 解析迁到注册表(经 ProviderRegistry)。
+- [x] **B1 能力注册表**:内核加 typed `Capability<T>` + `provide/resolve/resolveAll`(`CapabilityRegistry`,经 `Context.registry` 注入插件、`Planet.resolve` 暴露)。**所有解析统一走注册表,一个机制**:transport/queue/volume/progress 各发能力 token(`TRANSPORT/PLAY_QUEUE/VOLUME_CONTROL/PROGRESS`)、`onInit` 自注册,`PlaybackService` 经 token `resolve`;provider 经 `MUSIC_PROVIDER`+ProviderRegistry。**删除 `Planet.getPlugin`**(已无消费方;Planet 内部仍用 id-keyed Map 做生命周期)。(原 B1 曾保留 getPlugin 做"右尺寸",重构 pass 复审后判定双机制是 wart,统一更简、更贴"同一注册方式"准则。)
 - [x] **B2 多 provider**:provider 独立 id(`provider:<name>`)+ `MUSIC_PROVIDER` 能力(`onInit` 自注册);加 `ProviderRegistry` 插件(`active`/`providers`/`setActive` + `provider:changed`);`Engine`/`Lyrics`/services 经注册表取**活跃** provider;组合根注册全部可用 provider、按 `VITE_PROVIDER` 选活跃(缺省/缺凭据回退 Mock)。删 `PROVIDER_PLUGIN_ID`。
 - [x] **B3 audio-analyser seam**:`AudioEngine` 能力插件**惰性**独占 `MediaElementSource`、暴露 `AnalyserNode` tap(**不建可视化 UI**;惰性=未被请求前不碰音频链,零回归风险),给均衡器/可视化留口。
 - [x] **B4 宿主按域挂能力**:`Engine` 把已解析能力以命名空间访问器显式暴露(`engine.providers`;未来 `engine.analyser`),**不上自动代理/条件类型机制**。

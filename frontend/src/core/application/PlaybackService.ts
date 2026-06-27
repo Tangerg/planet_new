@@ -1,10 +1,10 @@
-import type { IPlanet, IPlugin } from "../kernel";
+import type { Capability, IPlanet } from "../kernel";
 import type { IProvider } from "@domain";
-import type { Track } from "@domain/model/track";
-import { Playback } from "../plugin/playback";
-import { PlayQueue } from "../plugin/playqueue";
-import { Volume } from "../plugin/volume";
-import { Progress } from "../plugin/progress";
+import type { Track, TrackPlayUrl } from "@domain/model/track";
+import { TRANSPORT } from "../plugin/playback";
+import { PLAY_QUEUE } from "../plugin/playqueue";
+import { VOLUME_CONTROL } from "../plugin/volume";
+import { PROGRESS } from "../plugin/progress";
 
 /**
  * The playback command API — the single door the UI calls for every playback
@@ -13,10 +13,11 @@ import { Progress } from "../plugin/progress";
  * exactly one receiver, so routing it through fire-and-forget pub/sub would only
  * lose the receiver and the result. State flows back the other way, as events.
  *
- * The service resolves its plugins by id from the Planet on each call (they're
- * always mounted by the time the UI issues a command). It never imports concrete
- * providers or React; provider play-URL resolution comes through the domain port.
- * Dependency direction: core/application → core/kernel + core/plugin + domain.
+ * The service resolves the capabilities it needs from the Planet registry on
+ * each call (they're always provided by the time the UI issues a command). It
+ * never imports concrete providers or React; provider play-URL resolution comes
+ * through the domain port. Dependency direction: core/application → core/kernel
+ * + core/plugin + domain.
  */
 export class PlaybackService {
   /**
@@ -45,7 +46,7 @@ export class PlaybackService {
     const current = queue.find((t) => t.id === track.id) ?? queue[0];
     const ids = queue.map((t) => t.id).filter(Boolean);
 
-    let urls: Array<{ id: string | number; playUrl: string }> = [];
+    let urls: readonly TrackPlayUrl[] = [];
     if (ids.length) {
       try {
         urls = await this.getProvider().playUrls(ids);
@@ -130,29 +131,29 @@ export class PlaybackService {
     this.queue.cycleRepeat();
   }
 
-  // ── Plugin resolution ─────────────────────────────────────────────
+  // ── Capability resolution ─────────────────────────────────────────
 
-  private require<T extends IPlugin>(id: string): T {
-    const plugin = this.planet.getPlugin<T>(id);
-    if (!plugin) {
-      throw new Error(`Playback requires the "${id}" plugin, which is not registered.`);
+  private require<T>(cap: Capability<T>): T {
+    const impl = this.planet.resolve(cap);
+    if (!impl) {
+      throw new Error(`Playback requires the "${cap.key}" capability, which is not provided.`);
     }
-    return plugin;
+    return impl;
   }
 
-  private get queue(): PlayQueue {
-    return this.require<PlayQueue>(PlayQueue.id);
+  private get queue() {
+    return this.require(PLAY_QUEUE);
   }
 
-  private get playback(): Playback {
-    return this.require<Playback>(Playback.id);
+  private get playback() {
+    return this.require(TRANSPORT);
   }
 
-  private get volume(): Volume {
-    return this.require<Volume>(Volume.id);
+  private get volume() {
+    return this.require(VOLUME_CONTROL);
   }
 
-  private get progress(): Progress {
-    return this.require<Progress>(Progress.id);
+  private get progress() {
+    return this.require(PROGRESS);
   }
 }
