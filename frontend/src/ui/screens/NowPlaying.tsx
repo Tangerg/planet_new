@@ -9,6 +9,7 @@ import { Sheet } from "@/components/Sheet";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
+import { activateOnKey } from "@/lib/keys";
 
 // A synced-lyric line: text + optional timestamp (ms). The "No lyrics" fallback
 // line carries no `t`.
@@ -535,12 +536,7 @@ export const NowPlaying = React.memo(function NowPlaying({
                     tabIndex={0}
                     aria-label={t.title}
                     onClick={() => onPlay && onPlay(t)}
-                    onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        if (onPlay) onPlay(t);
-                      }
-                    }}
+                    onKeyDown={activateOnKey(() => onPlay?.(t))}
                     onContextMenu={(e: React.MouseEvent) => trackMenu(e, t)}
                     className="flex cursor-pointer items-center gap-[14px] py-[9px]"
                   >

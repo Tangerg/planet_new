@@ -15,6 +15,7 @@ import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
 import { ArtistLink } from "@/components/cards/ArtistLink";
 import { Icon, Art, artPair, fmt } from "@/components/primitives";
+import { activateOnKey } from "@/lib/keys";
 
 type Props = {
   track?: VibeTrack;
@@ -128,12 +129,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         tabIndex={0}
         aria-label="Open now playing"
         onClick={(e) => openNowPlaying(e.currentTarget)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openNowPlaying(e.currentTarget);
-          }
-        }}
+        onKeyDown={activateOnKey<HTMLDivElement>((e) => openNowPlaying(e.currentTarget))}
         className="relative z-[1] flex w-[224px] min-w-0 flex-none cursor-pointer items-center gap-[11px] pl-[18px] pr-1.5"
       >
         <Art

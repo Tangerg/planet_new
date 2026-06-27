@@ -7,6 +7,7 @@ import { motion, useMotionValue, useTransform, animate } from "motion/react";
 import { Icon, artBg, artPair, HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
+import { activateOnKey } from "@/lib/keys";
 
 /** One XMB sub-item (a launcher tile under a category). */
 export type XmbItemModel = {
@@ -427,13 +428,10 @@ export const XMB = React.memo(function XMB({
               // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div is a visual layout container in XMB column
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  if (o === 0) openItem(m, e as any);
-                  else setItem(i);
-                }
-              }}
+              onKeyDown={activateOnKey((e) => {
+                if (o === 0) openItem(m, e as any);
+                else setItem(i);
+              })}
               style={{
                 position: "absolute",
                 left: 0,

@@ -15,6 +15,7 @@ import { Sheet } from "@/components/Sheet";
 import { TextReveal } from "@/components/controls/TextReveal";
 import { FadeIn } from "@/components/motion";
 import { useScreenActions } from "@/hooks/screenActions";
+import { activateOnKey } from "@/lib/keys";
 
 type Props = {
   items: FlowItem[];
@@ -211,9 +212,7 @@ export function CoverFlow({
                 onClick={() =>
                   isC ? (expandable ? setExpanded((e) => !e) : onOpen(it)) : setCenter(i)
                 }
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key !== "Enter" && e.key !== " ") return;
-                  e.preventDefault();
+                onKeyDown={activateOnKey(() => {
                   if (!isC) {
                     setCenter(i);
                   } else if (expandable) {
@@ -221,7 +220,7 @@ export function CoverFlow({
                   } else {
                     onOpen(it);
                   }
-                }}
+                })}
                 onDoubleClick={() => isC && onOpen(it)}
                 onContextMenu={isC && it.obj ? (e) => collMenu(e, it.obj) : undefined}
                 // The fan geometry (per-card translate/rotateY/scale/opacity) is
@@ -440,12 +439,7 @@ export function CoverFlow({
                 tabIndex={0}
                 aria-label={t.title}
                 onClick={() => onPlayTrack && onPlayTrack(t)}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    if (onPlayTrack) onPlayTrack(t);
-                  }
-                }}
+                onKeyDown={activateOnKey(() => onPlayTrack?.(t))}
                 onContextMenu={(e) => trackMenu(e, t)}
                 className="flex cursor-pointer items-center gap-[14px] border-b border-white/[0.06] py-[9px]"
               >

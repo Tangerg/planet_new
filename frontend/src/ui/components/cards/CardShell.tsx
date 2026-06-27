@@ -7,6 +7,7 @@
 // ============================================================
 import React from "react";
 import { LiftCard } from "@/components/lift";
+import { activateOnKey } from "@/lib/keys";
 
 type CardShellProps = React.ComponentPropsWithoutRef<typeof LiftCard> & {
   label?: string;
@@ -22,12 +23,7 @@ export function CardShell({ label, onActivate, onContextMenu, children, ...lift 
       tabIndex={0}
       aria-label={label}
       onClick={onActivate}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onActivate(e);
-        }
-      }}
+      onKeyDown={activateOnKey(onActivate)}
       onContextMenu={onContextMenu}
       {...lift}
     >

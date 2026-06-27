@@ -9,6 +9,7 @@ import { Icon, Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
+import { activateOnKey } from "@/lib/keys";
 
 type CollectionRowProps = {
   item: CardItem;
@@ -40,12 +41,7 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
       // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div serves as interactive row container
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          activate(e);
-        }
-      }}
+      onKeyDown={activateOnKey(activate)}
       onContextMenu={(e) => collMenu(e, item)}
       className="flex cursor-pointer items-center gap-4 rounded-[8px] px-[14px] py-[9px] transition-[background] duration-150"
       style={{ background: hover ? "rgba(255,255,255,.06)" : "transparent" }}
