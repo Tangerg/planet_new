@@ -8,7 +8,8 @@ import { sortTracks, trackFlowItems, type SortMode, type FlowItem } from "@/mode
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
-import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
+import { Icon, Art, HeroBackdrop } from "@/components/primitives";
+import { HeroArt } from "@/components/HeroArt";
 import { FadeIn, Rise, XFade } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { CoverFlow } from "@/components/CoverFlow";
@@ -44,7 +45,6 @@ export function PlaylistDetailScreen({
   const { enqueue } = useScreenActions();
   const p = playlist;
   const total = p.tracks.length;
-  const b1 = artPair(p.coverSeed, p.gradient)[1];
   const [view, setView] = useState("list"); // list | grid | flow
   const [sort, setSort] = useState<SortMode>("order");
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -142,15 +142,13 @@ export function PlaylistDetailScreen({
             className="mx-auto box-border flex max-w-[1320px] items-end gap-[34px] px-12 pb-8"
             style={{ minHeight: HERO }}
           >
-            <Art
+            <HeroArt
               seed={p.coverSeed}
               grad={p.gradient}
               image={p.image}
               images={p.images}
-              data-hero="1"
+              size={248}
               className="flex-none"
-              style={{ width: 248, height: 248, boxShadow: "0 30px 70px -10px rgba(0,0,0,.7)" }}
-              glow={b1}
             />
             <div className="min-w-0 flex-1">
               <span className="mlabel text-white/70">{p.kind || "Playlist"}</span>
