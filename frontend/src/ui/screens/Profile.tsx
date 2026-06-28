@@ -6,7 +6,9 @@ import type { VibeCollection } from "@/model/adapt";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
+import { LoginSheet } from "@/components/LoginSheet";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
+import { useAuth } from "@/hooks/useAuth";
 
 type ProfileScreenProps = {
   accent: string;
@@ -18,6 +20,8 @@ type ProfileScreenProps = {
 export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: ProfileScreenProps) {
   const open = useMorphOpen();
   const b = accent;
+  const { supported, loggedIn, account, logout } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
   const items = playlists.slice(0, 6).map((p, i) => ({
     ...p,
     plays: ["8.40K", "4", "69", "127", "2.3K", "910"][i] || "12",
@@ -47,7 +51,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
           style={{ background: `linear-gradient(160deg, ${accent}, ${b})` }}
         >
           <div className="mlabel opacity-80">Name</div>
-          <div className="mb-7 mt-2 text-[26px] font-light">Lily Tran</div>
+          <div className="mb-7 mt-2 text-[26px] font-light">{account?.name ?? "Lily Tran"}</div>
           <div className="flex items-baseline gap-2.5">
             <span className="text-[40px] font-extralight">598</span>
             <span className="mlabel opacity-85">Followers</span>
@@ -59,9 +63,24 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
           <div className="mt-[30px] text-[15px] font-light opacity-90">
             Chasing reverb &amp; slow choruses.
           </div>
+          {supported && (
+            <Button
+              onClick={loggedIn ? () => void logout() : () => setLoginOpen(true)}
+              className="mt-[26px] rounded-full px-5 py-2 text-[12px] font-medium"
+              style={{ background: "rgba(0,0,0,.28)", color: "#fff" }}
+            >
+              {loggedIn ? "Log out" : "Log in with NetEase"}
+            </Button>
+          )}
         </div>
         {/* photo */}
-        <Art seed={9} grad={["#241003", "#ffb02e"]} mono className="-ml-px h-[380px]" />
+        <Art
+          images={account?.avatar}
+          seed={9}
+          grad={["#241003", "#ffb02e"]}
+          mono
+          className="-ml-px h-[380px]"
+        />
         {/* playlists */}
         <div className="scroll h-full max-h-[420px] pl-11">
           <span className="tag mb-[18px]" style={{ display: "inline-block" }}>
@@ -100,6 +119,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
           </div>
         </div>
       </div>
+      <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} accent={accent} />
     </FadeIn>
   );
 }
