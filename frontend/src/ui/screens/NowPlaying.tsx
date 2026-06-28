@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import { VirtualList } from "@/components/layout/VirtualList";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeComment, VibeTrack } from "@/model/adapt";
 import { Icon, Equalizer, Art, artBg, artPair } from "@/components/primitives";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
@@ -9,6 +9,7 @@ import { LikeHeart } from "@/components/controls/LikeHeart";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
+import { CommentList } from "@/components/CommentList";
 import { Empty } from "@/components/layout/Empty";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
@@ -132,6 +133,7 @@ type Props = {
   liked: boolean;
   toggleLike: () => void;
   lyrics: LyricLine[];
+  comments?: VibeComment[];
   onClose: () => void;
   mono?: boolean;
   initialMode?: string;
@@ -151,6 +153,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   liked,
   toggleLike,
   lyrics,
+  comments = [],
   onClose,
   mono = true,
   initialMode = "cover",
@@ -408,7 +411,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               >
                 {t("comments.title")}
               </div>
-              <Empty className="py-[50px]">{t("comments.empty")}</Empty>
+              <CommentList comments={comments} />
             </div>
           ) : (
             <div ref={lyricScrollRef} className="scroll h-full">
