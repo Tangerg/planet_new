@@ -4,6 +4,7 @@
 export * from "./ports/provider";
 export * from "./ports/auth";
 export * from "./ports/credentials";
+export * from "./ports/userLibrary";
 export * from "./model/account";
 export * from "./model/auth";
 export * from "./model/track";
