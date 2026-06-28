@@ -25,8 +25,13 @@
   --color-tx-3: rgba(255, 255, 255, 0.44);
   --color-tx-4: rgba(255, 255, 255, 0.28);
   --color-line: rgba(255, 255, 255, 0.09);
-  --color-accent: #ff2188;
-  --color-accent-soft: #ff62a8;
+  /* Accent is runtime-swappable: Shell writes the chosen accent to `--accent`
+     on :root (the accent picker). So the Tailwind accent utilities (bg-accent /
+     text-accent) must REFERENCE that live var, not mirror a frozen literal —
+     otherwise they'd stay stuck on the magenta default while everything driven
+     by var(--accent) tracks the picker. Literal = fallback before Shell mounts. */
+  --color-accent: var(--accent, #ff2188);
+  --color-accent-soft: var(--accent-soft, #ff62a8);
   --color-ink: #0a0a0c;
   --color-paper: #faf9f8;
 
