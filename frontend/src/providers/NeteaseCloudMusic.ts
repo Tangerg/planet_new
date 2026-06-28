@@ -364,4 +364,14 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       searchParams: { id: trackId, like: liked, timestamp: Date.now() },
     });
   }
+
+  async userPlaylists(): Promise<Playlist[]> {
+    const uid = await this.ensureUid();
+    const res = await this.http
+      .get("user/playlist", { searchParams: { uid, limit: 50, timestamp: Date.now() } })
+      .json<{ playlist?: any[] }>()
+      .catch(() => ({ playlist: [] }) as { playlist?: any[] });
+    // Stubs (cover/name/count); tracks are fetched when a playlist is opened.
+    return (res.playlist ?? []).map((p) => ({ ...mapNcmPlaylistStub(p), tracks: [] }) as Playlist);
+  }
 }

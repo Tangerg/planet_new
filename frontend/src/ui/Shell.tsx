@@ -29,8 +29,10 @@ import {
   useLyric,
   useProviderSearch,
   useToplists,
+  useUserPlaylists,
   useVibePlayback,
 } from "@/hooks/data";
+import { useAuthStore } from "@/store/auth";
 import { type VibeTrack } from "@/model/adapt";
 import { useLikes } from "@/hooks/useLikes";
 import { MorphStage, MorphProvider } from "@/infra/morph";
@@ -115,6 +117,16 @@ export default function Shell() {
   const { catalog } = useCatalog();
   const toplists = useToplists();
   const search = useProviderSearch();
+  // The logged-in user's own playlists (empty when anonymous) — feed the Library
+  // Playlists tab + the real "liked songs" view.
+  const loggedIn = useAuthStore((s) => s.loggedIn);
+  const userPlaylists = useUserPlaylists();
+  // Library's Playlists tab shows the user's own playlists when logged in,
+  // falling back to the personalized catalog when anonymous.
+  const libraryData = useMemo(
+    () => (loggedIn && userPlaylists.length ? { ...catalog, playlists: userPlaylists } : catalog),
+    [loggedIn, userPlaylists, catalog],
+  );
 
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
@@ -172,21 +184,26 @@ export default function Shell() {
 
   // "Liked Songs" is a synthetic playlist projected from the like set; it routes
   // through openDetail like any collection (but never fetches — _real: false).
-  const likedDetail = useCallback(
-    () =>
-      openDetail({
-        id: "liked",
-        name: "Liked Songs",
-        kind: "Playlist",
-        owner: "You",
-        coverSeed: 0,
-        gradient: ["#2a0420", "#ff4fa3"],
-        _real: false,
-        description: "Everything you've hearted, in one place.",
-        tracks: catalog.allTracks.filter((t) => liked.has(t.id)),
-      }),
-    [openDetail, catalog, liked],
-  );
+  const likedDetail = useCallback(() => {
+    // Logged in: open the real "liked songs" playlist (NCM puts it first) so it
+    // shows the full account list, not just the catalog matches.
+    const real = loggedIn ? userPlaylists[0] : undefined;
+    if (real) {
+      openDetail({ ...real, kind: "Playlist" });
+      return;
+    }
+    openDetail({
+      id: "liked",
+      name: "Liked Songs",
+      kind: "Playlist",
+      owner: "You",
+      coverSeed: 0,
+      gradient: ["#2a0420", "#ff4fa3"],
+      _real: false,
+      description: "Everything you've hearted, in one place.",
+      tracks: catalog.allTracks.filter((t) => liked.has(t.id)),
+    });
+  }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
 
   /* ---- right-click context menu (extracted hook) ---- */
   const { menu, setMenu, actions } = useContextMenu({
@@ -309,7 +326,7 @@ export default function Shell() {
           view={libraryView}
           onTab={setLibraryTab}
           onView={setLibraryView}
-          data={catalog}
+          data={libraryData}
           onPlay={onPlay}
           current={current}
           playing={playing}

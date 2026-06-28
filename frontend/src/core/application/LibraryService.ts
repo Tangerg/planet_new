@@ -1,4 +1,4 @@
-import type { MusicProvider, UserLibrary } from "@domain";
+import type { MusicProvider, Playlist, UserLibrary } from "@domain";
 
 /**
  * Application service for the logged-in user's own library (liked songs, …).
@@ -27,5 +27,9 @@ export class LibraryService {
 
   setLiked(trackId: string, liked: boolean): Promise<void> {
     return this.lib().setLiked(trackId, liked);
+  }
+
+  userPlaylists(): Promise<Playlist[]> {
+    return this.lib().userPlaylists();
   }
 }
