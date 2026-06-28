@@ -22,6 +22,8 @@ export type Artist = {
   topTracks?: Partial<Track>[];
   /** The artist's albums, filled in by `artistDetail`. */
   albums?: Partial<Album>[];
+  /** Related artists, filled in by `artistDetail`. */
+  similar?: Partial<Artist>[];
 };
 
 /** Artist behavior; see `Track` for the companion-object rationale. */

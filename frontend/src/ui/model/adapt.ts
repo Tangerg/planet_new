@@ -102,6 +102,8 @@ export type VibeArtist = {
   tracks?: VibeTrack[];
   /** The artist's albums (filled after artistDetail resolves). */
   albums?: VibeCollection[];
+  /** Related artists (filled after artistDetail resolves). */
+  similar?: VibeArtist[];
 };
 
 /**
@@ -256,6 +258,7 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
     genres: a.genres ?? [],
     bio: a.description ?? "",
     albums: (a.albums ?? []).map(toVibeAlbum),
+    similar: (a.similar ?? []).map(toVibeArtist),
   };
 }
 
