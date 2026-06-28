@@ -148,6 +148,7 @@ export function mapNcmAlbum(raw: any, songs: any[]): Album {
     id: raw.id?.toString() ?? "",
     name: raw.name,
     alias: raw.alias ?? [],
+    description: raw.description ?? "",
     images: cover,
     totalTracks: raw.size ?? tracks.length,
     releaseDate: raw.publishTime ? new Date(raw.publishTime).toISOString().slice(0, 10) : undefined,

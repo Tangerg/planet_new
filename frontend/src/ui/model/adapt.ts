@@ -239,7 +239,7 @@ export function toVibeAlbum(a: Partial<Album>): VibeCollection {
     image: Album.coverUrl(a),
     images: a.images,
     year: Album.year(a),
-    description: artistName,
+    description: a.description || artistName,
     tracks: toVibeTracks(a.tracks),
     trackCount: Album.trackCount(a),
   };

@@ -175,7 +175,10 @@ export function useProviderSearch() {
  */
 export function useLyric() {
   const lyric = usePlayQueueStore.use.lyric();
-  return useMemo(() => lyric.map((l) => ({ line: l.content, t: l.duration })), [lyric]);
+  return useMemo(
+    () => lyric.map((l) => ({ line: l.content, t: l.duration, tr: l.translation })),
+    [lyric],
+  );
 }
 
 /**

@@ -16,6 +16,8 @@ export type Album = {
   albumType?: "album" | "single" | "compilation";
   /** Alternate titles; some CJK providers expose these, not part of Spotify. */
   alias?: string[];
+  /** Album blurb / liner notes, when the provider exposes one. */
+  description?: string;
   tracks?: Partial<Track>[];
 };
 
