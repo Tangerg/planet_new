@@ -15,6 +15,7 @@ const ALLOWED = [
   ["domain/model/album.ts", "domain/model/artist.ts", "domain/model/track.ts"],
   ["domain/model/album.ts", "domain/model/track.ts"],
   ["domain/model/artist.ts", "domain/model/track.ts"],
+  ["domain/model/album.ts", "domain/model/artist.ts"], // Artist now lists its Albums; Album lists its Artists
 ];
 
 const allowedKeys = new Set(ALLOWED.map((cycle) => [...cycle].sort().join("|")));
