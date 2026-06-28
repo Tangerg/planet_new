@@ -153,9 +153,10 @@ export default function Shell() {
     morph,
   } = useShellNavigation(media, queryClient);
 
-  // Current-track comments (NCM hot/recent). Fetched only on the comments view,
-  // gated by the provider capability — so it never fires for every track played.
-  const comments = useComments(playback.current?.id, view === "comments");
+  // Current-track comments (NCM hot/recent). Fetched only while a comments
+  // surface is on screen (the standalone Comments view or Now Playing's comments
+  // mode), gated by the provider capability — never for every track played.
+  const comments = useComments(playback.current?.id, view === "comments" || view === "np");
 
   /* Play a track within the current browse context (the open collection); a
      track not in that list (e.g. a lone search result) plays on its own. */
@@ -416,6 +417,7 @@ export default function Shell() {
           liked={isLiked}
           toggleLike={() => current && toggleLike(current.id)}
           lyrics={lyrics}
+          comments={comments}
           mono={heroTreatment === "mono"}
           queue={queue}
           onPlay={onPlay}
