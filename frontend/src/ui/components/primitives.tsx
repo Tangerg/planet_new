@@ -8,98 +8,95 @@
 import React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
-  Cards,
-  CaretLeft,
-  ChartBar,
-  ChatCircle,
+  BarChart3,
   Check,
+  ChevronLeft,
   Clock,
   Compass,
-  DotsThreeVertical,
-  Gear,
-  GridFour,
+  EllipsisVertical,
+  GalleryHorizontalEnd,
   Heart,
   Infinity as InfinityIcon,
-  ListBullets,
-  MagnifyingGlass,
-  MusicNotes,
+  Layers,
+  LayoutGrid,
+  List,
+  type LucideIcon,
+  MessageCircle,
+  Music,
   Pause,
   Play,
   Repeat,
+  Search,
+  Settings,
   Shuffle,
   SkipBack,
   SkipForward,
-  SpeakerHigh,
-  Sparkle,
-  Stack,
+  Sparkles,
   User,
+  Volume2,
   X,
-  type Icon as PhosphorIcon,
-  type IconWeight,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 
 import { pickImageUrl, type Image } from "@domain/model/image";
 import "./primitives.css";
 
-/* ---- icons (Phosphor-backed) ---------------------------------------------
-   The hand-rolled SVG set was replaced with Phosphor (@phosphor-icons/react).
-   The `Icon.<name>` facade + `{ size, filled }` call signature is kept so every
-   call site — including the dynamic `Icon[name]` lookups in the XMB world tree
-   and the menus — stays untouched; only the glyphs are now third-party. The
-   transport controls use the PLAIN filled glyphs (Play / Pause / Skip*), never
-   the `*Circle` variants (the round frame is the button, not the icon). */
+/* ---- icons (lucide-react) -------------------------------------------------
+   The icon set is lucide-react. The `Icon.<name>` facade + `{ size, filled }`
+   call signature is kept (via adapt()) so every call site — including the
+   dynamic `Icon[name]` lookups in the XMB world tree and the menus — stays
+   untouched; only the glyphs change. Transport controls render PLAIN solid
+   glyphs (Play / Pause / Skip*), never a circled variant (the round frame is the
+   button, not the icon). lucide is stroke-based, so "solid" just fills the same
+   path with currentColor. */
 export type IconProps = React.SVGProps<SVGSVGElement> & {
   size?: number;
   /** Selects the filled variant — only meaningful for icons that have one (heart). */
   filled?: boolean;
 };
 
-/** Adapt a Phosphor icon to the `Icon.<name>` facade. `weight` is the resting
- *  weight; a `fillToggle` icon ignores it and follows the `filled` prop. */
+/** Adapt a lucide icon to the `Icon.<name>` facade. `solid` fills the glyph;
+ *  a `fillToggle` icon fills only when the `filled` prop is set. */
 function adapt(
-  C: PhosphorIcon,
-  opts: { weight?: IconWeight; fillToggle?: boolean } = {},
+  C: LucideIcon,
+  opts: { solid?: boolean; fillToggle?: boolean } = {},
 ): React.FC<IconProps> {
-  const Adapted: React.FC<IconProps> = ({ size = 22, filled, ...rest }) => (
-    <C
-      size={size}
-      weight={opts.fillToggle ? (filled ? "fill" : "regular") : (opts.weight ?? "regular")}
-      {...rest}
-    />
-  );
+  const Adapted: React.FC<IconProps> = ({ size = 22, filled, ...rest }) => {
+    const solid = opts.fillToggle ? !!filled : !!opts.solid;
+    return <C size={size} fill={solid ? "currentColor" : "none"} {...rest} />;
+  };
   return Adapted;
 }
 
 export const Icon: Record<string, React.FC<IconProps>> = {
-  // transport — plain filled glyphs, no surrounding circle
-  play: adapt(Play, { weight: "fill" }),
-  pause: adapt(Pause, { weight: "fill" }),
-  prev: adapt(SkipBack, { weight: "fill" }),
-  next: adapt(SkipForward, { weight: "fill" }),
+  // transport — plain solid glyphs, no surrounding circle
+  play: adapt(Play, { solid: true }),
+  pause: adapt(Pause, { solid: true }),
+  prev: adapt(SkipBack, { solid: true }),
+  next: adapt(SkipForward, { solid: true }),
   shuffle: adapt(Shuffle),
   loop: adapt(Repeat),
   infinity: adapt(InfinityIcon),
   // chrome / library
   heart: adapt(Heart, { fillToggle: true }),
-  comment: adapt(ChatCircle),
-  search: adapt(MagnifyingGlass),
-  close: adapt(X, { weight: "bold" }),
-  back: adapt(CaretLeft, { weight: "bold" }),
-  kebab: adapt(DotsThreeVertical, { weight: "fill" }),
-  check: adapt(Check, { weight: "bold" }),
-  volume: adapt(SpeakerHigh),
-  note: adapt(MusicNotes),
+  comment: adapt(MessageCircle),
+  search: adapt(Search),
+  close: adapt(X),
+  back: adapt(ChevronLeft),
+  kebab: adapt(EllipsisVertical, { solid: true }),
+  check: adapt(Check),
+  volume: adapt(Volume2),
+  note: adapt(Music),
   // view toggles
-  list: adapt(ListBullets),
-  grid: adapt(GridFour),
-  flow: adapt(Cards),
+  list: adapt(List),
+  grid: adapt(LayoutGrid),
+  flow: adapt(GalleryHorizontalEnd),
   // XMB worlds
-  star: adapt(Sparkle, { weight: "fill" }),
-  bars: adapt(ChartBar, { weight: "fill" }),
+  star: adapt(Sparkles, { solid: true }),
+  bars: adapt(BarChart3),
   clock: adapt(Clock),
   compass: adapt(Compass),
-  stack: adapt(Stack),
-  gear: adapt(Gear),
+  stack: adapt(Layers),
+  gear: adapt(Settings),
   user: adapt(User),
 };
 
