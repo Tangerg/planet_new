@@ -9,6 +9,7 @@ import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
+import { TextReveal } from "@/components/controls/TextReveal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { CollectionRow } from "@/components/cards/CollectionRow";
 import { TrackRow } from "@/components/cards/TrackRow";
@@ -157,6 +158,22 @@ export function ArtistScreen({
                     <StatPill key={g}>{g}</StatPill>
                   ))}
                 </div>
+                {artist.bio && (
+                  <TextReveal
+                    lines={2}
+                    cardStyle={{ maxWidth: 520 }}
+                    style={{
+                      marginTop: 18,
+                      maxWidth: 640,
+                      fontSize: 14,
+                      fontWeight: 300,
+                      lineHeight: 1.6,
+                      color: "rgba(255,255,255,.6)",
+                    }}
+                  >
+                    {artist.bio}
+                  </TextReveal>
+                )}
               </div>
             </PageColumn>
           </div>
