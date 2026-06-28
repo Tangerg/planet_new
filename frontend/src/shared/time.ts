@@ -4,6 +4,21 @@ export const Millisecond: Duration = 1;
 export const Second: Duration = 1000 * Millisecond;
 export const Minute: Duration = 60 * Second;
 export const Hour: Duration = 60 * Minute;
+const Day: Duration = 24 * Hour;
+
+/**
+ * A compact "time ago" label for a past timestamp (e.g. a comment's posted-at).
+ * `now` is injected (defaulting to the wall clock) so the function stays pure
+ * and testable. Falls back to a locale date once older than ~a month.
+ */
+export function relativeTime(at: Duration, now: Duration = Date.now()): string {
+  const diff = Math.max(0, now - at);
+  if (diff < Minute) return "just now";
+  if (diff < Hour) return `${Math.floor(diff / Minute)}m ago`;
+  if (diff < Day) return `${Math.floor(diff / Hour)}h ago`;
+  if (diff < 30 * Day) return `${Math.floor(diff / Day)}d ago`;
+  return new Date(at).toLocaleDateString();
+}
 
 /**
  * Format a duration.

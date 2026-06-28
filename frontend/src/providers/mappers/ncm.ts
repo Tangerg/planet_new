@@ -1,6 +1,7 @@
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
 import { Chart } from "@domain/model/chart";
+import { Comment } from "@domain/model/comment";
 import { Image } from "@domain/model/image";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
@@ -161,6 +162,20 @@ export function mapNcmAlbum(raw: any, songs: any[]): Album {
       : [],
     tracks: tracks as Partial<Track>[],
   } as Album;
+}
+
+/** One comment node (/comment/music -> hotComments[] / comments[]). */
+export function mapNcmComment(raw: any): Comment {
+  return {
+    id: (raw.commentId ?? raw.id ?? "").toString(),
+    user: {
+      name: raw.user?.nickname ?? "",
+      avatar: coverSet(raw.user?.avatarUrl),
+    },
+    content: raw.content ?? "",
+    likedCount: raw.likedCount ?? 0,
+    time: raw.time ?? 0,
+  };
 }
 
 export function mapNcmAlbumNewest(raw: any): Partial<Album> {

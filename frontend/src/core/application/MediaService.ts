@@ -5,6 +5,7 @@ import type { Album } from "@domain/model/album";
 import type { Artist } from "@domain/model/artist";
 import type { Chart } from "@domain/model/chart";
 import type { SearchResult } from "@domain/model/search";
+import type { Comment } from "@domain/model/comment";
 import type { ProviderCapability } from "@domain";
 
 /**
@@ -70,5 +71,10 @@ export class MediaService {
   /** Keyword search; unsupported dimensions come back empty. */
   search(query: string): Promise<SearchResult> {
     return this.getProvider().search(query);
+  }
+
+  /** Comments for a track (hot + recent); empty when the provider has none. */
+  comments(trackId: string): Promise<Comment[]> {
+    return this.getProvider().comments(trackId);
   }
 }

@@ -15,3 +15,4 @@ export * from "./model/repeat";
 export * from "./model/volume";
 export * from "./model/search";
 export * from "./model/chart";
+export * from "./model/comment";

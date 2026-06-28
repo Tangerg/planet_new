@@ -8,12 +8,14 @@ import { Artist } from "@domain/model/artist";
 import { Lyric, parseLyrics } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
 import { Chart } from "@domain/model/chart";
+import { Comment } from "@domain/model/comment";
 import { Personalized } from "@domain/model/personalized";
 import { SearchResult } from "@domain/model/search";
 import {
   mapNcmAlbum,
   mapNcmAlbumNewest,
   mapNcmChart,
+  mapNcmComment,
   mapNcmFeaturedArtist,
   mapNcmPlaylist,
   mapNcmPlaylistStub,
@@ -37,6 +39,7 @@ export class NeteaseCloudMusic extends Provider {
       "personalized",
       "search",
       "toplist",
+      "comments",
       "fullPlayback",
     ]);
 
@@ -227,5 +230,22 @@ export class NeteaseCloudMusic extends Provider {
   async toplistDetail(id: string): Promise<Playlist> {
     // A chart is a playlist on NCM, so its detail goes through the same endpoint.
     return this.playlistDetail(id);
+  }
+
+  async comments(trackId: string): Promise<Comment[]> {
+    // hotComments (热评) first, then recent; dedupe by id and cap.
+    const res = await this.http
+      .get("comment/music", { searchParams: { id: trackId, limit: 30 } })
+      .json<{ hotComments?: any[]; comments?: any[] }>()
+      .catch(() => ({}) as { hotComments?: any[]; comments?: any[] });
+    const seen = new Set<string>();
+    const out: Comment[] = [];
+    for (const raw of [...(res.hotComments ?? []), ...(res.comments ?? [])]) {
+      const c = mapNcmComment(raw);
+      if (!c.id || seen.has(c.id)) continue;
+      seen.add(c.id);
+      out.push(c);
+    }
+    return out.slice(0, 30);
   }
 }
