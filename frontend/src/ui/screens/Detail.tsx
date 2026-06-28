@@ -18,6 +18,7 @@ import { TrackCard } from "@/components/cards/TrackCard";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 import { SectionHead } from "@/components/layout/SectionHead";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { useScreenActions } from "@/hooks/screenActions";
 
@@ -140,10 +141,7 @@ export function PlaylistDetailScreen({
           {/* HERO banner — cover + meta side by side. minHeight (not height): real
               titles/descriptions run far longer than the example's, so the
               bottom-aligned column grows DOWN instead of overflowing UP. */}
-          <div
-            className="mx-auto box-border flex max-w-[1320px] items-end gap-[34px] px-12 pb-8"
-            style={{ minHeight: HERO }}
-          >
+          <PageColumn className="flex items-end gap-[34px] pb-8" style={{ minHeight: HERO }}>
             <HeroArt
               seed={p.coverSeed}
               grad={p.gradient}
@@ -200,13 +198,10 @@ export function PlaylistDetailScreen({
                 </Button>
               </div>
             </div>
-          </div>
+          </PageColumn>
 
           {/* CONTENT — width-capped, centered, with view toggle */}
-          <div
-            className="mx-auto box-border max-w-[1320px]"
-            style={{ padding: view === "flow" ? "8px 48px 30px" : "8px 48px 40px" }}
-          >
+          <PageColumn className={"pt-2 " + (view === "flow" ? "pb-[30px]" : "pb-10")}>
             <div className="mb-[14px] flex items-center justify-between">
               <SectionHead title="Tracks" size={22} />
               <div className="flex items-center gap-4">
@@ -288,7 +283,7 @@ export function PlaylistDetailScreen({
                 </div>
               )}
             </XFade>
-          </div>
+          </PageColumn>
         </ScrollProvider>
       </div>
 

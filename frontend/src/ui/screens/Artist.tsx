@@ -16,6 +16,7 @@ import { TrackCard } from "@/components/cards/TrackCard";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 import { StatPill } from "@/components/layout/StatPill";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
@@ -67,8 +68,10 @@ export function ArtistScreen({
       <div ref={scrollRef} className="scroll relative z-[2] h-full">
         <ScrollProvider value={scrollRef}>
           {/* header — atmospheric circle: blurred backdrop + seeded colour wash +
-              a large circular portrait with a soft halo carry identity. */}
-          <div className="relative px-12 pb-8 pt-[88px]">
+              a large circular portrait with a soft halo carry identity. The wash
+              stays full-bleed; the portrait/name ride the same centered column as
+              the track list below, so they line up on large screens. */}
+          <div className="relative pb-8 pt-[88px]">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 z-0"
@@ -76,7 +79,7 @@ export function ArtistScreen({
                 background: `radial-gradient(86% 140% at 14% -16%, ${b}4d, transparent 62%)`,
               }}
             />
-            <div className="relative z-[1] flex items-center gap-10">
+            <PageColumn className="relative z-[1] flex items-center gap-10">
               {/* circular portrait + soft colour halo */}
               <div className="relative flex-none">
                 <div
@@ -155,11 +158,11 @@ export function ArtistScreen({
                   ))}
                 </div>
               </div>
-            </div>
+            </PageColumn>
           </div>
 
           {/* tabs + content */}
-          <div className="mx-auto box-border max-w-[1320px] px-12 pb-10 pt-[26px]">
+          <PageColumn className="pb-10 pt-[26px]">
             <div className="tabs mb-6 items-start">
               <ToggleGroup
                 ariaLabel="Artist section"
@@ -309,7 +312,7 @@ export function ArtistScreen({
                 />
               )}
             </XFade>
-          </div>
+          </PageColumn>
         </ScrollProvider>
       </div>
     </FadeIn>
