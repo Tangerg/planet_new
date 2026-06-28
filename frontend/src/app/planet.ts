@@ -8,11 +8,21 @@ import {
   ProviderRegistry,
   AudioEngine,
 } from "@core/plugin";
-import { Mock, NeteaseCloudMusic, Provider, QQMusic, Spotify } from "@providers";
+import {
+  LocalCredentialStore,
+  Mock,
+  NeteaseCloudMusic,
+  Provider,
+  QQMusic,
+  Spotify,
+} from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
 const env = import.meta.env;
+
+/** On-device credential store, shared by auth-capable providers + the Engine. */
+const credentials = new LocalCredentialStore();
 
 /** VITE_PROVIDER value → provider `name`. */
 const PROVIDER_NAMES: Record<string, string> = {
@@ -30,7 +40,10 @@ const PROVIDER_NAMES: Record<string, string> = {
 function buildProviders(): { providers: Provider[]; active: string } {
   const providers: Provider[] = [
     new Mock(),
-    new NeteaseCloudMusic({ host: env.VITE_NETEASE_HOST ?? "http://localhost:3000" }),
+    new NeteaseCloudMusic({
+      host: env.VITE_NETEASE_HOST ?? "http://localhost:3000",
+      credentials,
+    }),
     new QQMusic({ host: env.VITE_QQMUSIC_HOST ?? "http://localhost:3200" }),
   ];
   if (env.VITE_SPOTIFY_CLIENT_ID && env.VITE_SPOTIFY_CLIENT_SECRET) {
@@ -64,5 +77,5 @@ const planet = new Planet({
 });
 
 /** The application Engine — the UI's single handle to the kernel (events +
- *  playback/media use-cases + provider selection). */
-export const engine = new Engine(planet);
+ *  playback/media/auth use-cases + provider selection). */
+export const engine = new Engine(planet, credentials);

@@ -4,6 +4,7 @@ import { NeteaseCloudMusic } from "./NeteaseCloudMusic";
 import { Spotify } from "./Spotify";
 import { Mock } from "./Mock";
 import { QQMusic } from "./QQMusic";
+import { LocalCredentialStore } from "./credentials";
 
 export type { MusicProvider, ProviderCapability };
-export { Provider, NeteaseCloudMusic, Spotify, Mock, QQMusic };
+export { Provider, NeteaseCloudMusic, Spotify, Mock, QQMusic, LocalCredentialStore };

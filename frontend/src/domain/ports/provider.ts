@@ -25,6 +25,7 @@ export type ProviderCapability =
   | "search" // keyword search (tracks/artists/albums/playlists)
   | "toplist" // charts
   | "comments" // track comments (hot / recent)
+  | "auth" // user login (the provider also implements AuthProvider)
   | "fullPlayback" // can provide a full playable track URL
   | "previewPlayback"; // 30s preview clip only (e.g. Spotify preview_url)
 

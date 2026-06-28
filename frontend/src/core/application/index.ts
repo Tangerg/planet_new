@@ -4,3 +4,4 @@
 export * from "./Engine";
 export * from "./PlaybackService";
 export * from "./MediaService";
+export * from "./AuthService";
