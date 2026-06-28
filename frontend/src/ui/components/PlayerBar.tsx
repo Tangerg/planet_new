@@ -242,11 +242,11 @@ export const PlayerBar = React.memo(function PlayerBar({
             thumb: {
               style: {
                 display: "block",
-                width: 9,
-                height: 9,
+                width: 6,
+                height: 6,
                 borderRadius: "50%",
                 background: "#fff",
-                boxShadow: `0 0 0 1.5px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
+                boxShadow: `0 0 0 1px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
               },
             },
           }}
@@ -364,11 +364,11 @@ export const PlayerBar = React.memo(function PlayerBar({
                         thumb: {
                           style: {
                             display: "block",
-                            width: 9,
-                            height: 9,
+                            width: 6,
+                            height: 6,
                             borderRadius: "50%",
                             background: "#fff",
-                            boxShadow: `0 0 0 1.5px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
+                            boxShadow: `0 0 0 1px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
                           },
                         },
                       }}
