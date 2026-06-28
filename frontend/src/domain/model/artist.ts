@@ -1,5 +1,6 @@
 import { type Image, pickImageUrl } from "./image";
 import type { Track } from "./track";
+import type { Album } from "./album";
 
 /**
  * Artist, aligned with the Spotify Artist object (camelCase).
@@ -19,6 +20,8 @@ export type Artist = {
   banner?: string;
   /** Top tracks, filled in by `artistDetail`. */
   topTracks?: Partial<Track>[];
+  /** The artist's albums, filled in by `artistDetail`. */
+  albums?: Partial<Album>[];
 };
 
 /** Artist behavior; see `Track` for the companion-object rationale. */

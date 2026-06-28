@@ -98,6 +98,8 @@ export type VibeArtist = {
   bio?: string;
   /** Top tracks (filled after artistDetail resolves). */
   tracks?: VibeTrack[];
+  /** The artist's albums (filled after artistDetail resolves). */
+  albums?: VibeCollection[];
 };
 
 /**
@@ -240,6 +242,7 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
     listeners: a.followers,
     genres: a.genres ?? [],
     bio: a.description ?? "",
+    albums: (a.albums ?? []).map(toVibeAlbum),
   };
 }
 

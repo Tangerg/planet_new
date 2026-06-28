@@ -91,8 +91,10 @@ export class NeteaseCloudMusic extends Provider {
       briefDesc?: string;
       introduction?: { ti?: string; txt?: string }[];
     };
-    // /artists returns artist info + hotSongs in one call; bio comes from /artist/desc.
-    const [info, desc] = await Promise.all([
+    type ArtistAlbumRes = { hotAlbums?: any[] };
+    // /artists returns artist info + hotSongs in one call; bio comes from
+    // /artist/desc; the discography from /artist/album. All three in parallel.
+    const [info, desc, albumRes] = await Promise.all([
       this.http
         .get("artists", { searchParams: { id } })
         .json<ArtistInfoRes>()
@@ -101,12 +103,17 @@ export class NeteaseCloudMusic extends Provider {
         .get("artist/desc", { searchParams: { id } })
         .json<ArtistDescRes>()
         .catch(() => ({}) as ArtistDescRes),
+      this.http
+        .get("artist/album", { searchParams: { id, limit: 50 } })
+        .json<ArtistAlbumRes>()
+        .catch(() => ({ hotAlbums: [] }) as ArtistAlbumRes),
     ]);
 
     const artist = info.artist ?? {};
     const topTracks = (info.hotSongs ?? [])
       .slice(0, 10)
       .map((s, i) => mapNcmTrack(s, { index: i + 1 }));
+    const albums = (albumRes.hotAlbums ?? []).map(mapNcmAlbumNewest);
     const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
     return {
       id: artist.id?.toString() ?? id,
@@ -119,6 +126,7 @@ export class NeteaseCloudMusic extends Provider {
       alias: artist.alias ?? [],
       description,
       topTracks,
+      albums,
     };
   }
 
