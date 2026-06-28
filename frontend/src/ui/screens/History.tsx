@@ -12,6 +12,7 @@ import { Button } from "@/components/controls/Button";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { Empty } from "@/components/layout/Empty";
+import { PageColumn } from "@/components/layout/PageColumn";
 
 type HistoryScreenProps = {
   history: VibeTrack[];
@@ -63,7 +64,7 @@ export function HistoryScreen({
     <FadeIn className="relative h-full bg-[#0a0a0d]">
       <HeroBackdrop image={hero?.image} seed={hero?.coverSeed || 0} grad={hero?.gradient} />
       <div className="scroll relative z-[2] h-full">
-        <div className="mx-auto max-w-[1180px] px-14 pb-[30px] pt-[70px]">
+        <PageColumn className="pb-[30px] pt-[70px]">
           {/* header */}
           <div className="mb-[46px] flex items-end gap-[30px]">
             <HeroArt
@@ -99,7 +100,7 @@ export function HistoryScreen({
           <Group label="Earlier this week" items={week} />
           <Group label="Earlier" items={earlier} />
           {!total && <Empty className="p-[50px]">Nothing played yet.</Empty>}
-        </div>
+        </PageColumn>
       </div>
     </FadeIn>
   );
