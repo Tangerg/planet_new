@@ -6,7 +6,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeComment } from "@/model/adapt";
-import { Icon, Art } from "@/components/primitives";
+import { Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { Empty } from "@/components/layout/Empty";
 
 export function CommentList({ comments }: { comments: VibeComment[] }) {

@@ -6,7 +6,8 @@
 import React from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { groupHistory } from "@/model/derive";
-import { Icon, HeroBackdrop } from "@/components/primitives";
+import { HeroBackdrop } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";

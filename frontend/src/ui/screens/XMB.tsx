@@ -4,7 +4,8 @@
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
-import { Icon, artBg, artPair, HeroBackdrop } from "@/components/primitives";
+import { artBg, artPair, HeroBackdrop } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";

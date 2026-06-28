@@ -5,7 +5,8 @@
 // ============================================================
 import React from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
-import { Art, Icon } from "@/components/primitives";
+import { Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { RiseFab } from "@/components/lift";
 import { CardShell } from "@/components/cards/CardShell";
 import { ArtistLinks } from "@/components/cards/ArtistLink";

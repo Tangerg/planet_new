@@ -15,7 +15,8 @@ import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
-import { Icon, Art, artPair, fmt } from "@/components/primitives";
+import { Art, artPair, fmt } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { activateOnKey } from "@/lib/keys";
 
 type Props = {
@@ -89,8 +90,6 @@ export const PlayerBar = React.memo(function PlayerBar({
   const pos = scrub ?? Math.min(positionSec, dur);
 
   // Text utility button (LRC) — chrome (bg/border/cursor) comes from `.btn`.
-  const txtBtnCls =
-    "border-b-[1.5px] border-[rgba(20,20,24,0.35)] px-0.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[rgba(20,20,24,0.62)]";
   // Icon control button: static grid layout in the class, the on/off accent in style.
   const ctlCls = "grid place-items-center p-[5px]";
   const ctlColor = (on: boolean): React.CSSProperties => ({
@@ -379,8 +378,13 @@ export const PlayerBar = React.memo(function PlayerBar({
             )}
           </AnimatePresence>
         </HoverCard.Root>
-        <Button className={txtBtnCls} onClick={onOpenLyrics} aria-label="Lyrics">
-          LRC
+        <Button
+          className={ctlCls}
+          style={ctlColor(false)}
+          onClick={onOpenLyrics}
+          aria-label="Lyrics"
+        >
+          <Icon.lyrics size={18} />
         </Button>
         <Button
           className={ctlCls}

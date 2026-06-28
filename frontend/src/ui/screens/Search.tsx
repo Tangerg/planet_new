@@ -4,7 +4,8 @@
 import React, { useState, useEffect } from "react";
 import type { ArtistRef, VibeTrack, VibeArtist, VibeCollection } from "@/model/adapt";
 import { SEARCH_SUGGESTIONS } from "@/model/defaults";
-import { Icon, Art } from "@/components/primitives";
+import { Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { LiftButton } from "@/components/lift";
 import { MediaCard } from "@/components/cards/MediaCard";

@@ -5,7 +5,7 @@
 // ============================================================
 import React from "react";
 import { Button } from "@/components/controls/Button";
-import { Icon } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 
 type LikeHeartProps = {
   liked: boolean;

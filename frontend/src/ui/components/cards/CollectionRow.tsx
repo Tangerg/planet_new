@@ -5,7 +5,8 @@
 // ============================================================
 import React, { useState } from "react";
 import type { CardItem } from "@/model/adapt";
-import { Icon, Art } from "@/components/primitives";
+import { Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";

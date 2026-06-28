@@ -7,7 +7,7 @@
 // ============================================================
 import React from "react";
 import { RiseFab } from "@/components/lift";
-import { Icon } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 
 type PlayFabProps = {
   onPlay: () => void;

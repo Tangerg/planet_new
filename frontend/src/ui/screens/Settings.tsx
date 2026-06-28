@@ -3,7 +3,7 @@
 // ============================================================
 import React from "react";
 import type { Settings } from "@/model/defaults";
-import { Icon } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { Switch } from "@/components/controls/Switch";

@@ -5,7 +5,8 @@
 // ============================================================
 import React from "react";
 import type { VibeCollection } from "@/model/adapt";
-import { Icon, artBg } from "@/components/primitives";
+import { artBg } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { LiftCard } from "@/components/lift";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";

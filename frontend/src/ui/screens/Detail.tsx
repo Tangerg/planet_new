@@ -8,7 +8,8 @@ import { sortTracks, trackFlowItems, type SortMode, type FlowItem } from "@/mode
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
-import { Icon, Art, HeroBackdrop } from "@/components/primitives";
+import { Art, HeroBackdrop } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn, Rise, XFade } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
