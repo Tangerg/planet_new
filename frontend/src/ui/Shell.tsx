@@ -162,6 +162,7 @@ export default function Shell() {
     playContext,
     navigate,
     goBack,
+    goHome,
     openSearch,
     openDetail,
     albumDetail,
@@ -227,6 +228,7 @@ export default function Shell() {
   useGlobalShortcuts({
     view,
     goBack,
+    goHome,
     openSearch,
     navigate,
     togglePlay,

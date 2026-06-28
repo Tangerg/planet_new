@@ -222,6 +222,15 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     lastTile.current = prev.lastTile;
   }, [startReverse, lastTile]);
 
+  /* Jump straight to the XMB root from any nesting depth: clear the back-stack
+     and collapse home via the launcher morph (startReverse falls back to a
+     direct switch under reduced-motion / no origin tile). Bound to the "/"
+     shortcut — a one-press escape hatch out of deep navigation. */
+  const goHome = useCallback(() => {
+    navStack.current = [];
+    startReverse();
+  }, [startReverse]);
+
   return {
     // view state + setters the screens read/write
     view,
@@ -238,6 +247,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     // navigation intents
     navigate,
     goBack,
+    goHome,
     openSearch,
     openDetail,
     albumDetail,
