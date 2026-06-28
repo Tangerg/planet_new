@@ -9,6 +9,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { Rail } from "@/components/layout/Rail";
 import { HeroBanner } from "@/components/layout/HeroBanner";
 import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
@@ -59,7 +60,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
       background="#08080b"
       backdrop={{ image: featured.image, seed: featured.coverSeed, grad: featured.gradient }}
     >
-      <div className="px-14 pb-[50px] pt-[60px]">
+      <PageColumn className="pb-[50px] pt-[60px]">
         {/* greeting + chips */}
         <div className="mb-[30px] flex items-end justify-between">
           <div>
@@ -192,7 +193,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
             );
           }}
         />
-      </div>
+      </PageColumn>
     </ScreenScaffold>
   );
 });

@@ -13,6 +13,7 @@ import { TrackRow } from "@/components/cards/TrackRow";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
 
@@ -87,11 +88,12 @@ export function LibraryScreen({
       }}
     >
       <ScrollProvider value={scrollRef}>
-        <div
+        <PageColumn
           className="flex min-h-0 flex-col"
           style={{
-            padding: flowMode ? "60px 48px 0" : "60px 48px 40px",
-            flex: flowMode ? "0 0 auto" : "1",
+            paddingTop: 60,
+            paddingBottom: flowMode ? 0 : 40,
+            flex: flowMode ? "0 0 auto" : 1,
           }}
         >
           <div className="mb-[22px] text-[36px] font-extralight">Your Library</div>
@@ -226,7 +228,7 @@ export function LibraryScreen({
               </div>
             )}
           </XFade>
-        </div>
+        </PageColumn>
       </ScrollProvider>
     </FadeIn>
   );
