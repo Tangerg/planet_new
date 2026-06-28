@@ -1,3 +1,5 @@
+import type { Playlist } from "../model/playlist";
+
 /**
  * Account-scoped library — the logged-in user's own data. Orthogonal to
  * MusicProvider/AuthProvider; implemented only by providers that expose it
@@ -8,4 +10,7 @@ export interface UserLibrary {
   likedTrackIds(): Promise<string[]>;
   /** Like or unlike a track on the account. */
   setLiked(trackId: string, liked: boolean): Promise<void>;
+  /** The user's own + subscribed playlists (stubs; tracks fetched on open). The
+   *  first is conventionally the "liked songs" playlist. */
+  userPlaylists(): Promise<Playlist[]>;
 }

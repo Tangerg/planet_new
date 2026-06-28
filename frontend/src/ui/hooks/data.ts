@@ -19,8 +19,10 @@ import { RepeatMode } from "@domain/model/repeat";
 
 import { useEngine } from "@/hooks/useEngine";
 import { useMediaService } from "@/hooks/useMediaService";
+import { useLibraryService } from "@/hooks/useLibraryService";
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
+import { useAuthStore } from "@/store/auth";
 
 import {
   seedOf,
@@ -194,6 +196,22 @@ export function useComments(trackId: string | undefined, enabled: boolean): Vibe
     enabled: enabled && !!trackId && media.supports("comments"),
   });
   return useMemo(() => (data ?? []).map(toVibeComment), [data]);
+}
+
+/**
+ * The logged-in user's own playlists (vibe shape), for the Library Playlists
+ * tab + the real "liked songs" view. Empty when anonymous / unsupported.
+ */
+export function useUserPlaylists(): VibeCollection[] {
+  const library = useLibraryService();
+  const media = useMediaService();
+  const loggedIn = useAuthStore((s) => s.loggedIn);
+  const { data } = useQuery({
+    queryKey: ["userPlaylists", media.providerName],
+    queryFn: () => library.userPlaylists(),
+    enabled: loggedIn && library.supported,
+  });
+  return useMemo(() => (data ?? []).map(toVibePlaylist), [data]);
 }
 
 /** Chart list in vibe shape, for the Charts grid. */
