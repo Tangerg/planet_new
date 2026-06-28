@@ -1,7 +1,14 @@
 import ky, { KyInstance } from "ky";
 
 import { Provider } from "./provider";
-import { ProviderCapability } from "@domain";
+import {
+  ProviderCapability,
+  type Account,
+  type AuthProvider,
+  type CredentialStore,
+  type LoginFlow,
+  type LoginStatus,
+} from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Track, TrackPlayUrl } from "@domain/model/track";
 import { Artist } from "@domain/model/artist";
@@ -26,9 +33,11 @@ import {
 
 export type Options = {
   host: string;
+  /** Persists the session cookie; injected so login survives restarts. */
+  credentials?: CredentialStore;
 };
 
-export class NeteaseCloudMusic extends Provider {
+export class NeteaseCloudMusic extends Provider implements AuthProvider {
   public static readonly NAME = "NeteaseCloudMusic";
   private static readonly CAPABILITIES: ReadonlySet<ProviderCapability> =
     new Set<ProviderCapability>([
@@ -40,16 +49,34 @@ export class NeteaseCloudMusic extends Provider {
       "search",
       "toplist",
       "comments",
+      "auth",
       "fullPlayback",
     ]);
 
   private readonly http: KyInstance;
+  private readonly credentials?: CredentialStore;
 
   constructor(opts: Options) {
     super();
+    this.credentials = opts.credentials;
     this.http = ky.create({
       prefix: opts.host,
       timeout: 10_000,
+      hooks: {
+        // Attach the stored session cookie (when logged in) to every request;
+        // NeteaseCloudMusicApi reads it from the `cookie` query param.
+        beforeRequest: [
+          ({ request }) => {
+            const session = this.credentials?.get(this.name);
+            if (!session) return;
+            const url = new URL(request.url);
+            if (!url.searchParams.has("cookie")) {
+              url.searchParams.set("cookie", session.token);
+              return new Request(url, request);
+            }
+          },
+        ],
+      },
     });
   }
 
@@ -259,5 +286,54 @@ export class NeteaseCloudMusic extends Provider {
       out.push(c);
     }
     return out.slice(0, 30);
+  }
+
+  // ── Auth (QR login: scan with the NCM mobile app) ──────────────────────────
+
+  async beginLogin(): Promise<LoginFlow> {
+    const keyRes = await this.http
+      .get("login/qr/key", { searchParams: { timestamp: Date.now() } })
+      .json<{ data?: { unikey?: string } }>();
+    const key = keyRes.data?.unikey ?? "";
+    const createRes = await this.http
+      .get("login/qr/create", { searchParams: { key, qrimg: true, timestamp: Date.now() } })
+      .json<{ data?: { qrimg?: string } }>();
+
+    return {
+      kind: "qr",
+      image: createRes.data?.qrimg ?? "",
+      poll: async (): Promise<LoginStatus> => {
+        // 800 expired · 801 waiting · 802 scanned (awaiting confirm) · 803 success.
+        const res = await this.http
+          .get("login/qr/check", { searchParams: { key, timestamp: Date.now() } })
+          .json<{ code?: number; cookie?: string }>()
+          .catch(() => ({}) as { code?: number; cookie?: string });
+        if (res.code === 803) {
+          if (res.cookie) this.credentials?.set(this.name, { token: res.cookie });
+          return { state: "authorized" };
+        }
+        if (res.code === 802) return { state: "scanned" };
+        if (res.code === 800) return { state: "expired" };
+        return { state: "pending" };
+      },
+    };
+  }
+
+  async account(): Promise<Account> {
+    const res = await this.http
+      .get("user/account", { searchParams: { timestamp: Date.now() } })
+      .json<{ profile?: any; account?: any }>();
+    const profile = res.profile ?? {};
+    return {
+      id: (profile.userId ?? "").toString(),
+      name: profile.nickname ?? "",
+      avatar: coverSet(profile.avatarUrl),
+      vip: (res.account?.vipType ?? 0) > 0,
+    };
+  }
+
+  async logout(): Promise<void> {
+    await this.http.get("logout", { searchParams: { timestamp: Date.now() } }).catch(() => {});
+    this.credentials?.clear(this.name);
   }
 }

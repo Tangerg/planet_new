@@ -1,8 +1,9 @@
 import type { Planet } from "../kernel";
-import type { MusicProvider } from "@domain";
+import type { CredentialStore, MusicProvider } from "@domain";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { PlaybackService } from "./PlaybackService";
 import { MediaService } from "./MediaService";
+import { AuthService } from "./AuthService";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
@@ -19,8 +20,12 @@ import { MediaService } from "./MediaService";
 export class Engine {
   readonly playback: PlaybackService;
   readonly media: MediaService;
+  readonly auth: AuthService;
 
-  constructor(private readonly planet: Planet) {
+  constructor(
+    private readonly planet: Planet,
+    credentials: CredentialStore,
+  ) {
     const getProvider = (): MusicProvider => {
       const provider = this.providers.active;
       if (!provider) {
@@ -30,6 +35,7 @@ export class Engine {
     };
     this.playback = new PlaybackService(planet, getProvider);
     this.media = new MediaService(getProvider);
+    this.auth = new AuthService(getProvider, credentials);
   }
 
   /** The kernel event bus — UI store-bridges subscribe here for playback/state. */
