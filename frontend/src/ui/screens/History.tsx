@@ -1,6 +1,7 @@
 // ============================================================
-// History — listening history grouped into Today / This week / Earlier.
-// Groups are small/bounded (≤14 each) so plain rows, not windowed.
+// History — listening history grouped into Today (this session) / This week /
+// All-time, the latter two from the account's real play record. Groups are
+// small/bounded so plain rows, not windowed.
 // ============================================================
 import React from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
@@ -15,7 +16,11 @@ import { Empty } from "@/components/layout/Empty";
 import { PageColumn } from "@/components/layout/PageColumn";
 
 type HistoryScreenProps = {
-  history: VibeTrack[];
+  /** This session's plays (newest last) → the "Today" group. */
+  session: VibeTrack[];
+  /** Account play record — most played last week. */
+  week: VibeTrack[];
+  /** Account play record — most played all time. */
   all: VibeTrack[];
   onPlay: (track: VibeTrack) => void;
   current?: VibeTrack;
@@ -27,7 +32,8 @@ type HistoryScreenProps = {
 };
 
 export function HistoryScreen({
-  history,
+  session,
+  week: weekRecord,
   all,
   onPlay,
   current,
@@ -37,7 +43,7 @@ export function HistoryScreen({
   accent,
   onOpenArtist,
 }: HistoryScreenProps) {
-  const { today, week, earlier, total, hero } = groupHistory(history, all, current?.coverSeed || 0);
+  const { today, week, earlier, total, hero } = groupHistory(session, weekRecord, all);
 
   const Group = ({ label, items }: { label: string; items: VibeTrack[] }) =>
     items.length ? (
@@ -97,8 +103,8 @@ export function HistoryScreen({
           </div>
           {/* grouped lists */}
           <Group label="Today" items={today} />
-          <Group label="Earlier this week" items={week} />
-          <Group label="Earlier" items={earlier} />
+          <Group label="This week" items={week} />
+          <Group label="All-time" items={earlier} />
           {!total && <Empty className="p-[50px]">Nothing played yet.</Empty>}
         </PageColumn>
       </div>

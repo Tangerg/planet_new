@@ -17,16 +17,23 @@ type ProfileScreenProps = {
   mono: boolean;
 };
 
+/** Compact count for the identity panel (1.2K, 3.4M). */
+function compactCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
 export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: ProfileScreenProps) {
   const open = useMorphOpen();
   const b = accent;
   const { supported, loggedIn, account, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
-  const items = playlists.slice(0, 6).map((p, i) => ({
-    ...p,
-    plays: ["8.40K", "4", "69", "127", "2.3K", "910"][i] || "12",
-  }));
+  const items = playlists.slice(0, 6);
   const [active, setActive] = useState(1);
+  // Real counts once logged in; the anonymous demo identity keeps its placeholder.
+  const followers = loggedIn && account ? compactCount(account.followers ?? 0) : "598";
+  const following = loggedIn && account ? compactCount(account.following ?? 0) : "6";
   return (
     <FadeIn className="relative h-full">
       <Art
@@ -53,11 +60,11 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
           <div className="mlabel opacity-80">Name</div>
           <div className="mb-7 mt-2 text-[26px] font-light">{account?.name ?? "Lily Tran"}</div>
           <div className="flex items-baseline gap-2.5">
-            <span className="text-[40px] font-extralight">598</span>
+            <span className="text-[40px] font-extralight">{followers}</span>
             <span className="mlabel opacity-85">Followers</span>
           </div>
           <div className="mt-[18px] flex items-baseline gap-2.5">
-            <span className="text-[40px] font-extralight">6</span>
+            <span className="text-[40px] font-extralight">{following}</span>
             <span className="mlabel opacity-85">Following</span>
           </div>
           <div className="mt-[30px] text-[15px] font-light opacity-90">
@@ -112,7 +119,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
                   className="mlabel mt-[5px] text-[10px]"
                   style={{ color: i === active ? "#06060a" : "var(--tx-3)" }}
                 >
-                  {p.plays} played
+                  {p.trackCount ?? p.tracks.length} tracks
                 </div>
               </Button>
             ))}

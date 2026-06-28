@@ -8,4 +8,8 @@ export type Account = {
   avatar?: Image[];
   /** Whether the account has an active membership (e.g. NCM VIP). */
   vip?: boolean;
+  /** Follower count (people following this user), when the provider exposes it. */
+  followers?: number;
+  /** Following count (people this user follows), when the provider exposes it. */
+  following?: number;
 };

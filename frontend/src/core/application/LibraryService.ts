@@ -1,4 +1,4 @@
-import type { MusicProvider, Playlist, UserLibrary } from "@domain";
+import type { MusicProvider, Playlist, Track, UserLibrary } from "@domain";
 
 /**
  * Application service for the logged-in user's own library (liked songs, …).
@@ -31,5 +31,13 @@ export class LibraryService {
 
   userPlaylists(): Promise<Playlist[]> {
     return this.lib().userPlaylists();
+  }
+
+  playRecord(period: "week" | "all"): Promise<Partial<Track>[]> {
+    return this.lib().playRecord(period);
+  }
+
+  dailyRecommendations(): Promise<Partial<Track>[]> {
+    return this.lib().dailyRecommendations();
   }
 }
