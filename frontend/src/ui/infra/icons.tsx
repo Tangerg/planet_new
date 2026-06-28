@@ -46,6 +46,21 @@ const Svg: React.FC<IconProps> = ({
   </svg>
 );
 
+/** Render `children` scaled about the 24-box centre while holding the visual
+ *  stroke at STROKE_WIDTH — lets a few glyphs whose natural extent runs large
+ *  (the box-filling lucide shuffle/repeat) or small be optically size-matched to
+ *  the rest WITHOUT changing their stroke weight. */
+function scaled(factor: number, children: React.ReactNode) {
+  return (
+    <g
+      transform={`translate(12 12) scale(${factor}) translate(-12 -12)`}
+      strokeWidth={STROKE_WIDTH / factor}
+    >
+      {children}
+    </g>
+  );
+}
+
 export const Icon: Record<string, React.FC<IconProps>> = {
   // transport — plain filled shapes (no surrounding circle)
   play: (p) => (
@@ -72,19 +87,29 @@ export const Icon: Record<string, React.FC<IconProps>> = {
   // shuffle / loop — industry-standard geometry (lucide Shuffle / Repeat)
   shuffle: (p) => (
     <Svg {...p}>
-      <path d="m18 14 4 4-4 4" />
-      <path d="m18 2 4 4-4 4" />
-      <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
-      <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
-      <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
+      {scaled(
+        0.88,
+        <>
+          <path d="m18 14 4 4-4 4" />
+          <path d="m18 2 4 4-4 4" />
+          <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+          <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+          <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
+        </>,
+      )}
     </Svg>
   ),
   loop: (p) => (
     <Svg {...p}>
-      <path d="m17 2 4 4-4 4" />
-      <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-      <path d="m7 22-4-4 4-4" />
-      <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+      {scaled(
+        0.88,
+        <>
+          <path d="m17 2 4 4-4 4" />
+          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+          <path d="m7 22-4-4 4-4" />
+          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+        </>,
+      )}
     </Svg>
   ),
   infinity: (p) => (
@@ -110,7 +135,7 @@ export const Icon: Record<string, React.FC<IconProps>> = {
   // distinct from `list` (left-aligned + queue marker) and `comment` (bubble).
   lyrics: (p) => (
     <Svg {...p}>
-      <path d="M7 7h10M5 12h14M8 17h8" />
+      <path d="M6 4h12M4 12h16M8 20h8" />
     </Svg>
   ),
   search: (p) => (
@@ -156,7 +181,7 @@ export const Icon: Record<string, React.FC<IconProps>> = {
   // view toggles
   list: (p) => (
     <Svg {...p}>
-      <path d="M4 7h11M4 12h11M4 17h7M18 14v6M18 14l3 2" />
+      <path d="M4 5h12M4 12h12M4 19h7M18 14v6M18 14l3 2" />
     </Svg>
   ),
   grid: (p) => (
