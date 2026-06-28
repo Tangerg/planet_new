@@ -4,6 +4,7 @@ import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { PlaybackService } from "./PlaybackService";
 import { MediaService } from "./MediaService";
 import { AuthService } from "./AuthService";
+import { LibraryService } from "./LibraryService";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
@@ -21,6 +22,7 @@ export class Engine {
   readonly playback: PlaybackService;
   readonly media: MediaService;
   readonly auth: AuthService;
+  readonly library: LibraryService;
 
   constructor(
     private readonly planet: Planet,
@@ -36,6 +38,7 @@ export class Engine {
     this.playback = new PlaybackService(planet, getProvider);
     this.media = new MediaService(getProvider);
     this.auth = new AuthService(getProvider, credentials);
+    this.library = new LibraryService(getProvider);
   }
 
   /** The kernel event bus — UI store-bridges subscribe here for playback/state. */

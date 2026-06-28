@@ -8,6 +8,7 @@ import {
   type CredentialStore,
   type LoginFlow,
   type LoginStatus,
+  type UserLibrary,
 } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Track, TrackPlayUrl } from "@domain/model/track";
@@ -37,7 +38,7 @@ export type Options = {
   credentials?: CredentialStore;
 };
 
-export class NeteaseCloudMusic extends Provider implements AuthProvider {
+export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLibrary {
   public static readonly NAME = "NeteaseCloudMusic";
   private static readonly CAPABILITIES: ReadonlySet<ProviderCapability> =
     new Set<ProviderCapability>([
@@ -50,11 +51,14 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider {
       "toplist",
       "comments",
       "auth",
+      "userLibrary",
       "fullPlayback",
     ]);
 
   private readonly http: KyInstance;
   private readonly credentials?: CredentialStore;
+  /** Cached logged-in user id (uid), needed by likelist / user playlists. */
+  private uid?: string;
 
   constructor(opts: Options) {
     super();
@@ -335,5 +339,29 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider {
   async logout(): Promise<void> {
     await this.http.get("logout", { searchParams: { timestamp: Date.now() } }).catch(() => {});
     this.credentials?.clear(this.name);
+    this.uid = undefined;
+  }
+
+  // ── User library (requires login) ──────────────────────────────────────────
+
+  /** likelist / user-playlist endpoints need the uid; resolve it once per session. */
+  private async ensureUid(): Promise<string> {
+    if (!this.uid) this.uid = (await this.account()).id;
+    return this.uid;
+  }
+
+  async likedTrackIds(): Promise<string[]> {
+    const uid = await this.ensureUid();
+    const res = await this.http
+      .get("likelist", { searchParams: { uid, timestamp: Date.now() } })
+      .json<{ ids?: Array<number | string> }>()
+      .catch(() => ({ ids: [] }) as { ids?: Array<number | string> });
+    return (res.ids ?? []).map(String);
+  }
+
+  async setLiked(trackId: string, liked: boolean): Promise<void> {
+    await this.http.get("like", {
+      searchParams: { id: trackId, like: liked, timestamp: Date.now() },
+    });
   }
 }

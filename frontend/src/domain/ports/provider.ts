@@ -26,6 +26,7 @@ export type ProviderCapability =
   | "toplist" // charts
   | "comments" // track comments (hot / recent)
   | "auth" // user login (the provider also implements AuthProvider)
+  | "userLibrary" // logged-in user data: liked songs, playlists (UserLibrary)
   | "fullPlayback" // can provide a full playable track URL
   | "previewPlayback"; // 30s preview clip only (e.g. Spotify preview_url)
 
