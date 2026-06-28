@@ -12,6 +12,7 @@ import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { CardRail } from "@/components/layout/CardRail";
 import { Empty } from "@/components/layout/Empty";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 
@@ -93,7 +94,7 @@ export function SearchScreen({
       className="scroll h-full"
       style={{ background: "radial-gradient(120% 80% at 30% -5%, #16161d, var(--surf-0))" }}
     >
-      <div className="px-12 pb-[44px] pt-[60px]">
+      <PageColumn className="pb-[44px] pt-[60px]">
         {/* input */}
         <div
           className="flex max-w-[640px] items-center gap-4 pb-[14px]"
@@ -242,7 +243,7 @@ export function SearchScreen({
             />
           </section>
         )}
-      </div>
+      </PageColumn>
     </FadeIn>
   );
 }
