@@ -1,4 +1,5 @@
 import type { Playlist } from "../model/playlist";
+import type { Track } from "../model/track";
 
 /**
  * Account-scoped library — the logged-in user's own data. Orthogonal to
@@ -13,4 +14,9 @@ export interface UserLibrary {
   /** The user's own + subscribed playlists (stubs; tracks fetched on open). The
    *  first is conventionally the "liked songs" playlist. */
   userPlaylists(): Promise<Playlist[]>;
+  /** The user's play record — most-played tracks over the last week ("week") or
+   *  all time ("all"). Partial tracks (display fields only). */
+  playRecord(period: "week" | "all"): Promise<Partial<Track>[]>;
+  /** The day's personalised song recommendations ("每日推荐"). */
+  dailyRecommendations(): Promise<Partial<Track>[]>;
 }

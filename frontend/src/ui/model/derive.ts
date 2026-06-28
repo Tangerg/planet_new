@@ -93,37 +93,41 @@ export type HistoryGroups = {
 };
 
 /**
- * Group play history into Today / Week / Earlier. "Today" is the de-duplicated
- * recent plays (newest first); the other two are seeded from the catalog so the
- * page reads populated before much listening has happened (mock-era behaviour).
+ * Group play history into Today / This week / All-time. "Today" is this
+ * session's plays (newest first, consecutive dupes dropped); "week" and
+ * "earlier" come from the account's real play record (NCM /user/record — most
+ * played last week / all time). Each track appears in only the earliest bucket
+ * it qualifies for. Anonymous → only "today" (the account record is empty).
  */
 export function groupHistory(
-  history: VibeTrack[],
+  session: VibeTrack[],
+  week: VibeTrack[],
   all: VibeTrack[],
-  currentSeed: number,
 ): HistoryGroups {
   const today: VibeTrack[] = [];
-  for (let i = history.length - 1; i >= 0; i--) {
-    const t = history[i];
+  for (let i = session.length - 1; i >= 0; i--) {
+    const t = session[i];
     if (!t) continue;
     if (today.length && today[today.length - 1].id === t.id) continue;
     today.push(t);
   }
-  const seedStart = currentSeed + 3;
-  const seeded: VibeTrack[] = [];
-  for (let i = 0; seeded.length < 14 && i < all.length * 2; i++) {
-    const t = all[(seedStart + i) % all.length];
-    if (!t) continue;
-    if (today.some((r) => r.id === t.id) || seeded.some((s) => s.id === t.id)) continue;
-    seeded.push(t);
-  }
-  const week = seeded.slice(0, 7);
-  const earlier = seeded.slice(7, 14);
+  const seen = new Set(today.map((t) => t.id));
+  const dedupe = (xs: VibeTrack[]): VibeTrack[] => {
+    const out: VibeTrack[] = [];
+    for (const t of xs) {
+      if (seen.has(t.id)) continue;
+      seen.add(t.id);
+      out.push(t);
+    }
+    return out;
+  };
+  const weekOut = dedupe(week);
+  const earlier = dedupe(all);
   return {
     today,
-    week,
+    week: weekOut,
     earlier,
-    total: today.length + week.length + earlier.length,
-    hero: today[0] || week[0] || all[0],
+    total: today.length + weekOut.length + earlier.length,
+    hero: today[0] || weekOut[0] || earlier[0],
   };
 }

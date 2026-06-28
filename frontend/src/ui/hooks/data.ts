@@ -214,6 +214,48 @@ export function useUserPlaylists(): VibeCollection[] {
   return useMemo(() => (data ?? []).map(toVibePlaylist), [data]);
 }
 
+/**
+ * The logged-in user's play record (vibe shape): most-played tracks over the
+ * last week and all time. Empty when anonymous / unsupported — the History
+ * screen then shows only this session's local plays.
+ */
+export function usePlayRecord(): { week: VibeTrack[]; all: VibeTrack[] } {
+  const library = useLibraryService();
+  const media = useMediaService();
+  const loggedIn = useAuthStore((s) => s.loggedIn);
+  const enabled = loggedIn && library.supported;
+  const week = useQuery({
+    queryKey: ["playRecord", media.providerName, "week"],
+    queryFn: () => library.playRecord("week"),
+    enabled,
+  });
+  const all = useQuery({
+    queryKey: ["playRecord", media.providerName, "all"],
+    queryFn: () => library.playRecord("all"),
+    enabled,
+  });
+  return useMemo(
+    () => ({ week: toVibeTracks(week.data), all: toVibeTracks(all.data) }),
+    [week.data, all.data],
+  );
+}
+
+/**
+ * The day's personalised song recommendations ("每日推荐") in vibe shape. Empty
+ * when anonymous / unsupported — ForYou then falls back to a catalog playlist.
+ */
+export function useDailyRecommendations(): VibeTrack[] {
+  const library = useLibraryService();
+  const media = useMediaService();
+  const loggedIn = useAuthStore((s) => s.loggedIn);
+  const { data } = useQuery({
+    queryKey: ["dailyRecommendations", media.providerName],
+    queryFn: () => library.dailyRecommendations(),
+    enabled: loggedIn && library.supported,
+  });
+  return useMemo(() => toVibeTracks(data), [data]);
+}
+
 /** Chart list in vibe shape, for the Charts grid. */
 export function useToplists(): VibeCollection[] {
   const media = useMediaService();

@@ -2,9 +2,10 @@
  * Likes, play history, and settings state. Likes are account-backed when the
  * user is logged in to a provider that exposes a user library (the like set
  * loads from the account and toggles sync back, optimistically); otherwise they
- * stay local UI state. History and settings remain local.
+ * stay local UI state. On first login the anonymous session's local likes are
+ * merged into the account. History and settings remain local.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { VibeTrack } from "@/model/adapt";
@@ -57,6 +58,25 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
     },
     [synced, qc, library, media.providerName],
   );
+
+  // First login: fold the anonymous session's local likes into the account
+  // (push each, then clear local so the synced set becomes the source of truth).
+  // Guarded by a ref so it runs once per login transition, never in a loop.
+  const mergedRef = useRef(false);
+  useEffect(() => {
+    if (!synced) {
+      mergedRef.current = false;
+      return;
+    }
+    if (mergedRef.current) return;
+    mergedRef.current = true;
+    if (localLiked.size === 0) return;
+    const ids = [...localLiked];
+    void Promise.all(ids.map((id) => library.setLiked(id, true).catch(() => {}))).then(() => {
+      setLocalLiked(new Set());
+      void qc.invalidateQueries({ queryKey: ["likedIds", media.providerName] });
+    });
+  }, [synced, localLiked, library, qc, media.providerName]);
 
   const isLiked = !!(currentTrackId && liked.has(currentTrackId));
 

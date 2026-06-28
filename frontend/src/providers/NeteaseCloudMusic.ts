@@ -328,11 +328,26 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       .get("user/account", { searchParams: { timestamp: Date.now() } })
       .json<{ profile?: any; account?: any }>();
     const profile = res.profile ?? {};
+    const id = (profile.userId ?? "").toString();
+    // Opportunistically cache the uid so likelist / playlists / record don't pay
+    // for a second /user/account round-trip.
+    if (id) this.uid = id;
+    // Follower / following counts live on /user/detail (needs the uid); fold them
+    // in when present, but never fail the whole account read if it's unavailable.
+    const detail = id
+      ? await this.http
+          .get("user/detail", { searchParams: { uid: id, timestamp: Date.now() } })
+          .json<{ profile?: any }>()
+          .catch(() => ({}) as { profile?: any })
+      : {};
+    const dp = detail.profile ?? {};
     return {
-      id: (profile.userId ?? "").toString(),
+      id,
       name: profile.nickname ?? "",
       avatar: coverSet(profile.avatarUrl),
       vip: (res.account?.vipType ?? 0) > 0,
+      followers: dp.followeds ?? profile.followeds,
+      following: dp.follows ?? profile.follows,
     };
   }
 
@@ -344,9 +359,15 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
 
   // ── User library (requires login) ──────────────────────────────────────────
 
-  /** likelist / user-playlist endpoints need the uid; resolve it once per session. */
+  /** likelist / user-playlist / record endpoints need the uid; resolve it once
+   *  per session. Uses the lightweight /user/account (not the enriched account(),
+   *  which also fetches follower counts) so id-only callers stay cheap. */
   private async ensureUid(): Promise<string> {
-    if (!this.uid) this.uid = (await this.account()).id;
+    if (this.uid) return this.uid;
+    const res = await this.http
+      .get("user/account", { searchParams: { timestamp: Date.now() } })
+      .json<{ profile?: { userId?: number | string } }>();
+    this.uid = (res.profile?.userId ?? "").toString();
     return this.uid;
   }
 
@@ -373,5 +394,26 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       .catch(() => ({ playlist: [] }) as { playlist?: any[] });
     // Stubs (cover/name/count); tracks are fetched when a playlist is opened.
     return (res.playlist ?? []).map((p) => ({ ...mapNcmPlaylistStub(p), tracks: [] }) as Playlist);
+  }
+
+  async playRecord(period: "week" | "all"): Promise<Partial<Track>[]> {
+    const uid = await this.ensureUid();
+    // type 1 = last week's record, 0 = all-time. Each row is { playCount, song }
+    // sorted by play count; the full song node lives in `song`.
+    const type = period === "week" ? 1 : 0;
+    const res = await this.http
+      .get("user/record", { searchParams: { uid, type, timestamp: Date.now() } })
+      .json<{ weekData?: Array<{ song: any }>; allData?: Array<{ song: any }> }>()
+      .catch(() => ({}) as { weekData?: Array<{ song: any }>; allData?: Array<{ song: any }> });
+    const rows = period === "week" ? res.weekData : res.allData;
+    return (rows ?? []).map((row, i) => mapNcmTrack(row.song, { index: i + 1 }));
+  }
+
+  async dailyRecommendations(): Promise<Partial<Track>[]> {
+    const res = await this.http
+      .get("recommend/songs", { searchParams: { timestamp: Date.now() } })
+      .json<{ data?: { dailySongs?: any[] } }>()
+      .catch(() => ({ data: {} }) as { data?: { dailySongs?: any[] } });
+    return (res.data?.dailySongs ?? []).map((s, i) => mapNcmTrack(s, { index: i + 1 }));
   }
 }

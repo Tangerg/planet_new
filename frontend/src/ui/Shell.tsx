@@ -26,7 +26,9 @@ import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,
   useComments,
+  useDailyRecommendations,
   useLyric,
+  usePlayRecord,
   useProviderSearch,
   useToplists,
   useUserPlaylists,
@@ -130,6 +132,12 @@ export default function Shell() {
 
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
+  // Real account play record (most played last week / all time); empty when
+  // anonymous, so the History screen falls back to this session's plays only.
+  const playRecord = usePlayRecord();
+  // The day's recommendations ("每日推荐"); empty when anonymous, so ForYou's hero
+  // falls back to a catalog playlist.
+  const daily = useDailyRecommendations();
 
   // Current-track lyrics, kernel-owned (Lyric plugin follows the track); the UI
   // just reads them. [] when none — NowPlaying shows "No lyrics" on its own.
@@ -295,6 +303,7 @@ export default function Shell() {
       return (
         <ForYouScreen
           data={catalog}
+          daily={daily}
           accent={accent}
           openPlaylist={openDetail}
           openAlbum={albumDetail}
@@ -367,8 +376,9 @@ export default function Shell() {
     if (v === "history")
       return (
         <HistoryScreen
-          history={history}
-          all={catalog.allTracks}
+          session={history}
+          week={playRecord.week}
+          all={playRecord.all}
           onPlay={onPlay}
           current={current}
           playing={playing}
@@ -410,7 +420,7 @@ export default function Shell() {
       return (
         <ProfileScreen
           accent={accent}
-          playlists={catalog.playlists}
+          playlists={libraryData.playlists}
           onOpenPlaylist={openDetail}
           mono={heroTreatment === "mono"}
         />

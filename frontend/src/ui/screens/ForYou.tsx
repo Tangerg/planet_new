@@ -1,8 +1,8 @@
 // ============================================================
 // ForYou — rich editorial home: hero · quick tiles · card rails.
 // ============================================================
-import React, { useState } from "react";
-import type { ArtistRef, ScreenData, VibeCollection } from "@/model/adapt";
+import React, { useMemo, useState } from "react";
+import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/adapt";
 import { Icon, Art } from "@/components/primitives";
 import { CardShell } from "@/components/cards/CardShell";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -17,6 +17,8 @@ import { useScreenActions } from "@/hooks/screenActions";
 
 type ForYouScreenProps = {
   data: ScreenData;
+  /** The day's recommendations ("每日推荐"); when present, headlines the hero. */
+  daily: VibeTrack[];
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
   openArtist: (artist: ArtistRef) => void;
@@ -26,6 +28,7 @@ type ForYouScreenProps = {
 
 export const ForYouScreen = React.memo(function ForYouScreen({
   data,
+  daily,
   openPlaylist,
   openAlbum,
   openArtist,
@@ -48,7 +51,28 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const playlists = data.playlists;
   const albums = data.albums;
   const artists = data.artists;
-  const featured = playlists[1] || playlists[0];
+  // "每日推荐" as a synthetic playlist of the day's songs (no provider fetch on
+  // open — tracks are already loaded, so _real:false). It headlines the hero.
+  const dailyMix = useMemo<VibeCollection | undefined>(
+    () =>
+      daily.length
+        ? {
+            id: "daily-mix",
+            name: "Daily Mix",
+            kind: "Playlist",
+            owner: "For You",
+            coverSeed: daily[0].coverSeed,
+            gradient: daily[0].gradient,
+            image: daily[0].image,
+            images: daily[0].images,
+            description: "Songs picked for you today — refreshed every morning.",
+            tracks: daily,
+            _real: false,
+          }
+        : undefined,
+    [daily],
+  );
+  const featured = dailyMix ?? playlists[1] ?? playlists[0];
   const tiles = [...playlists, ...albums].slice(0, 8);
   const openTile = (t: VibeCollection) =>
     t.artist && t.kind === "Album" ? openAlbum(t) : openPlaylist(t);
