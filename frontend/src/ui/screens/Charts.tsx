@@ -4,6 +4,7 @@
 import React from "react";
 import type { VibeCollection } from "@/model/adapt";
 import { ChartCard } from "@/components/cards/ChartCard";
+import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 
 type ChartsScreenProps = {
@@ -18,7 +19,7 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
       className="scroll h-full"
       style={{ background: "radial-gradient(120% 90% at 50% 0%, #16161d, var(--surf-0))" }}
     >
-      <div className="px-10 pb-10 pt-[60px]">
+      <PageColumn className="pb-10 pt-[60px]">
         <div className="mb-1.5 text-[36px] font-extralight">Charts</div>
         <div className="mlabel mb-[26px] text-tx-3">Ranked by plays · refreshed daily</div>
         {/* 5-up grid of square tiles; each tile lifts on its own hover
@@ -36,7 +37,7 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
             />
           ))}
         </div>
-      </div>
+      </PageColumn>
     </FadeIn>
   );
 }
