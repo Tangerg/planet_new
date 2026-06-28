@@ -3,6 +3,8 @@ import { parseTimestamp } from "@shared/time";
 
 export type Lyric = {
   content: string;
+  /** Translated line (e.g. NCM tlyric), when the provider supplies one. */
+  translation?: string;
 } & FormattedDuration;
 
 /** Matches an LRC timestamp tag. Accepted forms:
@@ -41,4 +43,18 @@ export function parseLyrics(lrcs: string): Lyric[] {
     .split("\n")
     .map(parseLyric)
     .filter((line): line is Lyric => line !== undefined);
+}
+
+/**
+ * Attach a translated LRC to the main lyric lines, matched by timestamp (the
+ * translation shares the original's timings). Lines with no match — or whose
+ * translation equals the original — keep `translation` unset.
+ */
+export function mergeTranslations(lyrics: Lyric[], translated: Lyric[]): Lyric[] {
+  if (!translated.length) return lyrics;
+  const byTime = new Map(translated.map((l) => [l.duration, l.content]));
+  return lyrics.map((l) => {
+    const tr = byTime.get(l.duration);
+    return tr && tr !== l.content ? { ...l, translation: tr } : l;
+  });
 }

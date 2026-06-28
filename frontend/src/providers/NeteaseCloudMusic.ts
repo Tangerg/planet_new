@@ -5,7 +5,7 @@ import { ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
 import { Track, TrackPlayUrl } from "@domain/model/track";
 import { Artist } from "@domain/model/artist";
-import { Lyric, parseLyrics } from "@domain/model/lyric";
+import { Lyric, parseLyrics, mergeTranslations } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
 import { Chart } from "@domain/model/chart";
 import { Comment } from "@domain/model/comment";
@@ -71,12 +71,16 @@ export class NeteaseCloudMusic extends Provider {
   }
 
   async lyric(id: string): Promise<Lyric[]> {
+    // NCM returns the original (lrc) plus a timed translation (tlyric); merge
+    // them by timestamp so the UI can show both lines.
     const res = await this.http
       .get("lyric", {
         searchParams: { id },
       })
-      .json<{ lrc: { version: number; lyric: string } }>();
-    return parseLyrics(res.lrc.lyric);
+      .json<{ lrc?: { lyric?: string }; tlyric?: { lyric?: string } }>();
+    const main = parseLyrics(res.lrc?.lyric ?? "");
+    const translated = parseLyrics(res.tlyric?.lyric ?? "");
+    return mergeTranslations(main, translated);
   }
 
   async albumDetail(id: string): Promise<Album> {

@@ -15,9 +15,9 @@ import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
 import { activateOnKey } from "@/lib/keys";
 
-// A synced-lyric line: text + optional timestamp (ms). The "No lyrics" fallback
-// line carries no `t`.
-export type LyricLine = { line: string; t?: number };
+// A synced-lyric line: text + optional timestamp (ms) + optional translation.
+// The "No lyrics" fallback line carries no `t`.
+export type LyricLine = { line: string; t?: number; tr?: string };
 
 // ============================================================
 // NowPlaying — full-bleed cover  ·  Lyrics  (toggle)
@@ -77,6 +77,17 @@ function LyricLines({
             }}
           >
             {l.line}
+            {l.tr && (
+              <div
+                style={{
+                  marginTop: 5,
+                  fontSize: on ? 16 : 14,
+                  color: on ? `${accent}cc` : "rgba(255,255,255,.4)",
+                }}
+              >
+                {l.tr}
+              </div>
+            )}
           </div>
         );
       })}
