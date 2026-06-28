@@ -376,7 +376,7 @@ export default function Shell() {
           artist={artistObj}
           tracks={artistObj?.tracks ?? []}
           albums={artistObj?.albums ?? []}
-          similar={catalog.artists.filter((a) => a.id !== artistObj?.id)}
+          similar={artistObj?.similar ?? []}
           onPlay={onPlay}
           current={current}
           playing={playing}

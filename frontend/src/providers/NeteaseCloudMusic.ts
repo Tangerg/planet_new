@@ -95,9 +95,11 @@ export class NeteaseCloudMusic extends Provider {
       introduction?: { ti?: string; txt?: string }[];
     };
     type ArtistAlbumRes = { hotAlbums?: any[] };
+    type SimilarRes = { artists?: any[] };
     // /artists returns artist info + hotSongs in one call; bio comes from
-    // /artist/desc; the discography from /artist/album. All three in parallel.
-    const [info, desc, albumRes] = await Promise.all([
+    // /artist/desc; the discography from /artist/album; related acts from
+    // /simi/artist. All in parallel.
+    const [info, desc, albumRes, simiRes] = await Promise.all([
       this.http
         .get("artists", { searchParams: { id } })
         .json<ArtistInfoRes>()
@@ -110,6 +112,10 @@ export class NeteaseCloudMusic extends Provider {
         .get("artist/album", { searchParams: { id, limit: 50 } })
         .json<ArtistAlbumRes>()
         .catch(() => ({ hotAlbums: [] }) as ArtistAlbumRes),
+      this.http
+        .get("simi/artist", { searchParams: { id } })
+        .json<SimilarRes>()
+        .catch(() => ({ artists: [] }) as SimilarRes),
     ]);
 
     const artist = info.artist ?? {};
@@ -117,6 +123,7 @@ export class NeteaseCloudMusic extends Provider {
       .slice(0, 10)
       .map((s, i) => mapNcmTrack(s, { index: i + 1 }));
     const albums = (albumRes.hotAlbums ?? []).map(mapNcmAlbumNewest);
+    const similar = (simiRes.artists ?? []).map(mapNcmFeaturedArtist);
     const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
     return {
       id: artist.id?.toString() ?? id,
@@ -130,6 +137,7 @@ export class NeteaseCloudMusic extends Provider {
       description,
       topTracks,
       albums,
+      similar,
     };
   }
 
