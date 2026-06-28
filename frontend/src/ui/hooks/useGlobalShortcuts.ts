@@ -21,6 +21,8 @@ export type GlobalShortcutHandlers = {
   /** Current view — guards (don't re-open Search while on it, etc.). */
   view: string;
   goBack: () => void;
+  /** Jump straight to the XMB root from any depth (the "/" shortcut). */
+  goHome: () => void;
   openSearch: () => void;
   navigate: (view: string) => void;
   togglePlay: () => void;
@@ -37,6 +39,7 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
   const {
     view,
     goBack,
+    goHome,
     openSearch,
     navigate,
     togglePlay,
@@ -49,7 +52,9 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
   } = h;
 
   useHotkey("Escape", () => void (view !== "xmb" && goBack()));
-  useHotkey("/", () => void (view !== "search" && openSearch()));
+  // "/" jumps to the XMB root (Search has its own: ⌘F + double-Shift). Ignored
+  // while typing (single-key default), so it won't fire inside the search box.
+  useHotkey("/", () => void (view !== "xmb" && goHome()));
   useHotkey("Mod+F", () => void (view !== "search" && openSearch()));
   // Transport / library — NetEase-style
   useHotkey("Mod+ArrowLeft", () => playPrev(), HK_IGNORE_INPUTS);
