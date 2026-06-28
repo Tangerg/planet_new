@@ -301,7 +301,7 @@ export const PlayerBar = React.memo(function PlayerBar({
               <HoverCard.Portal forceMount>
                 <HoverCard.Content side="top" align="center" sideOffset={12} asChild forceMount>
                   <motion.div
-                    className="volpop z-[9000] flex flex-col items-center gap-3 rounded-[14px] px-[13px] pb-[13px] pt-[15px]"
+                    className="volpop z-[9000] flex flex-col items-center gap-3 rounded-[14px] px-[9px] pb-[13px] pt-[15px]"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
@@ -318,7 +318,7 @@ export const PlayerBar = React.memo(function PlayerBar({
                   >
                     {/* Fixed footprint + tabular figures: 1–3 digits (7→71→100)
                         never change the popup width. */}
-                    <span className="block w-[30px] text-center font-mono text-[9.5px] tracking-[0.1em] text-[rgba(20,20,24,0.5)] tabular-nums">
+                    <span className="block w-[22px] text-center font-mono text-[9.5px] tracking-[0.1em] text-[rgba(20,20,24,0.5)] tabular-nums">
                       {Math.round(volume)}
                     </span>
                     <Slider
