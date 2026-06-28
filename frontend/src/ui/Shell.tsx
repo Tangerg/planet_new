@@ -21,7 +21,8 @@ import "./Shell.css";
 
 import { useMediaService } from "@/hooks/useMediaService";
 
-import { artBg, Equalizer, Icon } from "@/components/primitives";
+import { artBg, Equalizer } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,

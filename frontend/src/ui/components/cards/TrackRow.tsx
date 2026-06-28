@@ -5,7 +5,8 @@
 // ============================================================
 import React, { useState } from "react";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
-import { Icon, Equalizer, Art } from "@/components/primitives";
+import { Equalizer, Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";

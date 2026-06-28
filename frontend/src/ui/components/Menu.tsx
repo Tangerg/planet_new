@@ -1,7 +1,7 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { motion } from "motion/react";
-import { Icon } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import "./Menu.css";
 
 // ============================================================

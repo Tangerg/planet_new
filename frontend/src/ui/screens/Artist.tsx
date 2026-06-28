@@ -5,7 +5,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
 import { collectionFlowItems, trackFlowItems, type FlowItem } from "@/model/derive";
-import { Icon, Art, artPair, HeroBackdrop } from "@/components/primitives";
+import { Art, artPair, HeroBackdrop } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";

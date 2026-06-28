@@ -3,7 +3,8 @@
 // ============================================================
 import React, { useMemo, useState } from "react";
 import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/adapt";
-import { Icon, Art } from "@/components/primitives";
+import { Art } from "@/components/primitives";
+import { Icon } from "@/infra/icons";
 import { CardShell } from "@/components/cards/CardShell";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { Rail } from "@/components/layout/Rail";
