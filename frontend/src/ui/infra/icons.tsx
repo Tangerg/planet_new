@@ -167,9 +167,7 @@ export const Icon: Record<string, React.FC<IconProps>> = {
     </Svg>
   ),
   volume: (p) => (
-    <Svg {...p}>
-      <path d="M5 9v6h4l5 4V5L9 9zM17 8a5 5 0 0 1 0 8" />
-    </Svg>
+    <Svg {...p}>{scaled(1.1, <path d="M5 9v6h4l5 4V5L9 9zM17 8a5 5 0 0 1 0 8" />)}</Svg>
   ),
   note: (p) => (
     <Svg {...p}>
