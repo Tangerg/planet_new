@@ -6,6 +6,7 @@ import { TrackPlayUrl } from "../model/track";
 import { Personalized } from "../model/personalized";
 import { SearchResult } from "../model/search";
 import { Chart } from "../model/chart";
+import { Comment } from "../model/comment";
 
 /**
  * Provider capability declaration. What each source can do is expressed by its
@@ -23,6 +24,7 @@ export type ProviderCapability =
   | "personalized"
   | "search" // keyword search (tracks/artists/albums/playlists)
   | "toplist" // charts
+  | "comments" // track comments (hot / recent)
   | "fullPlayback" // can provide a full playable track URL
   | "previewPlayback"; // 30s preview clip only (e.g. Spotify preview_url)
 
@@ -85,4 +87,10 @@ export interface MusicProvider {
    * @param id chart id
    */
   toplistDetail(id: string): Promise<Playlist>;
+
+  /**
+   * Comments for a track (hot + recent); empty when unsupported.
+   * @param trackId track id
+   */
+  comments(trackId: string): Promise<Comment[]>;
 }

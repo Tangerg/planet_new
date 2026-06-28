@@ -15,6 +15,8 @@ import { Artist } from "@domain/model/artist";
 import { Image } from "@domain/model/image";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
+import type { Comment } from "@domain/model/comment";
+import { relativeTime } from "@shared/time";
 
 // ── Presentation models ─────────────────────────────────────────────
 
@@ -143,6 +145,17 @@ export type ArtistRef = { id: string; name: string };
 /** An artist handed to openArtist — id/name always; the rest fills in on fetch. */
 export type ArtistTarget = ArtistRef & Partial<VibeArtist>;
 
+/** Display shape for a track comment (NCM hot/recent comments). */
+export type VibeComment = {
+  id: string;
+  name: string;
+  avatar?: Image[];
+  content: string;
+  likedCount: number;
+  /** Pre-formatted relative time (e.g. "3d ago"). */
+  timeLabel: string;
+};
+
 /** The catalog slice every browse screen consumes (home / library / search). */
 export type ScreenData = {
   playlists: VibeCollection[];
@@ -243,6 +256,17 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
     genres: a.genres ?? [],
     bio: a.description ?? "",
     albums: (a.albums ?? []).map(toVibeAlbum),
+  };
+}
+
+export function toVibeComment(c: Comment): VibeComment {
+  return {
+    id: c.id,
+    name: c.user.name,
+    avatar: c.user.avatar,
+    content: c.content,
+    likedCount: c.likedCount,
+    timeLabel: relativeTime(c.time),
   };
 }
 

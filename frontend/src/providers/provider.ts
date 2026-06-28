@@ -9,6 +9,7 @@ import { TrackPlayUrl } from "@domain/model/track";
 import { Personalized } from "@domain/model/personalized";
 import { SearchResult } from "@domain/model/search";
 import { Chart } from "@domain/model/chart";
+import { Comment } from "@domain/model/comment";
 
 /**
  * Base class for data-source plugins. Every concrete music source
@@ -59,5 +60,9 @@ export abstract class Provider extends Plugin implements MusicProvider {
 
   async toplistDetail(_id: string): Promise<Playlist> {
     return { id: "", name: "", images: [], tracks: [], totalTracks: 0 };
+  }
+
+  async comments(_trackId: string): Promise<Comment[]> {
+    return [];
   }
 }

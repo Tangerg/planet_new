@@ -27,10 +27,12 @@ import {
   toTrack,
   toVibeAlbum,
   toVibeArtist,
+  toVibeComment,
   toVibePlaylist,
   toVibeTrack,
   toVibeTracks,
   type ScreenData,
+  type VibeComment,
   type VibeCollection,
   type VibeTrack,
 } from "@/model/adapt";
@@ -174,6 +176,21 @@ export function useProviderSearch() {
 export function useLyric() {
   const lyric = usePlayQueueStore.use.lyric();
   return useMemo(() => lyric.map((l) => ({ line: l.content, t: l.duration })), [lyric]);
+}
+
+/**
+ * Track comments in vibe shape. Gated by the `comments` capability and an
+ * `enabled` flag (the Comments screen only mounts on its own view), so we don't
+ * fetch comments for every track played.
+ */
+export function useComments(trackId: string | undefined, enabled: boolean): VibeComment[] {
+  const media = useMediaService();
+  const { data } = useQuery({
+    queryKey: ["comments", media.providerName, trackId],
+    queryFn: () => media.comments(trackId ?? ""),
+    enabled: enabled && !!trackId && media.supports("comments"),
+  });
+  return useMemo(() => (data ?? []).map(toVibeComment), [data]);
 }
 
 /** Chart list in vibe shape, for the Charts grid. */

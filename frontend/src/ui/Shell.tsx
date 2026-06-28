@@ -25,6 +25,7 @@ import { artBg, Equalizer, Icon } from "@/components/primitives";
 import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,
+  useComments,
   useLyric,
   useProviderSearch,
   useToplists,
@@ -151,6 +152,10 @@ export default function Shell() {
     startForward,
     morph,
   } = useShellNavigation(media, queryClient);
+
+  // Current-track comments (NCM hot/recent). Fetched only on the comments view,
+  // gated by the provider capability — so it never fires for every track played.
+  const comments = useComments(playback.current?.id, view === "comments");
 
   /* Play a track within the current browse context (the open collection); a
      track not in that list (e.g. a lone search result) plays on its own. */
@@ -396,6 +401,7 @@ export default function Shell() {
       return (
         <CommentsScreen
           track={current}
+          comments={comments}
           accent={accent}
           liked={isLiked}
           toggleLike={() => current && toggleLike(current.id)}

@@ -1,10 +1,10 @@
 // ============================================================
-// Comments — hot comments for the current track (left cover + right list).
-// No provider exposes comments yet, so the list shows an honest empty state.
+// Comments — track comments (left cover + right list). Providers that expose a
+// comment endpoint (NCM) fill the list; others fall back to an honest empty state.
 // ============================================================
 import React from "react";
-import type { VibeTrack } from "@/model/adapt";
-import { Art } from "@/components/primitives";
+import type { VibeComment, VibeTrack } from "@/model/adapt";
+import { Icon, Art } from "@/components/primitives";
 import { LikeHeart } from "@/components/controls/LikeHeart";
 import { FadeIn } from "@/components/motion";
 import { Empty } from "@/components/layout/Empty";
@@ -12,13 +12,21 @@ import { useTranslation } from "react-i18next";
 
 type CommentsScreenProps = {
   track?: VibeTrack;
+  comments: VibeComment[];
   accent: string;
   liked: boolean;
   toggleLike: () => void;
   mono: boolean;
 };
 
-export function CommentsScreen({ track, accent, liked, toggleLike, mono }: CommentsScreenProps) {
+export function CommentsScreen({
+  track,
+  comments,
+  accent,
+  liked,
+  toggleLike,
+  mono,
+}: CommentsScreenProps) {
   const { t } = useTranslation();
   return (
     <FadeIn
@@ -59,7 +67,37 @@ export function CommentsScreen({ track, accent, liked, toggleLike, mono }: Comme
         >
           {t("comments.title")}
         </div>
-        <Empty className="py-[50px]">{t("comments.empty")}</Empty>
+        {comments.length ? (
+          <div className="flex max-w-[680px] flex-col gap-7">
+            {comments.map((c) => (
+              <div key={c.id} className="flex gap-3.5">
+                <Art
+                  images={c.avatar}
+                  px={36}
+                  grain={false}
+                  className="h-9 w-9 flex-none rounded-full"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2.5">
+                    <span className="truncate text-[13px] text-white/80">{c.name}</span>
+                    <span className="mlabel flex-none text-[10px] text-tx-3">{c.timeLabel}</span>
+                  </div>
+                  <div className="mt-1 text-[14px] font-light leading-relaxed text-white/[0.85] [overflow-wrap:anywhere]">
+                    {c.content}
+                  </div>
+                  {c.likedCount > 0 && (
+                    <div className="mt-1.5 inline-flex items-center gap-1 text-tx-3">
+                      <Icon.heart size={12} />
+                      <span className="text-[11px]">{c.likedCount}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Empty className="py-[50px]">{t("comments.empty")}</Empty>
+        )}
       </div>
     </FadeIn>
   );
