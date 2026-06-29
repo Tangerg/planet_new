@@ -86,6 +86,9 @@ export const PlayerBar = React.memo(function PlayerBar({
   const [dragOver, setDragOver] = useState(false);
   // Controlled so AnimatePresence can play the volume popup's exit before unmount.
   const [volOpen, setVolOpen] = useState(false);
+  // Pointer position over the scrubber → the time it maps to (Spotify-style
+  // hover preview), so you can read a target before committing a seek.
+  const [scrubHover, setScrubHover] = useState<{ x: number; t: number } | null>(null);
   const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
@@ -218,6 +221,14 @@ export const PlayerBar = React.memo(function PlayerBar({
             scrubTimer.current = setTimeout(() => setScrub(null), 400);
           }}
           thumbLabel="Seek"
+          // Hover preview: map the pointer x over the slider to a time and show it
+          // above the cursor (passive read — doesn't interfere with Radix's drag).
+          onPointerMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
+            setScrubHover({ x, t: r.width > 0 ? (x / r.width) * dur : 0 });
+          }}
+          onPointerLeave={() => setScrubHover(null)}
           // Flex-center the Root so Radix's abspos thumb wrapper centers on the
           // track (no magic offset); the track flows so it fills the width.
           style={{
@@ -259,7 +270,26 @@ export const PlayerBar = React.memo(function PlayerBar({
               },
             },
           }}
-        />
+        >
+          {scrubHover && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute font-mono text-[10.5px] tabular-nums text-white shadow-pop"
+              style={{
+                left: scrubHover.x,
+                bottom: "calc(100% + 6px)",
+                transform: "translateX(-50%)",
+                background: "#2a2a32",
+                border: "0.5px solid rgba(255,255,255,.12)",
+                borderRadius: 6,
+                padding: "2px 6px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {fmt(Math.round(scrubHover.t))}
+            </div>
+          )}
+        </Slider>
         <span className={timeCls + " text-left"}>{fmt(Math.round(dur))}</span>
       </div>
 
