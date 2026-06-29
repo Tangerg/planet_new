@@ -1,16 +1,16 @@
 @reference "../../../index.css";
 
-/* Floating tooltip surface — the same material as the context menu (`.ctxmenu`)
-   so every popover in the app reads as one family: dark vertical gradient, a
-   hairline border, frosted backdrop and the layered inset+drop shadow. Surface
-   only; callers add their own padding / text. Used by the control tooltips and
-   the scrubber's hover-time bubble. */
+/* Floating tooltip surface — the same frosted material as the text-reveal
+   popover (`.textpop`), scaled down: a translucent dark gradient over a heavy
+   blur+saturate that picks up the page hue, with mask-feathered edges (no hard
+   border) so it melts into the page. One family across the app's popovers.
+   Surface only; callers add their own padding / text. */
 .tooltip-pop {
-  @apply rounded-[8px] border border-white/12 text-white;
-  background: linear-gradient(180deg, rgba(28, 28, 34, 0.97), rgba(14, 14, 18, 0.97));
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 12px 30px -10px rgba(0, 0, 0, 0.7);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(24, 24, 31, 0.62), rgba(15, 15, 21, 0.68));
+  -webkit-backdrop-filter: blur(48px) saturate(132%) brightness(0.94);
+  backdrop-filter: blur(48px) saturate(132%) brightness(0.94);
+  -webkit-mask-image: radial-gradient(150% 140% at 50% 50%, #000 72%, transparent 120%);
+  mask-image: radial-gradient(150% 140% at 50% 50%, #000 72%, transparent 120%);
 }
