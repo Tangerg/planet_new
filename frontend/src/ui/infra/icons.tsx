@@ -38,8 +38,12 @@ const Svg: React.FC<IconProps> = ({
     fill={fill}
     stroke="currentColor"
     strokeWidth={STROKE_WIDTH}
+    // Set aesthetic: crisp/angular corners (miter joins → 有棱有角) but soft line
+    // ends (round caps) — "sharp with a touch of round", not hard-edged. Acute
+    // joins are clamped to a bevel by miterlimit so nothing spikes.
     strokeLinecap="round"
-    strokeLinejoin="round"
+    strokeLinejoin="miter"
+    strokeMiterlimit={2.6}
     {...p}
   >
     {children}
@@ -126,17 +130,18 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       />
     </Svg>
   ),
-  // rounded speech bubble (was a hard rectangle) — softer, less crude.
+  // crisp speech bubble — small-radius corners + a sharp tail (angular, with just
+  // a hint of round on the corners).
   comment: (p) => (
     <Svg {...p}>
-      <path d="M5 4.5h14a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-8.5l-3.5 3v-3H5a2.5 2.5 0 0 1-2.5-2.5V7a2.5 2.5 0 0 1 2.5-2.5z" />
+      <path d="M4.5 5h15a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3v-3H4.5A1.5 1.5 0 0 1 3 14.5v-8A1.5 1.5 0 0 1 4.5 5z" />
     </Svg>
   ),
   // lyrics — a vocal microphone (the convention for a sing-along / lyrics view);
   // a clean stand-mic with our own proportions, not any one product's exact glyph.
   lyrics: (p) => (
     <Svg {...p}>
-      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <rect x="9" y="2" width="6" height="11" rx="2" />
       <path d="M6 11.5a6 6 0 0 0 12 0" />
       <path d="M12 17.5V21" />
       <path d="M9 21h6" />
