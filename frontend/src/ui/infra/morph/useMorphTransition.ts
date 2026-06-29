@@ -159,8 +159,11 @@ export function useMorphTransition(
         hero: null,
         measured: false,
       });
-      timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 620));
-      timers.current.push(setTimeout(() => setTrans(null), 1000));
+      // reveal/clear are scheduled when the morph phase actually begins (see the
+      // phase-flip effect), NOT here: a heavy outgoing screen can jank the main
+      // thread before the morph starts, and a trans-set-relative reveal would cut
+      // the .58s square→circle radius tween short (transform flies on the GPU but
+      // the non-composited border-radius never finishes → snaps at the handoff).
     },
     [view],
   );
@@ -229,9 +232,15 @@ export function useMorphTransition(
   useEffect(() => {
     if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
     const outer = requestAnimationFrame(() => {
-      const inner = requestAnimationFrame(() =>
-        setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
-      );
+      const inner = requestAnimationFrame(() => {
+        setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
+        // Anchor reveal/clear to the real morph start (after any pre-morph jank),
+        // so the .58s shape tween always gets its full window and the square→circle
+        // radius finishes before the hero hand-off — fixes the snap when entering
+        // from a heavy screen (e.g. the control bar → disc from ForYou).
+        timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 600));
+        timers.current.push(setTimeout(() => setTrans(null), 980));
+      });
       rafIds.current.push(inner);
     });
     rafIds.current.push(outer);
