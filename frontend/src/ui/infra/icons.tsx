@@ -126,16 +126,20 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       />
     </Svg>
   ),
+  // rounded speech bubble (was a hard rectangle) — softer, less crude.
   comment: (p) => (
     <Svg {...p}>
-      <path d="M4 5h16v11H9l-4 3.5V16H4z" />
+      <path d="M5 4.5h14a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-8.5l-3.5 3v-3H5a2.5 2.5 0 0 1-2.5-2.5V7a2.5 2.5 0 0 1 2.5-2.5z" />
     </Svg>
   ),
-  // lyrics — centered lyric lines (mirrors how the lyrics view centers text);
-  // distinct from `list` (left-aligned + queue marker) and `comment` (bubble).
+  // lyrics — a vocal microphone (the convention for a sing-along / lyrics view);
+  // a clean stand-mic with our own proportions, not any one product's exact glyph.
   lyrics: (p) => (
     <Svg {...p}>
-      <path d="M6 4h12M4 12h16M8 20h8" />
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M6 11.5a6 6 0 0 0 12 0" />
+      <path d="M12 17.5V21" />
+      <path d="M9 21h6" />
     </Svg>
   ),
   search: (p) => (
@@ -166,8 +170,14 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       <path d="M5 12.5 10 17l9-10" />
     </Svg>
   ),
+  // speaker + two curved waves (Spotify-style "volume high"); fills the box on
+  // its own, so no scale hack needed.
   volume: (p) => (
-    <Svg {...p}>{scaled(1.1, <path d="M5 9v6h4l5 4V5L9 9zM17 8a5 5 0 0 1 0 8" />)}</Svg>
+    <Svg {...p}>
+      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
+      <path d="M15.5 9.5a4 4 0 0 1 0 5" />
+      <path d="M18 7a8 8 0 0 1 0 10" />
+    </Svg>
   ),
   note: (p) => (
     <Svg {...p}>
