@@ -199,13 +199,16 @@ export function useMorphTransition(
     });
     setView("xmb");
     const revId1 = requestAnimationFrame(() => {
-      const revId2 = requestAnimationFrame(() =>
-        setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t)),
-      );
+      const revId2 = requestAnimationFrame(() => {
+        setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
+        // Same anchoring as the forward path: schedule the clear from the real
+        // morph start (after any pre-morph jank from a heavy collapsing screen),
+        // so the reverse collapse's shape tween isn't cut short → no snap.
+        timers.current.push(setTimeout(() => setTrans(null), 740));
+      });
       rafIds.current.push(revId2);
     });
     rafIds.current.push(revId1);
-    timers.current.push(setTimeout(() => setTrans(null), 760));
   }, [view]);
 
   // Stable rect-based morph trigger for deep consumers (cards/rows), exposed via
