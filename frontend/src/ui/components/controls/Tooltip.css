@@ -1,0 +1,16 @@
+@reference "../../../index.css";
+
+/* Floating tooltip surface — the same material as the context menu (`.ctxmenu`)
+   so every popover in the app reads as one family: dark vertical gradient, a
+   hairline border, frosted backdrop and the layered inset+drop shadow. Surface
+   only; callers add their own padding / text. Used by the control tooltips and
+   the scrubber's hover-time bubble. */
+.tooltip-pop {
+  @apply rounded-[8px] border border-white/12 text-white;
+  background: linear-gradient(180deg, rgba(28, 28, 34, 0.97), rgba(14, 14, 18, 0.97));
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 30px -10px rgba(0, 0, 0, 0.7);
+}
