@@ -73,4 +73,22 @@
     border-color: var(--accent);
     color: #06060a;
   }
+
+  /* Shared floating-popover surface — the SAME frosted material as the
+     text-reveal popover (.textpop), so every popover in the app (context menu,
+     control tooltips, the scrubber's hover-time bubble) reads as one family:
+     a translucent dark gradient over a heavy blur+saturate that picks up the
+     page hue, with mask-feathered edges (no hard border) so it melts in.
+     No box-shadow on purpose — a shadow isn't clipped by the mask, so it would
+     show a hard rectangle behind the feathered fill. Surface only; callers add
+     padding / text / sizing. */
+  .glass-pop {
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(180deg, rgba(24, 24, 31, 0.62), rgba(15, 15, 21, 0.68));
+    -webkit-backdrop-filter: blur(50px) saturate(132%) brightness(0.94);
+    backdrop-filter: blur(50px) saturate(132%) brightness(0.94);
+    -webkit-mask-image: radial-gradient(125% 118% at 50% 50%, #000 70%, transparent 112%);
+    mask-image: radial-gradient(125% 118% at 50% 50%, #000 70%, transparent 112%);
+  }
 }

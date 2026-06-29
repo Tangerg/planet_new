@@ -39,7 +39,12 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
         />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="ctxmenu" sideOffset={0} collisionPadding={10} asChild>
+        <DropdownMenu.Content
+          className="ctxmenu glass-pop"
+          sideOffset={0}
+          collisionPadding={10}
+          asChild
+        >
           <motion.div
             className="z-[9000] min-w-[212px]"
             style={{ transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)" }}
