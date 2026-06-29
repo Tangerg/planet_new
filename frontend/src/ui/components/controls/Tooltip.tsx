@@ -1,6 +1,5 @@
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 import React from "react";
-import "./Tooltip.css";
 
 /**
  * Small dark tooltip (Spotify-style) that names what a control does on hover /
@@ -26,7 +25,7 @@ export function Tooltip({ label, side = "top", children }: TooltipProps) {
         <RadixTooltip.Content
           side={side}
           sideOffset={9}
-          className="tooltip-pop z-[9999] select-none px-3 py-2 text-[11.5px] font-medium tracking-[0.01em]"
+          className="glass-pop z-[9999] select-none px-3 py-2 text-[11.5px] font-medium tracking-[0.01em]"
         >
           {label}
         </RadixTooltip.Content>
