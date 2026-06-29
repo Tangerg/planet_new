@@ -46,6 +46,7 @@ import { ScreenActionsProvider } from "@/hooks/screenActions";
 
 import { PlayerBar } from "@/components/PlayerBar";
 import { Button } from "@/components/controls/Button";
+import { TooltipProvider } from "@/components/controls/Tooltip";
 import { XMB } from "@/screens/XMB";
 import { buildWorlds } from "@/model/navigation";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -470,60 +471,61 @@ export default function Shell() {
   const noDragStyle = { "--wails-draggable": "no-drag" } as React.CSSProperties;
 
   return (
-    <MorphProvider morph={morph}>
-      <ScreenActionsProvider actions={actions}>
-        <div className="win-stage">
-          <div className="win">
-            {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
-            <div
-              aria-hidden
-              className="absolute inset-x-0 top-0 z-[55] h-[30px]"
-              style={dragStyle}
-            />
+    <TooltipProvider delayDuration={350} skipDelayDuration={500}>
+      <MorphProvider morph={morph}>
+        <ScreenActionsProvider actions={actions}>
+          <div className="win-stage">
+            <div className="win">
+              {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
+              <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 z-[55] h-[30px]"
+                style={dragStyle}
+              />
 
-            <div className="traffic" style={noDragStyle}>
-              {(
-                [
-                  ["r", "Close", () => wails()?.Quit?.()],
-                  ["y", "Minimise", () => wails()?.WindowMinimise?.()],
-                  ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
-                ] as const
-              ).map(([cls, label, action]) => (
-                <Button
-                  key={cls}
-                  aria-label={label}
-                  className={cls}
-                  onClick={action}
-                  title={label}
-                />
-              ))}
-            </div>
-
-            {!npView && (
-              <div className="win-tools" style={noDragStyle}>
-                {!homeView && (
-                  <Button onClick={goBack} aria-label="Menu">
-                    <Icon.back size={20} />
-                  </Button>
-                )}
-                <Button onClick={() => navigate("np")} aria-label="Now playing">
-                  <Equalizer playing={playing} color="currentColor" size={18} />
-                </Button>
-                <Button aria-label="More">
-                  <Icon.kebab size={20} />
-                </Button>
+              <div className="traffic" style={noDragStyle}>
+                {(
+                  [
+                    ["r", "Close", () => wails()?.Quit?.()],
+                    ["y", "Minimise", () => wails()?.WindowMinimise?.()],
+                    ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
+                  ] as const
+                ).map(([cls, label, action]) => (
+                  <Button
+                    key={cls}
+                    aria-label={label}
+                    className={cls}
+                    onClick={action}
+                    title={label}
+                  />
+                ))}
               </div>
-            )}
 
-            <MorphStage
-              viewRef={viewRef}
-              view={view}
-              trans={trans}
-              renderScreen={renderScreen}
-              tileBg={artBg}
-            />
+              {!npView && (
+                <div className="win-tools" style={noDragStyle}>
+                  {!homeView && (
+                    <Button onClick={goBack} aria-label="Menu">
+                      <Icon.back size={20} />
+                    </Button>
+                  )}
+                  <Button onClick={() => navigate("np")} aria-label="Now playing">
+                    <Equalizer playing={playing} color="currentColor" size={18} />
+                  </Button>
+                  <Button aria-label="More">
+                    <Icon.kebab size={20} />
+                  </Button>
+                </div>
+              )}
 
-            {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
+              <MorphStage
+                viewRef={viewRef}
+                view={view}
+                trans={trans}
+                renderScreen={renderScreen}
+                tileBg={artBg}
+              />
+
+              {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
             transition). Entering now-playing collapses it to 0 the same frame, so
             .view is full-height when the np cover morph measures its (vertically
             centered) hero — never re-jumping. The bar itself is positioned
@@ -532,67 +534,68 @@ export default function Shell() {
             with the old single collapsing box, entering np yanked the bar into a
             0-height box (no slide — a dark strip just popped where it sat); now the
             light bar visibly slides off the bottom over the full-height np content. */}
-            <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
+              <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
 
-            {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
+              {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
             the slide-out. z-index 30 sits below the morph grain (40) so the flying
             cover passes over it, above .view content. overflow:visible is harmless
             now the volume popup portals out; .win (overflow:hidden) clips the slide. */}
-            <AnimatePresence>
-              {showBar && (
-                <motion.div
-                  initial={{ y: "108%", opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: "108%", opacity: 0 }}
-                  transition={{
-                    y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
-                    opacity: { duration: 0.3 },
-                  }}
-                  className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
-                >
-                  <PlayerBar
-                    track={current}
-                    playing={playing}
-                    setPlaying={setPlaying}
-                    liked={isLiked}
-                    toggleLike={() => current && toggleLike(current.id)}
-                    accent={accent}
-                    shuffle={shuffle}
-                    setShuffle={setShuffle}
-                    repeat={repeat}
-                    repeatOne={repeatOne}
-                    onToggleRepeat={onToggleRepeat}
-                    onNext={playNext}
-                    onPrev={playPrev}
-                    positionSec={playback.progress.duration}
-                    durationSec={playback.duration.duration}
-                    onSeek={playback.seek}
-                    volume={playback.volume}
-                    onVolume={playback.setVolume}
-                    onOpenNowPlaying={() => navigate("np")}
-                    onOpenQueue={() => navigate("queue")}
-                    onOpenComments={() => navigate("comments")}
-                    onOpenLyrics={() => navigate("np")}
-                    onOpenArtist={openArtist}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              <AnimatePresence>
+                {showBar && (
+                  <motion.div
+                    initial={{ y: "108%", opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: "108%", opacity: 0 }}
+                    transition={{
+                      y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
+                      opacity: { duration: 0.3 },
+                    }}
+                    className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
+                  >
+                    <PlayerBar
+                      track={current}
+                      playing={playing}
+                      setPlaying={setPlaying}
+                      liked={isLiked}
+                      toggleLike={() => current && toggleLike(current.id)}
+                      accent={accent}
+                      shuffle={shuffle}
+                      setShuffle={setShuffle}
+                      repeat={repeat}
+                      repeatOne={repeatOne}
+                      onToggleRepeat={onToggleRepeat}
+                      onNext={playNext}
+                      onPrev={playPrev}
+                      positionSec={playback.progress.duration}
+                      durationSec={playback.duration.duration}
+                      onSeek={playback.seek}
+                      volume={playback.volume}
+                      onVolume={playback.setVolume}
+                      onOpenNowPlaying={() => navigate("np")}
+                      onOpenQueue={() => navigate("queue")}
+                      onOpenComments={() => navigate("comments")}
+                      onOpenLyrics={() => navigate("np")}
+                      onOpenArtist={openArtist}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          {menu && (
-            <React.Suspense fallback={null}>
-              <LazyContextMenu
-                x={menu.x}
-                y={menu.y}
-                items={menu.items}
-                accent={accent}
-                onClose={() => setMenu(null)}
-              />
-            </React.Suspense>
-          )}
-        </div>
-      </ScreenActionsProvider>
-    </MorphProvider>
+            {menu && (
+              <React.Suspense fallback={null}>
+                <LazyContextMenu
+                  x={menu.x}
+                  y={menu.y}
+                  items={menu.items}
+                  accent={accent}
+                  onClose={() => setMenu(null)}
+                />
+              </React.Suspense>
+            )}
+          </div>
+        </ScreenActionsProvider>
+      </MorphProvider>
+    </TooltipProvider>
   );
 }

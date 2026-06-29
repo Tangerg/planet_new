@@ -11,6 +11,7 @@ import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Slider } from "@/components/controls/Slider";
 import { Button } from "@/components/controls/Button";
 import { Toggle } from "@/components/controls/Toggle";
+import { Tooltip } from "@/components/controls/Tooltip";
 import { useMorph } from "@/infra/morph";
 import { useScreenActions } from "@/hooks/screenActions";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
@@ -164,34 +165,40 @@ export const PlayerBar = React.memo(function PlayerBar({
 
       {/* ── transport (left-aligned; white play button is the focal point) ── */}
       <div className="relative z-[1] flex flex-none items-center gap-1">
-        <Button
-          className={ctlCls}
-          style={ctlColor(false)}
-          onClick={() => onPrev && onPrev()}
-          aria-label="Previous"
-        >
-          <Icon.prev size={21} />
-        </Button>
-        <Button
-          className="mx-0.5 grid h-11 w-11 place-items-center rounded-full"
-          style={{
-            background: accent,
-            color: "#06060a",
-            boxShadow: `0 6px 18px -4px ${accent}`,
-          }}
-          onClick={() => setPlaying(!playing)}
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
-        </Button>
-        <Button
-          className={ctlCls}
-          style={ctlColor(false)}
-          onClick={() => onNext && onNext()}
-          aria-label="Next"
-        >
-          <Icon.next size={21} />
-        </Button>
+        <Tooltip label="Previous">
+          <Button
+            className={ctlCls}
+            style={ctlColor(false)}
+            onClick={() => onPrev && onPrev()}
+            aria-label="Previous"
+          >
+            <Icon.prev size={21} />
+          </Button>
+        </Tooltip>
+        <Tooltip label={playing ? "Pause" : "Play"}>
+          <Button
+            className="mx-0.5 grid h-11 w-11 place-items-center rounded-full"
+            style={{
+              background: accent,
+              color: "#06060a",
+              boxShadow: `0 6px 18px -4px ${accent}`,
+            }}
+            onClick={() => setPlaying(!playing)}
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? <Icon.pause size={22} /> : <Icon.play size={22} />}
+          </Button>
+        </Tooltip>
+        <Tooltip label="Next">
+          <Button
+            className={ctlCls}
+            style={ctlColor(false)}
+            onClick={() => onNext && onNext()}
+            aria-label="Next"
+          >
+            <Icon.next size={21} />
+          </Button>
+        </Tooltip>
       </div>
 
       {/* ── inline scrubber: current time · slider · total time (always shown) ── */}
@@ -258,33 +265,41 @@ export const PlayerBar = React.memo(function PlayerBar({
 
       {/* ── right: utilities ── */}
       <div className="relative z-[1] flex flex-none items-center gap-1 pr-[18px]">
-        <Toggle
-          className={ctlCls}
-          style={ctlColor(liked)}
-          pressed={liked}
-          onPressedChange={() => toggleLike()}
-          aria-label="Like"
+        <Tooltip label={liked ? "Remove from liked" : "Save to liked"}>
+          <Toggle
+            className={ctlCls}
+            style={ctlColor(liked)}
+            pressed={liked}
+            onPressedChange={() => toggleLike()}
+            aria-label="Like"
+          >
+            <Icon.heart size={18} filled={liked} />
+          </Toggle>
+        </Tooltip>
+        <Tooltip label={shuffle ? "Disable shuffle" : "Enable shuffle"}>
+          <Toggle
+            className={ctlCls}
+            style={ctlColor(shuffle)}
+            pressed={shuffle}
+            onPressedChange={setShuffle}
+            aria-label="Shuffle"
+          >
+            <Icon.shuffle size={18} />
+          </Toggle>
+        </Tooltip>
+        <Tooltip
+          label={!repeat ? "Enable repeat" : repeatOne ? "Disable repeat" : "Enable repeat one"}
         >
-          <Icon.heart size={18} filled={liked} />
-        </Toggle>
-        <Toggle
-          className={ctlCls}
-          style={ctlColor(shuffle)}
-          pressed={shuffle}
-          onPressedChange={setShuffle}
-          aria-label="Shuffle"
-        >
-          <Icon.shuffle size={18} />
-        </Toggle>
-        <Toggle
-          className={ctlCls}
-          style={ctlColor(repeat)}
-          pressed={repeat}
-          onPressedChange={() => onToggleRepeat()}
-          aria-label={repeatOne ? "Repeat one" : "Repeat"}
-        >
-          {repeatOne ? <Icon.loopOne size={18} /> : <Icon.loop size={18} />}
-        </Toggle>
+          <Toggle
+            className={ctlCls}
+            style={ctlColor(repeat)}
+            pressed={repeat}
+            onPressedChange={() => onToggleRepeat()}
+            aria-label={repeatOne ? "Repeat one" : "Repeat"}
+          >
+            {repeatOne ? <Icon.loopOne size={18} /> : <Icon.loop size={18} />}
+          </Toggle>
+        </Tooltip>
         {/* volume — Radix HoverCard owns the hover-open + the trigger→content
             safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
         <HoverCard.Root open={volOpen} onOpenChange={setVolOpen} openDelay={0} closeDelay={120}>
@@ -387,43 +402,49 @@ export const PlayerBar = React.memo(function PlayerBar({
             )}
           </AnimatePresence>
         </HoverCard.Root>
-        <Button
-          className={ctlCls}
-          style={ctlColor(false)}
-          onClick={onOpenLyrics}
-          aria-label="Lyrics"
-        >
-          <Icon.lyrics size={18} />
-        </Button>
-        <Button
-          className={ctlCls}
-          style={ctlColor(dragOver)}
-          onClick={onOpenQueue}
-          aria-label="Up next"
-          onDragOver={(e) => {
-            if (e.dataTransfer.types.includes("text/sonance-track")) {
+        <Tooltip label="Lyrics">
+          <Button
+            className={ctlCls}
+            style={ctlColor(false)}
+            onClick={onOpenLyrics}
+            aria-label="Lyrics"
+          >
+            <Icon.lyrics size={18} />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Queue">
+          <Button
+            className={ctlCls}
+            style={ctlColor(dragOver)}
+            onClick={onOpenQueue}
+            aria-label="Up next"
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("text/sonance-track")) {
+                e.preventDefault();
+                setDragOver(true);
+              }
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
               e.preventDefault();
-              setDragOver(true);
-            }
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const id = e.dataTransfer.getData("text/sonance-track");
-            if (id) enqueue(id);
-          }}
-        >
-          <Icon.list size={18} />
-        </Button>
-        <Button
-          className={ctlCls}
-          style={ctlColor(false)}
-          onClick={onOpenComments}
-          aria-label="Comments"
-        >
-          <Icon.comment size={18} />
-        </Button>
+              setDragOver(false);
+              const id = e.dataTransfer.getData("text/sonance-track");
+              if (id) enqueue(id);
+            }}
+          >
+            <Icon.list size={18} />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Comments">
+          <Button
+            className={ctlCls}
+            style={ctlColor(false)}
+            onClick={onOpenComments}
+            aria-label="Comments"
+          >
+            <Icon.comment size={18} />
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );
