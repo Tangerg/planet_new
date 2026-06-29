@@ -40,6 +40,17 @@ function radiusPct(r: number | string, size: number): number {
  * `.t-base`, `.t-from`, `.grain`) live in the design-system CSS.
  */
 export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: MorphStageProps) {
+  // Freeze the OUTGOING screen's render for the whole transition. A heavy `from`
+  // screen (e.g. ForYou — blurred hero + image rails) would otherwise re-render
+  // on every Shell update mid-morph (its catalog/daily/record queries resolving),
+  // churning the main thread for ~600ms. border-radius is non-composited, so that
+  // churn makes the flying tile's square→circle tween drop frames and snap at the
+  // hand-off (seen ONLY when leaving ForYou). Keyed on `trans.from` → computed
+  // once per transition; intentionally NOT re-run when `renderScreen` changes
+  // (that's the whole point — a stable frozen snapshot while the tile flies).
+  const fromKey = trans?.from;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fromScreen = React.useMemo(() => (fromKey ? renderScreen(fromKey) : null), [fromKey]);
   return (
     <div className="view" ref={viewRef}>
       {(() => {
@@ -88,7 +99,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
                 className={hideFromHero ? "t-layer t-from t-hide-hero" : "t-layer t-from"}
                 style={fromStyle}
               >
-                <MorphFrozen>{renderScreen(trans.from)}</MorphFrozen>
+                <MorphFrozen>{fromScreen}</MorphFrozen>
               </div>
             );
           })()}
