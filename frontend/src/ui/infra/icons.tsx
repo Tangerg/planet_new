@@ -65,6 +65,11 @@ function scaled(factor: number, children: React.ReactNode) {
   );
 }
 
+// Volume glyphs share the speaker body+cone (and the low wave), so they can't
+// drift apart; high/low/mute differ only by the extra wave / mute ✕.
+const VOL_SPEAKER = "M4 9.5v5h3.5l5 4V5.5L7.5 9.5z";
+const VOL_WAVE = "M15.5 9.5a4 4 0 0 1 0 5";
+
 export const Icon: Record<string, React.FC<IconProps>> = {
   // transport — plain filled shapes (no surrounding circle)
   play: (p) => (
@@ -190,25 +195,24 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       <path d="M5 12.5 10 17l9-10" />
     </Svg>
   ),
-  // volume — high: speaker + two curved waves (fills the box; no scale hack).
+  // volume — high / low / mute share the speaker body+cone (VOL_SPEAKER) and only
+  // differ by the trailing waves / mute ✕, so the speaker can't drift between them.
   volume: (p) => (
     <Svg {...p}>
-      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
-      <path d="M15.5 9.5a4 4 0 0 1 0 5" />
+      <path d={VOL_SPEAKER} />
+      <path d={VOL_WAVE} />
       <path d="M18 7a8 8 0 0 1 0 10" />
     </Svg>
   ),
-  // volume — low: speaker + a single wave.
   volumeLow: (p) => (
     <Svg {...p}>
-      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
-      <path d="M15.5 9.5a4 4 0 0 1 0 5" />
+      <path d={VOL_SPEAKER} />
+      <path d={VOL_WAVE} />
     </Svg>
   ),
-  // volume — muted: speaker + an ✕.
   volumeMute: (p) => (
     <Svg {...p}>
-      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
+      <path d={VOL_SPEAKER} />
       <path d="M16.5 10l5 4M21.5 10l-5 4" />
     </Svg>
   ),

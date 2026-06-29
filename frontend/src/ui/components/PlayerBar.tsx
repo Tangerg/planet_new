@@ -96,12 +96,15 @@ export const PlayerBar = React.memo(function PlayerBar({
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const pos = scrub ?? Math.min(positionSec, dur);
 
-  // Text utility button (LRC) — chrome (bg/border/cursor) comes from `.btn`.
   // Icon control button: static grid layout in the class, the on/off accent in style.
   const ctlCls = "grid place-items-center p-[5px]";
   const ctlColor = (on: boolean): React.CSSProperties => ({
     color: on ? accent : "rgba(20,20,24,.78)",
   });
+  // Stateful glyph / label, named so the JSX stays declarative: volume by level
+  // (mute / low / high); the repeat tooltip describes what the NEXT click does.
+  const VolumeIcon = volume === 0 ? Icon.volumeMute : volume <= 50 ? Icon.volumeLow : Icon.volume;
+  const repeatTip = !repeat ? "Enable repeat" : repeatOne ? "Disable repeat" : "Enable repeat one";
   // Mono time labels flanking the scrubber; fixed width so digit changes
   // (9:59 → 10:00) don't nudge the layout.
   const timeCls =
@@ -313,9 +316,7 @@ export const PlayerBar = React.memo(function PlayerBar({
             <Icon.shuffle size={18} />
           </Toggle>
         </Tooltip>
-        <Tooltip
-          label={!repeat ? "Enable repeat" : repeatOne ? "Disable repeat" : "Enable repeat one"}
-        >
+        <Tooltip label={repeatTip}>
           <Toggle
             className={ctlCls}
             style={ctlColor(repeat)}
@@ -336,13 +337,7 @@ export const PlayerBar = React.memo(function PlayerBar({
               aria-label="Volume"
               onClick={() => onVolume(volume > 0 ? 0 : 80)}
             >
-              {volume === 0 ? (
-                <Icon.volumeMute size={18} />
-              ) : volume <= 50 ? (
-                <Icon.volumeLow size={18} />
-              ) : (
-                <Icon.volume size={18} />
-              )}
+              <VolumeIcon size={18} />
             </Button>
           </HoverCard.Trigger>
           <AnimatePresence>
