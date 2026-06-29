@@ -274,15 +274,11 @@ export const PlayerBar = React.memo(function PlayerBar({
           {scrubHover && (
             <div
               aria-hidden
-              className="pointer-events-none absolute font-mono text-[10.5px] tabular-nums text-white shadow-pop"
+              className="tooltip-pop pointer-events-none absolute px-[7px] py-[3px] font-mono text-[10.5px] font-semibold tabular-nums"
               style={{
                 left: scrubHover.x,
                 bottom: "calc(100% + 6px)",
                 transform: "translateX(-50%)",
-                background: "#2a2a32",
-                border: "0.5px solid rgba(255,255,255,.12)",
-                borderRadius: 6,
-                padding: "2px 6px",
                 whiteSpace: "nowrap",
               }}
             >
