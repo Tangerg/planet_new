@@ -325,46 +325,51 @@ export function CoverFlow({
       {/* meta — NOT keyed on cur.id: re-mounting per step re-ran each TextReveal's
           layout measure + HoverCard + the FadeIn on every flip, which stalled the
           main thread (the "lag" on fast switching). Content updates in place. */}
-      <FadeIn
-        className="relative z-[400] text-center"
-        style={{
-          marginTop: expanded ? -COVER * 0.66 : -COVER * 0.42,
-          transition: `margin-top .5s ${NP_EASE}`,
-        }}
-      >
-        <TextReveal
-          lines={1}
-          side="top"
-          align="center"
-          full={cur?.name}
+      <FadeIn className="relative z-[400]" style={{ marginTop: -COVER * 0.42 }}>
+        <div
+          className="text-center"
           style={{
-            fontSize: 30,
-            fontWeight: 300,
-            letterSpacing: ".01em",
-            maxWidth: 560,
-            margin: "0 auto",
-            // One line, never wraps to two (which crammed the meta against the
-            // cover); the full title reveals on hover and in the expanded sheet.
+            // Composited: animate the expand delta on the GPU (translateY) rather
+            // than reflowing margin-top. A plain div (not the motion FadeIn) so
+            // Motion's own transform management can't clobber the CSS transition.
+            transform: `translateY(${expanded ? -COVER * 0.24 : 0}px)`,
+            transition: `transform .5s ${NP_EASE}`,
           }}
         >
-          {cur?.name}
-        </TextReveal>
-        <TextReveal
-          lines={1}
-          side="top"
-          align="center"
-          className="mlabel"
-          full={cur?.sub}
-          style={{
-            color: "var(--tx-3)",
-            marginTop: 8,
-            maxWidth: 460,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          {cur?.sub}
-        </TextReveal>
+          <TextReveal
+            lines={1}
+            side="top"
+            align="center"
+            full={cur?.name}
+            style={{
+              fontSize: 30,
+              fontWeight: 300,
+              letterSpacing: ".01em",
+              maxWidth: 560,
+              margin: "0 auto",
+              // One line, never wraps to two (which crammed the meta against the
+              // cover); the full title reveals on hover and in the expanded sheet.
+            }}
+          >
+            {cur?.name}
+          </TextReveal>
+          <TextReveal
+            lines={1}
+            side="top"
+            align="center"
+            className="mlabel"
+            full={cur?.sub}
+            style={{
+              color: "var(--tx-3)",
+              marginTop: 8,
+              maxWidth: 460,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            {cur?.sub}
+          </TextReveal>
+        </div>
       </FadeIn>
 
       {/* progress dots */}
