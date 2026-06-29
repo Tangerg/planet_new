@@ -33,6 +33,8 @@ type Props = {
   shuffle: boolean;
   setShuffle: (v: boolean) => void;
   repeat: boolean;
+  /** Whether repeat mode is single-track (renders the repeat-one glyph). */
+  repeatOne: boolean;
   onToggleRepeat: () => void;
   onNext?: () => void;
   onPrev?: () => void;
@@ -61,6 +63,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   shuffle,
   setShuffle,
   repeat,
+  repeatOne,
   onToggleRepeat,
   onNext,
   onPrev,
@@ -278,9 +281,9 @@ export const PlayerBar = React.memo(function PlayerBar({
           style={ctlColor(repeat)}
           pressed={repeat}
           onPressedChange={() => onToggleRepeat()}
-          aria-label="Repeat"
+          aria-label={repeatOne ? "Repeat one" : "Repeat"}
         >
-          <Icon.loop size={18} />
+          {repeatOne ? <Icon.loopOne size={18} /> : <Icon.loop size={18} />}
         </Toggle>
         {/* volume — Radix HoverCard owns the hover-open + the trigger→content
             safe area, so there's no hand-rolled hover-bridge / dead-zone. */}
@@ -288,11 +291,17 @@ export const PlayerBar = React.memo(function PlayerBar({
           <HoverCard.Trigger asChild>
             <Button
               className={ctlCls}
-              style={{ ...ctlColor(false), opacity: volume === 0 ? 0.4 : 1 }}
+              style={ctlColor(false)}
               aria-label="Volume"
               onClick={() => onVolume(volume > 0 ? 0 : 80)}
             >
-              <Icon.volume size={18} />
+              {volume === 0 ? (
+                <Icon.volumeMute size={18} />
+              ) : volume <= 50 ? (
+                <Icon.volumeLow size={18} />
+              ) : (
+                <Icon.volume size={18} />
+              )}
             </Button>
           </HoverCard.Trigger>
           <AnimatePresence>
