@@ -109,6 +109,7 @@ export default function Shell() {
   const playing = playback.playing;
   const shuffle = playback.shuffle;
   const repeat = playback.repeat !== RepeatMode.OFF;
+  const repeatOne = playback.repeat === RepeatMode.ONE;
   const queue = playback.upNext;
   const setPlaying = useCallback(() => togglePlay(), [togglePlay]);
   const setShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
@@ -559,6 +560,7 @@ export default function Shell() {
                     shuffle={shuffle}
                     setShuffle={setShuffle}
                     repeat={repeat}
+                    repeatOne={repeatOne}
                     onToggleRepeat={onToggleRepeat}
                     onNext={playNext}
                     onPrev={playPrev}

@@ -116,6 +116,21 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       )}
     </Svg>
   ),
+  // repeat-one — the repeat cycle with a small "1" centred (single-track loop).
+  loopOne: (p) => (
+    <Svg {...p}>
+      {scaled(
+        0.88,
+        <>
+          <path d="m17 2 4 4-4 4" />
+          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+          <path d="m7 22-4-4 4-4" />
+          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+          <path d="M11 10.4 12.3 9.5V15" />
+        </>,
+      )}
+    </Svg>
+  ),
   infinity: (p) => (
     <Svg {...p}>
       <path d="M8.5 9.5a3 3 0 1 0 0 5c1.5 0 2.5-1.2 3.5-2.5s2-2.5 3.5-2.5a3 3 0 1 1 0 5c-1.5 0-2.5-1.2-3.5-2.5" />
@@ -175,13 +190,26 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       <path d="M5 12.5 10 17l9-10" />
     </Svg>
   ),
-  // speaker + two curved waves (Spotify-style "volume high"); fills the box on
-  // its own, so no scale hack needed.
+  // volume — high: speaker + two curved waves (fills the box; no scale hack).
   volume: (p) => (
     <Svg {...p}>
       <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
       <path d="M15.5 9.5a4 4 0 0 1 0 5" />
       <path d="M18 7a8 8 0 0 1 0 10" />
+    </Svg>
+  ),
+  // volume — low: speaker + a single wave.
+  volumeLow: (p) => (
+    <Svg {...p}>
+      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
+      <path d="M15.5 9.5a4 4 0 0 1 0 5" />
+    </Svg>
+  ),
+  // volume — muted: speaker + an ✕.
+  volumeMute: (p) => (
+    <Svg {...p}>
+      <path d="M4 9.5v5h3.5l5 4V5.5L7.5 9.5z" />
+      <path d="M16.5 10l5 4M21.5 10l-5 4" />
     </Svg>
   ),
   note: (p) => (
