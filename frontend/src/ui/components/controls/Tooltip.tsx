@@ -26,7 +26,7 @@ export function Tooltip({ label, side = "top", children }: TooltipProps) {
         <RadixTooltip.Content
           side={side}
           sideOffset={9}
-          className="tooltip-pop z-[9999] select-none px-2.5 py-[7px] text-[11px] font-semibold tracking-[0.01em]"
+          className="tooltip-pop z-[9999] select-none px-3 py-2 text-[11.5px] font-medium tracking-[0.01em]"
         >
           {label}
         </RadixTooltip.Content>
