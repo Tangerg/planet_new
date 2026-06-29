@@ -64,10 +64,13 @@ export function layerStyle(t: Transition): React.CSSProperties {
     pointerEvents: "none",
     zIndex: 20,
     opacity: begin ? 1 : 0,
-    transform: begin ? "scale(1)" : "scale(.985)",
-    transformOrigin: "center",
-    willChange: "transform, opacity",
-    transition: begin ? "none" : `opacity .32s ease, transform .46s ${EASE}`,
+    // Opacity-only fade — deliberately NO transform/scale on the outgoing layer.
+    // Scaling it re-rasters any blur filter it contains (e.g. ForYou's blurred
+    // hero) on every frame, which blocks the main thread for the whole morph and
+    // stalls the tile's non-composited border-radius tween → square→circle snaps
+    // at the hand-off. A plain opacity fade just composites the cached layer.
+    willChange: "opacity",
+    transition: begin ? "none" : `opacity .34s ease`,
   };
 }
 
