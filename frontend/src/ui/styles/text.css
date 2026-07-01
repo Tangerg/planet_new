@@ -62,7 +62,10 @@
   /* filter chips */
   .chip {
     @apply cursor-pointer whitespace-nowrap rounded-full border border-white/20 bg-transparent px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/65;
-    transition: all 0.15s;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      background-color 0.15s;
   }
   .chip:hover {
     border-color: rgba(255, 255, 255, 0.4);
