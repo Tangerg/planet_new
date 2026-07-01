@@ -38,123 +38,145 @@ type SearchResults = {
   playlists: VibeCollection[];
 };
 
-type Props = {
-  view: string;
-  cats: XmbCat[];
-  accent: string;
+// Screen props grouped by bounded context so the router is a screen *assembler*,
+// not a 50-field forwarder. Field names mirror the values each screen consumes;
+// the router just destructures each bundle and hands screens what they need.
+
+type PlaybackBundle = {
   playing: boolean;
   current: VibeTrack;
   hasCurrentTrack: boolean;
   queue: VibeTrack[];
-  catalog: ScreenData;
-  daily: VibeTrack[];
-  libraryData: ScreenData;
-  toplists: VibeCollection[];
-  searchQuery: string;
-  search: (query: string) => Promise<SearchResults>;
-  settings: Settings;
-  liked: Set<string>;
-  isLiked: boolean;
-  lyrics: LyricLine[];
-  comments: VibeComment[];
-  history: VibeTrack[];
-  playRecord: { week: VibeTrack[]; all: VibeTrack[] };
-  libraryTab: string;
-  libraryView: string;
-  detail: DetailTarget | null;
-  artistObj: ArtistTarget;
-  musicVideoObj: VibeMusicVideo | null;
-  musicVideos: VibeMusicVideo[];
-  musicVideosLoading: boolean;
-  musicVideoRail: VibeMusicVideo[];
-  musicVideoComments: VibeComment[];
-  heroTreatment: "mono" | "color";
-  accentOptions: string[];
   progressSec: number;
-  xmbCategory: number;
-  setXmbCategory: (value: number) => void;
-  xmbRowByCategory: Record<string, number>;
-  setXmbRowByCategory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  startForward: (item: XmbItemModel, rect: DOMRect) => void;
-  setSeedQuery: (query: string) => void;
-  setLibraryTab: (tab: string) => void;
-  setLibraryView: (view: string) => void;
-  setAccent: (accent: string) => void;
-  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
+  onPlay: (track: VibeTrack | undefined) => void;
+  onPause: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+  shufflePlay: (tracks: VibeTrack[]) => void;
+};
+
+type NavigationBundle = {
   navigate: (view: string) => void;
   goBack: () => void;
+  startForward: (item: XmbItemModel, rect: DOMRect) => void;
   openDetail: (target: VibeCollection) => void;
   albumDetail: (target: VibeCollection) => void;
   openChart: (target: VibeCollection) => void;
   openArtist: (target: ArtistTarget) => void;
   openMusicVideo: (video: VibeMusicVideo) => void;
   openMusicVideoTheater: (video: VibeMusicVideo) => void;
-  onPlay: (track: VibeTrack | undefined) => void;
-  onPause: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  toggleLike: (id: string) => void;
-  shufflePlay: (tracks: VibeTrack[]) => void;
+  // XMB launcher cursor — transient highlight state Shell holds across mounts.
+  cats: XmbCat[];
+  xmbCategory: number;
+  setXmbCategory: (value: number) => void;
+  xmbRowByCategory: Record<string, number>;
+  setXmbRowByCategory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
 
-export function ShellScreenRouter({
-  view,
-  cats,
-  accent,
-  playing,
-  current,
-  hasCurrentTrack,
-  queue,
-  catalog,
-  daily,
-  libraryData,
-  toplists,
-  searchQuery,
-  search,
-  settings,
-  liked,
-  isLiked,
-  lyrics,
-  comments,
-  history,
-  playRecord,
-  libraryTab,
-  libraryView,
-  detail,
-  artistObj,
-  musicVideoObj,
-  musicVideos,
-  musicVideosLoading,
-  musicVideoRail,
-  musicVideoComments,
-  heroTreatment,
-  accentOptions,
-  progressSec,
-  xmbCategory,
-  setXmbCategory,
-  xmbRowByCategory,
-  setXmbRowByCategory,
-  startForward,
-  setSeedQuery,
-  setLibraryTab,
-  setLibraryView,
-  setAccent,
-  setSettings,
-  navigate,
-  goBack,
-  openDetail,
-  albumDetail,
-  openChart,
-  openArtist,
-  openMusicVideo,
-  openMusicVideoTheater,
-  onPlay,
-  onPause,
-  onNext,
-  onPrev,
-  toggleLike,
-  shufflePlay,
-}: Props) {
+type CatalogBundle = {
+  catalog: ScreenData;
+  toplists: VibeCollection[];
+  daily: VibeTrack[];
+  searchQuery: string;
+  search: (query: string) => Promise<SearchResults>;
+  setSeedQuery: (query: string) => void;
+};
+
+type LibraryBundle = {
+  libraryData: ScreenData;
+  libraryTab: string;
+  libraryView: string;
+  setLibraryTab: (tab: string) => void;
+  setLibraryView: (view: string) => void;
+  liked: Set<string>;
+  isLiked: boolean;
+  toggleLike: (id: string) => void;
+  history: VibeTrack[];
+  playRecord: { week: VibeTrack[]; all: VibeTrack[] };
+};
+
+type ContentBundle = {
+  lyrics: LyricLine[];
+  comments: VibeComment[];
+  detail: DetailTarget | null;
+  artistObj: ArtistTarget;
+};
+
+type MusicVideoBundle = {
+  musicVideoObj: VibeMusicVideo | null;
+  musicVideos: VibeMusicVideo[];
+  musicVideosLoading: boolean;
+  musicVideoRail: VibeMusicVideo[];
+  musicVideoComments: VibeComment[];
+};
+
+type SettingsBundle = {
+  settings: Settings;
+  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
+  accent: string;
+  setAccent: (accent: string) => void;
+  accentOptions: string[];
+  heroTreatment: "mono" | "color";
+};
+
+type Props = {
+  view: string;
+  playback: PlaybackBundle;
+  navigation: NavigationBundle;
+  catalog: CatalogBundle;
+  library: LibraryBundle;
+  content: ContentBundle;
+  musicVideo: MusicVideoBundle;
+  settings: SettingsBundle;
+};
+
+export function ShellScreenRouter(props: Props) {
+  const { view } = props;
+  const {
+    playing,
+    current,
+    hasCurrentTrack,
+    queue,
+    progressSec,
+    onPlay,
+    onPause,
+    onNext,
+    onPrev,
+    shufflePlay,
+  } = props.playback;
+  const {
+    navigate,
+    goBack,
+    startForward,
+    openDetail,
+    albumDetail,
+    openChart,
+    openArtist,
+    openMusicVideo,
+    openMusicVideoTheater,
+    cats,
+    xmbCategory,
+    setXmbCategory,
+    xmbRowByCategory,
+    setXmbRowByCategory,
+  } = props.navigation;
+  const { catalog, toplists, daily, searchQuery, search, setSeedQuery } = props.catalog;
+  const {
+    libraryData,
+    libraryTab,
+    libraryView,
+    setLibraryTab,
+    setLibraryView,
+    liked,
+    isLiked,
+    toggleLike,
+    history,
+    playRecord,
+  } = props.library;
+  const { lyrics, comments, detail, artistObj } = props.content;
+  const { musicVideoObj, musicVideos, musicVideosLoading, musicVideoRail, musicVideoComments } =
+    props.musicVideo;
+  const { settings, setSettings, accent, setAccent, accentOptions, heroTreatment } = props.settings;
   const mono = heroTreatment === "mono";
 
   if (view === "xmb") {
