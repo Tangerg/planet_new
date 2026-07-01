@@ -78,9 +78,8 @@ export function MusicVideoDetailScreen({
           </Button>
 
           <div className="min-w-0 pb-2">
-            <div className="mlabel mb-4 inline-block bg-[rgba(6,6,9,.78)] px-4 py-2 text-[10px] text-white/74">
-              Music Video
-            </div>
+            {/* Plain mono kind-label, matching the Detail/Artist hero (not a boxed chip). */}
+            <div className="mlabel mb-3 text-white/70">Music Video</div>
             <div className="line-clamp-2 max-w-[700px] text-[52px] font-extralight leading-[1.04] tracking-[0.005em] [overflow-wrap:anywhere]">
               {video.title}
             </div>

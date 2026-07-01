@@ -138,9 +138,12 @@ export function MusicVideoTheaterScreen({
           onClick={() => setCommentsOpen((v) => !v)}
           className="mlabel cursor-pointer px-[12px] py-[7px] text-[10px]"
           style={{
-            background: commentsOpen ? "rgba(18,255,131,.18)" : "rgba(6,6,9,.72)",
+            background: commentsOpen
+              ? `color-mix(in srgb, ${accent} 18%, transparent)`
+              : "rgba(6,6,9,.72)",
             color: commentsOpen ? accent : "rgba(255,255,255,.78)",
             borderBottom: commentsOpen ? `1px solid ${accent}` : "1px solid transparent",
+            boxShadow: commentsOpen ? `0 8px 26px -18px ${accent}` : "none",
             WebkitBackdropFilter: "blur(12px)",
             backdropFilter: "blur(12px)",
           }}
