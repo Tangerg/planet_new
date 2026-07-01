@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
 import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
-import { collectionFlowItems, trackFlowItems, type FlowItem } from "@/model/derive";
+import { collectionFlowItems, type FlowItem } from "@/model/derive";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -13,8 +13,7 @@ import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { CollectionRow } from "@/components/cards/CollectionRow";
-import { TrackRow } from "@/components/cards/TrackRow";
-import { TrackCard } from "@/components/cards/TrackCard";
+import { TrackCollectionView } from "@/components/TrackCollectionView";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 import { StatPill } from "@/components/layout/StatPill";
@@ -204,54 +203,21 @@ export function ArtistScreen({
             </div>
 
             <XFade key={tab + view}>
-              {tab === "top" && view === "list" && (
-                <VList
-                  count={tracks.length}
-                  estimateSize={66}
-                  itemKey={(i) => tracks[i].id}
-                  renderItem={(i) => (
-                    <TrackRow
-                      track={tracks[i]}
-                      index={i + 1}
-                      onPlay={onPlay}
-                      current={current}
-                      playing={playing}
-                      liked={liked}
-                      toggleLike={toggleLike}
-                      accent={accent}
-                      onOpenArtist={onOpenArtist}
-                    />
-                  )}
+              {tab === "top" && (
+                <TrackCollectionView
+                  view={view}
+                  tracks={tracks}
+                  onPlay={onPlay}
+                  current={current}
+                  playing={playing}
+                  liked={liked}
+                  toggleLike={toggleLike}
+                  accent={accent}
+                  onOpenArtist={onOpenArtist}
+                  flowCenter={flowCenter}
+                  setFlowCenter={setFlowCenter}
+                  flowHeight={480}
                 />
-              )}
-              {tab === "top" && view === "grid" && (
-                <CardGrid
-                  count={tracks.length}
-                  minColumnWidth={168}
-                  gap={26}
-                  estimateRowHeight={232}
-                  itemKey={(i) => tracks[i].id}
-                  renderItem={(i) => (
-                    <TrackCard
-                      track={tracks[i]}
-                      onPlay={onPlay}
-                      accent={accent}
-                      onOpenArtist={onOpenArtist}
-                    />
-                  )}
-                />
-              )}
-              {tab === "top" && view === "flow" && (
-                <div className="-mx-12 h-[480px]">
-                  <CoverFlow
-                    items={trackFlowItems(tracks)}
-                    center={Math.min(flowCenter, tracks.length - 1)}
-                    setCenter={setFlowCenter}
-                    accent={accent}
-                    onOpen={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
-                    onPlay={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
-                  />
-                </div>
               )}
               {tab === "albums" && view === "grid" && (
                 <CardGrid
