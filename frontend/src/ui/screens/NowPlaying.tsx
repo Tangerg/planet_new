@@ -14,6 +14,7 @@ import { TagStack } from "@/components/now-playing/TagStack";
 import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
 import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
+import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 import { activeLyricIndex, lyricLinesOrFallback, type LyricLine } from "@/model/now-playing";
 
 export type { LyricLine } from "@/model/now-playing";
@@ -33,8 +34,6 @@ type Props = {
   current?: VibeTrack;
   onNext?: () => void;
   onPrev?: () => void;
-  /** Current playback position in seconds (from the kernel). */
-  progressSec?: number;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -52,9 +51,11 @@ export const NowPlaying = React.memo(function NowPlaying({
   onPlay,
   onNext,
   onPrev,
-  progressSec = 0,
   onOpenArtist,
 }: Props) {
+  // Read the live clock here (not threaded from Shell) so only Now Playing
+  // re-renders on the progress tick — see usePlaybackProgress.
+  const { positionSec: progressSec } = usePlaybackProgress();
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
   const touch = useRef<{ x: number; y: number } | null>(null);

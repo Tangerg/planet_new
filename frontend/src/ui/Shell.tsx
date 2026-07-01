@@ -220,7 +220,6 @@ export default function Shell() {
         current,
         hasCurrentTrack: !!playback.current,
         queue,
-        progressSec: playback.progress.duration,
         onPlay,
         onPause: playback.pause,
         onNext: playNext,
@@ -325,8 +324,6 @@ export default function Shell() {
                 onToggleRepeat={onToggleRepeat}
                 onNext={playNext}
                 onPrev={playPrev}
-                positionSec={playback.progress.duration}
-                durationSec={playback.duration.duration}
                 onSeek={playback.seek}
                 volume={playback.volume}
                 onVolume={playback.setVolume}

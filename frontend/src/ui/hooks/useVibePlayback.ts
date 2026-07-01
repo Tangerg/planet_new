@@ -24,8 +24,6 @@ export function useVibePlayback() {
   const domainTrack = usePlayQueueStore.use.track();
   const domainTracks = usePlayQueueStore.use.tracks();
   const playState = usePlayQueueStore.use.playState();
-  const progress = usePlayQueueStore.use.progress();
-  const duration = usePlayQueueStore.use.duration();
   const playing = playState === PlayState.PLAYING;
 
   const current = useMemo(() => currentTrackView(domainTrack), [domainTrack]);
@@ -85,8 +83,6 @@ export function useVibePlayback() {
     tracks,
     upNext,
     playing,
-    progress,
-    duration,
     shuffle,
     repeat,
     volume,

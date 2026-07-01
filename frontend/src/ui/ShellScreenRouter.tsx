@@ -45,7 +45,6 @@ type PlaybackBundle = {
   current: VibeTrack;
   hasCurrentTrack: boolean;
   queue: VibeTrack[];
-  progressSec: number;
   onPlay: (track: VibeTrack | undefined) => void;
   onPause: () => void;
   onNext: () => void;
@@ -130,18 +129,8 @@ type Props = {
 
 export function ShellScreenRouter(props: Props) {
   const { view } = props;
-  const {
-    playing,
-    current,
-    hasCurrentTrack,
-    queue,
-    progressSec,
-    onPlay,
-    onPause,
-    onNext,
-    onPrev,
-    shufflePlay,
-  } = props.playback;
+  const { playing, current, hasCurrentTrack, queue, onPlay, onPause, onNext, onPrev, shufflePlay } =
+    props.playback;
   const {
     navigate,
     goBack,
@@ -412,7 +401,6 @@ export function ShellScreenRouter(props: Props) {
         current={current}
         onNext={onNext}
         onPrev={onPrev}
-        progressSec={progressSec}
         initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
         onClose={goBack}
         onOpenArtist={openArtist}
