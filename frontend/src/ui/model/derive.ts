@@ -9,8 +9,10 @@ import type { VibeTrack, VibeCollection } from "./adapt";
 
 // ── CoverFlow items ──────────────────────────────────────────────────
 
-/** A CoverFlow card: cover fields + display name/sub + the source object. */
-export type FlowItem = {
+/** A CoverFlow card: cover fields + display name/sub + the source object. The
+ *  source type is preserved through `T` so callers get their concrete object
+ *  back (a track or a collection) without a cast. */
+export type FlowItem<T extends VibeTrack | VibeCollection = VibeTrack | VibeCollection> = {
   id: string;
   name: string;
   sub?: string;
@@ -18,11 +20,11 @@ export type FlowItem = {
   grad?: string[];
   image?: string;
   images?: Image[];
-  obj: VibeTrack | VibeCollection;
+  obj: T;
 };
 
 /** Tracks → flow cards (title as name, artist as sub). */
-export function trackFlowItems(tracks: VibeTrack[]): FlowItem[] {
+export function trackFlowItems(tracks: VibeTrack[]): FlowItem<VibeTrack>[] {
   return tracks.map((t) => ({
     id: t.id,
     name: t.title,
@@ -39,7 +41,7 @@ export function trackFlowItems(tracks: VibeTrack[]): FlowItem[] {
 export function collectionFlowItems(
   items: VibeCollection[],
   sub: (c: VibeCollection) => string,
-): FlowItem[] {
+): FlowItem<VibeCollection>[] {
   return items.map((c) => ({
     id: c.id,
     name: c.name,

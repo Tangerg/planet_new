@@ -12,7 +12,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 
-import type { VibeTrack } from "@/model/adapt";
+import type { VibeCollection, VibeTrack } from "@/model/adapt";
 import type { FlowItem } from "@/model/derive";
 import { Button } from "@/components/controls/Button";
 import { TextReveal } from "@/components/controls/TextReveal";
@@ -30,20 +30,21 @@ import {
 import { useScreenActions } from "@/hooks/screenActions";
 import { useCoverFlowInput } from "@/hooks/useCoverFlowInput";
 
-type Props = {
-  items: FlowItem[];
+type Props<T extends VibeTrack | VibeCollection> = {
+  items: FlowItem<T>[];
   center: number;
   setCenter: (n: number | ((c: number) => number)) => void;
-  onOpen: (item: FlowItem) => void;
-  onPlay: (item: FlowItem) => void;
+  /** Receives the source object (track or collection), not the flow wrapper. */
+  onOpen: (item: T) => void;
+  onPlay: (item: T) => void;
   accent: string;
-  tracksFor?: (item: FlowItem) => VibeTrack[];
+  tracksFor?: (item: T) => VibeTrack[];
   onPlayTrack?: (track: VibeTrack) => void;
   /** Render covers as circles (artists) instead of squares (everything else). */
   round?: boolean;
 };
 
-export function CoverFlow({
+export function CoverFlow<T extends VibeTrack | VibeCollection>({
   items,
   center,
   setCenter,
@@ -53,7 +54,7 @@ export function CoverFlow({
   tracksFor,
   onPlayTrack,
   round,
-}: Props) {
+}: Props<T>) {
   const { trackMenu, collMenu } = useScreenActions();
   // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
   const rootRef = useRef<HTMLDivElement>(null);
@@ -72,7 +73,7 @@ export function CoverFlow({
     setExpanded(false);
   }, [center]);
 
-  const sheetTracks = expanded && expandable && cur ? expandable(cur) || [] : [];
+  const sheetTracks = expanded && expandable && cur ? expandable(cur.obj) || [] : [];
 
   const input = useCoverFlowInput({
     items,
@@ -128,11 +129,11 @@ export function CoverFlow({
                 showPlay={isC && !round}
                 transform={coverTransform(i - center)}
                 onActivate={() =>
-                  isC ? (expandable ? setExpanded((e) => !e) : onOpen(it)) : setCenter(i)
+                  isC ? (expandable ? setExpanded((e) => !e) : onOpen(it.obj)) : setCenter(i)
                 }
-                onDoubleOpen={isC ? () => onOpen(it) : undefined}
+                onDoubleOpen={isC ? () => onOpen(it.obj) : undefined}
                 onContextMenu={isC && it.obj ? (e) => collMenu(e, it.obj) : undefined}
-                onPlay={() => onPlay(it)}
+                onPlay={() => onPlay(it.obj)}
               />
             );
           })}
@@ -218,7 +219,7 @@ export function CoverFlow({
           container={rootRef.current}
           item={cur}
           tracks={sheetTracks}
-          onOpen={() => onOpen(cur)}
+          onOpen={() => cur && onOpen(cur.obj)}
           onPlayTrack={onPlayTrack}
           trackMenu={trackMenu}
         />

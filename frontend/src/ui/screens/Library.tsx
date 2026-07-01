@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
 import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/adapt";
-import { collectionSub, collectionMeta, collectionFlowItems, type FlowItem } from "@/model/derive";
+import { collectionSub, collectionMeta, collectionFlowItems } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -136,12 +136,12 @@ export function LibraryScreen({
                   center={Math.min(flowCenter, flowItems.length - 1)}
                   setCenter={setFlowCenter}
                   accent={accent}
-                  onOpen={(it: FlowItem) => openOf(it.obj as VibeCollection)}
-                  onPlay={(it: FlowItem) => {
-                    const ts = tracksOf(it.obj as VibeCollection);
+                  onOpen={openOf}
+                  onPlay={(al) => {
+                    const ts = tracksOf(al);
                     if (ts[0]) onPlay(ts[0]);
                   }}
-                  tracksFor={(it: FlowItem) => tracksOf(it.obj as VibeCollection)}
+                  tracksFor={tracksOf}
                   onPlayTrack={onPlay}
                 />
               </div>
