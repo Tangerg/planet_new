@@ -30,38 +30,14 @@ import {
   type VibeMusicVideo,
   type VibeTrack,
 } from "@/model/adapt";
+import { normalizeDetailTarget } from "@/model/detail";
+import { createNavSnapshot, isLauncherSnapshot, type NavSnapshot } from "@/model/shell-navigation";
 import {
-  detailKindOf,
-  loadArtistTarget,
-  loadDetailTarget,
-  loadMusicVideoDetail,
-  mergeDetailTarget,
-  mergeMusicVideoDetail,
-  normalizeDetailTarget,
-  shouldFetchArtistTarget,
-  shouldFetchDetailTarget,
-  shouldFetchMusicVideoDetail,
-} from "@/model/detail";
-import { queryKeys } from "@/model/queryKeys";
-
-// One frame of navigation state — enough to rebuild any screen on "back".
-// Screen rendering reads several independent state slices (detail / artistObj /
-// library tab+view / search seed), so a back-stack entry must snapshot all of
-// them, not just the `view` string.
-type NavSnapshot = {
-  view: string;
-  detail: DetailTarget | null;
-  artistObj: ArtistTarget;
-  musicVideoObj: VibeMusicVideo | null;
-  musicVideoRelated: VibeMusicVideo[];
-  libraryTab: string;
-  libraryView: string;
-  searchQuery: string;
-  playContext: VibeTrack[];
-  // The morph origin tile active while on this screen — restored so a later
-  // collapse-to-launcher flies from the right place after a deep back-walk.
-  lastTile: MorphLastTile | null;
-};
+  fetchArtistTarget,
+  fetchDetailTarget,
+  fetchMusicVideoTarget,
+  mergeFetchedMusicVideo,
+} from "@/hooks/shellNavigationLoaders";
 
 export function useShellNavigation(media: MediaService, queryClient: QueryClient) {
   /* ---- navigation / view state ---- */
@@ -79,8 +55,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
      launcher boundary itself stays the morph engine's job (startReverse), so
      we never push "xmb" — an empty stack means "morph home". Held in a ref:
      it only drives the goBack branch, never rendering. ---- */
-  const navStack = useRef<NavSnapshot[]>([]);
-  const navSnapRef = useRef<NavSnapshot | null>(null);
+  const navStack = useRef<NavSnapshot<MorphLastTile>[]>([]);
+  const navSnapRef = useRef<NavSnapshot<MorphLastTile> | null>(null);
 
   /* Current playable context (filled once a detail/artist loads); Shell's
      onPlay(track) plays within this list. */
@@ -91,7 +67,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   // Reads navSnapRef at call time (populated each render, after the morph hook).
   const pushCurrent = useCallback(() => {
     const snap = navSnapRef.current;
-    if (!snap || snap.view === "xmb") return;
+    if (!snap || isLauncherSnapshot(snap)) return;
     navStack.current.push(snap);
   }, []);
   // Forward navigation to a bare view: push the current screen, then switch.
@@ -117,20 +93,13 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
       setDetail(obj);
       playContext.current = obj.tracks;
       setView("detail");
-      if (shouldFetchDetailTarget(obj)) {
-        const kind = detailKindOf(obj);
-        queryClient
-          .fetchQuery({
-            queryKey: queryKeys.detail(media.providerName, kind, obj.id),
-            queryFn: () => loadDetailTarget(media, obj),
-          })
-          .then((full) => {
-            const merged = mergeDetailTarget(obj, full);
-            playContext.current = merged.tracks;
-            setDetail(merged);
-          })
-          .catch(() => {});
-      }
+      fetchDetailTarget({ media, queryClient }, obj)
+        .then((merged) => {
+          if (!merged) return;
+          playContext.current = merged.tracks;
+          setDetail(merged);
+        })
+        .catch(() => {});
     },
     [media, queryClient, pushCurrent],
   );
@@ -148,34 +117,20 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
       setArtistObj(ar);
       playContext.current = ar.tracks ?? [];
       setView("artist");
-      if (shouldFetchArtistTarget(ar)) {
-        queryClient
-          .fetchQuery({
-            queryKey: queryKeys.artist(media.providerName, ar.id),
-            queryFn: () => loadArtistTarget(media, ar),
-          })
-          .then((mapped) => {
-            playContext.current = mapped.tracks ?? [];
-            setArtistObj(mapped);
-          })
-          .catch(() => {});
-      }
+      fetchArtistTarget({ media, queryClient }, ar)
+        .then((mapped) => {
+          if (!mapped) return;
+          playContext.current = mapped.tracks ?? [];
+          setArtistObj(mapped);
+        })
+        .catch(() => {});
     },
     [media, queryClient, pushCurrent],
   );
   const fetchMusicVideo = useCallback(
     (mv: VibeMusicVideo) => {
-      if (!shouldFetchMusicVideoDetail(mv, (cap) => media.supports(cap))) return;
-      queryClient
-        .fetchQuery({
-          queryKey: queryKeys.musicVideo(media.providerName, mv.id),
-          queryFn: () => loadMusicVideoDetail(media, mv),
-        })
-        .then((full) =>
-          setMusicVideoObj((current) => {
-            return mergeMusicVideoDetail(current, mv.id, full);
-          }),
-        )
+      fetchMusicVideoTarget({ media, queryClient }, mv)
+        .then((full) => setMusicVideoObj((current) => mergeFetchedMusicVideo(current, mv.id, full)))
         .catch(() => {});
     },
     [media, queryClient],
@@ -224,7 +179,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
      placed after the morph hook so lastTile is in scope. A card morph mutates
      lastTile only inside the click handler that follows this render, so the
      value captured here is still the origin tile of the *current* screen. */
-  navSnapRef.current = {
+  navSnapRef.current = createNavSnapshot({
     view,
     detail,
     artistObj,
@@ -235,7 +190,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     searchQuery,
     playContext: playContext.current,
     lastTile: lastTile.current,
-  };
+  });
 
   /* Back: pop one screen off the stack and restore its full data snapshot;
      when the stack is empty we're at a launcher-level screen, so hand off to

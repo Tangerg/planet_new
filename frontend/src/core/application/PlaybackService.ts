@@ -43,11 +43,17 @@ export class PlaybackService {
   async play(tracks: Track[], track: Track): Promise<void> {
     const gen = ++this.playGeneration;
     const intent = PlaybackIntent.from(tracks, track);
+    const provider = this.getProvider();
+    const resolutionPolicy = {
+      canResolveFullPlayback: provider.supports("fullPlayback"),
+      canUsePreviewPlayback: provider.supports("previewPlayback"),
+    };
 
     let urls: readonly TrackPlayUrl[] = [];
-    if (intent.trackIds.length) {
+    const idsToResolve = intent.trackIdsToResolve(resolutionPolicy);
+    if (idsToResolve.length) {
       try {
-        urls = await this.getProvider().playUrls(intent.trackIds);
+        urls = await provider.playUrls(idsToResolve);
       } catch {
         // Provider has no play-URL support: stay silent; the UI still switches track.
       }

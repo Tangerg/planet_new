@@ -2,6 +2,7 @@ import type { Artist } from "./artist";
 import type { Album } from "./album";
 import { ArtistCredit } from "./artist-credit";
 import { pickImageUrl } from "./image";
+import { PlaybackAvailability, type PlaybackAvailabilityPolicy } from "./playback-availability";
 import { formatDuration, Minute, Second } from "@shared/time";
 
 /**
@@ -67,9 +68,16 @@ export const Track = {
     return formatDuration(t.durationMs ?? 0, [Minute, Second]);
   },
 
-  /** Playable now without further resolution: a full or preview URL is present. */
-  isPlayable(t: Partial<Track>): boolean {
-    return Boolean(t.playUrl || t.previewUrl);
+  playbackAvailability(
+    t: Partial<Track>,
+    policy?: PlaybackAvailabilityPolicy,
+  ): PlaybackAvailability {
+    return PlaybackAvailability.fromTrack(t, policy);
+  },
+
+  /** Can start now or after provider URL resolution, depending on policy. */
+  isPlayable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
+    return Track.playbackAvailability(t, policy).canStart;
   },
 
   /** Clone tracks and apply resolved provider playback URLs by id, preserving order. */

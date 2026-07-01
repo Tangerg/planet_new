@@ -53,4 +53,16 @@ describe("Track", () => {
       ]),
     ).toEqual(["1", "2"]);
   });
+
+  test("describes playback availability with provider URL resolution", () => {
+    expect(Track.playbackAvailability({ id: "1" })).toMatchObject({
+      status: "unavailable",
+      reason: "provider-unsupported",
+    });
+    expect(Track.playbackAvailability({ id: "1" }, { canResolveFullPlayback: true })).toEqual({
+      status: "resolvable",
+      canStart: true,
+    });
+    expect(Track.isPlayable({ id: "1" }, { canResolveFullPlayback: true })).toBe(true);
+  });
 });

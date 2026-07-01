@@ -2,6 +2,7 @@
  *  models (entities / value objects). Models are also importable by subpath:
  *  @domain/model/<entity>. */
 export * from "./ports/provider";
+export * from "./ports/capability";
 export * from "./ports/auth";
 export * from "./ports/credentials";
 export * from "./ports/userLibrary";
@@ -17,6 +18,7 @@ export * from "./model/duration";
 export * from "./model/lyric";
 export * from "./model/personalized";
 export * from "./model/playback-intent";
+export * from "./model/playback-availability";
 export * from "./model/play-queue";
 export * from "./model/repeat";
 export * from "./model/volume";

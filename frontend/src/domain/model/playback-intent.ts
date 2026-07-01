@@ -1,3 +1,4 @@
+import { PlaybackAvailability, type PlaybackAvailabilityPolicy } from "./playback-availability";
 import { Track, type TrackPlayUrl } from "./track";
 
 /**
@@ -26,6 +27,14 @@ export class PlaybackIntent {
 
   get trackIds(): string[] {
     return Track.uniqueIds(this.queue);
+  }
+
+  trackIdsToResolve(policy: PlaybackAvailabilityPolicy): string[] {
+    return Track.uniqueIds(
+      this.queue.filter((track) =>
+        PlaybackAvailability.requiresFullUrlResolution(Track.playbackAvailability(track, policy)),
+      ),
+    );
   }
 
   withResolvedUrls(urls: readonly TrackPlayUrl[]): ResolvedPlaybackIntent {

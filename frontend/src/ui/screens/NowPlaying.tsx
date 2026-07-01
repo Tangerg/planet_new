@@ -1,151 +1,22 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
-import { VirtualList } from "@/components/layout/VirtualList";
 import type { ArtistRef, VibeComment, VibeTrack } from "@/model/adapt";
-import { Equalizer, Art, artBg, artPair } from "@/components/primitives";
+import { Art, artBg, artPair } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
-import { LikeHeart } from "@/components/controls/LikeHeart";
-import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
 import { CommentList } from "@/components/CommentList";
-import { Empty } from "@/components/layout/Empty";
-import { useScreenActions } from "@/hooks/screenActions";
+import { LyricLines } from "@/components/now-playing/LyricLines";
+import { ModeTag } from "@/components/now-playing/ModeTag";
+import { TagStack } from "@/components/now-playing/TagStack";
+import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
+import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
-import { activateOnKey } from "@/lib/keys";
 import { activeLyricIndex, lyricLinesOrFallback, type LyricLine } from "@/model/now-playing";
 
 export type { LyricLine } from "@/model/now-playing";
-
-// ============================================================
-// NowPlaying — full-bleed cover  ·  Lyrics  (toggle)
-// ============================================================
-function LyricLines({
-  lines,
-  accent,
-  active,
-  scrollRef,
-}: {
-  lines: LyricLine[];
-  accent: string;
-  active: number;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  // Auto-scroll the active line into view (centered) inside the fixed-height container.
-  useEffect(() => {
-    const container = scrollRef.current;
-    const el = container?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);
-    if (!el || !container) return;
-    const elRect = el.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const top =
-      container.scrollTop +
-      (elRect.top - containerRect.top) -
-      containerRect.height / 2 +
-      elRect.height / 2;
-    // Interrupt any in-flight smooth scroll before starting a new one
-    // eslint-disable-next-line no-self-assign — reading scrollTop interrupts smooth scroll
-    container.scrollTop = container.scrollTop;
-    container.scrollTo({ top, behavior: "smooth" });
-    return () => {
-      // Halt scroll on unmount
-      // eslint-disable-next-line no-self-assign — reading scrollTop interrupts smooth scroll
-      container.scrollTop = container.scrollTop;
-    };
-  }, [active, scrollRef]);
-
-  return (
-    <div className="flex flex-col gap-[25px] px-[11%] pb-[56%] pt-[34%] text-center">
-      {lines.map((l, i) => {
-        const on = i === active;
-        if (!l.line) return <div key={i} className="h-0.5" />;
-        return (
-          <div
-            key={i}
-            data-lyric-idx={i}
-            style={{
-              fontSize: on ? 27 : 20,
-              fontWeight: 300,
-              letterSpacing: ".01em",
-              lineHeight: 1.42,
-              color: on ? accent : "rgba(255,255,255,.44)",
-              transition: "color .4s, font-size .4s",
-              paddingBottom: on ? 16 : 0,
-              borderBottom: on ? `1px solid ${accent}aa` : "none",
-            }}
-          >
-            {l.line}
-            {l.tr && (
-              <div
-                style={{
-                  marginTop: 5,
-                  fontSize: on ? 16 : 14,
-                  color: on ? `${accent}cc` : "rgba(255,255,255,.3)",
-                }}
-              >
-                {l.tr}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ============================================================
-// TagStack — floating tag stack (top-left)
-// ============================================================
-function TagStack({
-  accent,
-  liked,
-  toggleLike,
-  extra,
-}: {
-  accent: string;
-  liked: boolean;
-  toggleLike: () => void;
-  extra?: React.ReactNode;
-}) {
-  return (
-    <div className="absolute left-12 top-16 z-[6] flex flex-col items-start gap-[14px]">
-      <LikeHeart liked={liked} onToggle={toggleLike} accent={accent} />
-      {extra}
-    </div>
-  );
-}
-
-// ============================================================
-// ModeTag — clickable pill tag (mode toggle). A native <button> (Button
-// primitive) — no hand-rolled role="button"/keyboard; Enter/Space + focus ring
-// come for free.
-// ============================================================
-function ModeTag({
-  active,
-  onClick,
-  children,
-}: {
-  active?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Button
-      className="mlabel cursor-pointer px-[12px] py-[7px] text-[10px]"
-      onClick={onClick}
-      style={{
-        background: active ? "rgba(18,255,131,.18)" : "rgba(6,6,9,.76)",
-        color: active ? "var(--accent)" : "rgba(255,255,255,.78)",
-        borderBottom: active ? "1px solid var(--accent)" : "1px solid transparent",
-        boxShadow: active ? `0 8px 26px -18px var(--accent)` : "none",
-      }}
-    >
-      {children}
-    </Button>
-  );
-}
 
 type Props = {
   track?: VibeTrack;
@@ -184,7 +55,6 @@ export const NowPlaying = React.memo(function NowPlaying({
   progressSec = 0,
   onOpenArtist,
 }: Props) {
-  const { trackMenu } = useScreenActions();
   const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -435,136 +305,21 @@ export const NowPlaying = React.memo(function NowPlaying({
         </NpSwap>
       </div>
 
-      {/* Up Next handle (bottom-center) — invites the down axis */}
-      {!queueOpen && (
-        <Button
-          onClick={() => setQueueOpen(true)}
-          aria-label="Up Next"
-          className="absolute bottom-[22px] left-1/2 z-[9] flex -translate-x-1/2 items-center gap-[9px] rounded-full px-[18px] py-[9px] text-white/[0.82]"
-          style={{
-            background: "rgba(10,10,13,.62)",
-            border: "1px solid rgba(255,255,255,.14)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px -10px rgba(0,0,0,.7)",
-          }}
-        >
-          <span className="mlabel text-[10px]">Up Next · {queue.length}</span>
-          <span className="grid rotate-90 place-items-center">
-            <Icon.back size={14} />
-          </span>
-        </Button>
-      )}
+      {!queueOpen && <UpNextHandle count={queue.length} onOpen={() => setQueueOpen(true)} />}
 
-      {/* queue sheet — Radix Dialog (Escape / click-outside / scroll-lock), Motion slide */}
-      <Sheet
+      <UpNextSheet
         open={queueOpen}
         onOpenChange={setQueueOpen}
         container={rootRef.current}
-        label="Up Next"
         contentRef={queueScrollRef}
-        className="z-[22] h-[70%]"
-        overlayClassName="z-[21]"
-        durationSec={0.58}
-        style={{
-          background: `linear-gradient(180deg, ${a}26, rgba(8,8,11,.97) 20%)`,
-          backdropFilter: "blur(34px)",
-          WebkitBackdropFilter: "blur(34px)",
-          borderTop: "1px solid rgba(255,255,255,.13)",
-          boxShadow: "0 -34px 90px rgba(0,0,0,.62)",
-        }}
-      >
-        <button
-          type="button"
-          aria-label="Collapse queue"
-          onClick={() => setQueueOpen(false)}
-          className="btn grid w-full cursor-pointer place-items-center pb-1 pt-[13px]"
-        >
-          <div className="h-1 w-11 rounded-sm bg-white/[0.28]"></div>
-        </button>
-        <div className="px-11 pb-11 pt-2">
-          <div className="mb-4 flex items-baseline gap-[13px]">
-            <span className="text-[24px] font-extralight tracking-[0.05em]">Up Next</span>
-            <span className="mlabel text-white/40">{queue.length} tracks</span>
-          </div>
-          {/* now playing */}
-          <div className="mb-2 flex items-center gap-[14px] border-b border-white/10 pb-[14px] pt-2.5">
-            <span className="grid w-[18px] place-items-center">
-              <Equalizer playing color={accent} size={15} />
-            </span>
-            <Art
-              seed={track?.coverSeed}
-              grad={grad}
-              image={track?.image}
-              images={track?.images}
-              className="flex-none"
-              style={{ width: 44, height: 44 }}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px]" style={{ color: accent }}>
-                {track?.title}
-              </div>
-              <div className="truncate text-[12.5px] font-light text-white/50">
-                <ArtistLinks
-                  artists={track?.artists}
-                  fallback={track?.artist}
-                  fallbackId={track?.artistId}
-                  accent={accent}
-                  color="rgba(255,255,255,.5)"
-                  onOpenArtist={onOpenArtist}
-                />
-              </div>
-            </div>
-            <span className="mlabel text-[10px] text-white/40">Now</span>
-          </div>
-          {queue.length > 0 ? (
-            <VirtualList
-              scrollRef={queueScrollRef}
-              count={queue.length}
-              estimateSize={58}
-              itemKey={(vi) => queue[vi].id + vi}
-              renderItem={(vi) => {
-                const t = queue[vi];
-                return (
-                  <div
-                    // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t.title}
-                    onClick={() => onPlay && onPlay(t)}
-                    onKeyDown={activateOnKey(() => onPlay?.(t))}
-                    onContextMenu={(e: React.MouseEvent) => trackMenu(e, t)}
-                    className="flex cursor-pointer items-center gap-[14px] py-[9px]"
-                  >
-                    <span className="mlabel w-[18px] flex-none text-center text-[11px] text-white/[0.32]">
-                      {vi + 1}
-                    </span>
-                    <Art
-                      seed={t.coverSeed}
-                      grad={t.gradient}
-                      image={t.image}
-                      images={t.images}
-                      className="flex-none"
-                      style={{ width: 40, height: 40 }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[14px]">{t.title}</div>
-                      <div className="truncate text-[12px] font-light text-white/45">
-                        {t.artist}
-                      </div>
-                    </div>
-                    <span className="mlabel flex-none text-[10px] text-white/[0.32]">
-                      {t.duration}
-                    </span>
-                  </div>
-                );
-              }}
-            />
-          ) : (
-            <Empty className="p-[30px]">Queue is empty.</Empty>
-          )}
-        </div>
-      </Sheet>
+        track={track}
+        queue={queue}
+        accent={accent}
+        tintA={a}
+        grad={grad}
+        onPlay={onPlay}
+        onOpenArtist={onOpenArtist}
+      />
     </FadeIn>
   );
 });
