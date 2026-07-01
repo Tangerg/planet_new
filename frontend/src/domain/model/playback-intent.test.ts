@@ -23,6 +23,22 @@ describe("PlaybackIntent", () => {
     expect(intent.trackIds).toEqual(["1", "2"]);
   });
 
+  it("requests only tracks that need provider URL resolution", () => {
+    const ready = { ...track("ready"), playUrl: "https://cdn.example/ready.mp3" };
+    const duplicateResolvable = track("missing");
+    const preview = { ...track("preview"), previewUrl: "https://cdn.example/preview.mp3" };
+    const intent = PlaybackIntent.from(
+      [ready, track("missing"), duplicateResolvable, preview],
+      ready,
+    );
+
+    expect(intent.trackIdsToResolve({ canResolveFullPlayback: true })).toEqual([
+      "missing",
+      "preview",
+    ]);
+    expect(intent.trackIdsToResolve({ canResolveFullPlayback: false })).toEqual([]);
+  });
+
   it("resolves play URLs without mutating the source tracks", () => {
     const t1 = track("1");
     const t2 = track("2");

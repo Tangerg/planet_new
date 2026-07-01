@@ -2,6 +2,7 @@
 // Profile — restrained music identity: square image · thin account type · rows.
 // ============================================================
 import React, { useState } from "react";
+import { Account } from "@domain/model/account";
 import type { VibeCollection } from "@/model/adapt";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
@@ -26,9 +27,9 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
   const items = playlists.slice(0, 4);
   const [active, setActive] = useState(0);
   // Real counts once logged in; the anonymous demo identity keeps its placeholder.
-  const followers = loggedIn && account ? compactCount(account.followers ?? 0) : "598";
-  const following = loggedIn && account ? compactCount(account.following ?? 0) : "6";
-  const name = account?.name ?? "Lily Tran";
+  const followers = loggedIn && account ? compactCount(Account.followerCount(account)) : "598";
+  const following = loggedIn && account ? compactCount(Account.followingCount(account)) : "6";
+  const name = Account.displayName(account, "Lily Tran");
   return (
     <FadeIn className="relative h-full overflow-hidden bg-[#08080b]">
       <Art

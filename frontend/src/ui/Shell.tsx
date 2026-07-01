@@ -13,59 +13,36 @@
 //   - useContextMenu       right-click menu
 //   - buildWorlds          the XMB navigation IA tree (@/model/navigation)
 // ============================================================
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import React, { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import "./Shell.css";
 
 import { useMediaService } from "@/hooks/useMediaService";
 
-import { artBg, Equalizer } from "@/components/primitives";
-import { Icon } from "@/infra/icons";
-import { wailsRuntime } from "@/infra/wails";
-import { RepeatMode } from "@domain/model/repeat";
-import {
-  useCatalog,
-  useComments,
-  useDailyRecommendations,
-  useArtistMusicVideos,
-  useLyric,
-  useMusicVideoComments,
-  useMusicVideoDiscovery,
-  usePlayRecord,
-  useProviderSearch,
-  useToplists,
-  useUserPlaylists,
-  useVibePlayback,
-} from "@/hooks/data";
-import { useAuthStore } from "@/store/auth";
-import { type VibeTrack } from "@/model/adapt";
+import { artBg } from "@/components/primitives";
 import { useLikes } from "@/hooks/useLikes";
 import { MorphStage, MorphProvider } from "@/infra/morph";
 import { useSpatialNavigation } from "@/hooks/useSpatialNavigation";
-import { useContextMenu } from "@/hooks/useContextMenu";
 import { useAppMenu } from "@/hooks/useAppMenu";
 import { useShellNavigation } from "@/hooks/useShellNavigation";
 import { ScreenActionsProvider } from "@/hooks/screenActions";
-import { useQueueActions } from "@/hooks/useQueueActions";
 
-import { PlayerBar } from "@/components/PlayerBar";
-import { Button } from "@/components/controls/Button";
 import { TooltipProvider } from "@/components/controls/Tooltip";
-import { buildWorlds } from "@/model/navigation";
+import { ShellPlayerDock } from "@/components/shell/ShellPlayerDock";
+import { ShellWindowChrome } from "@/components/shell/ShellWindowChrome";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+import { useShellLibraryData } from "@/hooks/useShellLibraryData";
+import { useShellPlayback } from "@/hooks/useShellPlayback";
+import { useShellTrackActions } from "@/hooks/useShellTrackActions";
+import { useShellScreenContent } from "@/hooks/useShellScreenContent";
+import { useShellXmbModel } from "@/hooks/useShellXmbModel";
 // ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
 const LazyContextMenu = React.lazy(() =>
   import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
 );
 import { ShellScreenRouter } from "@/ShellScreenRouter";
-import {
-  ACCENT_OPTIONS,
-  DEFAULT_ACCENT,
-  DEFAULT_GLASS_BLUR,
-  PLACEHOLDER_TRACK,
-} from "@/model/defaults";
+import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_GLASS_BLUR } from "@/model/defaults";
 
 export default function Shell() {
   const media = useMediaService();
@@ -88,61 +65,38 @@ export default function Shell() {
   const [xmbCategory, setXmbCategory] = useState(1);
   const [xmbRowByCategory, setXmbRowByCategory] = useState<Record<string, number>>({});
 
-  /* ---- real kernel playback state (replaces the example's mock + local useState) ---- */
-  const playback = useVibePlayback();
-  // Destructure stable callbacks from playback (they are useCallback-ed in hooks.ts)
   const {
-    play: playFn,
+    playback,
+    playFn,
+    current,
+    playing,
+    shuffle,
+    repeat,
+    repeatOne,
+    queue,
     togglePlay,
-    toggleShuffle,
-    toggleRepeat,
-    next: playNextFn,
-    prev: playPrevFn,
-  } = playback;
+    setPlaying,
+    setShuffle,
+    onToggleRepeat,
+    playNext,
+    playPrev,
+  } = useShellPlayback();
 
-  const current = playback.current ?? PLACEHOLDER_TRACK;
-  const playing = playback.playing;
-  const shuffle = playback.shuffle;
-  const repeat = playback.repeat !== RepeatMode.OFF;
-  const repeatOne = playback.repeat === RepeatMode.ONE;
-  const queue = playback.upNext;
-  const setPlaying = useCallback(() => togglePlay(), [togglePlay]);
-  const setShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
-  const onToggleRepeat = useCallback(() => toggleRepeat(), [toggleRepeat]);
-  const playNext = useCallback(() => playNextFn(), [playNextFn]);
-  const playPrev = useCallback(() => playPrevFn(), [playPrevFn]);
-
-  /* ---- catalog / charts / search (real provider) ---- */
-  const { catalog } = useCatalog();
-  const toplists = useToplists();
-  const search = useProviderSearch();
-  const { videos: musicVideos, isLoading: musicVideosLoading } = useMusicVideoDiscovery(
-    catalog.artists,
-  );
-  // The logged-in user's own playlists (empty when anonymous) — feed the Library
-  // Playlists tab + the real "liked songs" view.
-  const loggedIn = useAuthStore((s) => s.loggedIn);
-  const userPlaylists = useUserPlaylists();
-  // Library's Playlists tab shows the user's own playlists when logged in,
-  // falling back to the personalized catalog when anonymous.
-  const libraryData = useMemo(
-    () => (loggedIn && userPlaylists.length ? { ...catalog, playlists: userPlaylists } : catalog),
-    [loggedIn, userPlaylists, catalog],
-  );
+  const {
+    catalog,
+    toplists,
+    search,
+    musicVideos,
+    musicVideosLoading,
+    loggedIn,
+    userPlaylists,
+    libraryData,
+    playRecord,
+    daily,
+  } = useShellLibraryData();
 
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
-  // Real account play record (most played last week / all time); empty when
-  // anonymous, so the History screen falls back to this session's plays only.
-  const playRecord = usePlayRecord();
-  // The day's recommendations ("每日推荐"); empty when anonymous, so ForYou's hero
-  // falls back to a catalog playlist.
-  const daily = useDailyRecommendations();
-
-  // Current-track lyrics, kernel-owned (Lyric plugin follows the track); the UI
-  // just reads them. [] when none — NowPlaying shows "No lyrics" on its own.
-  const lyrics = useLyric();
-
   /* ---- navigation + shared-element transition machine (extracted hook) ----
      Owns the view string, every nav-significant screen slice, the morph engine,
      and the back-stack. Shell composes onPlay / likedDetail / menu / shortcuts /
@@ -180,69 +134,27 @@ export default function Shell() {
   const npView = view === "np";
   const mvTheaterView = view === "mv-theater";
   const homeView = view === "xmb";
-  const relatedMusicVideos = useArtistMusicVideos(
-    musicVideoObj?.artistId,
-    view === "mv-detail" || view === "mv-theater",
-  );
-  const musicVideoComments = useMusicVideoComments(musicVideoObj?.id, mvTheaterView);
-  const musicVideoRail = relatedMusicVideos.length ? relatedMusicVideos : musicVideoRelated;
-
-  // Current-track comments (NCM hot/recent). Fetched only while a comments
-  // surface is on screen (the standalone Comments view or Now Playing's comments
-  // mode), gated by the provider capability — never for every track played.
-  const comments = useComments(playback.current?.id, view === "comments" || view === "np");
-
-  /* Play a track within the current browse context (the open collection); a
-     track not in that list (e.g. a lone search result) plays on its own. */
-  const onPlay = useCallback(
-    (track: VibeTrack | undefined) => {
-      if (!track) return;
-      const ctx = playContext.current;
-      const list = ctx?.length && ctx.some((t) => t.id === track.id) ? ctx : [track];
-      playFn(list, track);
-    },
-    [playFn, playContext],
-  );
-
-  // "Liked Songs" is a synthetic playlist projected from the like set; it routes
-  // through openDetail like any collection (but never fetches — _real: false).
-  const likedDetail = useCallback(() => {
-    // Logged in: open the real "liked songs" playlist (NCM puts it first) so it
-    // shows the full account list, not just the catalog matches.
-    const real = loggedIn ? userPlaylists[0] : undefined;
-    if (real) {
-      openDetail({ ...real, kind: "Playlist" });
-      return;
-    }
-    openDetail({
-      id: "liked",
-      name: "Liked Songs",
-      kind: "Playlist",
-      owner: "You",
-      coverSeed: 0,
-      gradient: ["#2a0420", "#ff4fa3"],
-      _real: false,
-      description: "Everything you've hearted, in one place.",
-      tracks: catalog.allTracks.filter((t) => liked.has(t.id)),
-    });
-  }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
-
-  const { enqueueById } = useQueueActions({
-    addToQueue: playback.addToQueue,
-    catalogTracks: catalog.allTracks,
-    playbackTracks: playback.tracks,
-    queueTracks: queue,
-    playContext,
+  const { lyrics, comments, musicVideoRail, musicVideoComments } = useShellScreenContent({
+    view,
+    currentTrackId: playback.current?.id,
+    musicVideoArtistId: musicVideoObj?.artistId,
+    musicVideoId: musicVideoObj?.id,
+    musicVideoRelated,
   });
 
-  /* ---- right-click context menu (extracted hook) ---- */
-  const { menu, setMenu, actions } = useContextMenu({
-    onPlay,
-    enqueue: enqueueById,
+  const { onPlay, likedDetail, menu, setMenu, actions } = useShellTrackActions({
+    play: playFn,
+    addToQueue: playback.addToQueue,
+    catalog,
+    playbackTracks: playback.tracks,
+    queue,
+    playContext,
+    loggedIn,
+    userPlaylists,
+    liked,
     openDetail,
     openArtist,
     toggleLike,
-    liked,
   });
   const openAppMenu = useAppMenu({
     setMenu,
@@ -285,25 +197,17 @@ export default function Shell() {
      XMB model — the navigation IA tree, projected from catalog + provider
      capabilities + session state (see @/model/navigation, docs §11).
      ========================================================================== */
-  const cats = useMemo(
-    () =>
-      buildWorlds(
-        {
-          catalog,
-          supports: (cap) => media.supports(cap),
-          liked,
-          current,
-          queueLength: queue.length,
-        },
-        {
-          goto: setView,
-          openSearch,
-          openLibrary: openLib,
-          openLikedSongs: likedDetail,
-        },
-      ),
-    [catalog, media, liked, current, queue, setView, openSearch, openLib, likedDetail],
-  );
+  const cats = useShellXmbModel({
+    media,
+    catalog,
+    liked,
+    current,
+    queueLength: queue.length,
+    goto: setView,
+    openSearch,
+    openLibrary: openLib,
+    openLikedSongs: likedDetail,
+  });
 
   /* ==========================================================================
      render screen
@@ -369,56 +273,20 @@ export default function Shell() {
     />
   );
 
-  // No native frame: the faux traffic lights take over real window controls; a draggable strip at the top moves the window.
-  const dragStyle = { "--wails-draggable": "drag" } as React.CSSProperties;
-  const noDragStyle = { "--wails-draggable": "no-drag" } as React.CSSProperties;
-
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={500}>
       <MorphProvider morph={morph}>
         <ScreenActionsProvider actions={actions}>
           <div className="win-stage">
             <div className="win">
-              {/* top drag strip (spans the top; traffic-light and tool buttons above it stay clickable) */}
-              <div
-                aria-hidden
-                className="absolute inset-x-0 top-0 z-[55] h-[30px]"
-                style={dragStyle}
+              <ShellWindowChrome
+                showTools={!npView && !mvTheaterView}
+                showBack={!homeView}
+                playing={playing}
+                onBack={goBack}
+                onNowPlaying={() => navigate("np")}
+                onMenu={openAppMenu}
               />
-
-              <div className="traffic" style={noDragStyle}>
-                {(
-                  [
-                    ["r", "Close", () => wailsRuntime()?.Quit?.()],
-                    ["y", "Minimise", () => wailsRuntime()?.WindowMinimise?.()],
-                    ["g", "Maximise", () => wailsRuntime()?.WindowToggleMaximise?.()],
-                  ] as const
-                ).map(([cls, label, action]) => (
-                  <Button
-                    key={cls}
-                    aria-label={label}
-                    className={cls}
-                    onClick={action}
-                    title={label}
-                  />
-                ))}
-              </div>
-
-              {!npView && !mvTheaterView && (
-                <div className="win-tools" style={noDragStyle}>
-                  {!homeView && (
-                    <Button onClick={goBack} aria-label="Back">
-                      <Icon.back size={20} />
-                    </Button>
-                  )}
-                  <Button onClick={() => navigate("np")} aria-label="Now playing">
-                    <Equalizer playing={playing} color="currentColor" size={18} />
-                  </Button>
-                  <Button onClick={openAppMenu} aria-label="More actions">
-                    <Icon.kebab size={20} />
-                  </Button>
-                </div>
-              )}
 
               <MorphStage
                 viewRef={viewRef}
@@ -428,61 +296,32 @@ export default function Shell() {
                 tileBg={artBg}
               />
 
-              {/* Layout reservation: a flex spacer that tracks showBar *instantly* (no
-            transition). Entering now-playing collapses it to 0 the same frame, so
-            .view is full-height when the np cover morph measures its (vertically
-            centered) hero — never re-jumping. The bar itself is positioned
-            absolutely and slides independently of this spacer, so its
-            appear/disappear never reflows .view. That's the fix for the asymmetry:
-            with the old single collapsing box, entering np yanked the bar into a
-            0-height box (no slide — a dark strip just popped where it sat); now the
-            light bar visibly slides off the bottom over the full-height np content. */}
-              <div aria-hidden style={{ flex: `0 0 ${showBar ? 84 : 0}px` }} />
-
-              {/* Absolute over .win's bottom; AnimatePresence keeps it mounted through
-            the slide-out. z-index 30 sits below the morph grain (40) so the flying
-            cover passes over it, above .view content. overflow:visible is harmless
-            now the volume popup portals out; .win (overflow:hidden) clips the slide. */}
-              <AnimatePresence>
-                {showBar && (
-                  <motion.div
-                    initial={{ y: "108%", opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: "108%", opacity: 0 }}
-                    transition={{
-                      y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
-                      opacity: { duration: 0.3 },
-                    }}
-                    className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
-                  >
-                    <PlayerBar
-                      track={current}
-                      playing={playing}
-                      setPlaying={setPlaying}
-                      liked={isLiked}
-                      toggleLike={() => current && toggleLike(current.id)}
-                      accent={accent}
-                      shuffle={shuffle}
-                      setShuffle={setShuffle}
-                      repeat={repeat}
-                      repeatOne={repeatOne}
-                      onToggleRepeat={onToggleRepeat}
-                      onNext={playNext}
-                      onPrev={playPrev}
-                      positionSec={playback.progress.duration}
-                      durationSec={playback.duration.duration}
-                      onSeek={playback.seek}
-                      volume={playback.volume}
-                      onVolume={playback.setVolume}
-                      onOpenNowPlaying={() => navigate("np")}
-                      onOpenQueue={() => navigate("queue")}
-                      onOpenComments={() => navigate("comments")}
-                      onOpenLyrics={() => navigate("np")}
-                      onOpenArtist={openArtist}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ShellPlayerDock
+                show={showBar}
+                track={current}
+                playing={playing}
+                setPlaying={setPlaying}
+                liked={isLiked}
+                toggleLike={() => current && toggleLike(current.id)}
+                accent={accent}
+                shuffle={shuffle}
+                setShuffle={setShuffle}
+                repeat={repeat}
+                repeatOne={repeatOne}
+                onToggleRepeat={onToggleRepeat}
+                onNext={playNext}
+                onPrev={playPrev}
+                positionSec={playback.progress.duration}
+                durationSec={playback.duration.duration}
+                onSeek={playback.seek}
+                volume={playback.volume}
+                onVolume={playback.setVolume}
+                onOpenNowPlaying={() => navigate("np")}
+                onOpenQueue={() => navigate("queue")}
+                onOpenComments={() => navigate("comments")}
+                onOpenLyrics={() => navigate("np")}
+                onOpenArtist={openArtist}
+              />
             </div>
 
             {menu && (

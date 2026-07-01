@@ -13,3 +13,21 @@ export type Account = {
   /** Following count (people this user follows), when the provider exposes it. */
   following?: number;
 };
+
+export const Account = {
+  displayName(account: Partial<Account> | null | undefined, fallback = "Listener"): string {
+    return account?.name?.trim() || fallback;
+  },
+
+  followerCount(account: Partial<Account> | null | undefined): number {
+    return Math.max(0, account?.followers ?? 0);
+  },
+
+  followingCount(account: Partial<Account> | null | undefined): number {
+    return Math.max(0, account?.following ?? 0);
+  },
+
+  hasMembership(account: Partial<Account> | null | undefined): boolean {
+    return account?.vip === true;
+  },
+};
