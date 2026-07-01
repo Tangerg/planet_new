@@ -7,6 +7,7 @@ import {
   toVibeArtist,
   toVibePlaylist,
   toVibeTracks,
+  type SearchResults,
   type VibeCollection,
 } from "@/model/adapt";
 import { catalogScreenData, toVibeCharts } from "@/model/catalog";
@@ -26,7 +27,7 @@ export function useCatalog() {
 export function useProviderSearch() {
   const media = useMediaService();
   return useCallback(
-    async (query: string) => {
+    async (query: string): Promise<SearchResults> => {
       const result = await media.search(query);
       return {
         tracks: toVibeTracks(result.tracks),
