@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useState, useRef } from "react";
 import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/adapt";
-import { sortTracks, trackFlowItems, type SortMode, type FlowItem } from "@/model/derive";
+import { sortTracks, type SortMode } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
@@ -13,11 +13,7 @@ import { Icon } from "@/infra/icons";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn, Rise, XFade } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
-import { CoverFlow } from "@/components/CoverFlow";
-import { TrackRow } from "@/components/cards/TrackRow";
-import { TrackCard } from "@/components/cards/TrackCard";
-import { CardGrid } from "@/components/layout/CardGrid";
-import { VList } from "@/components/layout/VList";
+import { TrackCollectionView } from "@/components/TrackCollectionView";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
@@ -237,62 +233,25 @@ export function PlaylistDetailScreen({
             </div>
 
             <XFade key={view}>
-              {view === "list" && (
-                <VList
-                  count={sorted.length}
-                  estimateSize={66}
-                  itemKey={(vi) => sorted[vi].t.id}
-                  renderItem={(vi) => {
-                    const { t, i } = sorted[vi];
-                    return (
-                      <TrackRow
-                        track={t}
-                        index={i + 1}
-                        rank={p.variant === "chart" ? (t._rank ?? i + 1) : undefined}
-                        delta={p.variant === "chart" ? t._delta : undefined}
-                        onPlay={onPlay}
-                        current={current}
-                        selected={sel.has(t.id)}
-                        onSelect={toggleSel}
-                        playing={playing}
-                        liked={liked}
-                        toggleLike={toggleLike}
-                        accent={accent}
-                        onOpenArtist={onOpenArtist}
-                      />
-                    );
-                  }}
-                />
-              )}
-              {view === "grid" && (
-                <CardGrid
-                  count={p.tracks.length}
-                  minColumnWidth={168}
-                  gap={26}
-                  estimateRowHeight={232}
-                  itemKey={(i) => p.tracks[i].id}
-                  renderItem={(i) => (
-                    <TrackCard
-                      track={p.tracks[i]}
-                      onPlay={onPlay}
-                      accent={accent}
-                      onOpenArtist={onOpenArtist}
-                    />
-                  )}
-                />
-              )}
-              {view === "flow" && (
-                <div className="-mx-12 h-[520px]">
-                  <CoverFlow
-                    items={trackFlowItems(p.tracks)}
-                    center={Math.min(flowCenter, total - 1)}
-                    setCenter={setFlowCenter}
-                    accent={accent}
-                    onOpen={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
-                    onPlay={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
-                  />
-                </div>
-              )}
+              <TrackCollectionView
+                view={view}
+                tracks={p.tracks}
+                listRows={sorted}
+                onPlay={onPlay}
+                current={current}
+                playing={playing}
+                liked={liked}
+                toggleLike={toggleLike}
+                accent={accent}
+                onOpenArtist={onOpenArtist}
+                flowCenter={flowCenter}
+                setFlowCenter={setFlowCenter}
+                flowHeight={520}
+                rankFor={(t, i) => (p.variant === "chart" ? (t._rank ?? i + 1) : undefined)}
+                deltaFor={(t) => (p.variant === "chart" ? t._delta : undefined)}
+                selected={sel}
+                onSelect={toggleSel}
+              />
             </XFade>
           </PageColumn>
         </ScrollProvider>
