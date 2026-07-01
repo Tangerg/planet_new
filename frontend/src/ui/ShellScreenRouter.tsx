@@ -25,11 +25,9 @@ import { ArtistScreen } from "@/screens/Artist";
 import { ProfileScreen } from "@/screens/Profile";
 import { CommentsScreen } from "@/screens/Comments";
 import { NowPlaying, type LyricLine } from "@/screens/NowPlaying";
-import {
-  MusicVideoDetailScreen,
-  MusicVideoTheaterScreen,
-  MusicVideosScreen,
-} from "@/screens/MusicVideos";
+import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
+import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
+import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
 
 type SearchResults = {
   tracks: VibeTrack[];
