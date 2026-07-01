@@ -17,6 +17,7 @@ import { Lyric, parseLyrics, mergeTranslations } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
 import { Chart } from "@domain/model/chart";
 import { Comment } from "@domain/model/comment";
+import { MusicVideo } from "@domain/model/music-video";
 import { Personalized } from "@domain/model/personalized";
 import { SearchResult } from "@domain/model/search";
 import {
@@ -25,12 +26,47 @@ import {
   mapNcmChart,
   mapNcmComment,
   mapNcmFeaturedArtist,
+  mapNcmMusicVideo,
   mapNcmPlaylist,
   mapNcmPlaylistStub,
   mapNcmTrack,
   coverSet,
   toHttps,
 } from "./mappers/ncm";
+import type {
+  NcmAccountResponse,
+  NcmAlbumDetailResponse,
+  NcmArtistAlbumsResponse,
+  NcmArtistDescriptionResponse,
+  NcmArtistInfoResponse,
+  NcmArtistMusicVideosResponse,
+  NcmCommentsResponse,
+  NcmDailyRecommendationsResponse,
+  NcmLikedTrackIdsResponse,
+  NcmLyricResponse,
+  NcmMusicVideoCountsResponse,
+  NcmMusicVideoDetailResponse,
+  NcmMusicVideoUrlResponse,
+  NcmNewestAlbumsResponse,
+  NcmPersonalizedPlaylistsResponse,
+  NcmPersonalizedTracksResponse,
+  NcmPlayRecordResponse,
+  NcmPlayUrlResponse,
+  NcmPlaylist,
+  NcmPlaylistDetailResponse,
+  NcmPlaylistTracksResponse,
+  NcmQrCheckResponse,
+  NcmQrCreateResponse,
+  NcmQrKeyResponse,
+  NcmSearchResponse,
+  NcmSimilarArtistsResponse,
+  NcmSongDetailResponse,
+  NcmTopArtistsResponse,
+  NcmToplistsResponse,
+  NcmTrack,
+  NcmUserDetailResponse,
+  NcmUserPlaylistsResponse,
+} from "./ncm/types";
 
 export type Options = {
   host: string;
@@ -45,6 +81,10 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       "playlistDetail",
       "albumDetail",
       "artistDetail",
+      "trackDetail",
+      "musicVideoDetail",
+      "artistMusicVideos",
+      "musicVideoComments",
       "lyric",
       "personalized",
       "search",
@@ -97,8 +137,28 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       .get("playlist/detail", {
         searchParams: { id },
       })
-      .json<{ playlist: any }>();
-    return mapNcmPlaylist(res.playlist);
+      .json<NcmPlaylistDetailResponse>();
+    const playlist: NcmPlaylist = res.playlist ?? {};
+    const songs = await this.playlistTracks(id, playlist.trackCount).catch(() => []);
+    return mapNcmPlaylist({
+      ...playlist,
+      tracks: songs.length ? songs : (playlist.tracks ?? []),
+    });
+  }
+
+  private async playlistTracks(id: string, total?: number): Promise<NcmTrack[]> {
+    const limit = 500;
+    const tracks: NcmTrack[] = [];
+    for (let offset = 0; ; offset += limit) {
+      const res = await this.http
+        .get("playlist/track/all", { searchParams: { id, limit, offset } })
+        .json<NcmPlaylistTracksResponse>();
+      const songs = res.songs ?? [];
+      tracks.push(...songs);
+      if (songs.length < limit) break;
+      if (total && tracks.length >= total) break;
+    }
+    return tracks;
   }
 
   async lyric(id: string): Promise<Lyric[]> {
@@ -108,7 +168,7 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       .get("lyric", {
         searchParams: { id },
       })
-      .json<{ lrc?: { lyric?: string }; tlyric?: { lyric?: string } }>();
+      .json<NcmLyricResponse>();
     const main = parseLyrics(res.lrc?.lyric ?? "");
     const translated = parseLyrics(res.tlyric?.lyric ?? "");
     return mergeTranslations(main, translated);
@@ -119,44 +179,35 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       .get("album", {
         searchParams: { id },
       })
-      .json<{ album: any; songs: any[] }>();
-    return mapNcmAlbum(res.album, res.songs ?? []);
+      .json<NcmAlbumDetailResponse>();
+    return mapNcmAlbum(res.album ?? {}, res.songs ?? []);
   }
 
   async artistDetail(id: string): Promise<Artist> {
-    type ArtistInfoRes = { artist: any; hotSongs: any[] };
-    type ArtistDescRes = {
-      briefDesc?: string;
-      introduction?: { ti?: string; txt?: string }[];
-    };
-    type ArtistAlbumRes = { hotAlbums?: any[] };
-    type SimilarRes = { artists?: any[] };
     // /artists returns artist info + hotSongs in one call; bio comes from
     // /artist/desc; the discography from /artist/album; related acts from
     // /simi/artist. All in parallel.
     const [info, desc, albumRes, simiRes] = await Promise.all([
       this.http
         .get("artists", { searchParams: { id } })
-        .json<ArtistInfoRes>()
-        .catch(() => ({ artist: {}, hotSongs: [] }) as ArtistInfoRes),
+        .json<NcmArtistInfoResponse>()
+        .catch((): NcmArtistInfoResponse => ({ artist: {}, hotSongs: [] })),
       this.http
         .get("artist/desc", { searchParams: { id } })
-        .json<ArtistDescRes>()
-        .catch(() => ({}) as ArtistDescRes),
+        .json<NcmArtistDescriptionResponse>()
+        .catch((): NcmArtistDescriptionResponse => ({})),
       this.http
         .get("artist/album", { searchParams: { id, limit: 50 } })
-        .json<ArtistAlbumRes>()
-        .catch(() => ({ hotAlbums: [] }) as ArtistAlbumRes),
+        .json<NcmArtistAlbumsResponse>()
+        .catch((): NcmArtistAlbumsResponse => ({ hotAlbums: [] })),
       this.http
         .get("simi/artist", { searchParams: { id } })
-        .json<SimilarRes>()
-        .catch(() => ({ artists: [] }) as SimilarRes),
+        .json<NcmSimilarArtistsResponse>()
+        .catch((): NcmSimilarArtistsResponse => ({ artists: [] })),
     ]);
 
     const artist = info.artist ?? {};
-    const topTracks = (info.hotSongs ?? [])
-      .slice(0, 10)
-      .map((s, i) => mapNcmTrack(s, { index: i + 1 }));
+    const topTracks = (info.hotSongs ?? []).map((s, i) => mapNcmTrack(s, { index: i + 1 }));
     const albums = (albumRes.hotAlbums ?? []).map(mapNcmAlbumNewest);
     const similar = (simiRes.artists ?? []).map(mapNcmFeaturedArtist);
     const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
@@ -176,6 +227,65 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     };
   }
 
+  async trackDetail(id: string): Promise<Partial<Track> | undefined> {
+    const tracks = await this.trackDetails([id]);
+    return tracks[0];
+  }
+
+  async trackDetails(ids: string[]): Promise<Partial<Track>[]> {
+    const uniqueIds = [...new Set(ids.map(String).filter(Boolean))];
+    if (uniqueIds.length === 0) return [];
+
+    const byId = new Map<string, Partial<Track>>();
+    for (let i = 0; i < uniqueIds.length; i += 100) {
+      const batch = uniqueIds.slice(i, i + 100);
+      const res = await this.http
+        .get("song/detail", { searchParams: { ids: batch.join(",") } })
+        .json<NcmSongDetailResponse>()
+        .catch((): NcmSongDetailResponse => ({ songs: [] }));
+      for (const raw of res.songs ?? []) {
+        const track = mapNcmTrack(raw);
+        if (track.id) byId.set(track.id, track);
+      }
+    }
+
+    return ids
+      .map((id) => byId.get(String(id)))
+      .filter((track): track is Partial<Track> => !!track);
+  }
+
+  async musicVideoDetail(id: string): Promise<MusicVideo | undefined> {
+    const [detail, url, counts] = await Promise.all([
+      this.http
+        .get("mv/detail", { searchParams: { mvid: id } })
+        .json<NcmMusicVideoDetailResponse>()
+        .catch((): NcmMusicVideoDetailResponse => ({})),
+      this.http
+        .get("mv/url", { searchParams: { id, r: 1080 } })
+        .json<NcmMusicVideoUrlResponse>()
+        .catch((): NcmMusicVideoUrlResponse => ({})),
+      this.http
+        .get("mv/detail/info", { searchParams: { mvid: id, timestamp: Date.now() } })
+        .json<NcmMusicVideoCountsResponse>()
+        .catch((): NcmMusicVideoCountsResponse => ({})),
+    ]);
+
+    if (!detail.data) return undefined;
+    return mapNcmMusicVideo(detail.data, {
+      playUrl: url.data?.url ? toHttps(url.data.url) : undefined,
+      quality: url.data?.r,
+      counts,
+    });
+  }
+
+  async artistMusicVideos(artistId: string): Promise<Partial<MusicVideo>[]> {
+    const res = await this.http
+      .get("artist/mv", { searchParams: { id: artistId, limit: 50, offset: 0 } })
+      .json<NcmArtistMusicVideosResponse>()
+      .catch((): NcmArtistMusicVideosResponse => ({ mvs: [] }));
+    return (res.mvs ?? []).map((raw) => mapNcmMusicVideo(raw));
+  }
+
   async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {
     if (ids.length === 0) return [];
     const res = await this.http
@@ -185,40 +295,38 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
           id: ids.join(","),
         },
       })
-      .json<{ data: Array<{ id: number | string; url: string | null }> }>();
-    return res.data
-      .filter((tr) => !!tr.url)
+      .json<NcmPlayUrlResponse>();
+    return (res.data ?? [])
+      .filter((tr): tr is { id: number | string; url: string } => !!tr.url)
       .map(
         (tr): TrackPlayUrl => ({
           id: tr.id.toString(),
           // NCM returns http stream URLs; the secure-context webview blocks
           // http <audio src> as mixed content, so upgrade to https (the CDN
           // serves both — verified 206 audio/mpeg).
-          playUrl: toHttps(tr.url as string),
+          playUrl: toHttps(tr.url),
         }),
       );
   }
 
   private async personalizedPlaylist(): Promise<Partial<Playlist>[]> {
-    const res = await this.http.get("personalized").json<{ result: any[] }>();
-    return res.result.map(mapNcmPlaylistStub);
+    const res = await this.http.get("personalized").json<NcmPersonalizedPlaylistsResponse>();
+    return (res.result ?? []).map(mapNcmPlaylistStub);
   }
 
   private async personalizedTracks(): Promise<Partial<Track>[]> {
-    const res = await this.http
-      .get("personalized/newsong")
-      .json<{ result: Array<{ song: any }> }>();
-    return res.result.map((item) => mapNcmTrack(item.song));
+    const res = await this.http.get("personalized/newsong").json<NcmPersonalizedTracksResponse>();
+    return (res.result ?? []).flatMap((item) => (item.song ? [mapNcmTrack(item.song)] : []));
   }
 
   private async personalizedAlbums(): Promise<Partial<Album>[]> {
-    const res = await this.http.get("album/newest").json<{ albums: any[] }>();
-    return res.albums.map(mapNcmAlbumNewest);
+    const res = await this.http.get("album/newest").json<NcmNewestAlbumsResponse>();
+    return (res.albums ?? []).map(mapNcmAlbumNewest);
   }
 
   private async personalizedArtists(): Promise<Partial<Artist>[]> {
-    const res = await this.http.get("top/artists").json<{ artists: any[] }>();
-    return res.artists.map(mapNcmFeaturedArtist);
+    const res = await this.http.get("top/artists").json<NcmTopArtistsResponse>();
+    return (res.artists ?? []).map(mapNcmFeaturedArtist);
   }
 
   async personalized(): Promise<Personalized> {
@@ -244,8 +352,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     const byType = (type: number) =>
       this.http
         .get("cloudsearch", { searchParams: { keywords: q, type, limit: 30 } })
-        .json<{ result?: any }>()
-        .catch(() => ({ result: {} }) as { result?: any });
+        .json<NcmSearchResponse>()
+        .catch((): NcmSearchResponse => ({ result: {} }));
     const [songs, artists, albums, playlists] = await Promise.all([
       byType(1),
       byType(100),
@@ -253,9 +361,7 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
       byType(1000),
     ]);
     return {
-      tracks: (songs.result?.songs ?? []).map((s: any, i: number) =>
-        mapNcmTrack(s, { index: i + 1 }),
-      ),
+      tracks: (songs.result?.songs ?? []).map((s, i) => mapNcmTrack(s, { index: i + 1 })),
       artists: (artists.result?.artists ?? []).map(mapNcmFeaturedArtist),
       albums: (albums.result?.albums ?? []).map(mapNcmAlbumNewest),
       playlists: (playlists.result?.playlists ?? []).map(mapNcmPlaylistStub),
@@ -265,8 +371,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
   async toplists(): Promise<Chart[]> {
     const res = await this.http
       .get("toplist")
-      .json<{ list?: any[] }>()
-      .catch(() => ({ list: [] }) as { list?: any[] });
+      .json<NcmToplistsResponse>()
+      .catch((): NcmToplistsResponse => ({ list: [] }));
     return (res.list ?? []).map(mapNcmChart).filter((c) => c.id && c.title);
   }
 
@@ -276,20 +382,25 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
   }
 
   async comments(trackId: string): Promise<Comment[]> {
-    // hotComments (热评) first, then recent; dedupe by id and cap.
     const res = await this.http
       .get("comment/music", { searchParams: { id: trackId, limit: 30 } })
-      .json<{ hotComments?: any[]; comments?: any[] }>()
-      .catch(() => ({}) as { hotComments?: any[]; comments?: any[] });
-    const seen = new Set<string>();
-    const out: Comment[] = [];
-    for (const raw of [...(res.hotComments ?? []), ...(res.comments ?? [])]) {
-      const c = mapNcmComment(raw);
-      if (!c.id || seen.has(c.id)) continue;
-      seen.add(c.id);
-      out.push(c);
-    }
-    return out.slice(0, 30);
+      .json<NcmCommentsResponse>()
+      .catch((): NcmCommentsResponse => ({}));
+    return Comment.mergeThreads(
+      (res.hotComments ?? []).map(mapNcmComment),
+      (res.comments ?? []).map(mapNcmComment),
+    );
+  }
+
+  async musicVideoComments(musicVideoId: string): Promise<Comment[]> {
+    const res = await this.http
+      .get("comment/mv", { searchParams: { id: musicVideoId, limit: 30 } })
+      .json<NcmCommentsResponse>()
+      .catch((): NcmCommentsResponse => ({}));
+    return Comment.mergeThreads(
+      (res.hotComments ?? []).map(mapNcmComment),
+      (res.comments ?? []).map(mapNcmComment),
+    );
   }
 
   // ── Auth (QR login: scan with the NCM mobile app) ──────────────────────────
@@ -297,11 +408,11 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
   async beginLogin(): Promise<LoginFlow> {
     const keyRes = await this.http
       .get("login/qr/key", { searchParams: { timestamp: Date.now() } })
-      .json<{ data?: { unikey?: string } }>();
+      .json<NcmQrKeyResponse>();
     const key = keyRes.data?.unikey ?? "";
     const createRes = await this.http
       .get("login/qr/create", { searchParams: { key, qrimg: true, timestamp: Date.now() } })
-      .json<{ data?: { qrimg?: string } }>();
+      .json<NcmQrCreateResponse>();
 
     return {
       kind: "qr",
@@ -310,8 +421,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
         // 800 expired · 801 waiting · 802 scanned (awaiting confirm) · 803 success.
         const res = await this.http
           .get("login/qr/check", { searchParams: { key, timestamp: Date.now() } })
-          .json<{ code?: number; cookie?: string }>()
-          .catch(() => ({}) as { code?: number; cookie?: string });
+          .json<NcmQrCheckResponse>()
+          .catch((): NcmQrCheckResponse => ({}));
         if (res.code === 803) {
           if (res.cookie) this.credentials?.set(this.name, { token: res.cookie });
           return { state: "authorized" };
@@ -326,7 +437,7 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
   async account(): Promise<Account> {
     const res = await this.http
       .get("user/account", { searchParams: { timestamp: Date.now() } })
-      .json<{ profile?: any; account?: any }>();
+      .json<NcmAccountResponse>();
     const profile = res.profile ?? {};
     const id = (profile.userId ?? "").toString();
     // Opportunistically cache the uid so likelist / playlists / record don't pay
@@ -337,8 +448,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     const detail = id
       ? await this.http
           .get("user/detail", { searchParams: { uid: id, timestamp: Date.now() } })
-          .json<{ profile?: any }>()
-          .catch(() => ({}) as { profile?: any })
+          .json<NcmUserDetailResponse>()
+          .catch((): NcmUserDetailResponse => ({}))
       : {};
     const dp = detail.profile ?? {};
     return {
@@ -366,7 +477,7 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     if (this.uid) return this.uid;
     const res = await this.http
       .get("user/account", { searchParams: { timestamp: Date.now() } })
-      .json<{ profile?: { userId?: number | string } }>();
+      .json<NcmAccountResponse>();
     this.uid = (res.profile?.userId ?? "").toString();
     return this.uid;
   }
@@ -375,8 +486,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     const uid = await this.ensureUid();
     const res = await this.http
       .get("likelist", { searchParams: { uid, timestamp: Date.now() } })
-      .json<{ ids?: Array<number | string> }>()
-      .catch(() => ({ ids: [] }) as { ids?: Array<number | string> });
+      .json<NcmLikedTrackIdsResponse>()
+      .catch((): NcmLikedTrackIdsResponse => ({ ids: [] }));
     return (res.ids ?? []).map(String);
   }
 
@@ -390,8 +501,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     const uid = await this.ensureUid();
     const res = await this.http
       .get("user/playlist", { searchParams: { uid, limit: 50, timestamp: Date.now() } })
-      .json<{ playlist?: any[] }>()
-      .catch(() => ({ playlist: [] }) as { playlist?: any[] });
+      .json<NcmUserPlaylistsResponse>()
+      .catch((): NcmUserPlaylistsResponse => ({ playlist: [] }));
     // Stubs (cover/name/count); tracks are fetched when a playlist is opened.
     return (res.playlist ?? []).map((p) => ({ ...mapNcmPlaylistStub(p), tracks: [] }) as Playlist);
   }
@@ -403,17 +514,19 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     const type = period === "week" ? 1 : 0;
     const res = await this.http
       .get("user/record", { searchParams: { uid, type, timestamp: Date.now() } })
-      .json<{ weekData?: Array<{ song: any }>; allData?: Array<{ song: any }> }>()
-      .catch(() => ({}) as { weekData?: Array<{ song: any }>; allData?: Array<{ song: any }> });
+      .json<NcmPlayRecordResponse>()
+      .catch((): NcmPlayRecordResponse => ({}));
     const rows = period === "week" ? res.weekData : res.allData;
-    return (rows ?? []).map((row, i) => mapNcmTrack(row.song, { index: i + 1 }));
+    return (rows ?? []).flatMap((row, i) =>
+      row.song ? [mapNcmTrack(row.song, { index: i + 1 })] : [],
+    );
   }
 
   async dailyRecommendations(): Promise<Partial<Track>[]> {
     const res = await this.http
       .get("recommend/songs", { searchParams: { timestamp: Date.now() } })
-      .json<{ data?: { dailySongs?: any[] } }>()
-      .catch(() => ({ data: {} }) as { data?: { dailySongs?: any[] } });
+      .json<NcmDailyRecommendationsResponse>()
+      .catch((): NcmDailyRecommendationsResponse => ({ data: {} }));
     return (res.data?.dailySongs ?? []).map((s, i) => mapNcmTrack(s, { index: i + 1 }));
   }
 }

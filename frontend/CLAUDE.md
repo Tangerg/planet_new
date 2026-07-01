@@ -10,7 +10,7 @@
 >
 > 依赖规则(单向):`@shared ← @domain ← @core ← @providers ← @/(ui) ← app`。先单包文件夹分层;待规模/团队增长再升级 workspace monorepo。
 >
-> 本文件只放**法则 —— 只宏观、不写具体**（具体文件名 / 符号 / 行数会随演化漂移,活在代码 / git 里,不进本则）。读法:先「两条法则」→ §1 架构心智 → §2-§4 技术栈 / 判断 / 硬约定 → §5 别走的方向 → §6 怎么干活。
+> 本文件只放**法则 —— 只宏观、不写具体**（具体文件名 / 符号 / 行数会随演化漂移,活在代码 / git 里,不进本则）。产品能力边界与 provider 职责见 `../doc/product-scope.md`;新增音乐能力前先确认它属于核心流媒体范围。读法:先「两条法则」→ §1 架构心智 → §2-§4 技术栈 / 判断 / 硬约定 → §5 别走的方向 → §6 怎么干活。
 
 ---
 
@@ -36,14 +36,14 @@
 
 - **一句话定位**:**内核与 UI 严格分层,数据只经 provider,导航就是一台单页状态机。**
 - **四大支柱**:
-  1. **内核 / UI 分层(硬边界)**:`@kernel/*` 永不 import React;UI 只通过三条通道碰内核 ——
-     ① `planet.hooks`(事件总线,`emit` 下命令 / `on` 收状态);
-     ② provider 插件(取数据);
+  1. **内核 / UI 分层(硬边界)**:`@core/*` 永不 import React;UI 只通过三条通道碰内核 ——
+     ① `engine.events`(事件总线,收状态事实);
+     ② `Engine` services + provider 插件(发命令 / 取数据);
      ③ zustand store(`StoreBridge` 把内核事件固化进 `usePlayQueueStore`,任何时刻 mount 的组件都读得到当前播放态)。
      **绝不在 UI 里复制一份播放态**(current / playing / queue / progress 全来自内核 store + hooks)。
-  2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `MusicProvider`(`packages/provider/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `types.ts` 加 capability + 给 `MusicProvider` 加方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
-  3. **导航 = 单页状态机 + 共享元素切换引擎**(`view/vibe/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
-  4. **设计系统主体 = `ui/vibe/vibe.css`**(逐字搬自示例):class + 内联样式驱动,自带字体 / token / 玻璃 / 全部动画 keyframes —— 仍是「切换效果原样」的根因,**不机械全量改写、不破坏 morph**。在此之上 **Tailwind v4 已启用(无 Preflight,只引 theme+utilities 层)**作为工具类补充,`@theme` 镜像了 vibe.css 的 token;复用型交互件(Radix + Tailwind,经 `ui/lib/cn`)放 `ui/components/`(已落地 `Slider`、`VirtualList`)。详见 §2 / §5。
+  2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `MusicProvider`(`src/providers/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `domain/ports` 加 capability / 方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
+  3. **导航 = 单页状态机 + 共享元素切换引擎**(`ui/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
+  4. **设计系统主体 = `ui/Shell.css` + `ui/styles/*` + 组件级 CSS**(逐字搬自示例并逐步组件化):class + 内联样式驱动,自带字体 / token / 玻璃 / 动画 keyframes —— 仍是「切换效果原样」的根因,**不机械全量改写、不破坏 morph**。在此之上 **Tailwind v4 已启用(无 Preflight,只引 theme+utilities 层)**作为工具类补充,复用型交互件(Radix + Tailwind,经 `ui/lib/cn`)放 `ui/components/`(已落地 `Slider`、`VirtualList`)。详见 §2 / §5。
 
 ---
 
@@ -72,6 +72,7 @@
 ## 4 · 硬约定(违反 = 回归)
 
 - **取数走 provider**:任何外部数据都经 `MusicProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
+- **产品范围先行**:新增 provider/API 能力先看 `../doc/product-scope.md`;只接核心流媒体能力,不因为平台接口存在就把签到、任务、社交、播客、广播等能力带进产品。
 - **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。

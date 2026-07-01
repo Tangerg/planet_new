@@ -25,6 +25,18 @@ describe("PlayQueue.setTracks", () => {
   });
 });
 
+describe("PlayQueue.upNext", () => {
+  test("projects the tracks after current without mutating display order", () => {
+    expect(PlayQueue.upNext([t1, t2, t3], t1).map((t) => t.id)).toEqual(["2", "3"]);
+    expect(PlayQueue.upNext([t1, t2, t3], t3)).toEqual([]);
+  });
+
+  test("returns the full list when there is no current match", () => {
+    expect(PlayQueue.upNext([t1, t2], undefined).map((t) => t.id)).toEqual(["1", "2"]);
+    expect(PlayQueue.upNext([t1, t2], track("missing")).map((t) => t.id)).toEqual(["1", "2"]);
+  });
+});
+
 describe("PlayQueue user skip (cyclic)", () => {
   test("next/previous wrap around the ends", () => {
     const q = new PlayQueue();
@@ -121,6 +133,23 @@ describe("PlayQueue.toggleShuffle", () => {
     expect(q.size).toBe(8);
 
     expect(q.toggleShuffle()).toBe(false);
+    expect(q.current).toBe(before);
+  });
+
+  test("setShuffle explicitly changes shuffle state without moving the current track", () => {
+    const q = new PlayQueue();
+    q.setTracks([t1, t2, t3], t2);
+    const before = q.current;
+
+    expect(q.setShuffle(true)).toBe(true);
+    expect(q.isShuffled).toBe(true);
+    expect(q.current).toBe(before);
+
+    expect(q.setShuffle(true)).toBe(true);
+    expect(q.current).toBe(before);
+
+    expect(q.setShuffle(false)).toBe(false);
+    expect(q.isShuffled).toBe(false);
     expect(q.current).toBe(before);
   });
 });

@@ -1,4 +1,5 @@
 import type { Artist } from "./artist";
+import { ArtistCredit } from "./artist-credit";
 import { type Image, pickImageUrl } from "./image";
 import type { Track } from "./track";
 
@@ -24,14 +25,15 @@ export type Album = {
 /** Album behavior; see `Track` for the companion-object rationale. */
 export const Album = {
   primaryArtist(a: Partial<Album>): Partial<Artist> | undefined {
-    return a.artists?.[0];
+    return a.artists?.find((artist) => artist?.name?.trim());
+  },
+
+  artistCredits(a: Partial<Album>): ArtistCredit[] {
+    return ArtistCredit.from(a.artists);
   },
 
   artistNames(a: Partial<Album>): string {
-    return (a.artists ?? [])
-      .map((x) => x?.name)
-      .filter(Boolean)
-      .join(", ");
+    return ArtistCredit.names(Album.artistCredits(a));
   },
 
   /** Release year derived from `releaseDate`, or undefined when unknown. */

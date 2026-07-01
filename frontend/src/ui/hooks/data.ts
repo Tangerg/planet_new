@@ -13,9 +13,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import type { Personalized } from "@domain/model/personalized";
 import { PlayState } from "@core/plugin";
+import { PlayQueue } from "@domain/model/play-queue";
 import { RepeatMode } from "@domain/model/repeat";
+import { Artist } from "@domain/model/artist";
 
 import { useEngine } from "@/hooks/useEngine";
 import { useMediaService } from "@/hooks/useMediaService";
@@ -25,19 +26,22 @@ import { usePlayQueueStore } from "@/store/playqueue";
 import { useAuthStore } from "@/store/auth";
 
 import {
-  seedOf,
   toTrack,
   toVibeAlbum,
   toVibeArtist,
   toVibeComment,
+  toVibeMusicVideos,
   toVibePlaylist,
   toVibeTrack,
   toVibeTracks,
-  type ScreenData,
   type VibeComment,
   type VibeCollection,
+  type VibeArtist,
+  type VibeMusicVideo,
   type VibeTrack,
 } from "@/model/adapt";
+import { catalogScreenData, toVibeCharts } from "@/model/catalog";
+import { queryKeys } from "@/model/queryKeys";
 
 // ── Playback ────────────────────────────────────────────────────────
 
@@ -90,13 +94,24 @@ export function useVibePlayback() {
     },
     [playbackService],
   );
+  const shufflePlay = useCallback(
+    async (list: VibeTrack[]) => {
+      await playbackService.shufflePlay(list.map(toTrack));
+    },
+    [playbackService],
+  );
 
   const togglePlay = useCallback(
     () => playbackService.togglePlay(playing),
     [playbackService, playing],
   );
+  const pause = useCallback(() => playbackService.pause(), [playbackService]);
   const next = useCallback(() => playbackService.next(), [playbackService]);
   const prev = useCallback(() => playbackService.previous(), [playbackService]);
+  const addToQueue = useCallback(
+    (track: VibeTrack) => playbackService.addToQueue(toTrack(track)),
+    [playbackService],
+  );
   const toggleShuffle = useCallback(() => playbackService.toggleShuffle(), [playbackService]);
   const toggleRepeat = useCallback(() => playbackService.cycleRepeat(), [playbackService]);
   const seek = useCallback((pct: number) => playbackService.seek(pct), [playbackService]);
@@ -104,10 +119,9 @@ export function useVibePlayback() {
 
   // Up-next: the queue after the current track; used by NowPlaying / Queue.
   const upNext = useMemo(() => {
-    if (!current) return tracks;
-    const i = tracks.findIndex((t) => t.id === current.id);
-    return i >= 0 ? tracks.slice(i + 1) : tracks;
-  }, [tracks, current]);
+    const domainUpNext = PlayQueue.upNext(domainTracks, domainTrack);
+    return domainUpNext.map((track) => toVibeTrack(track));
+  }, [domainTracks, domainTrack]);
 
   return {
     current,
@@ -120,9 +134,12 @@ export function useVibePlayback() {
     repeat,
     volume,
     play,
+    shufflePlay,
     togglePlay,
+    pause,
     next,
     prev,
+    addToQueue,
     toggleShuffle,
     toggleRepeat,
     seek,
@@ -132,22 +149,13 @@ export function useVibePlayback() {
 
 // ── Catalog (home / XMB) ─────────────────────────────────────────────
 
-function buildCatalog(p?: Personalized): ScreenData {
-  return {
-    playlists: (p?.playlists ?? []).map(toVibePlaylist),
-    albums: (p?.albums ?? []).map(toVibeAlbum),
-    artists: (p?.artists ?? []).map(toVibeArtist),
-    allTracks: toVibeTracks(p?.tracks),
-  };
-}
-
 export function useCatalog() {
   const media = useMediaService();
   const { data, isLoading } = useQuery({
-    queryKey: ["personalized", media.providerName],
+    queryKey: queryKeys.personalized(media.providerName),
     queryFn: () => media.personalized(),
   });
-  const catalog = useMemo(() => buildCatalog(data), [data]);
+  const catalog = useMemo(() => catalogScreenData(data), [data]);
   return { catalog, isLoading };
 }
 
@@ -163,6 +171,7 @@ export function useProviderSearch() {
         tracks: toVibeTracks(r.tracks),
         artists: (r.artists ?? []).map(toVibeArtist),
         albums: (r.albums ?? []).map(toVibeAlbum),
+        playlists: (r.playlists ?? []).map(toVibePlaylist),
       };
     },
     [media],
@@ -191,7 +200,7 @@ export function useLyric() {
 export function useComments(trackId: string | undefined, enabled: boolean): VibeComment[] {
   const media = useMediaService();
   const { data } = useQuery({
-    queryKey: ["comments", media.providerName, trackId],
+    queryKey: queryKeys.comments(media.providerName, trackId),
     queryFn: () => media.comments(trackId ?? ""),
     enabled: enabled && !!trackId && media.supports("comments"),
   });
@@ -207,7 +216,7 @@ export function useUserPlaylists(): VibeCollection[] {
   const media = useMediaService();
   const loggedIn = useAuthStore((s) => s.loggedIn);
   const { data } = useQuery({
-    queryKey: ["userPlaylists", media.providerName],
+    queryKey: queryKeys.userPlaylists(media.providerName),
     queryFn: () => library.userPlaylists(),
     enabled: loggedIn && library.supported,
   });
@@ -225,12 +234,12 @@ export function usePlayRecord(): { week: VibeTrack[]; all: VibeTrack[] } {
   const loggedIn = useAuthStore((s) => s.loggedIn);
   const enabled = loggedIn && library.supported;
   const week = useQuery({
-    queryKey: ["playRecord", media.providerName, "week"],
+    queryKey: queryKeys.playRecord(media.providerName, "week"),
     queryFn: () => library.playRecord("week"),
     enabled,
   });
   const all = useQuery({
-    queryKey: ["playRecord", media.providerName, "all"],
+    queryKey: queryKeys.playRecord(media.providerName, "all"),
     queryFn: () => library.playRecord("all"),
     enabled,
   });
@@ -249,7 +258,7 @@ export function useDailyRecommendations(): VibeTrack[] {
   const media = useMediaService();
   const loggedIn = useAuthStore((s) => s.loggedIn);
   const { data } = useQuery({
-    queryKey: ["dailyRecommendations", media.providerName],
+    queryKey: queryKeys.dailyRecommendations(media.providerName),
     queryFn: () => library.dailyRecommendations(),
     enabled: loggedIn && library.supported,
   });
@@ -260,22 +269,53 @@ export function useDailyRecommendations(): VibeTrack[] {
 export function useToplists(): VibeCollection[] {
   const media = useMediaService();
   const { data } = useQuery({
-    queryKey: ["toplists", media.providerName],
+    queryKey: queryKeys.toplists(media.providerName),
     queryFn: () => media.toplists(),
   });
-  return useMemo<VibeCollection[]>(
-    () =>
-      (data ?? []).map((c) => ({
-        id: c.id,
-        title: c.title,
-        name: c.title,
-        kind: "Chart",
-        image: c.image,
-        coverSeed: seedOf(c.id),
-        sub: c.period,
-        updatedAt: c.period ?? "today",
-        tracks: [],
-      })),
-    [data],
-  );
+  return useMemo<VibeCollection[]>(() => toVibeCharts(data), [data]);
+}
+
+// ── Music videos ────────────────────────────────────────────────────
+
+export function useMusicVideoDiscovery(artists: VibeArtist[]): {
+  videos: VibeMusicVideo[];
+  isLoading: boolean;
+} {
+  const media = useMediaService();
+  const artistIds = useMemo(() => Artist.uniqueIds(artists), [artists]);
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.musicVideoDiscovery(media.providerName, artistIds),
+    queryFn: () => media.discoverArtistMusicVideos(artists),
+    enabled: artistIds.length > 0 && media.supports("artistMusicVideos"),
+  });
+  return {
+    videos: useMemo(() => toVibeMusicVideos(data), [data]),
+    isLoading,
+  };
+}
+
+export function useArtistMusicVideos(
+  artistId: string | undefined,
+  enabled: boolean,
+): VibeMusicVideo[] {
+  const media = useMediaService();
+  const { data } = useQuery({
+    queryKey: queryKeys.artistMusicVideos(media.providerName, artistId),
+    queryFn: () => media.artistMusicVideos(artistId ?? ""),
+    enabled: enabled && !!artistId && media.supports("artistMusicVideos"),
+  });
+  return useMemo(() => toVibeMusicVideos(data), [data]);
+}
+
+export function useMusicVideoComments(
+  musicVideoId: string | undefined,
+  enabled: boolean,
+): VibeComment[] {
+  const media = useMediaService();
+  const { data } = useQuery({
+    queryKey: queryKeys.musicVideoComments(media.providerName, musicVideoId),
+    queryFn: () => media.musicVideoComments(musicVideoId ?? ""),
+    enabled: enabled && !!musicVideoId && media.supports("musicVideoComments"),
+  });
+  return useMemo(() => (data ?? []).map(toVibeComment), [data]);
 }

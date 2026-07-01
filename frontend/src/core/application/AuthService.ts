@@ -1,11 +1,18 @@
-import type { Account, AuthProvider, CredentialStore, LoginFlow, MusicProvider } from "@domain";
+import {
+  isAuthProvider,
+  type Account,
+  type AuthProvider,
+  type CredentialStore,
+  type LoginFlow,
+  type MusicProvider,
+} from "@domain";
 
 /**
  * Application service for user login — the UI's single handle to auth. It works
- * against whatever the active provider is: providers that declare the "auth"
- * capability also implement AuthProvider. Symmetric with PlaybackService /
- * MediaService; bound to the same active-provider getter so a provider switch
- * needs no rewiring. Never imports React or `@providers`.
+ * against whatever the active provider is: providers must both declare the
+ * "auth" capability and structurally implement AuthProvider. Symmetric with
+ * PlaybackService / MediaService; bound to the same active-provider getter so a
+ * provider switch needs no rewiring. Never imports React or `@providers`.
  */
 export class AuthService {
   constructor(
@@ -15,7 +22,7 @@ export class AuthService {
 
   /** Whether the active provider can log a user in at all. */
   get supported(): boolean {
-    return this.getProvider().supports("auth");
+    return isAuthProvider(this.getProvider());
   }
 
   /** Whether a session is stored for the active provider. */
@@ -25,11 +32,10 @@ export class AuthService {
 
   private auth(): AuthProvider {
     const provider = this.getProvider();
-    if (!provider.supports("auth")) {
+    if (!isAuthProvider(provider)) {
       throw new Error(`Provider ${provider.name} does not support auth.`);
     }
-    // Capability-gated: an "auth"-declaring provider also implements AuthProvider.
-    return provider as unknown as AuthProvider;
+    return provider;
   }
 
   beginLogin(): Promise<LoginFlow> {
@@ -41,6 +47,7 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
-    if (this.getProvider().supports("auth")) await this.auth().logout();
+    const provider = this.getProvider();
+    if (isAuthProvider(provider)) await provider.logout();
   }
 }

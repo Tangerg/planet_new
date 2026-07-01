@@ -2,7 +2,8 @@ import { Playlist } from "../model/playlist";
 import { Lyric } from "../model/lyric";
 import { Album } from "../model/album";
 import { Artist } from "../model/artist";
-import { TrackPlayUrl } from "../model/track";
+import { Track, TrackPlayUrl } from "../model/track";
+import { MusicVideo } from "../model/music-video";
 import { Personalized } from "../model/personalized";
 import { SearchResult } from "../model/search";
 import { Chart } from "../model/chart";
@@ -20,65 +21,119 @@ export type ProviderCapability =
   | "playlistDetail"
   | "albumDetail"
   | "artistDetail"
+  | "trackDetail"
+  | "musicVideoDetail"
+  | "artistMusicVideos"
+  | "musicVideoComments"
   | "lyric"
   | "personalized"
   | "search" // keyword search (tracks/artists/albums/playlists)
   | "toplist" // charts
   | "comments" // track comments (hot / recent)
-  | "auth" // user login (the provider also implements AuthProvider)
-  | "userLibrary" // logged-in user data: liked songs, playlists (UserLibrary)
+  | "auth" // user login (verified by isAuthProvider)
+  | "userLibrary" // logged-in user data: liked songs, playlists (verified by isUserLibraryProvider)
   | "fullPlayback" // can provide a full playable track URL
   | "previewPlayback"; // 30s preview clip only (e.g. Spotify preview_url)
 
-export interface MusicProvider {
+export interface ProviderIdentity {
   get name(): string;
 
   /** Capabilities this provider supports. */
   get capabilities(): ReadonlySet<ProviderCapability>;
 
   supports(cap: ProviderCapability): boolean;
+}
 
+export interface PlaylistDetailProvider {
   /**
    * Playlist detail.
    * @param id playlist id
    */
   playlistDetail(id: string): Promise<Playlist>;
+}
 
+export interface LyricProvider {
   /**
    * Track lyrics.
    * @param id track id
    */
   lyric(id: string): Promise<Lyric[]>;
+}
 
+export interface AlbumDetailProvider {
   /**
    * Album detail.
    * @param id album id
    */
   albumDetail(id: string): Promise<Album>;
+}
 
+export interface ArtistDetailProvider {
   /**
    * Artist detail (basics + top tracks).
    * @param id artist id
    */
   artistDetail(id: string): Promise<Artist>;
+}
 
+export interface TrackDetailProvider {
+  /**
+   * Track detail.
+   * @param id track id
+   */
+  trackDetail(id: string): Promise<Partial<Track> | undefined>;
+
+  /**
+   * Batch track detail. Preserves provider ordering when possible.
+   * @param ids track ids
+   */
+  trackDetails(ids: string[]): Promise<Partial<Track>[]>;
+}
+
+export interface MusicVideoProvider {
+  /**
+   * Music video detail, including a playable URL when the provider supports it.
+   * @param id music-video id
+   */
+  musicVideoDetail(id: string): Promise<MusicVideo | undefined>;
+
+  /**
+   * Music videos by an artist.
+   * @param artistId artist id
+   */
+  artistMusicVideos(artistId: string): Promise<Partial<MusicVideo>[]>;
+
+  /**
+   * Comments for a music video.
+   * @param musicVideoId music-video id
+   */
+  musicVideoComments(musicVideoId: string): Promise<Comment[]>;
+}
+
+export interface PlaybackUrlProvider {
   /**
    * Resolve playable URLs.
    * @param ids track ids
    */
   playUrls(ids: string[]): Promise<TrackPlayUrl[]>;
+}
 
+export interface PersonalizedProvider {
   /**
    * Home / personalized data.
    */
   personalized(): Promise<Personalized>;
+}
 
+export interface SearchProvider {
   /**
    * Keyword search; unsupported dimensions return empty arrays.
    * @param query search keywords
    */
   search(query: string): Promise<SearchResult>;
+}
 
+export interface ToplistProvider {
   /**
    * All charts (list items, without tracks).
    */
@@ -89,10 +144,27 @@ export interface MusicProvider {
    * @param id chart id
    */
   toplistDetail(id: string): Promise<Playlist>;
+}
 
+export interface TrackCommentProvider {
   /**
    * Comments for a track (hot + recent); empty when unsupported.
    * @param trackId track id
    */
   comments(trackId: string): Promise<Comment[]>;
 }
+
+export interface MusicProvider
+  extends
+    ProviderIdentity,
+    PlaylistDetailProvider,
+    LyricProvider,
+    AlbumDetailProvider,
+    ArtistDetailProvider,
+    TrackDetailProvider,
+    MusicVideoProvider,
+    PlaybackUrlProvider,
+    PersonalizedProvider,
+    SearchProvider,
+    ToplistProvider,
+    TrackCommentProvider {}

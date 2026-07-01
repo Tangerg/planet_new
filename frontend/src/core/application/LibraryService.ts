@@ -1,4 +1,10 @@
-import type { MusicProvider, Playlist, Track, UserLibrary } from "@domain";
+import {
+  isUserLibraryProvider,
+  type MusicProvider,
+  type Playlist,
+  type Track,
+  type UserLibrary,
+} from "@domain";
 
 /**
  * Application service for the logged-in user's own library (liked songs, …).
@@ -10,15 +16,15 @@ export class LibraryService {
 
   /** Whether the active provider exposes account library at all. */
   get supported(): boolean {
-    return this.getProvider().supports("userLibrary");
+    return isUserLibraryProvider(this.getProvider());
   }
 
   private lib(): UserLibrary {
     const provider = this.getProvider();
-    if (!provider.supports("userLibrary")) {
+    if (!isUserLibraryProvider(provider)) {
       throw new Error(`Provider ${provider.name} has no user library.`);
     }
-    return provider as unknown as UserLibrary;
+    return provider;
   }
 
   likedTrackIds(): Promise<string[]> {

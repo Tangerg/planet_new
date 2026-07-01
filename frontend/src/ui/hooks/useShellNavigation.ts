@@ -21,18 +21,28 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { MediaService } from "@core";
 
-import { useMorphTransition } from "@/infra/morph";
+import { useMorphTransition, type MorphLastTile } from "@/infra/morph";
 import {
-  toVibeAlbum,
-  toVibeArtist,
-  toVibePlaylist,
-  toVibeTracks,
   type ArtistTarget,
   type DetailTarget,
   type OpenTarget,
   type VibeCollection,
+  type VibeMusicVideo,
   type VibeTrack,
 } from "@/model/adapt";
+import {
+  detailKindOf,
+  loadArtistTarget,
+  loadDetailTarget,
+  loadMusicVideoDetail,
+  mergeDetailTarget,
+  mergeMusicVideoDetail,
+  normalizeDetailTarget,
+  shouldFetchArtistTarget,
+  shouldFetchDetailTarget,
+  shouldFetchMusicVideoDetail,
+} from "@/model/detail";
+import { queryKeys } from "@/model/queryKeys";
 
 // One frame of navigation state — enough to rebuild any screen on "back".
 // Screen rendering reads several independent state slices (detail / artistObj /
@@ -42,13 +52,15 @@ type NavSnapshot = {
   view: string;
   detail: DetailTarget | null;
   artistObj: ArtistTarget;
+  musicVideoObj: VibeMusicVideo | null;
+  musicVideoRelated: VibeMusicVideo[];
   libraryTab: string;
   libraryView: string;
   searchQuery: string;
   playContext: VibeTrack[];
   // The morph origin tile active while on this screen — restored so a later
   // collapse-to-launcher flies from the right place after a deep back-walk.
-  lastTile: unknown;
+  lastTile: MorphLastTile | null;
 };
 
 export function useShellNavigation(media: MediaService, queryClient: QueryClient) {
@@ -56,6 +68,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   const [view, setView] = useState("xmb");
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const [artistObj, setArtistObj] = useState<ArtistTarget>({ id: "", name: "" });
+  const [musicVideoObj, setMusicVideoObj] = useState<VibeMusicVideo | null>(null);
+  const [musicVideoRelated, setMusicVideoRelated] = useState<VibeMusicVideo[]>([]);
   const [searchQuery, setSeedQuery] = useState("");
   const [libraryTab, setLibraryTab] = useState("playlists");
   const [libraryView, setLibraryView] = useState("grid");
@@ -99,35 +113,19 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   const openDetail = useCallback(
     (input: OpenTarget) => {
       pushCurrent();
-      // Detail screens assume tracks is always an array (they read p.tracks.length);
-      // a summary (charts especially) may lack it, so default it.
-      const obj: DetailTarget = { ...input, tracks: input.tracks ?? [] };
+      const obj = normalizeDetailTarget(input);
       setDetail(obj);
       playContext.current = obj.tracks;
       setView("detail");
-      // Real playlist/collection summaries carry no tracks -> fetch detail to backfill.
-      if (obj.id && obj._real !== false && obj.tracks.length === 0) {
-        const kind = obj.kind;
-        const fetcher =
-          kind === "Album"
-            ? () => media.albumDetail(obj.id).then(toVibeAlbum)
-            : kind === "Chart"
-              ? () => media.toplistDetail(obj.id).then(toVibePlaylist)
-              : () => media.playlistDetail(obj.id).then(toVibePlaylist);
+      if (shouldFetchDetailTarget(obj)) {
+        const kind = detailKindOf(obj);
         queryClient
-          .fetchQuery({ queryKey: ["detail", kind, media.providerName, obj.id], queryFn: fetcher })
+          .fetchQuery({
+            queryKey: queryKeys.detail(media.providerName, kind, obj.id),
+            queryFn: () => loadDetailTarget(media, obj),
+          })
           .then((full) => {
-            // detail wins by default; keep the summary's identity fields when the
-            // detail lacks them (charts especially).
-            const merged: DetailTarget = {
-              ...obj,
-              ...full,
-              name: full.name || obj.name,
-              image: full.image || obj.image,
-              coverSeed: obj.coverSeed ?? full.coverSeed,
-              kind: obj.kind ?? full.kind,
-              tracks: full.tracks?.length ? full.tracks : obj.tracks,
-            };
+            const merged = mergeDetailTarget(obj, full);
             playContext.current = merged.tracks;
             setDetail(merged);
           })
@@ -150,17 +148,13 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
       setArtistObj(ar);
       playContext.current = ar.tracks ?? [];
       setView("artist");
-      if (ar.id && (!ar.tracks || ar.tracks.length === 0)) {
+      if (shouldFetchArtistTarget(ar)) {
         queryClient
           .fetchQuery({
-            queryKey: ["artist", media.providerName, ar.id],
-            queryFn: () => media.artistDetail(ar.id),
+            queryKey: queryKeys.artist(media.providerName, ar.id),
+            queryFn: () => loadArtistTarget(media, ar),
           })
-          .then((full) => {
-            const mapped: ArtistTarget = {
-              ...toVibeArtist(full),
-              tracks: toVibeTracks(full.topTracks),
-            };
+          .then((mapped) => {
             playContext.current = mapped.tracks ?? [];
             setArtistObj(mapped);
           })
@@ -168,6 +162,44 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
       }
     },
     [media, queryClient, pushCurrent],
+  );
+  const fetchMusicVideo = useCallback(
+    (mv: VibeMusicVideo) => {
+      if (!shouldFetchMusicVideoDetail(mv, (cap) => media.supports(cap))) return;
+      queryClient
+        .fetchQuery({
+          queryKey: queryKeys.musicVideo(media.providerName, mv.id),
+          queryFn: () => loadMusicVideoDetail(media, mv),
+        })
+        .then((full) =>
+          setMusicVideoObj((current) => {
+            return mergeMusicVideoDetail(current, mv.id, full);
+          }),
+        )
+        .catch(() => {});
+    },
+    [media, queryClient],
+  );
+  const openMusicVideo = useCallback(
+    (mv: VibeMusicVideo, related: VibeMusicVideo[] = []) => {
+      pushCurrent();
+      setMusicVideoObj(mv);
+      setMusicVideoRelated(related);
+      setView("mv-detail");
+      if (!mv.playUrl) fetchMusicVideo(mv);
+    },
+    [fetchMusicVideo, pushCurrent],
+  );
+  const openMusicVideoTheater = useCallback(
+    (mv?: VibeMusicVideo) => {
+      const target = mv ?? musicVideoObj;
+      if (!target) return;
+      pushCurrent();
+      setMusicVideoObj(target);
+      setView("mv-theater");
+      if (!target.playUrl) fetchMusicVideo(target);
+    },
+    [fetchMusicVideo, musicVideoObj, pushCurrent],
   );
   const openLib = useCallback(
     (tab: string, vw?: string) => {
@@ -196,6 +228,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     view,
     detail,
     artistObj,
+    musicVideoObj,
+    musicVideoRelated,
     libraryTab,
     libraryView,
     searchQuery,
@@ -215,6 +249,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     setView(prev.view);
     setDetail(prev.detail);
     setArtistObj(prev.artistObj);
+    setMusicVideoObj(prev.musicVideoObj);
+    setMusicVideoRelated(prev.musicVideoRelated);
     setLibraryTab(prev.libraryTab);
     setLibraryView(prev.libraryView);
     setSeedQuery(prev.searchQuery);
@@ -237,6 +273,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     setView,
     detail,
     artistObj,
+    musicVideoObj,
+    musicVideoRelated,
     libraryTab,
     libraryView,
     searchQuery,
@@ -253,6 +291,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     albumDetail,
     openChart,
     openArtist,
+    openMusicVideo,
+    openMusicVideoTheater,
     openLib,
     // morph engine surface Shell renders (MorphStage / MorphProvider / XMB onOpen)
     viewRef,

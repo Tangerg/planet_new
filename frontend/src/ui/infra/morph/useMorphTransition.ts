@@ -34,6 +34,22 @@ type Rect = {
   borderRadius: number | string;
 };
 
+export type MorphSource = {
+  dest: string;
+  seed?: number;
+  grad?: string[];
+  image?: string;
+  radius?: number | string;
+  run?: () => void;
+};
+
+export type MorphLastTile = {
+  origin: Rect;
+  seed?: number;
+  grad?: string[];
+  image?: string;
+};
+
 export type Transition = {
   from: string;
   to: string;
@@ -80,9 +96,11 @@ export function useMorphTransition(
   setView: (v: string) => void,
 ) {
   const [trans, setTrans] = useState<Transition | null>(null);
-  const lastTile = useRef<any>(null);
+  const transRef = useRef<Transition | null>(null);
+  const lastTile = useRef<MorphLastTile | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafIds = useRef<number[]>([]);
+  transRef.current = trans;
 
   const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clearTimers = () => {
@@ -131,7 +149,8 @@ export function useMorphTransition(
   };
 
   const startForward = useCallback(
-    (item: any, rect: DOMRect) => {
+    (item: MorphSource, rect: DOMRect) => {
+      if (transRef.current) return;
       if (!viewRef.current || reduceMo()) {
         if (item.run) item.run();
         return;
@@ -147,7 +166,7 @@ export function useMorphTransition(
       const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
       lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
       if (item.run) item.run();
-      setTrans({
+      const next: Transition = {
         from: view,
         to: item.dest,
         origin,
@@ -161,7 +180,9 @@ export function useMorphTransition(
         phase: "start",
         hero: null,
         measured: false,
-      });
+      };
+      transRef.current = next;
+      setTrans(next);
       // reveal/clear are scheduled when the morph phase actually begins (see the
       // phase-flip effect), NOT here: a heavy outgoing screen can jank the main
       // thread before the morph starts, and a trans-set-relative reveal would cut
@@ -172,6 +193,7 @@ export function useMorphTransition(
   );
 
   const startReverse = useCallback(() => {
+    if (transRef.current) return;
     const lt = lastTile.current;
     const from = view;
     if (!viewRef.current || !lt || reduceMo()) {
@@ -185,7 +207,7 @@ export function useMorphTransition(
     const px = o.left + o.width / 2,
       py = o.top + o.height / 2;
     const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
-    setTrans({
+    const next: Transition = {
       from,
       to: "xmb",
       origin: lt.origin,
@@ -199,7 +221,9 @@ export function useMorphTransition(
       phase: "start",
       hero: !!src,
       measured: true,
-    });
+    };
+    transRef.current = next;
+    setTrans(next);
     setView("xmb");
     const revId1 = requestAnimationFrame(() => {
       const revId2 = requestAnimationFrame(() => {
@@ -207,7 +231,12 @@ export function useMorphTransition(
         // Same anchoring as the forward path: schedule the clear from the real
         // morph start (after any pre-morph jank from a heavy collapsing screen),
         // so the reverse collapse's shape tween isn't cut short → no snap.
-        timers.current.push(setTimeout(() => setTrans(null), 740));
+        timers.current.push(
+          setTimeout(() => {
+            transRef.current = null;
+            setTrans(null);
+          }, 740),
+        );
       });
       rafIds.current.push(revId2);
     });
@@ -245,7 +274,12 @@ export function useMorphTransition(
         // radius finishes before the hero hand-off — fixes the snap when entering
         // from a heavy screen (e.g. the control bar → disc from ForYou).
         timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 600));
-        timers.current.push(setTimeout(() => setTrans(null), 980));
+        timers.current.push(
+          setTimeout(() => {
+            transRef.current = null;
+            setTrans(null);
+          }, 980),
+        );
       });
       rafIds.current.push(inner);
     });

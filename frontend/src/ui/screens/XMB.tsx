@@ -93,6 +93,7 @@ function XmbCategory({
   );
   return (
     <Button
+      aria-label={cat.label}
       onClick={onClick}
       style={{
         position: "absolute",
@@ -290,8 +291,8 @@ export const XMB = React.memo(function XMB({
     setC(nc);
   };
 
-  const openItem = (m: XmbItemModel, e: React.SyntheticEvent) => {
-    const node = (e.currentTarget as Element).querySelector("[data-art]") || e.currentTarget;
+  const openItem = (m: XmbItemModel, target: Element) => {
+    const node = target.querySelector("[data-art]") || target;
     if (onOpen) onOpen(m, (node as Element).getBoundingClientRect());
     else if (m.run) m.run();
   };
@@ -405,12 +406,12 @@ export const XMB = React.memo(function XMB({
           return (
             <div
               key={m.key}
-              onClick={(e) => (o === 0 ? openItem(m, e) : setItem(i))}
+              onClick={(e) => (o === 0 ? openItem(m, e.currentTarget) : setItem(i))}
               // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- div is a visual layout container in XMB column
               role="button"
               tabIndex={0}
               onKeyDown={activateOnKey((e) => {
-                if (o === 0) openItem(m, e as any);
+                if (o === 0) openItem(m, e.currentTarget);
                 else setItem(i);
               })}
               style={{

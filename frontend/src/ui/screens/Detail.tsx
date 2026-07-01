@@ -26,6 +26,7 @@ import { useScreenActions } from "@/hooks/screenActions";
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
   onPlay: (track: VibeTrack) => void;
+  onShufflePlay: (tracks: VibeTrack[]) => void;
   current?: VibeTrack;
   playing: boolean;
   liked: Set<string>;
@@ -37,6 +38,7 @@ type PlaylistDetailScreenProps = {
 export function PlaylistDetailScreen({
   playlist,
   onPlay,
+  onShufflePlay,
   current,
   playing,
   liked,
@@ -84,7 +86,13 @@ export function PlaylistDetailScreen({
     bar.style.transform = on ? "translateY(0)" : "translateY(-100%)";
     bar.style.pointerEvents = on ? "auto" : "none";
   };
-  const playFirst = () => onPlay(p.tracks[0]);
+  const hasTracks = p.tracks.length > 0;
+  const playFirst = () => {
+    if (hasTracks) onPlay(p.tracks[0]);
+  };
+  const shuffleAll = () => {
+    if (hasTracks) onShufflePlay(p.tracks);
+  };
 
   // Real-world names run long; a fixed 64px title wraps a long CJK name to two
   // lines and deforms the hero. Scale the title down so it stays ~one line (CJK
@@ -118,6 +126,7 @@ export function PlaylistDetailScreen({
         <div className="mx-auto flex max-w-[1320px] items-center gap-[14px] pl-[100px] pr-12 2xl:pl-12">
           <Button
             onClick={playFirst}
+            disabled={!hasTracks}
             aria-label="Play"
             className="grid h-10 w-10 flex-none place-items-center rounded-full"
             style={{ background: accent, color: "#06060a", boxShadow: `0 6px 18px -4px ${accent}` }}
@@ -191,10 +200,11 @@ export function PlaylistDetailScreen({
                   className="pill-accent inline-flex items-center gap-2.5"
                   style={{ fontSize: 12, padding: "12px 26px" }}
                   onClick={playFirst}
+                  disabled={!hasTracks}
                 >
                   <Icon.play size={15} /> Play
                 </Button>
-                <Button className="pill-ghost">
+                <Button className="pill-ghost" onClick={shuffleAll} disabled={!hasTracks}>
                   <Icon.infinity size={15} /> Shuffle
                 </Button>
               </div>

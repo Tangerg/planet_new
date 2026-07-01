@@ -23,12 +23,16 @@ import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg, Equalizer } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
+import { wailsRuntime } from "@/infra/wails";
 import { RepeatMode } from "@domain/model/repeat";
 import {
   useCatalog,
   useComments,
   useDailyRecommendations,
+  useArtistMusicVideos,
   useLyric,
+  useMusicVideoComments,
+  useMusicVideoDiscovery,
   usePlayRecord,
   useProviderSearch,
   useToplists,
@@ -41,31 +45,21 @@ import { useLikes } from "@/hooks/useLikes";
 import { MorphStage, MorphProvider } from "@/infra/morph";
 import { useSpatialNavigation } from "@/hooks/useSpatialNavigation";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { useAppMenu } from "@/hooks/useAppMenu";
 import { useShellNavigation } from "@/hooks/useShellNavigation";
 import { ScreenActionsProvider } from "@/hooks/screenActions";
+import { useQueueActions } from "@/hooks/useQueueActions";
 
 import { PlayerBar } from "@/components/PlayerBar";
 import { Button } from "@/components/controls/Button";
 import { TooltipProvider } from "@/components/controls/Tooltip";
-import { XMB } from "@/screens/XMB";
 import { buildWorlds } from "@/model/navigation";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
-import { ForYouScreen } from "@/screens/ForYou";
-import { NowPlaying } from "@/screens/NowPlaying";
 // ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
 const LazyContextMenu = React.lazy(() =>
   import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
 );
-import { SearchScreen } from "@/screens/Search";
-import { ChartsScreen } from "@/screens/Charts";
-import { LibraryScreen } from "@/screens/Library";
-import { PlaylistDetailScreen } from "@/screens/Detail";
-import { QueueScreen } from "@/screens/Queue";
-import { HistoryScreen } from "@/screens/History";
-import { SettingsScreen } from "@/screens/Settings";
-import { ArtistScreen } from "@/screens/Artist";
-import { ProfileScreen } from "@/screens/Profile";
-import { CommentsScreen } from "@/screens/Comments";
+import { ShellScreenRouter } from "@/ShellScreenRouter";
 import {
   ACCENT_OPTIONS,
   DEFAULT_ACCENT,
@@ -122,6 +116,9 @@ export default function Shell() {
   const { catalog } = useCatalog();
   const toplists = useToplists();
   const search = useProviderSearch();
+  const { videos: musicVideos, isLoading: musicVideosLoading } = useMusicVideoDiscovery(
+    catalog.artists,
+  );
   // The logged-in user's own playlists (empty when anonymous) — feed the Library
   // Playlists tab + the real "liked songs" view.
   const loggedIn = useAuthStore((s) => s.loggedIn);
@@ -155,6 +152,8 @@ export default function Shell() {
     setView,
     detail,
     artistObj,
+    musicVideoObj,
+    musicVideoRelated,
     libraryTab,
     libraryView,
     searchQuery,
@@ -170,12 +169,23 @@ export default function Shell() {
     albumDetail,
     openChart,
     openArtist,
+    openMusicVideo,
+    openMusicVideoTheater,
     openLib,
     viewRef,
     trans,
     startForward,
     morph,
   } = useShellNavigation(media, queryClient);
+  const npView = view === "np";
+  const mvTheaterView = view === "mv-theater";
+  const homeView = view === "xmb";
+  const relatedMusicVideos = useArtistMusicVideos(
+    musicVideoObj?.artistId,
+    view === "mv-detail" || view === "mv-theater",
+  );
+  const musicVideoComments = useMusicVideoComments(musicVideoObj?.id, mvTheaterView);
+  const musicVideoRail = relatedMusicVideos.length ? relatedMusicVideos : musicVideoRelated;
 
   // Current-track comments (NCM hot/recent). Fetched only while a comments
   // surface is on screen (the standalone Comments view or Now Playing's comments
@@ -217,13 +227,34 @@ export default function Shell() {
     });
   }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
 
+  const { enqueueById } = useQueueActions({
+    addToQueue: playback.addToQueue,
+    catalogTracks: catalog.allTracks,
+    playbackTracks: playback.tracks,
+    queueTracks: queue,
+    playContext,
+  });
+
   /* ---- right-click context menu (extracted hook) ---- */
   const { menu, setMenu, actions } = useContextMenu({
     onPlay,
+    enqueue: enqueueById,
     openDetail,
     openArtist,
     toggleLike,
     liked,
+  });
+  const openAppMenu = useAppMenu({
+    setMenu,
+    canGoBack: !homeView,
+    hasQueue: !!playback.current,
+    goBack,
+    goHome,
+    openSearch,
+    openLibrary: () => openLib("playlists"),
+    openQueue: () => navigate("queue"),
+    openProfile: () => navigate("profile"),
+    openSettings: () => navigate("settings"),
   });
 
   /* ---- global keyboard shortcuts (extracted hook) ---- */
@@ -245,13 +276,10 @@ export default function Shell() {
   /* ---- arrow-key spatial navigation (extracted hook) ---- */
   useSpatialNavigation(viewRef, view, goBack);
 
-  const npView = view === "np";
-  const homeView = view === "xmb";
-
   // Player bar visibility: shown when a track exists and we're not in the
   // full-screen now-playing view. Motion's AnimatePresence keeps it mounted
   // through the slide-out so it glides instead of popping.
-  const showBar = !npView && !!playback.current;
+  const showBar = !npView && !mvTheaterView && !!playback.current;
 
   /* ==========================================================================
      XMB model — the navigation IA tree, projected from catalog + provider
@@ -280,193 +308,68 @@ export default function Shell() {
   /* ==========================================================================
      render screen
      ========================================================================== */
-  const renderScreen = (v: string) => {
-    if (v === "xmb")
-      return (
-        <XMB
-          cats={cats}
-          accent={accent}
-          playing={playing}
-          np={
-            playback.current
-              ? {
-                  image: current.image,
-                  seed: current.coverSeed,
-                  grad: current.gradient,
-                }
-              : undefined
-          }
-          showWaves={settings.waves}
-          onOpen={startForward}
-          cState={xmbCategory}
-          setCState={setXmbCategory}
-          rowsState={xmbRowByCategory}
-          setRowsState={setXmbRowByCategory}
-        />
-      );
-    if (v === "home")
-      return (
-        <ForYouScreen
-          data={catalog}
-          daily={daily}
-          accent={accent}
-          openPlaylist={openDetail}
-          openAlbum={albumDetail}
-          openArtist={openArtist}
-          onNav={navigate}
-        />
-      );
-    if (v === "search")
-      return (
-        <SearchScreen
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          accent={accent}
-          query={searchQuery}
-          onQuery={setSeedQuery}
-          liked={liked}
-          toggleLike={toggleLike}
-          openArtist={openArtist}
-          openAlbum={albumDetail}
-          search={search}
-        />
-      );
-    if (v === "charts") return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
-    if (v === "library")
-      return (
-        <LibraryScreen
-          tab={libraryTab}
-          view={libraryView}
-          onTab={setLibraryTab}
-          onView={setLibraryView}
-          data={libraryData}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          accent={accent}
-          openPlaylist={openDetail}
-          openAlbum={albumDetail}
-          openArtist={openArtist}
-          liked={liked}
-          toggleLike={toggleLike}
-        />
-      );
-    if (v === "detail" && detail)
-      return (
-        <PlaylistDetailScreen
-          playlist={detail}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          accent={accent}
-          onOpenArtist={openArtist}
-        />
-      );
-    if (v === "queue")
-      return (
-        <QueueScreen
-          current={current}
-          queue={queue}
-          onPlay={onPlay}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          accent={accent}
-          onOpenArtist={openArtist}
-        />
-      );
-    if (v === "history")
-      return (
-        <HistoryScreen
-          session={history}
-          week={playRecord.week}
-          all={playRecord.all}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          accent={accent}
-          onOpenArtist={openArtist}
-        />
-      );
-    if (v === "settings")
-      return (
-        <SettingsScreen
-          accent={accent}
-          setAccent={setAccent}
-          accentOptions={[...ACCENT_OPTIONS]}
-          settings={settings}
-          setSettings={setSettings}
-        />
-      );
-    if (v === "artist")
-      return (
-        <ArtistScreen
-          artist={artistObj}
-          tracks={artistObj?.tracks ?? []}
-          albums={artistObj?.albums ?? []}
-          similar={artistObj?.similar ?? []}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          accent={accent}
-          mono={heroTreatment === "mono"}
-          onOpenAlbum={albumDetail}
-          onOpenArtist={openArtist}
-        />
-      );
-    if (v === "profile")
-      return (
-        <ProfileScreen
-          accent={accent}
-          playlists={libraryData.playlists}
-          onOpenPlaylist={openDetail}
-          mono={heroTreatment === "mono"}
-        />
-      );
-    if (v === "comments")
-      return (
-        <CommentsScreen
-          track={current}
-          comments={comments}
-          accent={accent}
-          liked={isLiked}
-          toggleLike={() => current && toggleLike(current.id)}
-          mono={heroTreatment === "mono"}
-        />
-      );
-    if (v === "np")
-      return (
-        <NowPlaying
-          track={current}
-          accent={accent}
-          liked={isLiked}
-          toggleLike={() => current && toggleLike(current.id)}
-          lyrics={lyrics}
-          comments={comments}
-          mono={heroTreatment === "mono"}
-          queue={queue}
-          onPlay={onPlay}
-          current={current}
-          onNext={playNext}
-          onPrev={playPrev}
-          progressSec={playback.progress.duration}
-          initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
-          onClose={goBack}
-          onOpenArtist={openArtist}
-        />
-      );
-    return null;
-  };
+  const renderScreen = (screenView: string) => (
+    <ShellScreenRouter
+      view={screenView}
+      cats={cats}
+      accent={accent}
+      playing={playing}
+      current={current}
+      hasCurrentTrack={!!playback.current}
+      queue={queue}
+      catalog={catalog}
+      daily={daily}
+      libraryData={libraryData}
+      toplists={toplists}
+      searchQuery={searchQuery}
+      search={search}
+      settings={settings}
+      liked={liked}
+      isLiked={isLiked}
+      lyrics={lyrics}
+      comments={comments}
+      history={history}
+      playRecord={playRecord}
+      libraryTab={libraryTab}
+      libraryView={libraryView}
+      detail={detail}
+      artistObj={artistObj}
+      musicVideoObj={musicVideoObj}
+      musicVideos={musicVideos}
+      musicVideosLoading={musicVideosLoading}
+      musicVideoRail={musicVideoRail}
+      musicVideoComments={musicVideoComments}
+      heroTreatment={heroTreatment}
+      accentOptions={[...ACCENT_OPTIONS]}
+      progressSec={playback.progress.duration}
+      xmbCategory={xmbCategory}
+      setXmbCategory={setXmbCategory}
+      xmbRowByCategory={xmbRowByCategory}
+      setXmbRowByCategory={setXmbRowByCategory}
+      startForward={startForward}
+      setSeedQuery={setSeedQuery}
+      setLibraryTab={setLibraryTab}
+      setLibraryView={setLibraryView}
+      setAccent={setAccent}
+      setSettings={setSettings}
+      navigate={navigate}
+      goBack={goBack}
+      openDetail={openDetail}
+      albumDetail={albumDetail}
+      openChart={openChart}
+      openArtist={openArtist}
+      openMusicVideo={openMusicVideo}
+      openMusicVideoTheater={openMusicVideoTheater}
+      onPlay={onPlay}
+      onPause={playback.pause}
+      onNext={playNext}
+      onPrev={playPrev}
+      toggleLike={toggleLike}
+      shufflePlay={playback.shufflePlay}
+    />
+  );
 
   // No native frame: the faux traffic lights take over real window controls; a draggable strip at the top moves the window.
-  const wails = () => (window as any).runtime;
   const dragStyle = { "--wails-draggable": "drag" } as React.CSSProperties;
   const noDragStyle = { "--wails-draggable": "no-drag" } as React.CSSProperties;
 
@@ -486,9 +389,9 @@ export default function Shell() {
               <div className="traffic" style={noDragStyle}>
                 {(
                   [
-                    ["r", "Close", () => wails()?.Quit?.()],
-                    ["y", "Minimise", () => wails()?.WindowMinimise?.()],
-                    ["g", "Maximise", () => wails()?.WindowToggleMaximise?.()],
+                    ["r", "Close", () => wailsRuntime()?.Quit?.()],
+                    ["y", "Minimise", () => wailsRuntime()?.WindowMinimise?.()],
+                    ["g", "Maximise", () => wailsRuntime()?.WindowToggleMaximise?.()],
                   ] as const
                 ).map(([cls, label, action]) => (
                   <Button
@@ -501,17 +404,17 @@ export default function Shell() {
                 ))}
               </div>
 
-              {!npView && (
+              {!npView && !mvTheaterView && (
                 <div className="win-tools" style={noDragStyle}>
                   {!homeView && (
-                    <Button onClick={goBack} aria-label="Menu">
+                    <Button onClick={goBack} aria-label="Back">
                       <Icon.back size={20} />
                     </Button>
                   )}
                   <Button onClick={() => navigate("np")} aria-label="Now playing">
                     <Equalizer playing={playing} color="currentColor" size={18} />
                   </Button>
-                  <Button aria-label="More">
+                  <Button onClick={openAppMenu} aria-label="More actions">
                     <Icon.kebab size={20} />
                   </Button>
                 </div>

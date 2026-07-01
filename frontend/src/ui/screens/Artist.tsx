@@ -189,7 +189,7 @@ export function ArtistScreen({
                 value={tab}
                 onValueChange={setTab}
                 items={[
-                  { value: "top", label: "Top 50" },
+                  { value: "top", label: "Hot" },
                   { value: "albums", label: "All Albums" },
                   { value: "similar", label: "Similar Artist" },
                 ]}

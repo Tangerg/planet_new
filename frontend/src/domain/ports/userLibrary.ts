@@ -1,5 +1,7 @@
 import type { Playlist } from "../model/playlist";
 import type { Track } from "../model/track";
+import type { MusicProvider } from "./provider";
+import { hasMethods } from "./capability";
 
 /**
  * Account-scoped library — the logged-in user's own data. Orthogonal to
@@ -19,4 +21,19 @@ export interface UserLibrary {
   playRecord(period: "week" | "all"): Promise<Partial<Track>[]>;
   /** The day's personalised song recommendations ("每日推荐"). */
   dailyRecommendations(): Promise<Partial<Track>[]>;
+}
+
+export function isUserLibraryProvider(
+  provider: MusicProvider,
+): provider is MusicProvider & UserLibrary {
+  return (
+    provider.supports("userLibrary") &&
+    hasMethods(provider, [
+      "likedTrackIds",
+      "setLiked",
+      "userPlaylists",
+      "playRecord",
+      "dailyRecommendations",
+    ])
+  );
 }

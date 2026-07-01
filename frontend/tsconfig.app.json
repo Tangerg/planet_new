@@ -31,8 +31,11 @@
 
     /* —— 路径别名 ——
        约定：
-         @kernel/*   —— 框架无关内核（packages/*），UI 之外也可复用
-         @/*         —— UI 层（view/*），React 实现
+         @shared/*    —— 框架无关纯工具
+         @domain/*    —— 领域模型与端口
+         @core/*      —— 应用内核 / 插件 / 服务
+         @providers/* —— 数据源适配器
+         @/*          —— UI 层（src/ui/*），React 实现
        说明：TS 6+ 起，paths 可不依赖 baseUrl，直接以 tsconfig 所在目录为锚点。 */
     "paths": {
       "@shared": ["./src/shared/index.ts"],

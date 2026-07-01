@@ -13,8 +13,10 @@
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
 import { Image } from "@domain/model/image";
+import { MusicVideo } from "@domain/model/music-video";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
+import type { ArtistCredit as DomainArtistCredit } from "@domain/model/artist-credit";
 import type { Comment } from "@domain/model/comment";
 import { relativeTime } from "@shared/time";
 
@@ -43,6 +45,7 @@ export type VibeTrack = {
   durSec: number;
   duration: string;
   playUrl?: string;
+  musicVideoId?: string;
   available?: boolean;
   // ── Editorial display extras (present in mock data; absent on real tracks) ──
   /** Mix/edit label, e.g. "live", "acoustic" ("studio" is treated as none). */
@@ -104,6 +107,30 @@ export type VibeArtist = {
   albums?: VibeCollection[];
   /** Related artists (filled after artistDetail resolves). */
   similar?: VibeArtist[];
+};
+
+/** Display shape for official music videos. */
+export type VibeMusicVideo = {
+  id: string;
+  title: string;
+  name: string;
+  artist: string;
+  artistId?: string;
+  artists?: ArtistRef[];
+  image?: string;
+  images?: Image[];
+  coverSeed: number;
+  duration: string;
+  durSec: number;
+  description?: string;
+  publishDate?: string;
+  playCount?: number;
+  commentCount?: number;
+  likedCount?: number;
+  shareCount?: number;
+  playUrl?: string;
+  quality?: number;
+  _real?: Partial<MusicVideo>;
 };
 
 /**
@@ -176,13 +203,14 @@ export function seedOf(id: string | number | undefined): number {
   return Math.abs(h);
 }
 
+function toArtistRefs(credits: readonly DomainArtistCredit[]): ArtistRef[] {
+  return credits.map((credit) => ({ id: credit.id ?? "", name: credit.name }));
+}
+
 // ── Domain → Presentation ────────────────────────────────────────────
 
 export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
-  // Mirror Track.artistNames' fallback (track artists, else the album's) so the
-  // clickable list matches the displayed string. Keep only named entries; ones
-  // without an id stay (rendered as plain, unclickable text).
-  const credited = real.artists?.length ? real.artists : (real.album?.artists ?? []);
+  const credited = Track.artistCredits(real);
   return {
     id: String(real.id ?? ""),
     index: real.index ?? i,
@@ -190,9 +218,7 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
     name: real.name ?? "",
     artist: Track.artistNames(real),
     artistId: Track.primaryArtist(real)?.id,
-    artists: credited
-      .map((a) => ({ id: a?.id ? String(a.id) : "", name: a?.name ?? "" }))
-      .filter((a) => a.name),
+    artists: toArtistRefs(credited),
     album: real.album?.name,
     albumId: real.album?.id,
     image: Track.coverUrl(real),
@@ -202,6 +228,7 @@ export function toVibeTrack(real: Partial<Track>, i?: number): VibeTrack {
     durSec: Track.durationSeconds(real),
     duration: Track.durationFormatted(real),
     playUrl: real.playUrl,
+    musicVideoId: real.musicVideoId,
     available: true,
     _real: real,
   };
@@ -262,6 +289,35 @@ export function toVibeArtist(a: Partial<Artist>): VibeArtist {
   };
 }
 
+export function toVibeMusicVideo(mv: Partial<MusicVideo>): VibeMusicVideo {
+  const credited = MusicVideo.artistCredits(mv);
+  return {
+    id: String(mv.id ?? ""),
+    title: mv.name ?? "",
+    name: mv.name ?? "",
+    artist: MusicVideo.artistNames(mv),
+    artistId: MusicVideo.primaryArtist(mv)?.id,
+    artists: toArtistRefs(credited),
+    image: MusicVideo.coverUrl(mv),
+    images: mv.images,
+    coverSeed: seedOf(mv.id),
+    duration: MusicVideo.durationFormatted(mv),
+    durSec: MusicVideo.durationSeconds(mv),
+    description: mv.description,
+    publishDate: mv.publishDate,
+    playCount: mv.playCount,
+    commentCount: mv.commentCount,
+    likedCount: mv.likedCount,
+    shareCount: mv.shareCount,
+    playUrl: mv.playUrl,
+    quality: mv.quality,
+    _real: mv,
+  };
+}
+
+export const toVibeMusicVideos = (xs?: Partial<MusicVideo>[]) =>
+  (xs ?? []).map((mv) => toVibeMusicVideo(mv));
+
 export function toVibeComment(c: Comment): VibeComment {
   return {
     id: c.id,
@@ -292,5 +348,6 @@ export function toTrack(vt: VibeTrack): Track {
     artists: vt.artist ? [{ id: vt.artistId || vt.artist, name: vt.artist }] : [],
     album: vt.albumId ? { id: vt.albumId, name: vt.album || "" } : undefined,
     playUrl: vt.playUrl,
+    musicVideoId: vt.musicVideoId,
   };
 }

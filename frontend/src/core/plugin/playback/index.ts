@@ -44,8 +44,16 @@ export class Playback extends Plugin {
   }
 
   async resume(): Promise<void> {
-    await this.context.audioElement.play();
-    this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
+    if (!this.context.audioElement.src) {
+      this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+      return;
+    }
+    try {
+      await this.context.audioElement.play();
+      this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
+    } catch {
+      this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+    }
   }
 
   pause(): void {
