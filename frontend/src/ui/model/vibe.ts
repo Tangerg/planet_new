@@ -156,6 +156,14 @@ export type ScreenData = {
   allTracks: VibeTrack[];
 };
 
+/** Provider search results projected to Vibe display shapes. */
+export type SearchResults = {
+  tracks: VibeTrack[];
+  artists: VibeArtist[];
+  albums: VibeCollection[];
+  playlists: VibeCollection[];
+};
+
 /** Stable string id -> non-negative int, seeding a fixed gradient per entity. */
 export function seedOf(id: string | number | undefined): number {
   const s = String(id ?? "");

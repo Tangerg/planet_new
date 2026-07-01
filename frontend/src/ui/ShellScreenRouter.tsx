@@ -4,10 +4,10 @@ import type {
   ArtistTarget,
   DetailTarget,
   ScreenData,
+  SearchResults,
   VibeCollection,
   VibeComment,
   VibeMusicVideo,
-  VibeArtist,
   VibeTrack,
 } from "@/model/adapt";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
@@ -28,13 +28,6 @@ import { NowPlaying, type LyricLine } from "@/screens/NowPlaying";
 import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
 import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
 import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
-
-type SearchResults = {
-  tracks: VibeTrack[];
-  artists: VibeArtist[];
-  albums: VibeCollection[];
-  playlists: VibeCollection[];
-};
 
 // Screen props grouped by bounded context so the router is a screen *assembler*,
 // not a 50-field forwarder. Field names mirror the values each screen consumes;

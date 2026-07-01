@@ -2,7 +2,7 @@
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
 import React, { useState, useEffect } from "react";
-import type { ArtistRef, VibeTrack, VibeArtist, VibeCollection } from "@/model/adapt";
+import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/adapt";
 import { SEARCH_SUGGESTIONS } from "@/model/defaults";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
@@ -16,13 +16,6 @@ import { Empty } from "@/components/layout/Empty";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
-
-type SearchResults = {
-  tracks: VibeTrack[];
-  playlists: VibeCollection[];
-  artists: VibeArtist[];
-  albums: VibeCollection[];
-};
 
 const EMPTY_RESULTS: SearchResults = { tracks: [], playlists: [], artists: [], albums: [] };
 
