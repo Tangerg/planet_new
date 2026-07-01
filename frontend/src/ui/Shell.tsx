@@ -215,61 +215,75 @@ export default function Shell() {
   const renderScreen = (screenView: string) => (
     <ShellScreenRouter
       view={screenView}
-      cats={cats}
-      accent={accent}
-      playing={playing}
-      current={current}
-      hasCurrentTrack={!!playback.current}
-      queue={queue}
-      catalog={catalog}
-      daily={daily}
-      libraryData={libraryData}
-      toplists={toplists}
-      searchQuery={searchQuery}
-      search={search}
-      settings={settings}
-      liked={liked}
-      isLiked={isLiked}
-      lyrics={lyrics}
-      comments={comments}
-      history={history}
-      playRecord={playRecord}
-      libraryTab={libraryTab}
-      libraryView={libraryView}
-      detail={detail}
-      artistObj={artistObj}
-      musicVideoObj={musicVideoObj}
-      musicVideos={musicVideos}
-      musicVideosLoading={musicVideosLoading}
-      musicVideoRail={musicVideoRail}
-      musicVideoComments={musicVideoComments}
-      heroTreatment={heroTreatment}
-      accentOptions={[...ACCENT_OPTIONS]}
-      progressSec={playback.progress.duration}
-      xmbCategory={xmbCategory}
-      setXmbCategory={setXmbCategory}
-      xmbRowByCategory={xmbRowByCategory}
-      setXmbRowByCategory={setXmbRowByCategory}
-      startForward={startForward}
-      setSeedQuery={setSeedQuery}
-      setLibraryTab={setLibraryTab}
-      setLibraryView={setLibraryView}
-      setAccent={setAccent}
-      setSettings={setSettings}
-      navigate={navigate}
-      goBack={goBack}
-      openDetail={openDetail}
-      albumDetail={albumDetail}
-      openChart={openChart}
-      openArtist={openArtist}
-      openMusicVideo={openMusicVideo}
-      openMusicVideoTheater={openMusicVideoTheater}
-      onPlay={onPlay}
-      onPause={playback.pause}
-      onNext={playNext}
-      onPrev={playPrev}
-      toggleLike={toggleLike}
-      shufflePlay={playback.shufflePlay}
+      playback={{
+        playing,
+        current,
+        hasCurrentTrack: !!playback.current,
+        queue,
+        progressSec: playback.progress.duration,
+        onPlay,
+        onPause: playback.pause,
+        onNext: playNext,
+        onPrev: playPrev,
+        shufflePlay: playback.shufflePlay,
+      }}
+      navigation={{
+        navigate,
+        goBack,
+        startForward,
+        openDetail,
+        albumDetail,
+        openChart,
+        openArtist,
+        openMusicVideo,
+        openMusicVideoTheater,
+        cats,
+        xmbCategory,
+        setXmbCategory,
+        xmbRowByCategory,
+        setXmbRowByCategory,
+      }}
+      catalog={{
+        catalog,
+        toplists,
+        daily,
+        searchQuery,
+        search,
+        setSeedQuery,
+      }}
+      library={{
+        libraryData,
+        libraryTab,
+        libraryView,
+        setLibraryTab,
+        setLibraryView,
+        liked,
+        isLiked,
+        toggleLike,
+        history,
+        playRecord,
+      }}
+      content={{
+        lyrics,
+        comments,
+        detail,
+        artistObj,
+      }}
+      musicVideo={{
+        musicVideoObj,
+        musicVideos,
+        musicVideosLoading,
+        musicVideoRail,
+        musicVideoComments,
+      }}
+      settings={{
+        settings,
+        setSettings,
+        accent,
+        setAccent,
+        accentOptions: [...ACCENT_OPTIONS],
+        heroTreatment,
+      }}
     />
   );
 
