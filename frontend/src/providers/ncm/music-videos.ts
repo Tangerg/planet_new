@@ -1,8 +1,9 @@
 import type { KyInstance } from "ky";
 
 import type { MusicVideo } from "@domain/model/music-video";
+import { httpsUrl } from "@shared/url";
 
-import { mapNcmMusicVideo, toHttps } from "../mappers/ncm";
+import { mapNcmMusicVideo } from "../mappers/ncm";
 import type {
   NcmArtistMusicVideosResponse,
   NcmMusicVideoCountsResponse,
@@ -31,7 +32,7 @@ export async function fetchNcmMusicVideoDetail(
 
   if (!detail.data) return undefined;
   return mapNcmMusicVideo(detail.data, {
-    playUrl: url.data?.url ? toHttps(url.data.url) : undefined,
+    playUrl: url.data?.url ? httpsUrl(url.data.url) : undefined,
     quality: url.data?.r,
     counts,
   });
