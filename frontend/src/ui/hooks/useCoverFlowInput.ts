@@ -1,6 +1,7 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
 
+import type { VibeCollection, VibeTrack } from "@/model/adapt";
 import type { FlowItem } from "@/model/derive";
 
 // `drag` is dual-use: a number accumulates horizontal wheel delta, an object
@@ -14,12 +15,12 @@ type DragState = number | { x: number; start: number } | null;
  * state is read through refs so the window listener installs once; the returned
  * pointer handlers close over live values for the root element.
  */
-export function useCoverFlowInput(params: {
-  items: FlowItem[];
+export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: {
+  items: FlowItem<T>[];
   center: number;
   expanded: boolean;
   expandable: unknown;
-  onOpen: (item: FlowItem) => void;
+  onOpen: (item: T) => void;
   setCenter: (n: number | ((c: number) => number)) => void;
   setExpanded: (open: boolean) => void;
 }): {
@@ -76,7 +77,7 @@ export function useCoverFlowInput(params: {
       } else if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
-        onOpenRef.current(itemsRef.current[centerRef.current]);
+        onOpenRef.current(itemsRef.current[centerRef.current].obj);
       }
     };
     window.addEventListener("keydown", onKey, true);

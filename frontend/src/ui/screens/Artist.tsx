@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
 import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
-import { collectionFlowItems, type FlowItem } from "@/model/derive";
+import { collectionFlowItems } from "@/model/derive";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -265,9 +265,9 @@ export function ArtistScreen({
                     center={Math.min(flowCenter, albums.length - 1)}
                     setCenter={setFlowCenter}
                     accent={accent}
-                    onOpen={(it: FlowItem) => onOpenAlbum(it.obj as VibeCollection)}
-                    onPlay={(it: FlowItem) => onOpenAlbum(it.obj as VibeCollection)}
-                    tracksFor={(it: FlowItem) => (it.obj as VibeCollection).tracks}
+                    onOpen={onOpenAlbum}
+                    onPlay={onOpenAlbum}
+                    tracksFor={(al) => al.tracks}
                     onPlayTrack={onPlay}
                   />
                 </div>

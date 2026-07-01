@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
-import { trackFlowItems, type FlowItem } from "@/model/derive";
+import { trackFlowItems } from "@/model/derive";
 import { CoverFlow } from "@/components/CoverFlow";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { TrackCard } from "@/components/cards/TrackCard";
@@ -110,8 +110,8 @@ export function TrackCollectionView({
         center={Math.min(flowCenter, tracks.length - 1)}
         setCenter={setFlowCenter}
         accent={accent}
-        onOpen={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
-        onPlay={(it: FlowItem) => onPlay(it.obj as VibeTrack)}
+        onOpen={onPlay}
+        onPlay={onPlay}
       />
     </div>
   );
