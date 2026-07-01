@@ -18,6 +18,10 @@ export type Playlist = {
 
 /** Playlist behavior; see `Track` for the companion-object rationale. */
 export const Playlist = {
+  empty(id = "", name = ""): Playlist {
+    return { id, name, images: [], tracks: [], totalTracks: 0 };
+  },
+
   ownerName(p: Partial<Playlist>): string | undefined {
     return p.owner?.displayName;
   },

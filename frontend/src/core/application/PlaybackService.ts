@@ -1,5 +1,6 @@
 import type { Capability, Planet } from "../kernel";
 import type { MusicProvider } from "@domain";
+import { PlaybackIntent } from "@domain/model/playback-intent";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
@@ -41,15 +42,12 @@ export class PlaybackService {
    */
   async play(tracks: Track[], track: Track): Promise<void> {
     const gen = ++this.playGeneration;
-    const items = tracks.length ? tracks : [track];
-    const queue = items.map((t) => ({ ...t }));
-    const current = queue.find((t) => t.id === track.id) ?? queue[0];
-    const ids = queue.map((t) => t.id).filter(Boolean);
+    const intent = PlaybackIntent.from(tracks, track);
 
     let urls: readonly TrackPlayUrl[] = [];
-    if (ids.length) {
+    if (intent.trackIds.length) {
       try {
-        urls = await this.getProvider().playUrls(ids);
+        urls = await this.getProvider().playUrls(intent.trackIds);
       } catch {
         // Provider has no play-URL support: stay silent; the UI still switches track.
       }
@@ -57,11 +55,15 @@ export class PlaybackService {
     // A newer play() superseded this one while awaiting — drop the stale result.
     if (gen !== this.playGeneration) return;
 
-    for (const u of urls) {
-      const t = queue.find((x) => x.id === u.id);
-      if (t) t.playUrl = u.playUrl;
-    }
-    this.queue.playNow(queue, current);
+    const resolved = intent.withResolvedUrls(urls);
+    this.queue.playNow(resolved.tracks, resolved.current);
+  }
+
+  /** Start this list in shuffle mode. The queue owns the actual shuffled order. */
+  async shufflePlay(tracks: Track[]): Promise<void> {
+    if (tracks.length === 0) return;
+    this.queue.setShuffle(true);
+    await this.play(tracks, tracks[0]);
   }
 
   selectTrack(track: Track): void {

@@ -19,6 +19,7 @@ import { Marquee } from "@/components/Marquee";
 import { Art, artPair, fmt } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { activateOnKey } from "@/lib/keys";
+import { effectiveDuration, playbackPosition, repeatTooltip, volumeLevel } from "@/model/player";
 
 type Props = {
   track?: VibeTrack;
@@ -79,7 +80,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   const { enqueue } = useScreenActions();
   // Real duration from the kernel (the loaded audio); track metadata is the
   // pre-load fallback so the bar has a sane scale before `durationchange`.
-  const dur = durationSec > 0 ? durationSec : track?.durSec || 1;
+  const dur = effectiveDuration(durationSec, track?.durSec);
   // While scrubbing, show the dragged seconds; commit the seek on release so
   // the audio isn't hammered every frame of the drag.
   const [scrub, setScrub] = useState<number | null>(null);
@@ -94,7 +95,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
-  const pos = scrub ?? Math.min(positionSec, dur);
+  const pos = playbackPosition(positionSec, dur, scrub);
 
   // Icon control button: static grid layout in the class, the on/off accent in style.
   const ctlCls = "grid place-items-center p-[5px]";
@@ -103,8 +104,13 @@ export const PlayerBar = React.memo(function PlayerBar({
   });
   // Stateful glyph / label, named so the JSX stays declarative: volume by level
   // (mute / low / high); the repeat tooltip describes what the NEXT click does.
-  const VolumeIcon = volume === 0 ? Icon.volumeMute : volume <= 50 ? Icon.volumeLow : Icon.volume;
-  const repeatTip = !repeat ? "Enable repeat" : repeatOne ? "Disable repeat" : "Enable repeat one";
+  const volumeIconByLevel = {
+    muted: Icon.volumeMute,
+    low: Icon.volumeLow,
+    high: Icon.volume,
+  };
+  const VolumeIcon = volumeIconByLevel[volumeLevel(volume)];
+  const repeatTip = repeatTooltip(repeat, repeatOne);
   // Mono time labels flanking the scrubber; fixed width so digit changes
   // (9:59 → 10:00) don't nudge the layout.
   const timeCls =

@@ -59,6 +59,41 @@ const DAOXIANG_LRC = `[00:00.000]稻香 - 周杰伦
 [02:56.000]乡间的歌谣 永远的依靠
 [03:00.000]回家吧 回到最初的美好`;
 
+let silentPreviewUrl: string | undefined;
+
+function silentWavDataUrl(seconds = 30): string {
+  if (silentPreviewUrl) return silentPreviewUrl;
+  const sampleRate = 8000;
+  const samples = sampleRate * seconds;
+  const bytes = new Uint8Array(44 + samples);
+  const view = new DataView(bytes.buffer);
+  const write = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) bytes[offset + i] = value.charCodeAt(i);
+  };
+  write(0, "RIFF");
+  view.setUint32(4, 36 + samples, true);
+  write(8, "WAVE");
+  write(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate, true);
+  view.setUint16(32, 1, true);
+  view.setUint16(34, 8, true);
+  write(36, "data");
+  view.setUint32(40, samples, true);
+  bytes.fill(128, 44);
+
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  silentPreviewUrl = `data:audio/wav;base64,${btoa(binary)}`;
+  return silentPreviewUrl;
+}
+
 const PLAYLIST_TITLES = [
   "Late Night Drive",
   "Morning Coffee",
@@ -479,9 +514,9 @@ export class Mock extends Provider {
   }
 
   async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {
-    // Returns no real URL; UI preview only, nothing actually plays.
+    const playUrl = silentWavDataUrl();
     return delay(
-      ids.map((id) => ({ id, playUrl: "" })),
+      ids.map((id) => ({ id, playUrl })),
       this.latency,
     );
   }

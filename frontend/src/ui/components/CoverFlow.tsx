@@ -31,6 +31,8 @@ type Props = {
   round?: boolean;
 };
 
+type DragState = number | { x: number; start: number } | null;
+
 export function CoverFlow({
   items,
   center,
@@ -52,7 +54,7 @@ export function CoverFlow({
   // Progress dots are cheap but N of them overflow the bar and waste transitions
   // at scale; window them too. Small lists (≤ 2*win+1) still render every dot.
   const COVER_DOT_WINDOW = 20;
-  const drag = useRef<any>(null);
+  const drag = useRef<DragState>(null);
   // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
   const rootRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -127,7 +129,8 @@ export function CoverFlow({
 
   const onWheel = (e: React.WheelEvent) => {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      drag.current = (drag.current || 0) + e.deltaX;
+      const wheelDelta = typeof drag.current === "number" ? drag.current : 0;
+      drag.current = wheelDelta + e.deltaX;
       if (drag.current > 60) {
         setCenter((c) => clamp(c + 1));
         drag.current = 0;

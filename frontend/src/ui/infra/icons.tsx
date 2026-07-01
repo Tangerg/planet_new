@@ -223,6 +223,13 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       <circle cx="16" cy="15" r="3" />
     </Svg>
   ),
+  video: (p) => (
+    <Svg {...p}>
+      <rect x="3.5" y="6" width="12" height="12" rx="1.2" />
+      <path d="m15.5 10 5-3v10l-5-3" />
+      <path d="M7 9h4M7 12h3" />
+    </Svg>
+  ),
   // view toggles
   list: (p) => (
     <Svg {...p}>

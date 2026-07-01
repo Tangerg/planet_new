@@ -5,7 +5,8 @@ import { Playlist } from "@domain/model/playlist";
 import { Lyric } from "@domain/model/lyric";
 import { Album } from "@domain/model/album";
 import { Artist } from "@domain/model/artist";
-import { TrackPlayUrl } from "@domain/model/track";
+import { Track, TrackPlayUrl } from "@domain/model/track";
+import { MusicVideo } from "@domain/model/music-video";
 import { Personalized } from "@domain/model/personalized";
 import { SearchResult } from "@domain/model/search";
 import { Chart } from "@domain/model/chart";
@@ -43,6 +44,27 @@ export abstract class Provider extends Plugin implements MusicProvider {
 
   abstract artistDetail(id: string): Promise<Artist>;
 
+  async trackDetail(id: string): Promise<Partial<Track> | undefined> {
+    const tracks = await this.trackDetails([id]);
+    return tracks[0];
+  }
+
+  async trackDetails(_ids: string[]): Promise<Partial<Track>[]> {
+    return [];
+  }
+
+  async musicVideoDetail(_id: string): Promise<MusicVideo | undefined> {
+    return undefined;
+  }
+
+  async artistMusicVideos(_artistId: string): Promise<Partial<MusicVideo>[]> {
+    return [];
+  }
+
+  async musicVideoComments(_musicVideoId: string): Promise<Comment[]> {
+    return [];
+  }
+
   abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>;
 
   abstract personalized(): Promise<Personalized>;
@@ -59,7 +81,7 @@ export abstract class Provider extends Plugin implements MusicProvider {
   }
 
   async toplistDetail(_id: string): Promise<Playlist> {
-    return { id: "", name: "", images: [], tracks: [], totalTracks: 0 };
+    return Playlist.empty(_id);
   }
 
   async comments(_trackId: string): Promise<Comment[]> {

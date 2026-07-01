@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthService } from "./useAuthService";
 import { useMediaService } from "./useMediaService";
 import { useAuthStore } from "@/store/auth";
+import { queryKeys } from "@/model/queryKeys";
 
 /**
  * UI handle for login: reactive `loggedIn` + the current `account` (React Query,
@@ -23,7 +24,7 @@ export function useAuth() {
   }, [auth, setLoggedIn]);
 
   const { data: account } = useQuery({
-    queryKey: ["account", media.providerName],
+    queryKey: queryKeys.account(media.providerName),
     queryFn: () => auth.account(),
     enabled: auth.supported && loggedIn,
     retry: false,
@@ -31,13 +32,13 @@ export function useAuth() {
 
   const markLoggedIn = useCallback(() => {
     setLoggedIn(true);
-    void qc.invalidateQueries({ queryKey: ["account"] });
+    void qc.invalidateQueries({ queryKey: queryKeys.accountRoot() });
   }, [qc, setLoggedIn]);
 
   const logout = useCallback(async () => {
     await auth.logout();
     setLoggedIn(false);
-    qc.removeQueries({ queryKey: ["account"] });
+    qc.removeQueries({ queryKey: queryKeys.accountRoot() });
   }, [auth, qc, setLoggedIn]);
 
   return {

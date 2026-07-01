@@ -50,6 +50,7 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
     currentId,
     toggleLike,
   } = h;
+  const inMvTheater = view === "mv-theater";
 
   useHotkey("Escape", () => void (view !== "xmb" && goBack()));
   // "/" jumps to the XMB root (Search has its own: ⌘F + double-Shift). Ignored
@@ -57,13 +58,17 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
   useHotkey("/", () => void (view !== "xmb" && goHome()));
   useHotkey("Mod+F", () => void (view !== "search" && openSearch()));
   // Transport / library — NetEase-style
-  useHotkey("Mod+ArrowLeft", () => playPrev(), HK_IGNORE_INPUTS);
-  useHotkey("Mod+ArrowRight", () => playNext(), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowLeft", () => void (!inMvTheater && playPrev()), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowRight", () => void (!inMvTheater && playNext()), HK_IGNORE_INPUTS);
   useHotkey("Mod+ArrowUp", () => setVolume(Math.min(100, volume + VOLUME_STEP)), HK_IGNORE_INPUTS);
   useHotkey("Mod+ArrowDown", () => setVolume(Math.max(0, volume - VOLUME_STEP)), HK_IGNORE_INPUTS);
   useHotkey("Mod+L", () => void (currentId && toggleLike(currentId)), HK_IGNORE_INPUTS);
   // ⌘R toggles the Now Playing surface (closest to NetEase's "lyrics" toggle).
-  useHotkey("Mod+R", () => (view === "np" ? goBack() : navigate("np")), HK_IGNORE_INPUTS);
+  useHotkey(
+    "Mod+R",
+    () => void (!inMvTheater && (view === "np" ? goBack() : navigate("np"))),
+    HK_IGNORE_INPUTS,
+  );
   // Space = play/pause, but yield to a focused control so it can handle Space (a11y).
   useHotkey(
     "Space",
@@ -75,6 +80,7 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
         return;
       }
       e.preventDefault();
+      if (inMvTheater) return;
       togglePlay();
     },
     HK_PASSIVE,

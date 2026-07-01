@@ -24,6 +24,21 @@ import {
   mapQQTrackFromSong,
   singerImage,
 } from "./mappers/qqmusic";
+import type {
+  QQAlbumInfoResponse,
+  QQMusicPlayResponse,
+  QQNewDisksResponse,
+  QQRanksResponse,
+  QQSingerDescriptionResponse,
+  QQSingerHotsongResponse,
+  QQSingerListResponse,
+  QQSmartboxResponse,
+  QQSongListDetailResponse,
+  QQSongListsResponse,
+  QQTopListsResponse,
+  QQLyricResponse,
+  QQTrack,
+} from "./qqmusic/types";
 
 export type QQMusicOptions = {
   /** Like `http://localhost:3200`; targets the Rain120/qq-music-api server. */
@@ -62,7 +77,7 @@ export class QQMusic extends Provider {
   async playlistDetail(id: string): Promise<Playlist> {
     const res = await this.http
       .get("getSongListDetail", { searchParams: { disstid: id } })
-      .json<{ response?: { cdlist?: any[] } }>();
+      .json<QQSongListDetailResponse>();
     const cd = res.response?.cdlist?.[0] ?? {};
     return mapQQPlaylistDetail(cd);
   }
@@ -70,42 +85,31 @@ export class QQMusic extends Provider {
   async albumDetail(id: string): Promise<Album> {
     const res = await this.http
       .get("getAlbumInfo", { searchParams: { albummid: id } })
-      .json<{ response?: { data?: any } }>();
+      .json<QQAlbumInfoResponse>();
     const data = res.response?.data ?? {};
     return mapQQAlbumDetail(data);
   }
 
   async artistDetail(id: string): Promise<Artist> {
-    type HotsongRes = {
-      response?: {
-        songList?: Array<{ musicData?: any }>;
-        singerInfo?: { singer_name?: string };
-      };
-    };
-    type DescRes = {
-      response?: {
-        data?: {
-          info?: { desc?: string };
-          basic_info?: { name?: string };
-        };
-      };
-    };
     // Parallel: top tracks + bio.
     const [hotsong, desc] = await Promise.all([
       this.http
         .get("getSingerHotsong", {
           searchParams: { singermid: id, limit: 10, page: 1 },
         })
-        .json<HotsongRes>()
-        .catch(() => ({}) as HotsongRes),
+        .json<QQSingerHotsongResponse>()
+        .catch((): QQSingerHotsongResponse => ({})),
       this.http
         .get("getSingerDesc", { searchParams: { singermid: id } })
-        .json<DescRes>()
-        .catch(() => ({}) as DescRes),
+        .json<QQSingerDescriptionResponse>()
+        .catch((): QQSingerDescriptionResponse => ({})),
     ]);
 
-    const songs = hotsong.response?.songList?.map((s) => s.musicData).filter(Boolean) ?? [];
-    const topTracks = songs.map((s: any, i: number) => mapQQTrackFromSong(s, i + 1));
+    const songs =
+      hotsong.response?.songList
+        ?.map((s) => s.musicData)
+        .filter((song): song is QQTrack => Boolean(song)) ?? [];
+    const topTracks = songs.map((s, i) => mapQQTrackFromSong(s, i + 1));
 
     const singerInfo = hotsong.response?.singerInfo ?? {};
     const basicInfo = desc.response?.data?.basic_info ?? {};
@@ -125,7 +129,7 @@ export class QQMusic extends Provider {
   async lyric(id: string): Promise<Lyric[]> {
     const res = await this.http
       .get("getLyric", { searchParams: { songmid: id } })
-      .json<{ response?: { lyric?: string } }>();
+      .json<QQLyricResponse>();
     const lrc = res.response?.lyric ?? "";
     if (!lrc) return [];
     return parseLyrics(lrc);
@@ -136,11 +140,7 @@ export class QQMusic extends Provider {
     // /getMusicPlay accepts comma-separated batches.
     const res = await this.http
       .get("getMusicPlay", { searchParams: { songmid: ids.join(",") } })
-      .json<{
-        data?: {
-          playUrl?: Record<string, { url: string; error?: string | false }>;
-        };
-      }>();
+      .json<QQMusicPlayResponse>();
     const playUrl = res.data?.playUrl ?? {};
     const out: TrackPlayUrl[] = [];
     for (const [songmid, info] of Object.entries(playUrl)) {
@@ -156,21 +156,17 @@ export class QQMusic extends Provider {
     const [popularPlaylists, newAlbums, hotSingers] = await Promise.all([
       this.http
         .get("getSongLists", { searchParams: { page: 0, limit: 20 } })
-        .json<{ response?: { data?: { list?: any[] } } }>()
+        .json<QQSongListsResponse>()
         .catch(() => ({ response: { data: { list: [] } } })),
       this.http
         .get("getNewDisks", { searchParams: { page: 2, limit: 10 } })
-        .json<{
-          response?: { new_album?: { data?: { albums?: any[] } } };
-        }>()
+        .json<QQNewDisksResponse>()
         .catch(() => ({ response: { new_album: { data: { albums: [] } } } })),
       this.http
         .get("getSingerList", {
           searchParams: { index: -100, page: 1 },
         })
-        .json<{
-          response?: { singerList?: { data?: { singerlist?: any[] } } };
-        }>()
+        .json<QQSingerListResponse>()
         .catch(() => ({
           response: { singerList: { data: { singerlist: [] } } },
         })),
@@ -202,8 +198,8 @@ export class QQMusic extends Provider {
     // The old client_search_cp was retired upstream (500); use smartbox suggest, which returns songs/singers/albums in one call.
     const res = await this.http
       .get("getSmartbox", { searchParams: { key: q } })
-      .json<{ response?: { data?: any } }>()
-      .catch(() => ({}) as { response?: { data?: any } });
+      .json<QQSmartboxResponse>()
+      .catch((): QQSmartboxResponse => ({}));
     const d = res.response?.data ?? {};
     return {
       tracks: (d.song?.itemlist ?? []).map(mapQQSmartboxSong),
@@ -216,18 +212,18 @@ export class QQMusic extends Provider {
   async toplists(): Promise<Chart[]> {
     const res = await this.http
       .get("getTopLists")
-      .json<{ response?: { data?: { topList?: any[] } } }>()
-      .catch(() => ({}) as { response?: { data?: { topList?: any[] } } });
+      .json<QQTopListsResponse>()
+      .catch((): QQTopListsResponse => ({}));
     return (res.response?.data?.topList ?? []).map(mapQQChart).filter((c) => c.id && c.title);
   }
 
   async toplistDetail(id: string): Promise<Playlist> {
     const res = await this.http
       .get("getRanks", { searchParams: { topId: id, limit: 100, page: 0 } })
-      .json<{ response?: { req_1?: { data?: { data?: { song?: any[] } } } } }>()
-      .catch(() => ({}) as any);
+      .json<QQRanksResponse>()
+      .catch((): QQRanksResponse => ({}));
     const list = res.response?.req_1?.data?.data?.song ?? [];
-    const tracks = list.map((s: any, i: number) => mapQQRankSong(s, i + 1));
+    const tracks = list.map((s, i) => mapQQRankSong(s, i + 1));
     return {
       id,
       name: "",

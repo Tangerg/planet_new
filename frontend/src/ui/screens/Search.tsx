@@ -1,5 +1,5 @@
 // ============================================================
-// Search — taxonomy results: top artist · songs · artist/album rails.
+// Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
 import React, { useState, useEffect } from "react";
 import type { ArtistRef, VibeTrack, VibeArtist, VibeCollection } from "@/model/adapt";
@@ -17,9 +17,14 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 
-type SearchResults = { tracks: VibeTrack[]; artists: VibeArtist[]; albums: VibeCollection[] };
+type SearchResults = {
+  tracks: VibeTrack[];
+  playlists: VibeCollection[];
+  artists: VibeArtist[];
+  albums: VibeCollection[];
+};
 
-const EMPTY_RESULTS: SearchResults = { tracks: [], artists: [], albums: [] };
+const EMPTY_RESULTS: SearchResults = { tracks: [], playlists: [], artists: [], albums: [] };
 
 type SearchScreenProps = {
   onPlay: (track: VibeTrack) => void;
@@ -30,6 +35,7 @@ type SearchScreenProps = {
   query: string;
   onQuery: (q: string) => void;
   openArtist: (artist: ArtistRef) => void;
+  openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
   liked: Set<string>;
   toggleLike: (id: string) => void;
@@ -45,6 +51,7 @@ export function SearchScreen({
   query: q,
   onQuery: setQ,
   openArtist,
+  openPlaylist,
   openAlbum,
   liked,
   toggleLike,
@@ -83,7 +90,7 @@ export function SearchScreen({
   }, [q, search]);
   const ql = q.trim().toLowerCase();
 
-  const { tracks, artists, albums } = results;
+  const { tracks, playlists, artists, albums } = results;
   const chips = SEARCH_SUGGESTIONS;
   const top = artists[0] || null;
   const emptyMsg = (text: string) => (
@@ -109,7 +116,7 @@ export function SearchScreen({
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search tracks, artists, albums…"
+            placeholder="Search tracks, playlists, artists, albums…"
             className="flex-1 border-0 bg-transparent font-sans text-[28px] font-light tracking-[0.01em] text-white outline-none"
           />
           {q && (
@@ -131,10 +138,10 @@ export function SearchScreen({
         </div>
 
         {!q.trim() ? (
-          emptyMsg("Search tracks, artists & albums…")
+          emptyMsg("Search tracks, playlists, artists & albums…")
         ) : loading ? (
           emptyMsg(`Searching “${q}”…`)
-        ) : !tracks.length && !artists.length && !albums.length ? (
+        ) : !tracks.length && !playlists.length && !artists.length && !albums.length ? (
           emptyMsg(`Nothing for “${q}”…`)
         ) : (
           <div
@@ -196,6 +203,30 @@ export function SearchScreen({
               ))}
             </div>
           </div>
+        )}
+
+        {playlists.length > 0 && (
+          <section className="mt-[44px]">
+            <SectionHead title="Playlists" />
+            <CardRail
+              count={playlists.length}
+              itemWidth={176}
+              itemKey={(i) => playlists[i].id}
+              renderItem={(i) => {
+                const p = playlists[i];
+                return (
+                  <MediaCard
+                    item={p}
+                    sub={p.owner}
+                    liftScale={1.12}
+                    liftY={-6}
+                    onOpen={() => openPlaylist(p)}
+                    onPlay={() => openPlaylist(p)}
+                  />
+                );
+              }}
+            />
+          </section>
         )}
 
         {artists.length > 0 && (

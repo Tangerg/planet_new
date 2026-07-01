@@ -2,6 +2,7 @@ import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { motion } from "motion/react";
 import { Icon } from "@/infra/icons";
+import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
 
 // ============================================================
@@ -9,16 +10,6 @@ import "./Menu.css";
 // Edge-aware positioning, keyboard navigation, and ARIA accessibility
 // are handled by Radix; styling lives in the co-located Menu.css.
 // ============================================================
-type MenuItem = {
-  label?: string;
-  icon?: string;
-  accent?: boolean;
-  sep?: boolean;
-  danger?: boolean;
-  hint?: string;
-  onClick?: () => void;
-};
-
 type Props = {
   x: number;
   y: number;

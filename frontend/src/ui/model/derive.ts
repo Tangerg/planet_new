@@ -63,8 +63,8 @@ export function collectionSub(c: VibeCollection, tab: string): string {
 
 /** Row meta (right-aligned count/year) for a library collection, per tab. */
 export function collectionMeta(c: VibeCollection, tab: string): string {
-  const count = c.tracks ? c.tracks.length : 0;
-  if (tab === "albums") return `${c.year} · ${count} tracks`;
+  const count = c.trackCount ?? c.tracks?.length ?? 0;
+  if (tab === "albums") return [c.year, `${count} tracks`].filter(Boolean).join(" · ");
   if (tab === "artists") return "";
   return `${count} tracks`;
 }

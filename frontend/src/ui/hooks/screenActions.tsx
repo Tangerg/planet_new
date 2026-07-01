@@ -15,7 +15,7 @@ export type ScreenActions = {
   trackMenu: (e: MenuEvent, track: VibeTrack) => void;
   /** Collection/artist card → only needs the shared cover-bearing CardItem shape. */
   collMenu: (e: MenuEvent, item: CardItem) => void;
-  /** Add a track to the play queue (no-op until the queue write path lands). */
+  /** Add a track to the play queue by id; Shell resolves the id in the active context. */
   enqueue: (trackId: string, next?: boolean) => void;
 };
 

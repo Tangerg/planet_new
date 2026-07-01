@@ -45,6 +45,13 @@ export class PlayQueue {
     return this.shuffled;
   }
 
+  /** Domain projection used by read models: what should be shown after current. */
+  static upNext(tracks: readonly Track[], current: Track | undefined): readonly Track[] {
+    if (!current) return tracks;
+    const at = tracks.findIndex((track) => track.id === current.id);
+    return at >= 0 ? tracks.slice(at + 1) : tracks;
+  }
+
   /** Replace the queue and place the cursor at `start` (or the first track). */
   setTracks(tracks: readonly Track[], start?: Track): void {
     this.displayOrder = [...tracks];
@@ -123,7 +130,13 @@ export class PlayQueue {
 
   /** Toggle shuffle, re-deriving the play order while keeping the current track. */
   toggleShuffle(): boolean {
-    this.shuffled = !this.shuffled;
+    return this.setShuffle(!this.shuffled);
+  }
+
+  /** Set shuffle explicitly, re-deriving play order while keeping the current track. */
+  setShuffle(enabled: boolean): boolean {
+    if (this.shuffled === enabled) return this.shuffled;
+    this.shuffled = enabled;
     if (this.playOrder.length === 0) return this.shuffled;
     const keep = this.current!;
     this.rebuildPlayOrder();

@@ -26,9 +26,29 @@ export type Artist = {
   similar?: Partial<Artist>[];
 };
 
+/** Minimal artist reference for provider lookups and cross-entity linking. */
+export type ArtistReference = Pick<Partial<Artist>, "id">;
+
 /** Artist behavior; see `Track` for the companion-object rationale. */
 export const Artist = {
   coverUrl(a: Partial<Artist>, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(a.images, prefer);
+  },
+
+  /**
+   * Provider lookup ids from a seed set, de-duplicated in encounter order.
+   * Useful for fan-out reads such as "find videos for these artists".
+   */
+  uniqueIds(artists: readonly ArtistReference[], limit = Number.POSITIVE_INFINITY): string[] {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const artist of artists) {
+      const id = artist.id?.trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+      if (ids.length >= limit) break;
+    }
+    return ids;
   },
 };

@@ -13,6 +13,7 @@ import { DEFAULT_SETTINGS, type Settings } from "@/model/defaults";
 import { useAuth } from "@/hooks/useAuth";
 import { useLibraryService } from "@/hooks/useLibraryService";
 import { useMediaService } from "@/hooks/useMediaService";
+import { queryKeys } from "@/model/queryKeys";
 
 export function useLikes(currentTrack: VibeTrack | undefined) {
   const currentTrackId = currentTrack?.id;
@@ -28,7 +29,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   const { data: accountIds } = useQuery({
-    queryKey: ["likedIds", media.providerName],
+    queryKey: queryKeys.likedIds(media.providerName),
     queryFn: () => library.likedTrackIds(),
     enabled: synced,
   });
@@ -42,7 +43,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
     (id: string) => {
       if (synced) {
         // Optimistic: flip the cached id list, fire the sync, let it settle.
-        const key = ["likedIds", media.providerName];
+        const key = queryKeys.likedIds(media.providerName);
         const cur = qc.getQueryData<string[]>(key) ?? [];
         const willLike = !cur.includes(id);
         qc.setQueryData<string[]>(key, willLike ? [...cur, id] : cur.filter((x) => x !== id));
@@ -74,7 +75,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
     const ids = [...localLiked];
     void Promise.all(ids.map((id) => library.setLiked(id, true).catch(() => {}))).then(() => {
       setLocalLiked(new Set());
-      void qc.invalidateQueries({ queryKey: ["likedIds", media.providerName] });
+      void qc.invalidateQueries({ queryKey: queryKeys.likedIds(media.providerName) });
     });
   }, [synced, localLiked, library, qc, media.providerName]);
 

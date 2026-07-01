@@ -18,6 +18,10 @@ type MorphStageProps = {
   tileBg: (seed: number | undefined, grad: string[] | undefined) => string;
 };
 
+type ClipStyle = React.CSSProperties & {
+  WebkitClipPath?: string;
+};
+
 /**
  * A border-radius (px number, "<n>px", or "<n>%") as a percentage of the given
  * box edge, clamped to [0,50]. The flying tile tweens its radius as a scale-stable
@@ -61,12 +65,12 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
         // shows twice (parked at the target + the one in transit). Revealed at
         // "reveal", exactly as the tile fades out, for a seamless handoff.
         const hideHero = fwd && trans.hero !== false && trans.phase !== "reveal";
-        const st: React.CSSProperties = { height: "100%" };
+        const st: ClipStyle = { height: "100%" };
         if (clipping) {
           const started = trans.phase !== "start";
           const cp = `circle(${started ? trans.clipR : 0}px at ${trans.point.x}px ${trans.point.y}px)`;
-          (st as any).clipPath = cp;
-          (st as any).WebkitClipPath = cp;
+          st.clipPath = cp;
+          st.WebkitClipPath = cp;
           st.transition = started ? `clip-path .6s ${EASE}` : "none";
           st.position = "relative";
           st.zIndex = 25;
@@ -80,7 +84,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
       {trans && (
         <React.Fragment>
           {(() => {
-            const fromStyle = layerStyle(trans);
+            const fromStyle: ClipStyle = layerStyle(trans);
             // On reverse, the outgoing hero is the shared element the tile carries
             // back to the card, so hide it for the whole reverse — the tile starts
             // exactly over it (so there's no flash) and represents it the rest of
@@ -89,8 +93,8 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
             if (trans.dir === "rev" && trans.hero === false && trans.point) {
               const collapsed = trans.phase !== "start";
               const cp = `circle(${collapsed ? 0 : trans.clipR}px at ${trans.point.x}px ${trans.point.y}px)`;
-              (fromStyle as any).clipPath = cp;
-              (fromStyle as any).WebkitClipPath = cp;
+              fromStyle.clipPath = cp;
+              fromStyle.WebkitClipPath = cp;
               fromStyle.opacity = 1;
               fromStyle.transition = collapsed ? `clip-path .55s ${EASE}` : "none";
             }

@@ -86,6 +86,10 @@ export class PlayQueue extends Plugin {
     this.context.hooks.emit("queue:shuffle-changed", this.queue.toggleShuffle());
   }
 
+  setShuffle(enabled: boolean): void {
+    this.context.hooks.emit("queue:shuffle-changed", this.queue.setShuffle(enabled));
+  }
+
   cycleRepeat(): void {
     this.repeat = nextRepeatMode(this.repeat);
     this.context.hooks.emit("queue:repeat-changed", this.repeat);

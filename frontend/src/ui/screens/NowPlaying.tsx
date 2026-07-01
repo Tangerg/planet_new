@@ -15,10 +15,9 @@ import { Empty } from "@/components/layout/Empty";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useTranslation } from "react-i18next";
 import { activateOnKey } from "@/lib/keys";
+import { activeLyricIndex, lyricLinesOrFallback, type LyricLine } from "@/model/now-playing";
 
-// A synced-lyric line: text + optional timestamp (ms) + optional translation.
-// The "No lyrics" fallback line carries no `t`.
-export type LyricLine = { line: string; t?: number; tr?: string };
+export type { LyricLine } from "@/model/now-playing";
 
 // ============================================================
 // NowPlaying — full-bleed cover  ·  Lyrics  (toggle)
@@ -58,7 +57,7 @@ function LyricLines({
   }, [active, scrollRef]);
 
   return (
-    <div className="flex flex-col gap-[26px] px-[12%] pb-[60%] pt-[40%] text-center">
+    <div className="flex flex-col gap-[25px] px-[11%] pb-[56%] pt-[34%] text-center">
       {lines.map((l, i) => {
         const on = i === active;
         if (!l.line) return <div key={i} className="h-0.5" />;
@@ -67,14 +66,14 @@ function LyricLines({
             key={i}
             data-lyric-idx={i}
             style={{
-              fontSize: on ? 26 : 21,
+              fontSize: on ? 27 : 20,
               fontWeight: 300,
               letterSpacing: ".01em",
-              lineHeight: 1.35,
-              color: on ? accent : "rgba(255,255,255,.62)",
+              lineHeight: 1.42,
+              color: on ? accent : "rgba(255,255,255,.44)",
               transition: "color .4s, font-size .4s",
-              paddingBottom: on ? 14 : 0,
-              borderBottom: on ? `1.5px solid ${accent}88` : "none",
+              paddingBottom: on ? 16 : 0,
+              borderBottom: on ? `1px solid ${accent}aa` : "none",
             }}
           >
             {l.line}
@@ -83,7 +82,7 @@ function LyricLines({
                 style={{
                   marginTop: 5,
                   fontSize: on ? 16 : 14,
-                  color: on ? `${accent}cc` : "rgba(255,255,255,.4)",
+                  color: on ? `${accent}cc` : "rgba(255,255,255,.3)",
                 }}
               >
                 {l.tr}
@@ -124,16 +123,25 @@ function TagStack({
 // come for free.
 // ============================================================
 function ModeTag({
-  cls = "tag",
+  active,
   onClick,
   children,
 }: {
-  cls?: string;
+  active?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <Button className={cls + " cursor-pointer"} onClick={onClick}>
+    <Button
+      className="mlabel cursor-pointer px-[12px] py-[7px] text-[10px]"
+      onClick={onClick}
+      style={{
+        background: active ? "rgba(18,255,131,.18)" : "rgba(6,6,9,.76)",
+        color: active ? "var(--accent)" : "rgba(255,255,255,.78)",
+        borderBottom: active ? "1px solid var(--accent)" : "1px solid transparent",
+        boxShadow: active ? `0 8px 26px -18px var(--accent)` : "none",
+      }}
+    >
       {children}
     </Button>
   );
@@ -185,10 +193,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   const rootRef = useRef<HTMLDivElement>(null);
   // Memoized so the lyric auto-advance effect below depends on a stable value
   // (the fallback array literal would otherwise be new every render).
-  const lines = useMemo(
-    () => (lyrics && lyrics.length ? lyrics : [{ line: "No lyrics for this track." }]),
-    [lyrics],
-  );
+  const lines = useMemo(() => lyricLinesOrFallback(lyrics), [lyrics]);
   const [active, setActive] = useState(0);
   const { t } = useTranslation();
 
@@ -196,16 +201,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
   const lyricScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    // Skip when there are no timestamps (fallback "No lyrics" line has no `t`).
-    if (!lines.length || typeof lines[0].t !== "number") return;
-    const posMs = progressSec * 1000;
-    // Find the last line whose timestamp <= current position.
-    let idx = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const t = lines[i]?.t;
-      if (typeof t === "number" && t <= posMs) idx = i;
-      else break;
-    }
+    const idx = activeLyricIndex(lines, progressSec);
     setActive((prev) => (prev === idx ? prev : idx));
   }, [progressSec, lines]);
 
@@ -276,7 +272,7 @@ export const NowPlaying = React.memo(function NowPlaying({
         <Icon.close size={20} />
       </Button>
 
-      {/* full-bleed hero (portrait drop) — stays put; lyrics panel slides over its right half */}
+      {/* full-bleed hero: one atmospheric stage, not a split functional panel. */}
       <Art
         seed={coverSeed}
         grad={grad}
@@ -288,7 +284,8 @@ export const NowPlaying = React.memo(function NowPlaying({
         <div
           className="absolute inset-0 z-[2]"
           style={{
-            background: "radial-gradient(60% 60% at 50% 50%, transparent 0%, rgba(6,6,9,.55) 100%)",
+            background:
+              "radial-gradient(70% 70% at 28% 54%, rgba(255,255,255,.02), transparent 34%, rgba(6,6,9,.34) 62%, rgba(6,6,9,.68) 100%), linear-gradient(90deg, rgba(6,6,9,.12), rgba(6,6,9,.62))",
           }}
         />
         <TagStack
@@ -296,26 +293,22 @@ export const NowPlaying = React.memo(function NowPlaying({
           liked={liked}
           toggleLike={toggleLike}
           extra={
-            mode === "cover" ? (
-              <>
-                <span className="tag">{track?.quality || "SQ"}</span>
-                {track?.version && track.version !== "studio" && (
-                  <span className="tag capitalize">{track.version}</span>
-                )}
-                {track?.vipOnly && <span className="pill-accent">VIP</span>}
-                <ModeTag onClick={() => setMode("lyrics")}>Lyrics</ModeTag>
-                <ModeTag onClick={() => setMode("comments")}>Comments</ModeTag>
-              </>
-            ) : (
-              <>
-                <ModeTag cls="pill-accent" onClick={() => setMode("cover")}>
-                  Cover
-                </ModeTag>
-                <ModeTag onClick={() => setMode(lyricsMode ? "comments" : "lyrics")}>
-                  {lyricsMode ? "Comments" : "Lyrics"}
-                </ModeTag>
-              </>
-            )
+            <>
+              <ModeTag active={mode === "cover"} onClick={() => setMode("cover")}>
+                Cover
+              </ModeTag>
+              <ModeTag active={lyricsMode} onClick={() => setMode("lyrics")}>
+                Lyrics
+              </ModeTag>
+              <ModeTag active={commentsMode} onClick={() => setMode("comments")}>
+                Comments
+              </ModeTag>
+              {track?.quality && (
+                <span className="mlabel bg-[rgba(6,6,9,.72)] px-[12px] py-[7px] text-[9px] text-white/70">
+                  {track.quality}
+                </span>
+              )}
+            </>
           }
         />
         <div className="absolute bottom-[44px] left-12 z-[6] max-w-[min(46%,540px)]">
@@ -344,13 +337,13 @@ export const NowPlaying = React.memo(function NowPlaying({
         style={{
           position: "absolute",
           top: "50%",
-          left: panelOpen ? "21%" : "50%",
+          left: panelOpen ? "25%" : "50%",
           width: 300,
           height: 300,
           marginLeft: -150,
           marginTop: -150,
           zIndex: 4,
-          transform: `scale(${panelOpen ? 0.82 : 1})`,
+          transform: `scale(${panelOpen ? 0.86 : 1})`,
           transformOrigin: "center",
           transition: `left .62s ${NP_EASE}, transform .62s ${NP_EASE}`,
         }}
@@ -395,31 +388,35 @@ export const NowPlaying = React.memo(function NowPlaying({
         </motion.div>
       </div>
 
-      {/* side panel — lyrics or comments — slides in from the right over a blurred tint */}
+      {/* lyrics/comments reading layer: transparent over the same image stage. */}
       <div
-        className="absolute right-0 top-0 z-[5] h-full w-[58%] overflow-hidden"
+        className="absolute right-0 top-0 z-[5] h-full w-[56%] overflow-hidden"
         style={{
           transform: panelOpen ? "translateX(0)" : "translateX(100%)",
           opacity: panelOpen ? 1 : 0,
           pointerEvents: panelOpen ? "auto" : "none",
           transition: `transform .62s ${NP_EASE}, opacity .42s ease`,
-          background: `linear-gradient(160deg, ${a}cc, ${b}aa)`,
         }}
       >
         <div
-          className="grain absolute inset-0 z-0"
+          className="absolute inset-0 z-0"
           style={{
-            backdropFilter: "blur(40px)",
-            WebkitBackdropFilter: "blur(40px)",
-            background: "rgba(10,12,18,.35)",
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(10,11,13,.16) 22%, rgba(10,11,13,.46) 58%, rgba(10,11,13,.58) 100%)",
+            backdropFilter: "blur(22px) saturate(112%)",
+            WebkitBackdropFilter: "blur(22px) saturate(112%)",
+            WebkitMaskImage:
+              "linear-gradient(90deg, transparent 0%, rgba(0,0,0,.18) 14%, rgba(0,0,0,.72) 34%, #000 54%)",
+            maskImage:
+              "linear-gradient(90deg, transparent 0%, rgba(0,0,0,.18) 14%, rgba(0,0,0,.72) 34%, #000 54%)",
           }}
         />
         <NpSwap key={mode} className="relative z-[2] h-full">
           {commentsMode ? (
-            <div className="scroll h-full px-12 pb-10 pt-[58px]">
+            <div className="scroll h-full px-[12%] pb-10 pt-[80px]">
               <div
-                className="mb-[22px] inline-block pb-3 text-[26px] font-extralight tracking-[0.06em]"
-                style={{ borderBottom: `2px solid ${accent}` }}
+                className="mb-[28px] inline-block bg-[rgba(6,6,9,.82)] px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em]"
+                style={{ color: accent }}
               >
                 {t("comments.title")}
               </div>
@@ -445,11 +442,11 @@ export const NowPlaying = React.memo(function NowPlaying({
           aria-label="Up Next"
           className="absolute bottom-[22px] left-1/2 z-[9] flex -translate-x-1/2 items-center gap-[9px] rounded-full px-[18px] py-[9px] text-white/[0.82]"
           style={{
-            background: "rgba(14,14,18,.5)",
+            background: "rgba(10,10,13,.62)",
             border: "1px solid rgba(255,255,255,.14)",
             backdropFilter: "blur(14px)",
             WebkitBackdropFilter: "blur(14px)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,.1), 0 8px 24px -10px rgba(0,0,0,.7)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px -10px rgba(0,0,0,.7)",
           }}
         >
           <span className="mlabel text-[10px]">Up Next · {queue.length}</span>
