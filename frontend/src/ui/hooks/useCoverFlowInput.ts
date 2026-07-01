@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 
 import type { VibeCollection, VibeTrack } from "@/model/adapt";
 import type { FlowItem } from "@/model/derive";
+import { useEventCallback } from "@/hooks/useEventCallback";
 
 // `drag` is dual-use: a number accumulates horizontal wheel delta, an object
 // tracks an in-flight pointer drag (start pointer x + start center), null idle.
@@ -11,9 +12,9 @@ type DragState = number | { x: number; start: number } | null;
 /**
  * Input driving for the CoverFlow carousel — keyboard (window, capture phase so
  * it wins over global spatial-nav), horizontal wheel, and pointer drag. Arrows
- * move the center / expand the tracklist, Enter opens the centered item. Latest
- * state is read through refs so the window listener installs once; the returned
- * pointer handlers close over live values for the root element.
+ * move the center / expand the tracklist, Enter opens the centered item. The
+ * keydown handler is stable (installed once) but always reads the latest state
+ * via useEventCallback; the pointer handlers are plain per-render closures.
  */
 export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: {
   items: FlowItem<T>[];
@@ -31,58 +32,38 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
 } {
   const { items, center, expanded, expandable, onOpen, setCenter, setExpanded } = params;
   const clamp = (n: number) => Math.max(0, Math.min(items.length - 1, n));
-
   const drag = useRef<DragState>(null);
-  // refs capture latest values for the stable window listener below
-  const centerRef = useRef(center);
-  const expandedRef = useRef(expanded);
-  const itemsRef = useRef(items);
-  const expandableRef = useRef(expandable);
-  const onOpenRef = useRef(onOpen);
-  const setExpandedRef = useRef(setExpanded);
-  const setCenterRef = useRef(setCenter);
-  // sync refs every render so the stable event handler always reads latest values
-  centerRef.current = center;
-  expandedRef.current = expanded;
-  itemsRef.current = items;
-  expandableRef.current = expandable;
-  onOpenRef.current = onOpen;
-  setExpandedRef.current = setExpanded;
-  setCenterRef.current = setCenter;
+
+  const onKey = useEventCallback((e: KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      e.stopPropagation();
+      setCenter((c) => clamp(c - 1));
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      e.stopPropagation();
+      setCenter((c) => clamp(c + 1));
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (expandable) setExpanded(true);
+    } else if (e.key === "ArrowUp") {
+      if (expanded) {
+        e.preventDefault();
+        e.stopPropagation();
+        setExpanded(false);
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpen(items[center].obj);
+    }
+  });
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        e.stopPropagation();
-        setCenterRef.current((c: number) =>
-          Math.max(0, Math.min(itemsRef.current.length - 1, c - 1)),
-        );
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        e.stopPropagation();
-        setCenterRef.current((c: number) =>
-          Math.max(0, Math.min(itemsRef.current.length - 1, c + 1)),
-        );
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        if (expandableRef.current) setExpandedRef.current(true);
-      } else if (e.key === "ArrowUp") {
-        if (expandedRef.current) {
-          e.preventDefault();
-          e.stopPropagation();
-          setExpandedRef.current(false);
-        }
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
-        onOpenRef.current(itemsRef.current[centerRef.current].obj);
-      }
-    };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, []);
+  }, [onKey]);
 
   const onWheel = (e: React.WheelEvent) => {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
