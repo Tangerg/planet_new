@@ -4,6 +4,7 @@ import type { Image } from "@domain/model/image";
 import type { Playlist } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 import type { User } from "@domain/model/user";
+import { httpsUrl } from "@shared/url";
 import type {
   QQAlbumDetail,
   QQChart,
@@ -29,12 +30,6 @@ import type {
 
 const I_HOST = "https://y.gtimg.cn/music/photo_new";
 
-/** Some Tencent image URLs are http://; an HTTPS webview blocks them, so upgrade to https. */
-function ensureHttps(url: string | undefined): string {
-  if (!url) return "";
-  return url.startsWith("http://") ? "https://" + url.slice("http://".length) : url;
-}
-
 function qqId(id: QQId | undefined): string {
   return id === undefined ? "" : id.toString();
 }
@@ -58,7 +53,7 @@ export function mapQQArtist(raw: QQSinger): Partial<Artist> {
 
 export function mapQQArtistFromList(raw: QQSinger): Partial<Artist> {
   // /getSingerList uses snake_case; singer_pic is 150x150, build a 300px image for clarity
-  const url = singerImage(raw.singer_mid ?? "", 300) || ensureHttps(raw.singer_pic);
+  const url = singerImage(raw.singer_mid ?? "", 300) || httpsUrl(raw.singer_pic);
   return {
     id: qqId(raw.singer_mid),
     name: raw.singer_name ?? "",
@@ -127,7 +122,7 @@ export function mapQQPlaylistDetail(cd: QQPlaylistDetail): Playlist {
     id: qqId(cd.disstid ?? cd.dissid),
     name: cd.dissname ?? "",
     description: cd.desc ?? "",
-    images: [{ url: ensureHttps(cd.logo) }],
+    images: [{ url: httpsUrl(cd.logo) }],
     totalTracks: cd.songnum ?? cd.total_song_num ?? tracks.length,
     owner,
     tracks,
@@ -171,7 +166,7 @@ export function mapQQPlaylistStub(raw: QQPlaylistStub): Partial<Playlist> {
   return {
     id: qqId(raw.dissid),
     name: raw.dissname ?? "",
-    images: [{ url: ensureHttps(raw.imgurl) }],
+    images: [{ url: httpsUrl(raw.imgurl) }],
     totalTracks: raw.songnum ?? 0,
   };
 }
@@ -194,7 +189,7 @@ export function mapQQSmartboxSong(raw: QQSmartboxItem): Partial<Track> {
 /** Singer search (/getSmartbox -> response.data.singer.itemlist[]): { mid, name, pic } */
 export function mapQQSmartboxSinger(raw: QQSmartboxItem): Partial<Artist> {
   const mid = qqId(raw.mid);
-  const url = ensureHttps(raw.pic) || singerImage(mid, 300);
+  const url = httpsUrl(raw.pic) || singerImage(mid, 300);
   return {
     id: mid,
     name: stripTags(raw.name),
@@ -205,7 +200,7 @@ export function mapQQSmartboxSinger(raw: QQSmartboxItem): Partial<Artist> {
 /** Album search (/getSmartbox -> response.data.album.itemlist[]): { mid, name, pic, singer } */
 export function mapQQSmartboxAlbum(raw: QQSmartboxItem): Partial<Album> {
   const mid = qqId(raw.mid);
-  const url = ensureHttps(raw.pic) || albumImage(mid, 300);
+  const url = httpsUrl(raw.pic) || albumImage(mid, 300);
   return {
     id: mid,
     name: stripTags(raw.name),
@@ -226,7 +221,7 @@ export function mapQQChart(raw: QQChart): {
   return {
     id: qqId(raw.id ?? raw.topId ?? raw.topid),
     title: raw.title ?? raw.topTitle ?? "",
-    image: ensureHttps(raw.frontPicUrl ?? raw.headPicUrl ?? raw.picUrl ?? raw.macHeadPicUrl ?? ""),
+    image: httpsUrl(raw.frontPicUrl ?? raw.headPicUrl ?? raw.picUrl ?? raw.macHeadPicUrl ?? ""),
     period: raw.updateTime ?? raw.intro ?? undefined,
   };
 }
@@ -236,7 +231,7 @@ export function mapQQChart(raw: QQChart): {
  *  Note: this shape gives songId but not songmid, so play URLs cannot be resolved yet (getMusicPlay needs songmid). */
 export function mapQQRankSong(raw: QQTrack, index?: number): Partial<Track> {
   const albumMid = raw.albumMid ?? raw.album?.mid ?? "";
-  const albumUrl = raw.cover ? ensureHttps(raw.cover) : albumImage(albumMid, 300);
+  const albumUrl = raw.cover ? httpsUrl(raw.cover) : albumImage(albumMid, 300);
   return {
     index,
     id: qqId(raw.songId ?? raw.mid),

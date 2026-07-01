@@ -3,7 +3,9 @@ import type { KyInstance } from "ky";
 import { mergeTranslations, parseLyrics, type Lyric } from "@domain/model/lyric";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 
-import { mapNcmTrack, toHttps } from "../mappers/ncm";
+import { httpsUrl } from "@shared/url";
+
+import { mapNcmTrack } from "../mappers/ncm";
 import type {
   NcmLyricResponse,
   NcmPlayUrlResponse,
@@ -80,5 +82,5 @@ export async function fetchNcmPlayUrls(
     .json<NcmPlayUrlResponse>();
   return (res.data ?? [])
     .filter((track): track is { id: string | number; url: string } => !!track.url)
-    .map((track): TrackPlayUrl => ({ id: track.id.toString(), playUrl: toHttps(track.url) }));
+    .map((track): TrackPlayUrl => ({ id: track.id.toString(), playUrl: httpsUrl(track.url) }));
 }

@@ -7,6 +7,7 @@ import { MusicVideo } from "@domain/model/music-video";
 import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 import { User } from "@domain/model/user";
+import { httpsUrl } from "@shared/url";
 import type {
   NcmAlbum,
   NcmArtist,
@@ -27,16 +28,9 @@ import type {
  *   pl.picUrl / coverImgUrl, ar.img1v1Url
  */
 
-/** NCM serves many image URLs over http; the app runs in a secure-context
- *  webview where http subresources are blocked as mixed content, so upgrade to
- *  https (the CDN serves both). Mirrors the QQ mapper's ensureHttps. */
-export function toHttps(url: string | undefined): string {
-  return (url ?? "").replace(/^http:\/\//, "https://");
-}
-
 export function resizeImage(url: string | undefined, size: number): string {
   if (!url) return "";
-  return `${toHttps(url)}?param=${size}y${size}`;
+  return `${httpsUrl(url)}?param=${size}y${size}`;
 }
 
 /** Square cover variant widths, largest-first (matches the Image[] contract). */
@@ -53,7 +47,7 @@ function ncmId(id: number | string | undefined): string {
  */
 export function coverSet(url: string | undefined): Image[] {
   if (!url) return [];
-  const base = toHttps(url);
+  const base = httpsUrl(url);
   return COVER_WIDTHS.map((w) => ({ url: `${base}?param=${w}y${w}`, width: w, height: w }));
 }
 
