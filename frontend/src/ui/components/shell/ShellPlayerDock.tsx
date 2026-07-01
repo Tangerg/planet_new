@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { PlayerBar } from "@/components/PlayerBar";
+import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 
 type Props = {
   show: boolean;
@@ -18,8 +19,6 @@ type Props = {
   onToggleRepeat: () => void;
   onNext: () => void;
   onPrev: () => void;
-  positionSec: number;
-  durationSec: number;
   onSeek: (percent: number) => void;
   volume: number;
   onVolume: (volume: number) => void;
@@ -45,8 +44,6 @@ export function ShellPlayerDock({
   onToggleRepeat,
   onNext,
   onPrev,
-  positionSec,
-  durationSec,
   onSeek,
   volume,
   onVolume,
@@ -56,6 +53,9 @@ export function ShellPlayerDock({
   onOpenLyrics,
   onOpenArtist,
 }: Props) {
+  // Subscribe to the frequent progress tick here, not in Shell — only this dock
+  // (and Now Playing) re-render as the clock advances.
+  const { positionSec, durationSec } = usePlaybackProgress();
   return (
     <>
       <div aria-hidden style={{ flex: `0 0 ${show ? 84 : 0}px` }} />
