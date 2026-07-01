@@ -126,7 +126,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
                     style={{
                       color: on ? accent : "rgba(255,255,255,.78)",
                       background: on
-                        ? "linear-gradient(90deg, rgba(18,255,131,.16), transparent 78%)"
+                        ? "linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 78%)"
                         : "transparent",
                     }}
                   >
