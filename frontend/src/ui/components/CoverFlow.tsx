@@ -200,7 +200,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
                 key={i}
                 onClick={() => setCenter(i)}
                 aria-label={"Go to " + (i + 1)}
-                className="h-[7px] rounded-full p-0 transition-all duration-300"
+                className="h-[7px] rounded-full p-0 transition-[width,background-color] duration-300"
                 style={{
                   width: i === center ? 22 : 7,
                   background: i === center ? accent : "rgba(255,255,255,.25)",

@@ -85,7 +85,9 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             letterSpacing: active ? ".02em" : ".005em",
             lineHeight: 1.1,
             color: active ? "#fff" : "rgba(255,255,255,.8)",
-            transition: `all .55s ${XMB_EASE}`,
+            // Only these four differ between active/inactive; enumerated (not
+            // `all`) so the browser doesn't diff every property each frame.
+            transition: `font-size .55s ${XMB_EASE}, letter-spacing .55s ${XMB_EASE}, color .55s ${XMB_EASE}, max-width .55s ${XMB_EASE}`,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
