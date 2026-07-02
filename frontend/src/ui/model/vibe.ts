@@ -1,5 +1,4 @@
 import type { Image } from "@domain/model/image";
-import type { MusicVideo } from "@domain/model/music-video";
 import type { Track } from "@domain/model/track";
 
 /** Display shape for a track, shared by mock and real data alike. */
@@ -36,8 +35,11 @@ export type VibeTrack = {
   /** Chart-only: explicit rank + week-over-week delta (mock charts). */
   _rank?: number;
   _delta?: number;
-  /** Original partial domain track; used when handing playback back to the kernel. */
-  _real?: Partial<Track>;
+  /** The domain track this view was projected from. Carried so a "play" gesture
+   *  can hand the kernel the full entity without re-fetching (the queue stores
+   *  domain tracks and re-projects them for Now Playing). Absent only on
+   *  hand-built view tracks like the placeholder. */
+  source?: Partial<Track>;
 };
 
 /** Display shape for a collection (playlist / album / chart). */
@@ -109,7 +111,6 @@ export type VibeMusicVideo = {
   shareCount?: number;
   playUrl?: string;
   quality?: number;
-  _real?: Partial<MusicVideo>;
 };
 
 export type CardItem = {

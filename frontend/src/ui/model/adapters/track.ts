@@ -25,7 +25,7 @@ export function toVibeTrack(real: Partial<DomainTrack>, i?: number): VibeTrack {
     playUrl: real.playUrl,
     musicVideoId: real.musicVideoId,
     available: true,
-    _real: real,
+    source: real,
   };
 }
 
@@ -34,10 +34,11 @@ export const toVibeTracks = (tracks?: Partial<DomainTrack>[]) =>
 
 /**
  * Recover the domain Track from a VibeTrack, for handing playback back to the
- * kernel. Uses `_real` when available; otherwise synthesises a minimal Track.
+ * kernel. Uses the projected `source` when available; otherwise synthesises a
+ * minimal Track from the view fields (e.g. the hand-built placeholder track).
  */
 export function toTrack(vt: VibeTrack): DomainTrack {
-  if (vt._real && vt._real.id) return vt._real as DomainTrack;
+  if (vt.source && vt.source.id) return vt.source as DomainTrack;
   return {
     id: vt.id,
     name: vt.name,
