@@ -41,6 +41,10 @@ export type NcmTrack = {
   mv?: NcmId;
   mvid?: NcmId;
   mvId?: NcmId;
+  /** Charge tier: 0 free, 1 VIP-only, 4 album-purchase, 8 low-quality-free. */
+  fee?: number;
+  /** Present (non-null) when NCM has no licence for the track. */
+  noCopyrightRcmd?: unknown;
 };
 
 export type NcmUser = NcmImageSource & {

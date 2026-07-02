@@ -27,7 +27,8 @@ export type VibeTrack = {
   musicVideoId?: string;
   /** Mix/edit label, e.g. "live", "acoustic" ("studio" is treated as none). */
   version?: string;
-  vipOnly?: boolean;
+  /** Full playback needs a paid subscription (projected from the domain fact). */
+  requiresSubscription?: boolean;
   /** Audio-quality badge, e.g. "SQ" / "HQ". */
   quality?: string;
   credits?: { music?: string; producer?: string };

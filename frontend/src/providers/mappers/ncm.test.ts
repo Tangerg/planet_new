@@ -55,4 +55,19 @@ describe("NCM mapper", () => {
     expect(track.album).toBeUndefined();
     expect(track.musicVideoId).toBeUndefined();
   });
+
+  it("translates NCM fee / noCopyrightRcmd into neutral availability facts", () => {
+    // fee 1 = VIP tier → requiresSubscription; licensed → available.
+    expect(mapNcmTrack({ id: 1, fee: 1 })).toMatchObject({
+      requiresSubscription: true,
+      available: true,
+    });
+    // Free tier, no licence flag → no subscription, still available.
+    expect(mapNcmTrack({ id: 2, fee: 0 })).toMatchObject({
+      requiresSubscription: false,
+      available: true,
+    });
+    // noCopyrightRcmd present → not licensed for playback.
+    expect(mapNcmTrack({ id: 3, noCopyrightRcmd: { type: 0 } }).available).toBe(false);
+  });
 });

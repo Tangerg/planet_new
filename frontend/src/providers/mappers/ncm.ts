@@ -97,6 +97,10 @@ export function mapNcmTrack(raw: NcmTrack, opts: MapTrackOptions = {}): Partial<
     album,
     artists: artistsRaw.map(mapNcmArtist),
     musicVideoId: mvId ? mvId.toString() : undefined,
+    // Neutral availability facts (see domain Track): fee 1 = VIP tier;
+    // noCopyrightRcmd present = NCM holds no licence for the track.
+    requiresSubscription: raw.fee === 1,
+    available: raw.noCopyrightRcmd == null,
   };
 }
 
