@@ -32,7 +32,7 @@ Planet 是一个 Wails 桌面音乐播放器。Go 端只提供桌面壳、窗口
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │ Plugins + providers                                    │  │
 │  │ Playback · Queue · Progress · Volume · Lyrics · NCM    │  │
-│  │ QQMusic · Spotify · Mock                               │  │
+│  │ QQMusic · Spotify                                      │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -76,7 +76,7 @@ shared <- domain <- core <- providers <- ui <- app
 | Shared | `src/shared` | Small pure utilities with no framework dependency. |
 | Domain | `src/domain` | Music entities, value objects, provider/auth/library ports. |
 | Core | `src/core` | Planet kernel, typed event bus, plugin system, playback/application services. |
-| Providers | `src/providers` | Concrete data-source adapters and mappers for NCM, QQMusic, Spotify, Mock. |
+| Providers | `src/providers` | Concrete data-source adapters and mappers for NCM, QQMusic, Spotify. |
 | UI | `src/ui` | React screens, components, hooks, i18n, shell navigation, Zustand bridges. |
 | App | `src/app` | Runtime composition: create providers, plugins, kernel, and `Engine`. |
 
@@ -102,8 +102,7 @@ Concrete providers:
 
 | Provider | Notes |
 |---|---|
-| `Mock` | Offline development source, generated deterministic data. |
-| `NeteaseCloudMusic` | Local NCM API service, supports richer real catalog/playback flows. |
+| `NeteaseCloudMusic` | Local NCM API service, supports richer real catalog/playback flows; the default/fallback provider. |
 | `QQMusic` | Local QQ Music API service. |
 | `Spotify` | Spotify Web API; playback is preview-limited where available. |
 

@@ -89,7 +89,7 @@ export const Track = {
   /**
    * The provider can play audio, but not *this* track — the signal a list row
    * uses to dim itself. Deliberately NOT `!isPlayable`: a provider with no
-   * playback capability at all (Mock) reports false so its rows stay interactive
+   * playback capability at all reports false so its rows stay interactive
    * as a dev source, rather than every row showing "unavailable".
    */
   isUnavailable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
