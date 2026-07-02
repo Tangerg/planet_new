@@ -2,9 +2,8 @@
 // Detail — Playlist / Album / Chart detail: cover hero, sticky condensed header,
 // list · grid · flow views, multi-select action bar. List/grid are windowed.
 // ============================================================
-import React, { useState, useRef } from "react";
 import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/adapt";
-import { sortTracks, type SortMode } from "@/model/derive";
+import { type SortMode } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
@@ -17,7 +16,7 @@ import { TrackCollectionView } from "@/components/TrackCollectionView";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
-import { useScreenActions } from "@/hooks/screenActions";
+import { useDetailScreenModel } from "@/hooks/useDetailScreenModel";
 
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
@@ -42,53 +41,29 @@ export function PlaylistDetailScreen({
   accent,
   onOpenArtist,
 }: PlaylistDetailScreenProps) {
-  const { enqueue } = useScreenActions();
   const p = playlist;
   const total = p.tracks.length;
-  const [view, setView] = useState("list"); // list | grid | flow
-  const [sort, setSort] = useState<SortMode>("order");
-  const [sel, setSel] = useState<Set<string>>(new Set());
-  const lastSel = useRef<string | null>(null);
-  const sorted = React.useMemo(() => sortTracks(p.tracks, sort), [p.tracks, sort]);
-  const toggleSel = (track: VibeTrack, e: React.MouseEvent) => {
-    setSel((prev) => {
-      const n = new Set(prev);
-      if (e.shiftKey && lastSel.current != null) {
-        const ids = sorted.map((s) => s.t.id);
-        const a = ids.indexOf(lastSel.current),
-          b = ids.indexOf(track.id);
-        if (a > -1 && b > -1) {
-          const [lo, hi] = a < b ? [a, b] : [b, a];
-          for (let k = lo; k <= hi; k++) n.add(ids[k]);
-        }
-      } else if (n.has(track.id)) {
-        n.delete(track.id);
-      } else {
-        n.add(track.id);
-      }
-      return n;
-    });
-    lastSel.current = track.id;
-  };
-  const [flowCenter, setFlowCenter] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
-  const HERO = 380;
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const bar = stickyRef.current;
-    if (!bar) return;
-    const on = (e.target as HTMLDivElement).scrollTop > HERO - 120;
-    bar.style.opacity = on ? "1" : "0";
-    bar.style.transform = on ? "translateY(0)" : "translateY(-100%)";
-    bar.style.pointerEvents = on ? "auto" : "none";
-  };
-  const hasTracks = p.tracks.length > 0;
-  const playFirst = () => {
-    if (hasTracks) onPlay(p.tracks[0]);
-  };
-  const shuffleAll = () => {
-    if (hasTracks) onShufflePlay(p.tracks);
-  };
+  const {
+    heroHeight: HERO,
+    view,
+    setView,
+    sort,
+    setSort,
+    sorted,
+    sel,
+    toggleSel,
+    clearSel,
+    flowCenter,
+    setFlowCenter,
+    scrollRef,
+    stickyRef,
+    handleScroll,
+    hasTracks,
+    playFirst,
+    shuffleAll,
+    enqueueSelected,
+    playSelected,
+  } = useDetailScreenModel(p.tracks, onPlay, onShufflePlay);
 
   // Real-world names run long; a fixed 64px title wraps a long CJK name to two
   // lines and deforms the hero. Scale the title down so it stays ~one line (CJK
@@ -276,26 +251,19 @@ export function PlaylistDetailScreen({
             <span className="mlabel text-[11px] text-white">{sel.size} selected</span>
             <Button
               className="mlabel rounded-full px-[14px] py-2 text-[10px]"
-              onClick={() => {
-                p.tracks.filter((t) => sel.has(t.id)).forEach((t) => enqueue(t.id));
-                setSel(new Set());
-              }}
+              onClick={enqueueSelected}
               style={{ background: accent, color: "#06060a" }}
             >
               Add to queue
             </Button>
             <Button
               className="mlabel rounded-full border border-white/20 bg-transparent px-[14px] py-2 text-[10px] text-white"
-              onClick={() => {
-                const first = p.tracks.find((t) => sel.has(t.id));
-                if (first) onPlay(first);
-                setSel(new Set());
-              }}
+              onClick={playSelected}
             >
               Play
             </Button>
             <Button
-              onClick={() => setSel(new Set())}
+              onClick={clearSel}
               aria-label="Clear"
               className="grid place-items-center p-1 text-white/60"
             >
