@@ -8,7 +8,7 @@ import {
   mapQQSmartboxSong,
   mapQQTrackFromSong,
   singerImage,
-} from "./qqmusic";
+} from "./mapper";
 
 describe("QQ Music mapper", () => {
   it("normalizes mixed Tencent ids and upgrades playlist artwork to https", () => {
