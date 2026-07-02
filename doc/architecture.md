@@ -158,7 +158,24 @@ The project intentionally does not use a route-per-screen model. Navigation is a
 
 ---
 
-## 8. Quality Gates
+## 8. Projection And Failure Boundaries
+
+Three conventions at the UI ↔ domain / provider seams. Documented so they read as deliberate, not as leftover shims.
+
+**`VibeTrack.source` — the play handoff carry (not a DTO backflow).**
+Screens are pure presentation and receive `VibeTrack` view models. Playing one hands the kernel a domain `Track`; rather than re-fetch or reconstruct it, each `VibeTrack` carries the `Track` it was projected from as `source`. This is load-bearing: the play queue stores domain tracks and Now Playing re-projects them **client-side**, so a lightweight id-only ref would force a re-fetch or a parallel id→Track cache — which is exactly what `source` already is. Boundary rule: only the track adapter writes `source` (it is `readonly`), and only `toTrack()` reads it back (with a minimal-synthesis fallback for hand-built view tracks such as the placeholder). Do not "remove the domain back-reference" — keep it, named honestly.
+
+**Collection detail hint — `fetchDetail`.**
+`VibeCollection.fetchDetail` answers "should opening this collection fetch full detail from the provider?" Default (undefined) = fetch; explicit `false` = tracks are already loaded (synthetic collections like Daily Mix / Liked Songs; a chart sets it `true`). It is the only meaning of that flag — the earlier dual-purpose `_real` name (a domain carrier on tracks vs. a boolean hint on collections) was split into `source` and `fetchDetail`.
+
+**Provider read failure — one shape, no `Result` wrapper.**
+`MediaService` never lets one bad read blank the app: an unsupported capability returns its fallback silently, while a *supported* read that faults returns the same fallback but reports it through `@shared/debug.warnReadFailure` — so "endpoint down" is distinguishable from "no data" in the console. Empty-but-successful is a valid result, not a fault. The UI already has the three signals separately — `media.supports(cap)` (unsupported), React Query `isError` (failed), `data.length` (empty) — so no `Result` type is threaded through every caller.
+
+Provider mappers share one field-normalization standard (`providers/mappers/common.ts`): `toIdString` (ids → string), `singleImage` (one URL → the `Image[]` contract), `secondsToMs` (seconds → the domain's `durationMs`). Image URL-scheme building and artist-credit shaping stay provider-specific / domain-owned respectively.
+
+---
+
+## 9. Quality Gates
 
 Frontend quality checks live in `frontend/package.json`:
 
