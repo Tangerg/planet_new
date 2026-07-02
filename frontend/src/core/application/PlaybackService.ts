@@ -6,6 +6,7 @@ import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
 import { VOLUME_CONTROL } from "../plugin/volume";
 import { PROGRESS } from "../plugin/progress";
+import { errorMessage, warn } from "@shared/debug";
 
 /**
  * The playback command API — the single door the UI calls for every playback
@@ -54,8 +55,11 @@ export class PlaybackService {
     if (idsToResolve.length) {
       try {
         urls = await provider.playUrls(idsToResolve);
-      } catch {
-        // Provider has no play-URL support: stay silent; the UI still switches track.
+      } catch (error) {
+        // We only get here for a provider that *claims* playback support (the
+        // resolution policy gated on it), so a throw is a real resolve failure,
+        // not "unsupported". Surface it, but still switch track on the fallback.
+        warn(`${provider.name}.playUrls failed: ${errorMessage(error)}`);
       }
     }
     // A newer play() superseded this one while awaiting — drop the stale result.
