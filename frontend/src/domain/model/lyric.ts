@@ -58,3 +58,17 @@ export function mergeTranslations(lyrics: Lyric[], translated: Lyric[]): Lyric[]
     return tr && tr !== l.content ? { ...l, translation: tr } : l;
   });
 }
+
+/**
+ * Index of the line active at `positionMs` — the last line whose timestamp is at
+ * or before the position. 0 when empty or before the first line (lines are
+ * timestamp-ordered; parseLyrics drops untimed lines).
+ */
+export function activeLyricIndex(lines: readonly Lyric[], positionMs: number): number {
+  let idx = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].duration <= positionMs) idx = i;
+    else break;
+  }
+  return idx;
+}

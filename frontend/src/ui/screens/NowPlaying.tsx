@@ -14,17 +14,16 @@ import { TagStack } from "@/components/now-playing/TagStack";
 import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
 import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
+import { activeLyricIndex, type Lyric } from "@domain/model/lyric";
 import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
-import { activeLyricIndex, lyricLinesOrFallback, type LyricLine } from "@/model/now-playing";
-
-export type { LyricLine } from "@/model/now-playing";
+import { lyricLinesOrFallback } from "@/model/now-playing";
 
 type Props = {
   track?: VibeTrack;
   accent: string;
   liked: boolean;
   toggleLike: () => void;
-  lyrics: LyricLine[];
+  lyrics: readonly Lyric[];
   comments?: VibeComment[];
   onClose: () => void;
   mono?: boolean;
@@ -68,11 +67,11 @@ export const NowPlaying = React.memo(function NowPlaying({
   const [active, setActive] = useState(0);
   const { t } = useTranslation();
 
-  // Sync active lyric line to real playback progress.
-  // Lyric timestamps `t` are in milliseconds; `progressSec` is in seconds.
+  // Sync active lyric line to real playback progress. Lyric timestamps are in
+  // milliseconds; `progressSec` is in seconds.
   const lyricScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const idx = activeLyricIndex(lines, progressSec);
+    const idx = activeLyricIndex(lines, progressSec * 1000);
     setActive((prev) => (prev === idx ? prev : idx));
   }, [progressSec, lines]);
 

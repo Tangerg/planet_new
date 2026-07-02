@@ -10,6 +10,7 @@ import type {
   VibeMusicVideo,
   VibeTrack,
 } from "@/model/adapt";
+import type { Lyric } from "@domain/model/lyric";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
 import type { Settings } from "@/model/defaults";
 import { XMB } from "@/screens/XMB";
@@ -24,7 +25,7 @@ import { SettingsScreen } from "@/screens/Settings";
 import { ArtistScreen } from "@/screens/Artist";
 import { ProfileScreen } from "@/screens/Profile";
 import { CommentsScreen } from "@/screens/Comments";
-import { NowPlaying, type LyricLine } from "@/screens/NowPlaying";
+import { NowPlaying } from "@/screens/NowPlaying";
 import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
 import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
 import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
@@ -86,7 +87,7 @@ type LibraryBundle = {
 };
 
 type ContentBundle = {
-  lyrics: LyricLine[];
+  lyrics: readonly Lyric[];
   comments: VibeComment[];
   detail: DetailTarget | null;
   artistObj: ArtistTarget;
