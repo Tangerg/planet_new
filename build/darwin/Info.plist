@@ -23,5 +23,13 @@
         <string>true</string>
         <key>NSHumanReadableCopyright</key>
         <string>{{.Info.Copyright}}</string>
+        <!-- Allow the WKWebView to load the on-device library's loopback media
+             server (http://127.0.0.1:<port>) without ATS blocking. Scoped to
+             local networking only; mirrors Info.dev.plist. -->
+        <key>NSAppTransportSecurity</key>
+        <dict>
+            <key>NSAllowsLocalNetworking</key>
+            <true/>
+        </dict>
     </dict>
 </plist>

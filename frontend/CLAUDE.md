@@ -4,7 +4,7 @@
 > - `@shared`(`src/shared`)框架无关纯工具 —— 零依赖,最内。
 > - `@domain`(`src/domain`)领域层:实体/值对象(`model/`)+ 端口契约(`ports/`,如 MusicProvider 能力)—— 只依赖 `@shared`。
 > - `@core`(`src/core`)应用/运行时:planet 内核(插件系统/事件总线/manager)+ 播放插件(control/playqueue/progress/volume/lyric/analyser)—— 依赖 domain。
-> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 适配器 + mappers,实现 domain 端口 —— 依赖 core+domain。
+> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 网络适配器 + 本地库 Local(经 `@wailsjs` 生成桥接 Go `library` 包:扫盘 / SQLite / 回环媒体流)+ mappers,实现 domain 端口 —— 依赖 core+domain。
 > - `@/`(`src/ui`)表现层:逐字移植自示例 **Sonance Vibe**(XMB 启动器 + 共享元素切换)的播放器界面。
 > - `src/app`(组合根 `planet.ts`)+ `src/main.tsx`(入口)在最外,装配具体 provider + 插件进内核。
 >
@@ -54,7 +54,7 @@
 - **交互件**:优先 **Radix** 替换手写(已用 `@radix-ui/react-slider`);新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
 - **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
-- **数据源**:provider 插件(NeteaseCloudMusic / QQMusic / Spotify),由 `VITE_PROVIDER` 选(默认 / 兜底为 NCM);QQ 对接本机 `Rain120/qq-music-api`(:3200)。
+- **数据源**:provider 插件(NeteaseCloudMusic / QQMusic / Spotify / Local),由 `VITE_PROVIDER` 选(默认 / 兜底为 NCM)或运行时在 Settings「音乐来源」切换;QQ 对接本机 `Rain120/qq-music-api`(:3200);Local 是桌面自带的本地库(Go 侧扫盘 + SQLite + 回环媒体流,无需外部服务),扫描经 Settings 原生目录选择器触发。桌面壳动作(原生对话框 / 窗口控制)走 `ui/infra` 薄 shim,不进 Engine facade。
 
 ---
 
