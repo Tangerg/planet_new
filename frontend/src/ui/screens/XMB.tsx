@@ -15,7 +15,7 @@ import { FadeIn } from "@/components/motion";
 import { FlowWaves } from "@/components/xmb/FlowWaves";
 import { XmbCategoryRail } from "@/components/xmb/XmbCategoryRail";
 import { XmbItemColumn } from "@/components/xmb/XmbItemColumn";
-import { useXmbKeyboard } from "@/hooks/useXmbKeyboard";
+import { useXmbKeyboard } from "@/components/xmb/useXmbKeyboard";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
 
 type Props = {
