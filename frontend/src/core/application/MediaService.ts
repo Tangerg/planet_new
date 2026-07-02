@@ -9,6 +9,7 @@ import type { Comment } from "@domain/model/comment";
 import type { Track } from "@domain/model/track";
 import { MusicVideo } from "@domain/model/music-video";
 import type { ProviderCapability } from "@domain";
+import { errorMessage, warn } from "@shared/debug";
 
 export type MusicVideoDiscoveryOptions = {
   /** Maximum artist seeds to query. Defaults to a restrained discovery pass. */
@@ -112,7 +113,14 @@ export class MediaService {
     if (!artistIds.length || videoLimit <= 0) return [];
 
     const groups = await Promise.all(
-      artistIds.map((id) => provider.artistMusicVideos(id).catch(() => [])),
+      artistIds.map((id) =>
+        provider.artistMusicVideos(id).catch((error: unknown) => {
+          // Tolerate one seed failing (partial discovery still useful), but a
+          // systematically failing endpoint stays visible in the console.
+          warn(`${provider.name}.artistMusicVideos(${id}) failed: ${errorMessage(error)}`);
+          return [];
+        }),
+      ),
     );
     return MusicVideo.uniqueById(groups.flat()).slice(0, videoLimit);
   }
@@ -160,7 +168,12 @@ export class MediaService {
     if (!provider.supports(capability)) return fallback;
     try {
       return await read(provider);
-    } catch {
+    } catch (error) {
+      // A *supported* read that still failed is a real fault (endpoint down, bad
+      // response), not "this provider can't do it". Surface it — a silent empty
+      // return is indistinguishable from "no data" and hides broken wiring. We
+      // still hand back the fallback so one bad read never blanks the whole app.
+      warn(`${provider.name}.${capability} read failed: ${errorMessage(error)}`);
       return fallback;
     }
   }
