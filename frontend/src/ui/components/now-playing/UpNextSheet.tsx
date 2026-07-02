@@ -108,7 +108,7 @@ export function UpNextSheet({
               const queued = queue[vi];
               return (
                 <div
-                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich queue row (art + meta), not valid native button content
                   role="button"
                   tabIndex={0}
                   aria-label={queued.title}

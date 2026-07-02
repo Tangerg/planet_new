@@ -77,7 +77,7 @@ export function CoverFlowSheet({
         {tracks.map((t, i) => (
           <div
             key={t.id + i}
-            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich track row (art + meta), not valid native button content
             role="button"
             tabIndex={0}
             aria-label={t.title}
