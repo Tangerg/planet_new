@@ -8,7 +8,7 @@ import type { Playlist } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 import type { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
-import { toIdString } from "@providers/mappers/common";
+import { toIdString } from "@providers/mapping";
 import type {
   NcmAlbum,
   NcmArtist,
