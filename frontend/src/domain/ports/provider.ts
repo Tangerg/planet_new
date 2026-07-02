@@ -1,13 +1,13 @@
-import { Playlist } from "../model/playlist";
-import { Lyric } from "../model/lyric";
-import { Album } from "../model/album";
-import { Artist } from "../model/artist";
-import { Track, TrackPlayUrl } from "../model/track";
-import { MusicVideo } from "../model/music-video";
-import { Personalized } from "../model/personalized";
-import { SearchResult } from "../model/search";
-import { Chart } from "../model/chart";
-import { Comment } from "../model/comment";
+import type { Playlist } from "../model/playlist";
+import type { Lyric } from "../model/lyric";
+import type { Album } from "../model/album";
+import type { Artist } from "../model/artist";
+import type { Track, TrackPlayUrl } from "../model/track";
+import type { MusicVideo } from "../model/music-video";
+import type { Personalized } from "../model/personalized";
+import type { SearchResult } from "../model/search";
+import type { Chart } from "../model/chart";
+import type { Comment } from "../model/comment";
 
 /**
  * Provider capability declaration. What each source can do is expressed by its

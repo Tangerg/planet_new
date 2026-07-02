@@ -1,14 +1,15 @@
-import ky, { KyInstance } from "ky";
+import type { KyInstance } from "ky";
+import ky from "ky";
 
 import { Provider } from "./provider";
-import { ProviderCapability } from "@domain";
-import { Playlist } from "@domain/model/playlist";
-import { Track, TrackPlayUrl } from "@domain/model/track";
-import { Artist } from "@domain/model/artist";
-import { Album } from "@domain/model/album";
-import { Image } from "@domain/model/image";
-import { Lyric } from "@domain/model/lyric";
-import { Personalized } from "@domain/model/personalized";
+import type { ProviderCapability } from "@domain";
+import type { Playlist } from "@domain/model/playlist";
+import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { Artist } from "@domain/model/artist";
+import type { Album } from "@domain/model/album";
+import type { Image } from "@domain/model/image";
+import type { Lyric } from "@domain/model/lyric";
+import type { Personalized } from "@domain/model/personalized";
 
 /**
  * Spotify Web API provider.

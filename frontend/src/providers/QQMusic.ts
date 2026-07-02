@@ -1,15 +1,17 @@
-import ky, { KyInstance } from "ky";
+import type { KyInstance } from "ky";
+import ky from "ky";
 
 import { Provider } from "./provider";
-import { ProviderCapability } from "@domain";
-import { Album } from "@domain/model/album";
-import { Artist } from "@domain/model/artist";
-import { Lyric, parseLyrics } from "@domain/model/lyric";
-import { Personalized } from "@domain/model/personalized";
-import { Playlist } from "@domain/model/playlist";
-import { TrackPlayUrl } from "@domain/model/track";
+import type { ProviderCapability } from "@domain";
+import type { Album } from "@domain/model/album";
+import type { Artist } from "@domain/model/artist";
+import type { Lyric } from "@domain/model/lyric";
+import { parseLyrics } from "@domain/model/lyric";
+import type { Personalized } from "@domain/model/personalized";
+import type { Playlist } from "@domain/model/playlist";
+import type { TrackPlayUrl } from "@domain/model/track";
 import { SearchResult } from "@domain/model/search";
-import { Chart } from "@domain/model/chart";
+import type { Chart } from "@domain/model/chart";
 import {
   mapQQAlbumDetail,
   mapQQArtistFromList,

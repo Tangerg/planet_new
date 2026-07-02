@@ -1,12 +1,12 @@
-import { Album } from "@domain/model/album";
-import { Artist } from "@domain/model/artist";
-import { Chart } from "@domain/model/chart";
-import { Comment } from "@domain/model/comment";
-import { Image } from "@domain/model/image";
-import { MusicVideo } from "@domain/model/music-video";
-import { Playlist } from "@domain/model/playlist";
-import { Track } from "@domain/model/track";
-import { User } from "@domain/model/user";
+import type { Album } from "@domain/model/album";
+import type { Artist } from "@domain/model/artist";
+import type { Chart } from "@domain/model/chart";
+import type { Comment } from "@domain/model/comment";
+import type { Image } from "@domain/model/image";
+import type { MusicVideo } from "@domain/model/music-video";
+import type { Playlist } from "@domain/model/playlist";
+import type { Track } from "@domain/model/track";
+import type { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
 import { toIdString } from "@providers/mappers/common";
 import type {

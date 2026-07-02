@@ -1,5 +1,5 @@
 import { Plugin, defineCapability } from "../../kernel";
-import { Track } from "@domain/model/track";
+import type { Track } from "@domain/model/track";
 import { PlayQueue as PlayQueueModel } from "@domain/model/play-queue";
 import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 

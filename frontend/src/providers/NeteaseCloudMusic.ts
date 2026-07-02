@@ -1,4 +1,5 @@
-import ky, { KyInstance } from "ky";
+import type { KyInstance } from "ky";
+import ky from "ky";
 
 import { Provider } from "./provider";
 import type {

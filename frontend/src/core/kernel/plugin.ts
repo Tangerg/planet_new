@@ -1,5 +1,5 @@
-import { PluginContext } from "./context";
-import { Disposable, Identifiable } from "../types";
+import type { PluginContext } from "./context";
+import type { Disposable, Identifiable } from "../types";
 import { warn } from "@shared/debug";
 
 /**

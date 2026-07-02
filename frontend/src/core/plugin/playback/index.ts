@@ -1,5 +1,5 @@
 import { Plugin, defineCapability } from "../../kernel";
-import { Track } from "@domain/model/track";
+import type { Track } from "@domain/model/track";
 
 export enum PlayState {
   PLAYING = "playing",

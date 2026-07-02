@@ -1,12 +1,13 @@
 import { Provider } from "./provider";
-import { ProviderCapability } from "@domain";
-import { Playlist } from "@domain/model/playlist";
-import { Track, TrackPlayUrl } from "@domain/model/track";
-import { Artist } from "@domain/model/artist";
-import { Album } from "@domain/model/album";
-import { Image } from "@domain/model/image";
-import { Lyric, parseLyrics } from "@domain/model/lyric";
-import { Personalized } from "@domain/model/personalized";
+import type { ProviderCapability } from "@domain";
+import type { Playlist } from "@domain/model/playlist";
+import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { Artist } from "@domain/model/artist";
+import type { Album } from "@domain/model/album";
+import type { Image } from "@domain/model/image";
+import type { Lyric } from "@domain/model/lyric";
+import { parseLyrics } from "@domain/model/lyric";
+import type { Personalized } from "@domain/model/personalized";
 
 /**
  * Mock provider — no backend; everything the UI needs is generated on the

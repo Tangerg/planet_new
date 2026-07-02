@@ -1,9 +1,10 @@
-import { EventEmitter } from "../event";
-import { Disposable } from "../types";
-import { PlanetEventMap } from "./event";
-import { Plugin } from "./plugin";
+import type { EventEmitter } from "../event";
+import type { Disposable } from "../types";
+import type { PlanetEventMap } from "./event";
+import type { Plugin } from "./plugin";
 import { PluginContext } from "./context";
-import { Capability, CapabilityRegistry } from "./capability";
+import type { Capability } from "./capability";
+import { CapabilityRegistry } from "./capability";
 import { warn } from "@shared/debug";
 
 export type PlanetOption = {

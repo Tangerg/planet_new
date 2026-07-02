@@ -1,6 +1,6 @@
-import { PlanetEventMap } from "./event";
+import type { PlanetEventMap } from "./event";
 import { EventEmitter } from "../event";
-import { CapabilityRegistry } from "./capability";
+import type { CapabilityRegistry } from "./capability";
 
 /**
  * Runtime context injected into every Plugin: the shared audio element, the

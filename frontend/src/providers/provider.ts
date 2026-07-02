@@ -1,16 +1,16 @@
 import { Plugin } from "@core";
 import { MUSIC_PROVIDER } from "@core/plugin";
-import { MusicProvider, ProviderCapability } from "@domain";
+import type { MusicProvider, ProviderCapability } from "@domain";
 import { Playlist } from "@domain/model/playlist";
-import { Lyric } from "@domain/model/lyric";
-import { Album } from "@domain/model/album";
-import { Artist } from "@domain/model/artist";
-import { Track, TrackPlayUrl } from "@domain/model/track";
-import { MusicVideo } from "@domain/model/music-video";
-import { Personalized } from "@domain/model/personalized";
+import type { Lyric } from "@domain/model/lyric";
+import type { Album } from "@domain/model/album";
+import type { Artist } from "@domain/model/artist";
+import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { MusicVideo } from "@domain/model/music-video";
+import type { Personalized } from "@domain/model/personalized";
 import { SearchResult } from "@domain/model/search";
-import { Chart } from "@domain/model/chart";
-import { Comment } from "@domain/model/comment";
+import type { Chart } from "@domain/model/chart";
+import type { Comment } from "@domain/model/comment";
 
 /**
  * Base class for data-source plugins. Every concrete music source
