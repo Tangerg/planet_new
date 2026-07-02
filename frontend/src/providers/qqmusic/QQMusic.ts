@@ -1,7 +1,7 @@
 import type { KyInstance } from "ky";
 import ky from "ky";
 
-import { Provider } from "./provider";
+import { Provider } from "../provider";
 import type { ProviderCapability } from "@domain";
 import type { Album } from "@domain/model/album";
 import type { Artist } from "@domain/model/artist";
@@ -25,7 +25,7 @@ import {
   mapQQSmartboxSong,
   mapQQTrackFromSong,
   singerImage,
-} from "./mappers/qqmusic";
+} from "./mapper";
 import type {
   QQAlbumInfoResponse,
   QQMusicPlayResponse,
@@ -40,7 +40,7 @@ import type {
   QQTopListsResponse,
   QQLyricResponse,
   QQTrack,
-} from "./qqmusic/types";
+} from "./types";
 
 export type QQMusicOptions = {
   /** Like `http://localhost:3200`; targets the Rain120/qq-music-api server. */

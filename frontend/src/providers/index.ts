@@ -3,7 +3,7 @@ import type { MusicProvider, ProviderCapability } from "@domain";
 import { NeteaseCloudMusic } from "./ncm";
 import { Spotify } from "./Spotify";
 import { Mock } from "./Mock";
-import { QQMusic } from "./QQMusic";
+import { QQMusic } from "./qqmusic";
 import { LocalCredentialStore } from "./credentials";
 
 export type { MusicProvider, ProviderCapability };
