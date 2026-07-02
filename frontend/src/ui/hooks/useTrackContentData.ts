@@ -1,21 +1,20 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import type { Lyric } from "@domain/model/lyric";
+
 import { useMediaService } from "@/hooks/useMediaService";
 import { usePlayQueueStore } from "@/store/playqueue";
 import { toVibeComment, type VibeComment } from "@/model/adapt";
 import { queryKeys } from "@/model/queryKeys";
 
 /**
- * Current-track lyrics in the NowPlaying { line, t } shape ([] when none).
- * The Lyrics plugin follows queue:current-changed; the UI only renders state.
+ * Current-track lyrics ([] when none). The Lyrics plugin follows
+ * queue:current-changed and writes domain Lyric lines into the store; the UI
+ * renders them directly (no separate view-model for the same concept).
  */
-export function useLyric() {
-  const lyric = usePlayQueueStore.use.lyric();
-  return useMemo(
-    () => lyric.map((line) => ({ line: line.content, t: line.duration, tr: line.translation })),
-    [lyric],
-  );
+export function useLyric(): readonly Lyric[] {
+  return usePlayQueueStore.use.lyric();
 }
 
 /**

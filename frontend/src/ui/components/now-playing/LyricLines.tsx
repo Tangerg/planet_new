@@ -1,9 +1,9 @@
 import { useEffect, type RefObject } from "react";
 
-import type { LyricLine } from "@/model/now-playing";
+import type { Lyric } from "@domain/model/lyric";
 
 type Props = {
-  lines: LyricLine[];
+  lines: readonly Lyric[];
   accent: string;
   active: number;
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -39,7 +39,7 @@ export function LyricLines({ lines, accent, active, scrollRef }: Props) {
     <div className="flex flex-col gap-[25px] px-[11%] pb-[56%] pt-[34%] text-center">
       {lines.map((line, i) => {
         const on = i === active;
-        if (!line.line) return <div key={i} className="h-0.5" />;
+        if (!line.content) return <div key={i} className="h-0.5" />;
         return (
           <div
             key={i}
@@ -55,8 +55,8 @@ export function LyricLines({ lines, accent, active, scrollRef }: Props) {
               borderBottom: on ? `1px solid ${accent}aa` : "none",
             }}
           >
-            {line.line}
-            {line.tr && (
+            {line.content}
+            {line.translation && (
               <div
                 style={{
                   marginTop: 5,
@@ -64,7 +64,7 @@ export function LyricLines({ lines, accent, active, scrollRef }: Props) {
                   color: on ? `${accent}cc` : "rgba(255,255,255,.3)",
                 }}
               >
-                {line.tr}
+                {line.translation}
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
-import { parseLyrics } from "./lyric";
-import { expect, test } from "vitest";
+import { activeLyricIndex, parseLyrics, type Lyric } from "./lyric";
+import { describe, expect, test } from "vitest";
 
 test("lyric_format", () => {
   const lrc =
@@ -66,4 +66,26 @@ test("lyric_format", () => {
 test("lyric_format2", () => {
   const result = parseLyrics("");
   expect(result).toEqual([]);
+});
+
+describe("activeLyricIndex", () => {
+  const lines: Lyric[] = [
+    { content: "A", duration: 0 },
+    { content: "B", duration: 5_000 },
+    { content: "C", duration: 12_000 },
+  ];
+
+  test("returns the last line at or before the position (ms)", () => {
+    expect(activeLyricIndex(lines, 0)).toBe(0);
+    expect(activeLyricIndex(lines, 6_000)).toBe(1);
+    expect(activeLyricIndex(lines, 99_000)).toBe(2);
+  });
+
+  test("holds the first line before the first timestamp", () => {
+    expect(activeLyricIndex([{ content: "A", duration: 1_000 }], 0)).toBe(0);
+  });
+
+  test("returns 0 for an empty list", () => {
+    expect(activeLyricIndex([], 5_000)).toBe(0);
+  });
 });
