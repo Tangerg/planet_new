@@ -1,6 +1,6 @@
 import type { ProviderCapability } from "@domain";
 import type { Album } from "@domain/model/album";
-import type { Artist } from "@domain/model/artist";
+import { Artist } from "@domain/model/artist";
 import type { MusicVideo } from "@domain/model/music-video";
 import type { Playlist } from "@domain/model/playlist";
 
@@ -80,7 +80,7 @@ export async function loadArtistTarget(
   const full = await reader.artistDetail(target.id);
   return {
     ...toVibeArtist(full),
-    tracks: toVibeTracks(full.topTracks),
+    tracks: toVibeTracks(Artist.hotTracks(full)),
   };
 }
 

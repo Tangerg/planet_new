@@ -1,5 +1,4 @@
-import type { Comment } from "@domain/model/comment";
-import { relativeTime } from "@shared/time";
+import { Comment } from "@domain/model/comment";
 
 import type { VibeComment } from "@/model/vibe";
 
@@ -10,6 +9,6 @@ export function toVibeComment(comment: Comment): VibeComment {
     avatar: comment.user.avatar,
     content: comment.content,
     likedCount: comment.likedCount,
-    timeLabel: relativeTime(comment.time),
+    timeLabel: Comment.timeLabel(comment),
   };
 }

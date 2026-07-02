@@ -35,6 +35,11 @@ export const Artist = {
     return pickImageUrl(a.images, prefer);
   },
 
+  /** Top tracks (filled by `artistDetail`), never undefined. */
+  hotTracks(a: Partial<Artist>): Partial<Track>[] {
+    return a.topTracks ?? [];
+  },
+
   /**
    * Provider lookup ids from a seed set, de-duplicated in encounter order.
    * Useful for fan-out reads such as "find videos for these artists".
