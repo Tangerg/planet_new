@@ -14,7 +14,7 @@ import type { Comment } from "@domain/model/comment";
 
 /**
  * Base class for data-source plugins. Every concrete music source
- * (NeteaseCloudMusic, Spotify, Mock, ...) extends Provider and publishes the
+ * (NeteaseCloudMusic, Spotify, QQMusic, ...) extends Provider and publishes the
  * MUSIC_PROVIDER capability; several can be mounted at once (the ProviderRegistry
  * picks the active one). The plugin id is derived per source from `name`, so
  * their lifecycle entries stay distinct.

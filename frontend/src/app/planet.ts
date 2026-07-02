@@ -9,7 +9,7 @@ import {
   AudioEngine,
 } from "@core/plugin";
 import type { Provider } from "@providers";
-import { LocalCredentialStore, Mock, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
+import { LocalCredentialStore, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
@@ -23,17 +23,16 @@ const PROVIDER_NAMES: Record<string, string> = {
   spotify: Spotify.NAME,
   netease: NeteaseCloudMusic.NAME,
   qqmusic: QQMusic.NAME,
-  mock: Mock.NAME,
 };
 
 /**
  * Build every provider the environment can construct (all are inert until used)
  * and pick the active one from VITE_PROVIDER. Spotify needs credentials, so it's
- * only mounted when present; an unavailable selection falls back to Mock.
+ * only mounted when present; NeteaseCloudMusic is the default and the fallback
+ * for an unset/unknown selection (it's always constructible).
  */
 function buildProviders(): { providers: Provider[]; active: string } {
   const providers: Provider[] = [
-    new Mock(),
     new NeteaseCloudMusic({
       host: env.VITE_NETEASE_HOST ?? "http://localhost:3000",
       credentials,
@@ -49,8 +48,8 @@ function buildProviders(): { providers: Provider[]; active: string } {
       }),
     );
   }
-  const wanted = PROVIDER_NAMES[env.VITE_PROVIDER ?? "mock"] ?? Mock.NAME;
-  const active = providers.some((p) => p.name === wanted) ? wanted : Mock.NAME;
+  const wanted = PROVIDER_NAMES[env.VITE_PROVIDER ?? "netease"] ?? NeteaseCloudMusic.NAME;
+  const active = providers.some((p) => p.name === wanted) ? wanted : NeteaseCloudMusic.NAME;
   return { providers, active };
 }
 

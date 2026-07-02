@@ -86,7 +86,7 @@ describe("Track", () => {
     // Preview-only provider (Spotify): with a preview clip it plays, without it can't.
     expect(Track.isUnavailable({ id: "1", previewUrl: "clip" }, previewOnly)).toBe(false);
     expect(Track.isUnavailable({ id: "1" }, previewOnly)).toBe(true);
-    // No-playback provider (Mock): rows stay interactive, not "unavailable".
+    // A provider with no playback capability at all: rows stay interactive.
     expect(Track.isUnavailable({ id: "1" }, {})).toBe(false);
     expect(Track.isUnavailable({ id: "1" })).toBe(false);
   });

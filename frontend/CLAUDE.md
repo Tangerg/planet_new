@@ -4,7 +4,7 @@
 > - `@shared`(`src/shared`)框架无关纯工具 —— 零依赖,最内。
 > - `@domain`(`src/domain`)领域层:实体/值对象(`model/`)+ 端口契约(`ports/`,如 MusicProvider 能力)—— 只依赖 `@shared`。
 > - `@core`(`src/core`)应用/运行时:planet 内核(插件系统/事件总线/manager)+ 播放插件(control/playqueue/progress/volume/lyric/analyser)—— 依赖 domain。
-> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify/Mock 适配器 + mappers,实现 domain 端口 —— 依赖 core+domain。
+> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 适配器 + mappers,实现 domain 端口 —— 依赖 core+domain。
 > - `@/`(`src/ui`)表现层:逐字移植自示例 **Sonance Vibe**(XMB 启动器 + 共享元素切换)的播放器界面。
 > - `src/app`(组合根 `planet.ts`)+ `src/main.tsx`(入口)在最外,装配具体 provider + 插件进内核。
 >
@@ -54,7 +54,7 @@
 - **交互件**:优先 **Radix** 替换手写(已用 `@radix-ui/react-slider`);新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
 - **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
-- **数据源**:provider 插件(QQMusic / NeteaseCloudMusic / Spotify / Mock),由 `VITE_PROVIDER` 选;QQ 对接本机 `Rain120/qq-music-api`(:3200)。
+- **数据源**:provider 插件(NeteaseCloudMusic / QQMusic / Spotify),由 `VITE_PROVIDER` 选(默认 / 兜底为 NCM);QQ 对接本机 `Rain120/qq-music-api`(:3200)。
 
 ---
 
@@ -77,7 +77,7 @@
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `hooks.ts` / `adapt.ts` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
-- **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。唯一的假数据源是 **Mock provider**(`providers/Mock.ts`,`VITE_PROVIDER=mock`,走真实取数路径);**不维护任何 UI 端 mock 目录**(已删 `ui/model/mock.ts`)。等 provider 有了对应 capability 再接真。
+- **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。**不维护任何 mock 目录 / mock provider**(早期的 `providers/Mock.ts` 与 `ui/model/mock.ts` 均已删)。想要有数据的 dev 体验就起真实后端(NCM / QQ);等 provider 有了对应 capability 再接真。
 - **加文档先问**:不主动建 `*.md`,除非用户明确要。
 
 ---
@@ -95,6 +95,6 @@
 
 ## 6 · 工作流
 
-- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 QQ API:`~/Desktop/qq-music-api` 跑 `yarn dev`(:3200);后端没起时 provider 取数失败,相关屏显示诚实空态;想要有数据的 dev 体验用 `VITE_PROVIDER=mock`(Mock provider 走真实路径供数据)。
+- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 NCM API(`VITE_NETEASE_HOST`,默认 provider)/ QQ API(`~/Desktop/qq-music-api` 跑 `yarn dev`,:3200);后端没起时 provider 取数失败,相关屏显示诚实空态(无 mock 兜底,起真实后端才有数据)。
 - **质量门禁**(在 `frontend/` 跑):`yarn typecheck` + `yarn build`(tsc + vite)+ `yarn test`(vitest)+ `yarn lint`(oxlint `--deny-warnings`)+ `yarn knip` + `yarn check:layers` + `yarn check:circular`(聚合:`yarn check`);全绿才往下走。会漂的数字直接跑命令查,不硬编码。**husky + lint-staged 预提交**会对暂存的 `.ts/.tsx` 跑 prettier + oxlint `--deny-warnings` —— 所以**碰任何一屏(哪怕只改一行)都会触发该文件全量 lint**,需连带消化它的告警;vibe 屏(尤以 `Shell.tsx` morph 引擎、`XMB.tsx` 方向键导航)仍有成片 jsx-a11y / exhaustive-deps 旧债,逐屏迁移时一并清(exhaustive-deps 用带说明的局部 disable,不盲改依赖)。
 - **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。
