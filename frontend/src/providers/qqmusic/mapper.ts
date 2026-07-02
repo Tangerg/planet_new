@@ -5,7 +5,7 @@ import type { Playlist } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 import type { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
-import { secondsToMs, singleImage, toIdString } from "@providers/mappers/common";
+import { secondsToMs, singleImage, toIdString } from "@providers/mapping";
 import type {
   QQAlbumDetail,
   QQChart,
