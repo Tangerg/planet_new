@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
         "@core": "/src/core",
         "@providers": "/src/providers",
         "@": "/src/ui",
+        // Wails-generated Go bridge (outside src/). The `local` provider (infra
+        // layer) is the only consumer — the desktop shell's on-device library.
+        "@wailsjs": "/wailsjs",
       },
     },
 

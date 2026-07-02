@@ -9,7 +9,7 @@ import {
   AudioEngine,
 } from "@core/plugin";
 import type { Provider } from "@providers";
-import { LocalCredentialStore, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
+import { LocalCredentialStore, LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
@@ -23,6 +23,7 @@ const PROVIDER_NAMES: Record<string, string> = {
   spotify: Spotify.NAME,
   netease: NeteaseCloudMusic.NAME,
   qqmusic: QQMusic.NAME,
+  local: LocalMusic.NAME,
 };
 
 /**
@@ -38,6 +39,9 @@ function buildProviders(): { providers: Provider[]; active: string } {
       credentials,
     }),
     new QQMusic({ host: env.VITE_QQMUSIC_HOST ?? "http://localhost:3200" }),
+    // On-device library via the Wails Go bridge; inert (empty) outside the
+    // desktop runtime, so it is always safe to mount.
+    new LocalMusic(),
   ];
   if (env.VITE_SPOTIFY_CLIENT_ID && env.VITE_SPOTIFY_CLIENT_SECRET) {
     providers.push(
