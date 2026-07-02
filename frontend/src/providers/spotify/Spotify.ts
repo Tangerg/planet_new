@@ -1,15 +1,22 @@
 import type { KyInstance } from "ky";
 import ky from "ky";
 
-import { Provider } from "./provider";
+import { Provider } from "../provider";
 import type { ProviderCapability } from "@domain";
 import type { Playlist } from "@domain/model/playlist";
-import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { TrackPlayUrl } from "@domain/model/track";
 import type { Artist } from "@domain/model/artist";
 import type { Album } from "@domain/model/album";
-import type { Image } from "@domain/model/image";
 import type { Lyric } from "@domain/model/lyric";
 import type { Personalized } from "@domain/model/personalized";
+import { toImages, toTrack } from "./mapper";
+import type {
+  SpotifyImage,
+  SpotifyPaging,
+  SpotifySimplifiedAlbum,
+  SpotifySimplifiedArtist,
+  SpotifyTrack,
+} from "./types";
 
 /**
  * Spotify Web API provider.
@@ -34,47 +41,6 @@ export type SpotifyOptions = {
   /** Market filter, e.g. "US" / "JP" (optional). */
   market?: string;
 };
-
-type SpotifyImage = {
-  url: string;
-  height: number | null;
-  width: number | null;
-};
-type SpotifySimplifiedArtist = { id: string; name: string };
-type SpotifySimplifiedAlbum = {
-  id: string;
-  name: string;
-  images: SpotifyImage[];
-  release_date?: string;
-  artists?: SpotifySimplifiedArtist[];
-  total_tracks?: number;
-};
-type SpotifyTrack = {
-  id: string;
-  name: string;
-  duration_ms: number;
-  preview_url: string | null;
-  explicit?: boolean;
-  track_number?: number;
-  artists: SpotifySimplifiedArtist[];
-  album?: SpotifySimplifiedAlbum;
-};
-type SpotifyPaging<T> = {
-  items: T[];
-  total?: number;
-  limit?: number;
-  offset?: number;
-};
-
-// Spotify returns images largest-first; map straight to domain Image[] (null -> undefined).
-const toImages = (images: SpotifyImage[] | undefined): Image[] =>
-  (images ?? []).map(
-    (im): Image => ({
-      url: im.url,
-      width: im.width ?? undefined,
-      height: im.height ?? undefined,
-    }),
-  );
 
 export class Spotify extends Provider {
   public static readonly NAME = "Spotify";
@@ -161,32 +127,6 @@ export class Spotify extends Provider {
     return this.opts.market ? { ...params, market: this.opts.market } : params;
   }
 
-  private toTrack = (
-    t: SpotifyTrack,
-    fallbackAlbum?: SpotifySimplifiedAlbum,
-    index?: number,
-  ): Partial<Track> => {
-    const album = t.album ?? fallbackAlbum;
-    return {
-      index,
-      id: t.id,
-      name: t.name,
-      durationMs: t.duration_ms,
-      explicit: t.explicit,
-      trackNumber: t.track_number,
-      artists: t.artists.map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
-      album: album
-        ? {
-            id: album.id,
-            name: album.name,
-            images: toImages(album.images),
-          }
-        : undefined,
-      previewUrl: t.preview_url ?? undefined,
-      playUrl: t.preview_url ?? undefined,
-    };
-  };
-
   async playlistDetail(id: string): Promise<Playlist> {
     const res = await this.api.get(`playlists/${id}`, { searchParams: this.withMarket({}) }).json<{
       id: string;
@@ -201,7 +141,7 @@ export class Spotify extends Provider {
       .map((it) => it.track)
       .filter((t): t is SpotifyTrack => !!t);
 
-    const tracks = items.map((t, i) => this.toTrack(t, undefined, i + 1));
+    const tracks = items.map((t, i) => toTrack(t, undefined, i + 1));
 
     return {
       id: res.id,
@@ -233,7 +173,7 @@ export class Spotify extends Provider {
       name: res.name,
       images: res.images,
     };
-    const tracks = (res.tracks.items ?? []).map((t, i) => this.toTrack(t, albumStub, i + 1));
+    const tracks = (res.tracks.items ?? []).map((t, i) => toTrack(t, albumStub, i + 1));
 
     return {
       id: res.id,
@@ -277,9 +217,7 @@ export class Spotify extends Provider {
         .catch(() => ({ tracks: [] }) as TopTracksRes),
     ]);
 
-    const topTracks = (top.tracks ?? [])
-      .slice(0, 10)
-      .map((t, i) => this.toTrack(t, undefined, i + 1));
+    const topTracks = (top.tracks ?? []).slice(0, 10).map((t, i) => toTrack(t, undefined, i + 1));
 
     return {
       id: info.id,
