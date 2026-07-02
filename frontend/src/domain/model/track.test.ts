@@ -65,4 +65,18 @@ describe("Track", () => {
     });
     expect(Track.isPlayable({ id: "1" }, { canResolveFullPlayback: true })).toBe(true);
   });
+
+  test("marks a track unavailable only when the provider can play but this track can't", () => {
+    const full = { canResolveFullPlayback: true };
+    const previewOnly = { canUsePreviewPlayback: true };
+
+    // Full-playback provider (NCM/QQ): any id resolves → never unavailable.
+    expect(Track.isUnavailable({ id: "1" }, full)).toBe(false);
+    // Preview-only provider (Spotify): with a preview clip it plays, without it can't.
+    expect(Track.isUnavailable({ id: "1", previewUrl: "clip" }, previewOnly)).toBe(false);
+    expect(Track.isUnavailable({ id: "1" }, previewOnly)).toBe(true);
+    // No-playback provider (Mock): rows stay interactive, not "unavailable".
+    expect(Track.isUnavailable({ id: "1" }, {})).toBe(false);
+    expect(Track.isUnavailable({ id: "1" })).toBe(false);
+  });
 });

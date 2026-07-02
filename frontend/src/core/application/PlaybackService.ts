@@ -1,6 +1,7 @@
 import type { Capability, Planet } from "../kernel";
 import type { MusicProvider } from "@domain";
 import { PlaybackIntent } from "@domain/model/playback-intent";
+import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
@@ -45,10 +46,7 @@ export class PlaybackService {
     const gen = ++this.playGeneration;
     const intent = PlaybackIntent.from(tracks, track);
     const provider = this.getProvider();
-    const resolutionPolicy = {
-      canResolveFullPlayback: provider.supports("fullPlayback"),
-      canUsePreviewPlayback: provider.supports("previewPlayback"),
-    };
+    const resolutionPolicy = this.playbackPolicy();
 
     let urls: readonly TrackPlayUrl[] = [];
     const idsToResolve = intent.trackIdsToResolve(resolutionPolicy);
@@ -67,6 +65,19 @@ export class PlaybackService {
 
     const resolved = intent.withResolvedUrls(urls);
     this.queue.playNow(resolved.tracks, resolved.current);
+  }
+
+  /**
+   * The active provider's playback resolution policy (full-stream vs preview).
+   * Used to resolve URLs on play() and, in the UI, to derive per-track
+   * availability — one source of truth for "how can this provider play audio".
+   */
+  playbackPolicy(): PlaybackAvailabilityPolicy {
+    const provider = this.getProvider();
+    return {
+      canResolveFullPlayback: provider.supports("fullPlayback"),
+      canUsePreviewPlayback: provider.supports("previewPlayback"),
+    };
   }
 
   /** Start this list in shuffle mode. The queue owns the actual shuffled order. */

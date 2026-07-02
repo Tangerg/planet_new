@@ -4,12 +4,14 @@
 // Playlist/Album detail, Queue, History, Search and Library songs.
 // ============================================================
 import React, { useState } from "react";
+import { Track } from "@domain/model/track";
 import type { ArtistRef, VibeTrack } from "@/model/adapt";
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
+import { usePlaybackPolicy } from "@/hooks/usePlaybackPolicy";
 import { activateOnKey } from "@/lib/keys";
 
 type TrackRowProps = {
@@ -46,11 +48,14 @@ export function TrackRow({
   onOpenArtist,
 }: TrackRowProps) {
   const { trackMenu } = useScreenActions();
+  const policy = usePlaybackPolicy();
   const isCur = current?.id === track.id;
   const [hover, setHover] = useState(false);
   const col = dark ? "#fff" : "#16161a";
   const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
-  const unavailable = track.available === false;
+  // Domain-derived: dim only when the provider can play audio but not this track
+  // (see Track.isUnavailable). No `source` (hand-built rows) → treated as fine.
+  const unavailable = track.source ? Track.isUnavailable(track.source, policy) : false;
   const isChart = rank != null;
   // Shared chart/version/VIP badge chrome (colours added per badge inline).
   const badgeCls =
