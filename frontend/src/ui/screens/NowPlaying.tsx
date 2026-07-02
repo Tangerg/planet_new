@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import type { ArtistRef, VibeComment, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeComment, VibeTrack } from "@/model/vibe";
 import { Art, artBg, artPair } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { FadeIn, NpSwap } from "@/components/motion";

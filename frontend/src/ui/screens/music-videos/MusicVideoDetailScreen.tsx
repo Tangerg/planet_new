@@ -1,4 +1,4 @@
-import type { ArtistRef, VibeMusicVideo } from "@/model/adapt";
+import type { ArtistRef, VibeMusicVideo } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { CardRail } from "@/components/layout/CardRail";

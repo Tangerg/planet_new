@@ -1,7 +1,7 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
 
-import type { VibeCollection, VibeTrack } from "@/model/adapt";
+import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import type { FlowItem } from "@/model/derive";
 import { useEventCallback } from "@/hooks/useEventCallback";
 

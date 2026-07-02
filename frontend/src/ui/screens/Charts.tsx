@@ -2,7 +2,7 @@
 // Charts — grid of ranked-chart banners.
 // ============================================================
 import React from "react";
-import type { VibeCollection } from "@/model/adapt";
+import type { VibeCollection } from "@/model/vibe";
 import { ChartCard } from "@/components/cards/ChartCard";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";

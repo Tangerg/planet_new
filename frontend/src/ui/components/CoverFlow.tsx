@@ -12,7 +12,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 
-import type { VibeCollection, VibeTrack } from "@/model/adapt";
+import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import type { FlowItem } from "@/model/derive";
 import { Button } from "@/components/controls/Button";
 import { TextReveal } from "@/components/controls/TextReveal";

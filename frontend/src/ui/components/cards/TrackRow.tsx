@@ -5,7 +5,7 @@
 // ============================================================
 import React, { useState } from "react";
 import { Track } from "@domain/model/track";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";

@@ -1,12 +1,6 @@
 import { useCallback, type RefObject } from "react";
 
-import type {
-  ArtistTarget,
-  OpenTarget,
-  ScreenData,
-  VibeCollection,
-  VibeTrack,
-} from "@/model/adapt";
+import type { ArtistTarget, OpenTarget, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useQueueActions } from "@/hooks/useQueueActions";
 

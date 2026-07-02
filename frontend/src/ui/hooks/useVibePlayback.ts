@@ -6,7 +6,8 @@ import { RepeatMode } from "@domain/model/repeat";
 import { useEngine } from "@/hooks/useEngine";
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
-import { toTrack, type VibeTrack } from "@/model/adapt";
+import { toTrack } from "@/model/adapters/track";
+import type { VibeTrack } from "@/model/vibe";
 import { currentTrackView, playbackQueueView, upNextView } from "@/model/playback";
 
 /**

@@ -4,7 +4,7 @@
 // Opening flies the shared-element morph from the `.art` rect.
 // ============================================================
 import React from "react";
-import type { CardItem } from "@/model/adapt";
+import type { CardItem } from "@/model/vibe";
 import { Art, artPair } from "@/components/primitives";
 import { CardShell } from "@/components/cards/CardShell";
 import { PlayFab } from "@/components/cards/PlayFab";

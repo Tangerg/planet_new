@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerBar } from "@/components/PlayerBar";
 import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 

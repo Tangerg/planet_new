@@ -1,4 +1,4 @@
-import type { VibeMusicVideo } from "@/model/adapt";
+import type { VibeMusicVideo } from "@/model/vibe";
 import { useArtistMusicVideos, useMusicVideoComments } from "@/hooks/useMusicVideoData";
 import { useComments, useLyric } from "@/hooks/useTrackContentData";
 

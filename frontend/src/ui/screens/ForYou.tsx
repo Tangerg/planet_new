@@ -2,7 +2,7 @@
 // ForYou — rich editorial home: hero · quick tiles · card rails.
 // ============================================================
 import React, { useMemo, useState } from "react";
-import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { CardShell } from "@/components/cards/CardShell";

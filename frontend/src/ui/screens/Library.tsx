@@ -3,7 +3,7 @@
 // Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
-import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/adapt";
+import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/vibe";
 import { collectionSub, collectionMeta, collectionFlowItems } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";

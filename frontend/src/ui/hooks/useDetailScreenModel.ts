@@ -1,7 +1,7 @@
 import type React from "react";
 import { useMemo, useRef, useState } from "react";
 
-import type { VibeTrack } from "@/model/adapt";
+import type { VibeTrack } from "@/model/vibe";
 import { sortTracks, type SortMode } from "@/model/derive";
 import { useScreenActions } from "@/hooks/screenActions";
 

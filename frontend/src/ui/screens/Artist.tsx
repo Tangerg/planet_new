@@ -3,7 +3,7 @@
 // list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
-import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/vibe";
 import { collectionFlowItems } from "@/model/derive";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";

@@ -2,14 +2,10 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useMediaService } from "@/hooks/useMediaService";
-import {
-  toVibeAlbum,
-  toVibeArtist,
-  toVibePlaylist,
-  toVibeTracks,
-  type SearchResults,
-  type VibeCollection,
-} from "@/model/adapt";
+import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
+import { toVibeArtist } from "@/model/adapters/artist";
+import { toVibeTracks } from "@/model/adapters/track";
+import type { SearchResults, VibeCollection } from "@/model/vibe";
 import { catalogScreenData, toVibeCharts } from "@/model/catalog";
 import { queryKeys } from "@/model/queryKeys";
 

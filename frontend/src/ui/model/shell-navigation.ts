@@ -1,4 +1,4 @@
-import type { ArtistTarget, DetailTarget, VibeMusicVideo, VibeTrack } from "@/model/adapt";
+import type { ArtistTarget, DetailTarget, VibeMusicVideo, VibeTrack } from "@/model/vibe";
 
 /** One frame of navigation state — enough to rebuild any screen on "back". */
 export type NavSnapshot<TLastTile> = {

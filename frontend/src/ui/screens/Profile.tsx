@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useState } from "react";
 import { Account } from "@domain/model/account";
-import type { VibeCollection } from "@/model/adapt";
+import type { VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";

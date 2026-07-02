@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { Equalizer, Art } from "@/components/primitives";
 import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";

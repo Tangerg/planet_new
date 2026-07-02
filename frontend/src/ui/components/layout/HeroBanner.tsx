@@ -4,7 +4,7 @@
 // gently on hover; "Open" flies the morph from the banner.
 // ============================================================
 import React from "react";
-import type { VibeCollection } from "@/model/adapt";
+import type { VibeCollection } from "@/model/vibe";
 import { artBg } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { LiftCard } from "@/components/lift";

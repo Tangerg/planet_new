@@ -1,4 +1,4 @@
-import type { VibeMusicVideo } from "@/model/adapt";
+import type { VibeMusicVideo } from "@/model/vibe";
 import { artBg } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { CardRail } from "@/components/layout/CardRail";

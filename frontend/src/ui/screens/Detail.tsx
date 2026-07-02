@@ -2,7 +2,7 @@
 // Detail — Playlist / Album / Chart detail: cover hero, sticky condensed header,
 // list · grid · flow views, multi-select action bar. List/grid are windowed.
 // ============================================================
-import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/vibe";
 import { type SortMode } from "@/model/derive";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";

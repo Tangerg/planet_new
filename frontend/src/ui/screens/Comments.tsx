@@ -3,7 +3,7 @@
 // comment endpoint (NCM) fill the list; others fall back to an honest empty state.
 // ============================================================
 import React from "react";
-import type { VibeComment, VibeTrack } from "@/model/adapt";
+import type { VibeComment, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { LikeHeart } from "@/components/controls/LikeHeart";
 import { CommentList } from "@/components/CommentList";

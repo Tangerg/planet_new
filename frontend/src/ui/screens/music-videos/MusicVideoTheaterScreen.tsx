@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { VibeComment, VibeMusicVideo } from "@/model/adapt";
+import type { VibeComment, VibeMusicVideo } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";

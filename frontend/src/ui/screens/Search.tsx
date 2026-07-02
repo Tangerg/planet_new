@@ -2,7 +2,7 @@
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
 import React, { useState, useEffect } from "react";
-import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/vibe";
 import { SEARCH_SUGGESTIONS } from "@/model/defaults";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";

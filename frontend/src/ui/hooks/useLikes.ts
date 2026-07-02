@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { VibeTrack } from "@/model/adapt";
+import type { VibeTrack } from "@/model/vibe";
 import { DEFAULT_SETTINGS, type Settings } from "@/model/defaults";
 import { useAuth } from "@/hooks/useAuth";
 import { useLibraryService } from "@/hooks/useLibraryService";

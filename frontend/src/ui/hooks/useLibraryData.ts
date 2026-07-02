@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useLibraryService } from "@/hooks/useLibraryService";
 import { useMediaService } from "@/hooks/useMediaService";
 import { useAuthStore } from "@/store/auth";
-import { toVibePlaylist, toVibeTracks, type VibeCollection, type VibeTrack } from "@/model/adapt";
+import { toVibePlaylist } from "@/model/adapters/collection";
+import { toVibeTracks } from "@/model/adapters/track";
+import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
 
 export function useUserPlaylists(): VibeCollection[] {

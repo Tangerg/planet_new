@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { MediaService } from "@core";
 
-import type { ArtistTarget, DetailTarget, VibeMusicVideo } from "@/model/adapt";
+import type { ArtistTarget, DetailTarget, VibeMusicVideo } from "@/model/vibe";
 import {
   detailKindOf,
   loadArtistTarget,
