@@ -8,6 +8,7 @@ import { Playlist } from "@domain/model/playlist";
 import { Track } from "@domain/model/track";
 import { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
+import { toIdString } from "@providers/mappers/common";
 import type {
   NcmAlbum,
   NcmArtist,
@@ -36,10 +37,6 @@ export function resizeImage(url: string | undefined, size: number): string {
 /** Square cover variant widths, largest-first (matches the Image[] contract). */
 const COVER_WIDTHS = [1024, 512, 256, 96] as const;
 
-function ncmId(id: number | string | undefined): string {
-  return id === undefined ? "" : id.toString();
-}
-
 /**
  * Multi-resolution variant set for a resizable NCM cover URL. NCM resizes via
  * `?param=WyH`, so one base URL yields every size; <Art> then picks the variant
@@ -53,14 +50,14 @@ export function coverSet(url: string | undefined): Image[] {
 
 export function mapNcmArtist(raw: NcmArtist): Partial<Artist> {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
   };
 }
 
 export function mapNcmFeaturedArtist(raw: NcmArtist): Partial<Artist> {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     images: coverSet(raw.img1v1Url),
     alias: raw.alias ?? [],
@@ -70,7 +67,7 @@ export function mapNcmFeaturedArtist(raw: NcmArtist): Partial<Artist> {
 /** Slim album (used when embedded in a track). */
 export function mapNcmAlbumStub(raw: NcmAlbum): Partial<Album> {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     images: coverSet(raw.picUrl),
   };
@@ -94,7 +91,7 @@ export function mapNcmTrack(raw: NcmTrack, opts: MapTrackOptions = {}): Partial<
   const mvId = raw.mv ?? raw.mvid ?? raw.mvId;
   return {
     index: opts.index,
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     durationMs: raw.dt ?? raw.duration ?? 0,
     album,
@@ -105,7 +102,7 @@ export function mapNcmTrack(raw: NcmTrack, opts: MapTrackOptions = {}): Partial<
 
 export function mapNcmCreator(raw: NcmUser): Partial<User> {
   return {
-    id: ncmId(raw.userId ?? raw.id),
+    id: toIdString(raw.userId ?? raw.id),
     displayName: raw.nickname ?? "",
     images: coverSet(raw.avatarUrl),
   };
@@ -114,7 +111,7 @@ export function mapNcmCreator(raw: NcmUser): Partial<User> {
 export function mapNcmPlaylist(raw: NcmPlaylist): Playlist {
   const tracks = (raw.tracks ?? []).map((tr, i) => mapNcmTrack(tr, { index: i + 1 }));
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     description: raw.description ?? "",
     images: coverSet(raw.coverImgUrl),
@@ -127,7 +124,7 @@ export function mapNcmPlaylist(raw: NcmPlaylist): Playlist {
 /** Playlist thumbnail. `picUrl` on /personalized rows, `coverImgUrl` on search rows. */
 export function mapNcmPlaylistStub(raw: NcmPlaylist): Partial<Playlist> {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     images: coverSet(raw.picUrl ?? raw.coverImgUrl),
     totalTracks: raw.trackCount,
@@ -137,7 +134,7 @@ export function mapNcmPlaylistStub(raw: NcmPlaylist): Partial<Playlist> {
 /** Chart list item (/toplist -> list[]): each chart is a playlist, so toplistDetail reuses playlistDetail. */
 export function mapNcmChart(raw: NcmChart): Chart {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     title: raw.name ?? "",
     // Chart cards render large (full-width tiles); take a high-res single size.
     image: resizeImage(raw.coverImgUrl, 512),
@@ -148,13 +145,13 @@ export function mapNcmChart(raw: NcmChart): Chart {
 export function mapNcmAlbum(raw: NcmAlbum, songs: NcmTrack[]): Album {
   const cover = coverSet(raw.picUrl);
   const albumStub: Partial<Album> = {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     images: cover,
   };
   const tracks = songs.map((tr, i) => mapNcmTrack(tr, { index: i + 1, fallbackAlbum: albumStub }));
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     alias: raw.alias ?? [],
     description: raw.description ?? "",
@@ -164,7 +161,7 @@ export function mapNcmAlbum(raw: NcmAlbum, songs: NcmTrack[]): Album {
     artists: raw.artist
       ? [
           {
-            id: ncmId(raw.artist.id),
+            id: toIdString(raw.artist.id),
             name: raw.artist.name ?? "",
             images: coverSet(raw.artist.picUrl),
           },
@@ -177,7 +174,7 @@ export function mapNcmAlbum(raw: NcmAlbum, songs: NcmTrack[]): Album {
 /** One comment node (/comment/music -> hotComments[] / comments[]). */
 export function mapNcmComment(raw: NcmComment): Comment {
   return {
-    id: (raw.commentId ?? raw.id ?? "").toString(),
+    id: toIdString(raw.commentId ?? raw.id),
     user: {
       name: raw.user?.nickname ?? "",
       avatar: coverSet(raw.user?.avatarUrl),
@@ -211,7 +208,7 @@ export function mapNcmMusicVideo(raw: NcmMusicVideo, opts: MapMusicVideoOptions 
       : []);
   const cover = raw.cover ?? raw.coverUrl ?? raw.imgurl16v9 ?? raw.imgurl;
   return {
-    id: (raw.id ?? raw.mvid ?? "").toString(),
+    id: toIdString(raw.id ?? raw.mvid),
     name: raw.name ?? raw.title ?? "",
     images: coverSet(cover),
     artists: artistsRaw.map(mapNcmArtist),
@@ -229,14 +226,14 @@ export function mapNcmMusicVideo(raw: NcmMusicVideo, opts: MapMusicVideoOptions 
 
 export function mapNcmAlbumNewest(raw: NcmAlbum): Partial<Album> {
   return {
-    id: ncmId(raw.id),
+    id: toIdString(raw.id),
     name: raw.name ?? "",
     totalTracks: raw.size,
     images: coverSet(raw.picUrl),
     artists: raw.artist
       ? [
           {
-            id: ncmId(raw.artist.id),
+            id: toIdString(raw.artist.id),
             name: raw.artist.name ?? "",
           },
         ]
