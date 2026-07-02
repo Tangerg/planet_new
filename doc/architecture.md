@@ -150,7 +150,7 @@ This keeps React from resolving plugins directly or importing concrete providers
 The UI is a resident single-page shell:
 
 - `ui/Shell.tsx` composes playback, catalog, auth, navigation, context menu, shortcuts, and screens.
-- `ui/hooks/data.ts` adapts domain data into UI display shapes and uses React Query for data cache.
+- Per-concern data hooks under `ui/hooks/` (catalog, library, music-video, track content, …) read through the application services with React Query for caching; `ui/model/adapters/` maps domain models into the UI display shapes (`VibeTrack` etc.).
 - `ui/store/bridge.ts` mirrors kernel events into Zustand stores.
 - `ui/infra/morph` and navigation hooks manage shared-element transitions between screens.
 
