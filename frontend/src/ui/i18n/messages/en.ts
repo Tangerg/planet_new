@@ -21,5 +21,12 @@ export const en = {
     waves: "Flowing waves",
     wavesSub: "Animated XMB background",
     reduceMotion: "Reduce motion",
+    library: "Local Library",
+    source: "Music source",
+    addFolder: "Add music folder",
+    addFolderSub: "Scan a folder to import local music",
+    scanning: "Scanning…",
+    scanDone: "Imported {{added}} new · {{total}} total",
+    scanError: "Scan failed",
   },
 };

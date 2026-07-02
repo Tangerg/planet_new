@@ -20,5 +20,12 @@ export const zh = {
     waves: "流动波纹",
     wavesSub: "动态 XMB 背景",
     reduceMotion: "减弱动效",
+    library: "本地音乐库",
+    source: "音乐来源",
+    addFolder: "添加音乐文件夹",
+    addFolderSub: "扫描文件夹导入本地音乐",
+    scanning: "扫描中…",
+    scanDone: "新增 {{added}} 首 · 共 {{total}} 首",
+    scanError: "扫描失败",
   },
 };

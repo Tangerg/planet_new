@@ -2,6 +2,7 @@
 // Settings — accent, playback and interface preferences.
 // ============================================================
 import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Settings } from "@/model/defaults";
 import { Icon } from "@/infra/icons";
 import { FadeIn } from "@/components/motion";
@@ -10,6 +11,8 @@ import { Switch } from "@/components/controls/Switch";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { useTranslation } from "react-i18next";
 import { LOCALES, LOCALE_LABELS } from "@/i18n";
+import { useEngine } from "@/hooks/useEngine";
+import { scanLocalFolder, LOCAL_PROVIDER_NAME } from "@/infra/localLibrary";
 
 function SetToggle({
   label,
@@ -60,6 +63,99 @@ function SetSeg({
 
 /** Plain string options (token values shown as-is, e.g. STD / HQ / SQ). */
 const seg = (...values: string[]) => values.map((v) => ({ value: v, label: v }));
+
+/** Provider registry-name → short display label (brand proper nouns, not i18n). */
+const SOURCE_LABELS: Record<string, string> = {
+  NeteaseCloudMusic: "网易云",
+  QQMusic: "QQ 音乐",
+  Spotify: "Spotify",
+  [LOCAL_PROVIDER_NAME]: "本地",
+};
+
+type ScanState =
+  | { phase: "idle" }
+  | { phase: "scanning" }
+  | { phase: "done"; added: number; total: number }
+  | { phase: "error" };
+
+/**
+ * On-device music: switch the active source among mounted providers and scan a
+ * folder into the local library. A successful scan auto-switches to the local
+ * source and invalidates cached catalog reads, so the imported music shows at
+ * once (Engine.media reads through the active provider).
+ */
+function LibrarySection({ accent }: { accent: string }) {
+  const { t } = useTranslation();
+  const engine = useEngine();
+  const queryClient = useQueryClient();
+  const sources = engine.providers.providers.map((p) => p.name);
+  const [source, setSource] = React.useState(engine.providers.active?.name ?? sources[0] ?? "");
+  const [scan, setScan] = React.useState<ScanState>({ phase: "idle" });
+
+  const switchSource = (name: string) => {
+    engine.providers.setActive(name);
+    setSource(name);
+    void queryClient.invalidateQueries();
+  };
+
+  const addFolder = async () => {
+    setScan({ phase: "scanning" });
+    try {
+      const result = await scanLocalFolder();
+      if (!result) {
+        setScan({ phase: "idle" }); // cancelled or no desktop bridge
+        return;
+      }
+      switchSource(LOCAL_PROVIDER_NAME);
+      setScan({ phase: "done", added: result.added, total: result.total });
+    } catch {
+      setScan({ phase: "error" });
+    }
+  };
+
+  const status =
+    scan.phase === "scanning"
+      ? t("settings.scanning")
+      : scan.phase === "done"
+        ? t("settings.scanDone", { added: scan.added, total: scan.total })
+        : scan.phase === "error"
+          ? t("settings.scanError")
+          : t("settings.addFolderSub");
+
+  return (
+    <div className="mt-[30px]">
+      <div className="mlabel mb-1" style={{ color: accent }}>
+        {t("settings.library")}
+      </div>
+
+      {sources.length > 1 && (
+        <SetSeg
+          label={t("settings.source")}
+          value={source}
+          options={sources.map((name) => ({ value: name, label: SOURCE_LABELS[name] ?? name }))}
+          onChange={switchSource}
+        />
+      )}
+
+      <div className="flex items-center justify-between border-b border-white/[0.08] py-4">
+        <div>
+          <div className="text-[16px] font-light">{t("settings.addFolder")}</div>
+          <div className="mlabel mt-[5px] text-[10px] text-white/40">{status}</div>
+        </div>
+        <Button
+          onClick={() => void addFolder()}
+          disabled={scan.phase === "scanning"}
+          aria-label={t("settings.addFolder")}
+          className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[13px] font-light disabled:opacity-50"
+          style={{ color: accent }}
+        >
+          <Icon.note size={15} />
+          {t("settings.addFolder")}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 type SettingsScreenProps = {
   accent: string;
@@ -144,6 +240,8 @@ export function SettingsScreen({
             onClick={() => up("gapless", !s.gapless)}
           />
         </div>
+
+        <LibrarySection accent={accent} />
 
         <div className="mt-[30px]">
           <div className="mlabel mb-1" style={{ color: accent }}>
