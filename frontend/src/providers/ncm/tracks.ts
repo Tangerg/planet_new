@@ -5,7 +5,7 @@ import type { Track, TrackPlayUrl } from "@domain/model/track";
 
 import { httpsUrl } from "@shared/url";
 
-import { mapNcmTrack } from "../mappers/ncm";
+import { mapNcmTrack } from "./mapper";
 import type {
   NcmLyricResponse,
   NcmPlayUrlResponse,

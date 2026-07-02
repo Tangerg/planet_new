@@ -2,12 +2,7 @@ import type { KyInstance } from "ky";
 
 import { SearchResult } from "@domain/model/search";
 
-import {
-  mapNcmAlbumNewest,
-  mapNcmFeaturedArtist,
-  mapNcmPlaylistStub,
-  mapNcmTrack,
-} from "../mappers/ncm";
+import { mapNcmAlbumNewest, mapNcmFeaturedArtist, mapNcmPlaylistStub, mapNcmTrack } from "./mapper";
 import type { NcmSearchResponse } from "./types";
 
 export async function searchNcm(http: KyInstance, query: string): Promise<SearchResult> {

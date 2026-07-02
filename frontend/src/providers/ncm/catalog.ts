@@ -13,7 +13,7 @@ import {
   mapNcmFeaturedArtist,
   mapNcmPlaylistStub,
   mapNcmTrack,
-} from "../mappers/ncm";
+} from "./mapper";
 import type {
   NcmNewestAlbumsResponse,
   NcmPersonalizedPlaylistsResponse,
