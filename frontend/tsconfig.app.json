@@ -48,7 +48,8 @@
       "@core/*": ["./src/core/*"],
       "@providers": ["./src/providers/index.ts"],
       "@providers/*": ["./src/providers/*"],
-      "@/*": ["./src/ui/*"]
+      "@/*": ["./src/ui/*"],
+      "@wailsjs/*": ["./wailsjs/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "test-setup.ts", "vite.config.ts"]
