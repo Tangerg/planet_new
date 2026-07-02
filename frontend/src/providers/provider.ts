@@ -65,7 +65,7 @@ export abstract class Provider extends Plugin implements MusicProvider {
     return [];
   }
 
-  abstract playUrls(ids: string[]): Promise<TrackPlayUrl[]>;
+  abstract playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]>;
 
   abstract personalized(): Promise<Personalized>;
 

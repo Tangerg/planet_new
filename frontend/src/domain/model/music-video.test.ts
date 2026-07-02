@@ -25,6 +25,30 @@ describe("MusicVideo", () => {
     expect(MusicVideo.isPlayable({})).toBe(false);
   });
 
+  test("describes MV playback availability separately from track playback", () => {
+    expect(MusicVideo.playbackAvailability({ id: "mv1" })).toEqual({
+      status: "unavailable",
+      canStart: false,
+      reason: "provider-unsupported",
+    });
+    expect(MusicVideo.playbackAvailability({ id: "mv1" }, { canResolvePlayback: true })).toEqual({
+      status: "resolvable",
+      canStart: true,
+    });
+    expect(
+      MusicVideo.playbackAvailability(
+        { id: "mv1", playbackResolved: true },
+        { canResolvePlayback: true },
+      ),
+    ).toEqual({ status: "unavailable", canStart: false, reason: "missing-url" });
+    expect(
+      MusicVideo.playbackAvailability(
+        { id: "mv1", available: false },
+        { canResolvePlayback: true },
+      ),
+    ).toEqual({ status: "unavailable", canStart: false, reason: "not-available" });
+  });
+
   test("keeps unique music videos by provider id", () => {
     expect(
       MusicVideo.uniqueById([

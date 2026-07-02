@@ -10,10 +10,12 @@ describe("PlaybackAvailability", () => {
   });
 
   test("marks provider-resolvable tracks separately from ready tracks", () => {
-    expect(PlaybackAvailability.fromTrack({ id: "1" }, { canResolveFullPlayback: true })).toEqual({
-      status: "resolvable",
-      canStart: true,
-    });
+    expect(
+      PlaybackAvailability.fromTrack(
+        { id: "row-1", playbackId: "stream-1" },
+        { canResolveFullPlayback: true },
+      ),
+    ).toEqual({ status: "resolvable", canStart: true });
   });
 
   test("allows preview playback when a preview URL exists", () => {
@@ -28,10 +30,10 @@ describe("PlaybackAvailability", () => {
       canStart: false,
       reason: "provider-unsupported",
     });
-    expect(PlaybackAvailability.fromTrack({})).toEqual({
+    expect(PlaybackAvailability.fromTrack({}, { canResolveFullPlayback: true })).toEqual({
       status: "unavailable",
       canStart: false,
-      reason: "missing-track-id",
+      reason: "missing-playback-id",
     });
   });
 });

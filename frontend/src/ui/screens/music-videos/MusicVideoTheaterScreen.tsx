@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { VibeComment, VibeMusicVideo } from "@/model/vibe";
+import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
@@ -10,6 +11,7 @@ type MusicVideoTheaterScreenProps = {
   video: VibeMusicVideo;
   comments: VibeComment[];
   accent: string;
+  playbackPolicy: MusicVideoAvailabilityPolicy;
   onClose: () => void;
 };
 
@@ -26,10 +28,15 @@ export function MusicVideoTheaterScreen({
   video,
   comments,
   accent,
+  playbackPolicy,
   onClose,
 }: MusicVideoTheaterScreenProps) {
+  const availability = MusicVideo.playbackAvailability(video, playbackPolicy);
+  const hasStream = availability.status === "ready";
+  const fallbackText =
+    availability.status === "resolvable" ? "Resolving video stream..." : "Video URL unavailable";
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(Boolean(video.playUrl));
+  const [playing, setPlaying] = useState(hasStream);
   const [timeSec, setTimeSec] = useState(0);
   const [duration, setDuration] = useState(video.durSec || 0);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -37,11 +44,11 @@ export function MusicVideoTheaterScreen({
   useEffect(() => {
     const node = videoRef.current;
     setTimeSec(0);
-    setPlaying(Boolean(video.playUrl));
+    setPlaying(hasStream);
     if (!node || !video.playUrl) return;
     node.currentTime = 0;
     node.play().catch(() => setPlaying(false));
-  }, [video.id, video.playUrl]);
+  }, [hasStream, video.id, video.playUrl]);
 
   const toggle = () => {
     const node = videoRef.current;
@@ -60,7 +67,7 @@ export function MusicVideoTheaterScreen({
 
   return (
     <FadeIn className="relative h-full overflow-hidden bg-[#08080b]">
-      {video.playUrl ? (
+      {hasStream ? (
         /* oxlint-disable-next-line jsx-a11y/media-has-caption -- Provider MV streams do not expose caption tracks yet. */
         <video
           ref={videoRef}
@@ -86,7 +93,7 @@ export function MusicVideoTheaterScreen({
           style={{ position: "absolute", inset: 0, height: "100%" }}
         >
           <div className="grid h-full place-items-center bg-black/35 text-[16px] font-light text-white/48">
-            Video URL unavailable
+            {fallbackText}
           </div>
         </Art>
       )}
@@ -99,7 +106,7 @@ export function MusicVideoTheaterScreen({
           position: "absolute",
           inset: "-4%",
           height: "108%",
-          opacity: video.playUrl ? 0.28 : 1,
+          opacity: hasStream ? 0.28 : 1,
           filter: "blur(26px) saturate(1.18)",
           transform: "scale(1.08)",
           zIndex: 0,
@@ -173,6 +180,7 @@ export function MusicVideoTheaterScreen({
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <Button
               onClick={toggle}
+              disabled={!hasStream}
               className="grid h-10 w-10 flex-none place-items-center rounded-full"
               aria-label="Play MV"
               style={{
@@ -200,6 +208,7 @@ export function MusicVideoTheaterScreen({
                 step={0.1}
                 value={Math.min(timeSec, total)}
                 onChange={(e) => seek(Number(e.currentTarget.value))}
+                disabled={!hasStream}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </div>

@@ -25,12 +25,19 @@ describe("Track", () => {
   });
 
   test("applies resolved provider playback URLs without mutating tracks", () => {
-    const original = { id: "1", name: "Song", durationMs: 1, artists: [] };
-    const untouched = { id: "2", name: "Other", durationMs: 1, artists: [], playUrl: "old" };
+    const original = { id: "1", playbackId: "mid-1", name: "Song", durationMs: 1, artists: [] };
+    const untouched = {
+      id: "2",
+      playbackId: "mid-2",
+      name: "Other",
+      durationMs: 1,
+      artists: [],
+      playUrl: "old",
+    };
 
     const resolved = Track.withResolvedPlayUrls(
       [original, untouched],
-      [{ id: "1", playUrl: "https://stream.example/song.mp3" }],
+      [{ playbackId: "mid-1", playUrl: "https://stream.example/song.mp3" }],
     );
 
     expect(resolved).toEqual([
@@ -54,16 +61,39 @@ describe("Track", () => {
     ).toEqual(["1", "2"]);
   });
 
+  test("keeps unique playback lookup ids separate from identity ids", () => {
+    expect(
+      Track.uniquePlaybackIds([
+        { id: "chart-row-1", playbackId: "songmid-1" },
+        { id: "chart-row-2" },
+        { id: "chart-row-3", playbackId: "songmid-2" },
+        { id: "chart-row-4", playbackId: "songmid-1" },
+      ]),
+    ).toEqual(["songmid-1", "songmid-2"]);
+  });
+
   test("describes playback availability with provider URL resolution", () => {
     expect(Track.playbackAvailability({ id: "1" })).toMatchObject({
       status: "unavailable",
       reason: "provider-unsupported",
     });
+    expect(
+      Track.playbackAvailability(
+        { id: "display-row", playbackId: "provider-songmid" },
+        { canResolveFullPlayback: true },
+      ),
+    ).toEqual({ status: "resolvable", canStart: true });
+    expect(
+      Track.isPlayable(
+        { id: "display-row", playbackId: "provider-songmid" },
+        { canResolveFullPlayback: true },
+      ),
+    ).toBe(true);
     expect(Track.playbackAvailability({ id: "1" }, { canResolveFullPlayback: true })).toEqual({
-      status: "resolvable",
-      canStart: true,
+      status: "unavailable",
+      canStart: false,
+      reason: "missing-playback-id",
     });
-    expect(Track.isPlayable({ id: "1" }, { canResolveFullPlayback: true })).toBe(true);
   });
 
   test("treats an unlicensed track as unavailable regardless of policy", () => {
@@ -82,7 +112,8 @@ describe("Track", () => {
     const previewOnly = { canUsePreviewPlayback: true };
 
     // Full-playback provider (NCM/QQ): any id resolves → never unavailable.
-    expect(Track.isUnavailable({ id: "1" }, full)).toBe(false);
+    expect(Track.isUnavailable({ id: "1", playbackId: "1" }, full)).toBe(false);
+    expect(Track.isUnavailable({ id: "1" }, full)).toBe(true);
     // Preview-only provider (Spotify): with a preview clip it plays, without it can't.
     expect(Track.isUnavailable({ id: "1", previewUrl: "clip" }, previewOnly)).toBe(false);
     expect(Track.isUnavailable({ id: "1" }, previewOnly)).toBe(true);

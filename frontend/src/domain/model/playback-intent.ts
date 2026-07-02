@@ -29,8 +29,12 @@ export class PlaybackIntent {
     return Track.uniqueIds(this.queue);
   }
 
-  trackIdsToResolve(policy: PlaybackAvailabilityPolicy): string[] {
-    return Track.uniqueIds(
+  get playbackIds(): string[] {
+    return Track.uniquePlaybackIds(this.queue);
+  }
+
+  playbackIdsToResolve(policy: PlaybackAvailabilityPolicy): string[] {
+    return Track.uniquePlaybackIds(
       this.queue.filter((track) =>
         PlaybackAvailability.requiresFullUrlResolution(Track.playbackAvailability(track, policy)),
       ),

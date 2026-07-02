@@ -170,7 +170,13 @@ Screens are pure presentation and receive `VibeTrack` view models. Playing one h
 **Provider read failure — one shape, no `Result` wrapper.**
 `MediaService` never lets one bad read blank the app: an unsupported capability returns its fallback silently, while a *supported* read that faults returns the same fallback but reports it through `@shared/debug.warnReadFailure` — so "endpoint down" is distinguishable from "no data" in the console. Empty-but-successful is a valid result, not a fault. The UI already has the three signals separately — `media.supports(cap)` (unsupported), React Query `isError` (failed), `data.length` (empty) — so no `Result` type is threaded through every caller.
 
-Provider mappers share one field-normalization standard (`providers/mappers/common.ts`): `toIdString` (ids → string), `singleImage` (one URL → the `Image[]` contract), `secondsToMs` (seconds → the domain's `durationMs`). Image URL-scheme building and artist-credit shaping stay provider-specific / domain-owned respectively.
+**Track identity vs playback key.**
+`Track.id` is the domain identity used for selection, queue matching, and navigation. Stream URL resolution uses `Track.playbackId` instead. They are often the same (NCM / Spotify), but not guaranteed: QQ chart rows may expose a numeric `songId` while playback resolution needs `songmid`. A track without `playbackId` is not provider-resolvable even if it has an `id`; this keeps list UI from promising playback that the provider cannot actually start.
+
+**MV availability is separate from track playback availability.**
+`MusicVideo.playbackAvailability(video, policy)` owns MV-specific rules (missing MV id, provider unsupported, URL not yet resolved, resolved-but-missing URL, provider licence unavailable). Do not fold MV state into `Track.isUnavailable()`; songs and official music videos are related media, but their playback resolution paths and failure reasons differ.
+
+Provider mappers share one field-normalization standard (`providers/mapping.ts`): `toIdString` (ids → string), `singleImage` (one URL → the `Image[]` contract), `secondsToMs` (seconds → the domain's `durationMs`). Image URL-scheme building and artist-credit shaping stay provider-specific / domain-owned respectively.
 
 ---
 

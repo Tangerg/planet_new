@@ -24,6 +24,7 @@ export type VibeTrack = {
   durSec: number;
   duration: string;
   playUrl?: string;
+  playbackId?: string;
   musicVideoId?: string;
   /** Mix/edit label, e.g. "live", "acoustic" ("studio" is treated as none). */
   version?: string;
@@ -113,6 +114,9 @@ export type VibeMusicVideo = {
   likedCount?: number;
   shareCount?: number;
   playUrl?: string;
+  playbackResolved?: boolean;
+  requiresSubscription?: boolean;
+  available?: boolean;
   quality?: number;
 };
 

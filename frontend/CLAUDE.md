@@ -76,7 +76,7 @@
 - **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
-- **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `hooks.ts` / `adapt.ts` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
+- **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
 - **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。**不维护任何 mock 目录 / mock provider**(早期的 `providers/Mock.ts` 与 `ui/model/mock.ts` 均已删)。想要有数据的 dev 体验就起真实后端(NCM / QQ);等 provider 有了对应 capability 再接真。
 - **加文档先问**:不主动建 `*.md`,除非用户明确要。
 

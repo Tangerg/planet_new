@@ -1,7 +1,7 @@
 export type PlaybackAvailabilityStatus = "ready" | "resolvable" | "preview" | "unavailable";
 
 export type PlaybackUnavailableReason =
-  | "missing-track-id"
+  | "missing-playback-id"
   | "provider-unsupported"
   | "missing-url"
   | "not-available";
@@ -21,6 +21,7 @@ export type PlaybackAvailability = {
 
 type PlaybackAvailabilityTrack = {
   id?: string;
+  playbackId?: string;
   playUrl?: string;
   previewUrl?: string;
   /** `false` = provider does not license this track for playback (removed / region-locked). */
@@ -36,12 +37,19 @@ export const PlaybackAvailability = {
       return { status: "unavailable", canStart: false, reason: "not-available" };
     }
     if (track.playUrl) return { status: "ready", canStart: true };
-    if (track.id && policy.canResolveFullPlayback) return { status: "resolvable", canStart: true };
+    if (track.playbackId && policy.canResolveFullPlayback) {
+      return { status: "resolvable", canStart: true };
+    }
     if (track.previewUrl && policy.canUsePreviewPlayback !== false) {
       return { status: "preview", canStart: true };
     }
-    if (!track.id) return { status: "unavailable", canStart: false, reason: "missing-track-id" };
-    if (!policy.canResolveFullPlayback && !track.previewUrl) {
+    if (policy.canResolveFullPlayback && !track.playbackId) {
+      return { status: "unavailable", canStart: false, reason: "missing-playback-id" };
+    }
+    if (policy.canResolveFullPlayback || policy.canUsePreviewPlayback) {
+      return { status: "unavailable", canStart: false, reason: "missing-url" };
+    }
+    if (!track.previewUrl) {
       return { status: "unavailable", canStart: false, reason: "provider-unsupported" };
     }
     return { status: "unavailable", canStart: false, reason: "missing-url" };

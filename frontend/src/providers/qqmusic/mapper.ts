@@ -31,6 +31,11 @@ import type {
 
 const I_HOST = "https://y.gtimg.cn/music/photo_new";
 
+function optionalId(id: QQId | undefined): string | undefined {
+  const value = toIdString(id);
+  return value || undefined;
+}
+
 export function albumImage(albumMidOrPmid: QQId | undefined, size = 300): string {
   if (!albumMidOrPmid) return "";
   return `${I_HOST}/T002R${size}x${size}M000${albumMidOrPmid}.jpg`;
@@ -65,9 +70,11 @@ export function mapQQArtistFromList(raw: QQSinger): Partial<Artist> {
 export function mapQQTrackFromSong(raw: QQTrack, index?: number): Partial<Track> {
   const albumMid = raw.album?.pmid ?? raw.album?.mid ?? "";
   const albumUrl = albumImage(albumMid, 300);
+  const id = toIdString(raw.mid ?? raw.songmid);
   return {
     index,
-    id: toIdString(raw.mid),
+    id,
+    playbackId: optionalId(raw.mid ?? raw.songmid),
     name: raw.name ?? raw.title ?? "",
     durationMs: secondsToMs(raw.interval),
     artists: (raw.singer ?? []).map(mapQQArtist),
@@ -90,9 +97,11 @@ export function mapQQTrackFromAlbumList(
   fallbackAlbum: Partial<Album>,
   index?: number,
 ): Partial<Track> {
+  const id = toIdString(raw.songmid ?? raw.mid);
   return {
     index,
-    id: toIdString(raw.songmid),
+    id,
+    playbackId: optionalId(raw.songmid ?? raw.mid),
     name: raw.songname ?? "",
     durationMs: secondsToMs(raw.interval),
     artists: (raw.singer ?? []).map((s) => ({
@@ -175,8 +184,10 @@ function stripTags(s: string | undefined): string {
 
 /** Search (/getSmartbox -> response.data.song.itemlist[]): { mid, name, singer(string) } */
 export function mapQQSmartboxSong(raw: QQSmartboxItem): Partial<Track> {
+  const id = toIdString(raw.mid);
   return {
-    id: toIdString(raw.mid),
+    id,
+    playbackId: optionalId(raw.mid),
     name: stripTags(raw.name),
     durationMs: 0,
     artists: raw.singer ? [{ name: stripTags(raw.singer) }] : [],
@@ -229,9 +240,11 @@ export function mapQQChart(raw: QQChart): {
 export function mapQQRankSong(raw: QQTrack, index?: number): Partial<Track> {
   const albumMid = raw.albumMid ?? raw.album?.mid ?? "";
   const albumUrl = raw.cover ? httpsUrl(raw.cover) : albumImage(albumMid, 300);
+  const playbackId = optionalId(raw.mid ?? raw.songmid);
   return {
     index,
-    id: toIdString(raw.songId ?? raw.mid),
+    id: toIdString(raw.songId ?? raw.mid ?? raw.songmid),
+    playbackId,
     name: raw.title ?? raw.name ?? raw.songname ?? "",
     durationMs: secondsToMs(raw.interval),
     artists: raw.singerName

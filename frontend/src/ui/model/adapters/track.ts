@@ -23,6 +23,7 @@ export function toVibeTrack(real: Partial<DomainTrack>, i?: number): VibeTrack {
     durSec: Track.durationSeconds(real),
     duration: Track.durationFormatted(real),
     playUrl: real.playUrl,
+    playbackId: real.playbackId,
     musicVideoId: real.musicVideoId,
     requiresSubscription: real.requiresSubscription,
     source: real,
@@ -49,6 +50,7 @@ export function toTrack(vt: VibeTrack): DomainTrack {
     artists: vt.artist ? [{ id: vt.artistId || vt.artist, name: vt.artist }] : [],
     album: vt.albumId ? { id: vt.albumId, name: vt.album || "" } : undefined,
     playUrl: vt.playUrl,
+    playbackId: vt.playbackId,
     musicVideoId: vt.musicVideoId,
   };
 }

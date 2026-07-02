@@ -84,6 +84,17 @@ describe("MediaService.discoverArtistMusicVideos", () => {
 });
 
 describe("MediaService optional provider reads", () => {
+  test("exposes the active provider's MV playback policy from capabilities", () => {
+    const service = new MediaService(() =>
+      makeProvider({ capabilities: new Set(["musicVideoDetail"]) }),
+    );
+
+    expect(service.musicVideoPlaybackPolicy()).toEqual({ canResolvePlayback: true });
+
+    const unsupported = new MediaService(() => makeProvider({}));
+    expect(unsupported.musicVideoPlaybackPolicy()).toEqual({ canResolvePlayback: false });
+  });
+
   test("does not call providers for unsupported optional capabilities", async () => {
     let calls = 0;
     const service = new MediaService(() =>

@@ -1,4 +1,5 @@
 import type { ArtistRef, VibeMusicVideo } from "@/model/vibe";
+import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { CardRail } from "@/components/layout/CardRail";
@@ -15,6 +16,7 @@ type MusicVideoDetailScreenProps = {
   video: VibeMusicVideo;
   related: VibeMusicVideo[];
   accent: string;
+  playbackPolicy: MusicVideoAvailabilityPolicy;
   onPlay: (video: VibeMusicVideo) => void;
   onOpenVideo: (video: VibeMusicVideo, related?: VibeMusicVideo[]) => void;
   onOpenArtist: (artist: ArtistRef) => void;
@@ -24,12 +26,15 @@ export function MusicVideoDetailScreen({
   video,
   related,
   accent,
+  playbackPolicy,
   onPlay,
   onOpenVideo,
   onOpenArtist,
 }: MusicVideoDetailScreenProps) {
   const artist = video.artists?.[0];
   const rail = related.filter((mv) => mv.id !== video.id).slice(0, 12);
+  const availability = MusicVideo.playbackAvailability(video, playbackPolicy);
+  const canPlay = availability.canStart;
 
   return (
     <ScreenScaffold
@@ -49,7 +54,7 @@ export function MusicVideoDetailScreen({
           <Button
             onClick={() => onPlay(video)}
             className="group relative block border-0 bg-transparent p-0 text-left"
-            disabled={!video.playUrl}
+            disabled={!canPlay}
             aria-label={`Play ${video.title}`}
           >
             <Art
@@ -67,9 +72,9 @@ export function MusicVideoDetailScreen({
                 className="absolute bottom-6 right-6 grid h-[58px] w-[58px] place-items-center transition-transform duration-200 group-hover:scale-105"
                 style={{
                   borderRadius: "50%",
-                  background: video.playUrl ? accent : "rgba(255,255,255,.16)",
-                  color: video.playUrl ? "#06060a" : "rgba(255,255,255,.62)",
-                  boxShadow: video.playUrl ? `0 12px 34px -10px ${accent}` : "none",
+                  background: canPlay ? accent : "rgba(255,255,255,.16)",
+                  color: canPlay ? "#06060a" : "rgba(255,255,255,.62)",
+                  boxShadow: canPlay ? `0 12px 34px -10px ${accent}` : "none",
                 }}
               >
                 <Icon.play size={22} />
@@ -101,11 +106,11 @@ export function MusicVideoDetailScreen({
             <div className="mt-[28px] flex items-center gap-[14px]">
               <Button
                 onClick={() => onPlay(video)}
-                disabled={!video.playUrl}
+                disabled={!canPlay}
                 className="pill-accent inline-flex items-center gap-2.5 px-[28px] py-[13px] text-[12px]"
                 style={{
-                  background: video.playUrl ? accent : "rgba(255,255,255,.12)",
-                  color: video.playUrl ? "#06060a" : "rgba(255,255,255,.55)",
+                  background: canPlay ? accent : "rgba(255,255,255,.12)",
+                  color: canPlay ? "#06060a" : "rgba(255,255,255,.55)",
                 }}
               >
                 <Icon.play size={15} /> Play

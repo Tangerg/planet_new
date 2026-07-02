@@ -230,12 +230,12 @@ export class Spotify extends Provider {
     };
   }
 
-  async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {
-    if (ids.length === 0) return [];
+  async playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]> {
+    if (playbackIds.length === 0) return [];
     const out: TrackPlayUrl[] = [];
     // /tracks accepts at most 50 ids per call.
-    for (let i = 0; i < ids.length; i += 50) {
-      const batch = ids.slice(i, i + 50);
+    for (let i = 0; i < playbackIds.length; i += 50) {
+      const batch = playbackIds.slice(i, i + 50);
       const res = await this.api
         .get("tracks", {
           searchParams: this.withMarket({ ids: batch.join(",") }),
@@ -244,7 +244,7 @@ export class Spotify extends Provider {
       for (const tr of res.tracks) {
         if (!tr) continue;
         if (tr.preview_url) {
-          out.push({ id: tr.id, playUrl: tr.preview_url });
+          out.push({ playbackId: tr.id, playUrl: tr.preview_url });
         }
       }
     }

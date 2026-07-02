@@ -115,8 +115,8 @@ export class NeteaseCloudMusic extends Provider implements AuthProvider, UserLib
     return fetchNcmArtistMusicVideos(this.http, artistId);
   }
 
-  async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {
-    return fetchNcmPlayUrls(this.http, ids);
+  async playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]> {
+    return fetchNcmPlayUrls(this.http, playbackIds);
   }
 
   async personalized(): Promise<Personalized> {

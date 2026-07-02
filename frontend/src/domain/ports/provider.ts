@@ -113,9 +113,9 @@ export interface MusicVideoProvider {
 export interface PlaybackUrlProvider {
   /**
    * Resolve playable URLs.
-   * @param ids track ids
+   * @param ids provider-specific playback ids, not necessarily `Track.id`
    */
-  playUrls(ids: string[]): Promise<TrackPlayUrl[]>;
+  playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]>;
 }
 
 export interface PersonalizedProvider {

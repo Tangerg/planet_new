@@ -114,6 +114,6 @@ describe("fetchNcmPlayUrls", () => {
       },
     });
     const urls = await fetchNcmPlayUrls(http, ["1", "2", "3"]);
-    expect(urls).toEqual([{ id: "1", playUrl: "https://m.example/a.mp3" }]);
+    expect(urls).toEqual([{ playbackId: "1", playUrl: "https://m.example/a.mp3" }]);
   });
 });
