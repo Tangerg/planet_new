@@ -1,4 +1,5 @@
 import type { Image } from "./image";
+import { relativeTime } from "@shared/time";
 
 /**
  * A user comment on a track (e.g. NetEase hot/recent comments). Providers
@@ -19,6 +20,11 @@ export type Comment = {
 };
 
 export const Comment = {
+  /** Compact "time ago" label for the comment's posted-at (e.g. "3d ago"). */
+  timeLabel(c: Pick<Comment, "time">, now?: number): string {
+    return relativeTime(c.time, now);
+  },
+
   /**
    * Merge prioritized comment threads, preserving the first occurrence of each
    * provider comment id. Useful for sources that return "hot" and "recent"
