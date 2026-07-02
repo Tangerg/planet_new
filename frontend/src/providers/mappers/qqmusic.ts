@@ -5,6 +5,7 @@ import type { Playlist } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 import type { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
+import { secondsToMs, singleImage, toIdString } from "@providers/mappers/common";
 import type {
   QQAlbumDetail,
   QQChart,
@@ -30,10 +31,6 @@ import type {
 
 const I_HOST = "https://y.gtimg.cn/music/photo_new";
 
-function qqId(id: QQId | undefined): string {
-  return id === undefined ? "" : id.toString();
-}
-
 export function albumImage(albumMidOrPmid: QQId | undefined, size = 300): string {
   if (!albumMidOrPmid) return "";
   return `${I_HOST}/T002R${size}x${size}M000${albumMidOrPmid}.jpg`;
@@ -46,7 +43,7 @@ export function singerImage(singerMid: QQId | undefined, size = 300): string {
 
 export function mapQQArtist(raw: QQSinger): Partial<Artist> {
   return {
-    id: qqId(raw.mid ?? raw.singer_mid),
+    id: toIdString(raw.mid ?? raw.singer_mid),
     name: raw.name ?? raw.singer_name ?? "",
   };
 }
@@ -55,9 +52,9 @@ export function mapQQArtistFromList(raw: QQSinger): Partial<Artist> {
   // /getSingerList uses snake_case; singer_pic is 150x150, build a 300px image for clarity
   const url = singerImage(raw.singer_mid ?? "", 300) || httpsUrl(raw.singer_pic);
   return {
-    id: qqId(raw.singer_mid),
+    id: toIdString(raw.singer_mid),
     name: raw.singer_name ?? "",
-    images: url ? [{ url }] : [],
+    images: singleImage(url),
   };
 }
 
@@ -70,15 +67,15 @@ export function mapQQTrackFromSong(raw: QQTrack, index?: number): Partial<Track>
   const albumUrl = albumImage(albumMid, 300);
   return {
     index,
-    id: qqId(raw.mid),
+    id: toIdString(raw.mid),
     name: raw.name ?? raw.title ?? "",
-    durationMs: (raw.interval ?? 0) * 1000,
+    durationMs: secondsToMs(raw.interval),
     artists: (raw.singer ?? []).map(mapQQArtist),
     album: raw.album
       ? {
-          id: qqId(raw.album.mid),
+          id: toIdString(raw.album.mid),
           name: raw.album.name ?? "",
-          images: albumUrl ? [{ url: albumUrl }] : [],
+          images: singleImage(albumUrl),
         }
       : undefined,
   };
@@ -95,11 +92,11 @@ export function mapQQTrackFromAlbumList(
 ): Partial<Track> {
   return {
     index,
-    id: qqId(raw.songmid),
+    id: toIdString(raw.songmid),
     name: raw.songname ?? "",
-    durationMs: (raw.interval ?? 0) * 1000,
+    durationMs: secondsToMs(raw.interval),
     artists: (raw.singer ?? []).map((s) => ({
-      id: qqId(s.mid),
+      id: toIdString(s.mid),
       name: s.name ?? "",
     })),
     album: {
@@ -114,12 +111,12 @@ export function mapQQPlaylistDetail(cd: QQPlaylistDetail): Playlist {
   const tracks = (cd.songlist ?? []).map((s, i) => mapQQTrackFromSong(s, i + 1));
   const ownerImage = cd.headurl ?? "";
   const owner: Partial<User> = {
-    id: qqId(cd.encrypt_uin),
+    id: toIdString(cd.encrypt_uin),
     displayName: cd.nickname ?? cd.nick ?? "",
-    images: ownerImage ? [{ url: ownerImage }] : [],
+    images: singleImage(ownerImage),
   };
   return {
-    id: qqId(cd.disstid ?? cd.dissid),
+    id: toIdString(cd.disstid ?? cd.dissid),
     name: cd.dissname ?? "",
     description: cd.desc ?? "",
     images: [{ url: httpsUrl(cd.logo) }],
@@ -132,9 +129,9 @@ export function mapQQPlaylistDetail(cd: QQPlaylistDetail): Playlist {
 export function mapQQAlbumDetail(data: QQAlbumDetail): Album {
   const albumMid = data.mid ?? "";
   const image = albumImage(albumMid, 500);
-  const images: Image[] = image ? [{ url: image }] : [];
+  const images: Image[] = singleImage(image);
   const albumStub: Partial<Album> = {
-    id: qqId(albumMid),
+    id: toIdString(albumMid),
     name: data.name ?? "",
     images,
   };
@@ -142,7 +139,7 @@ export function mapQQAlbumDetail(data: QQAlbumDetail): Album {
   const publishTime = Date.parse(data.aDate ?? "") || 0;
   const singerUrl = data.singermid ? singerImage(data.singermid, 300) : "";
   return {
-    id: qqId(albumMid),
+    id: toIdString(albumMid),
     name: data.name ?? "",
     alias: [],
     images,
@@ -152,9 +149,9 @@ export function mapQQAlbumDetail(data: QQAlbumDetail): Album {
     artists: data.singermid
       ? [
           {
-            id: qqId(data.singermid),
+            id: toIdString(data.singermid),
             name: data.singername ?? "",
-            images: singerUrl ? [{ url: singerUrl }] : [],
+            images: singleImage(singerUrl),
           },
         ]
       : [],
@@ -164,7 +161,7 @@ export function mapQQAlbumDetail(data: QQAlbumDetail): Album {
 /** Recommended-playlist thumbnail data (/getSongLists list item). */
 export function mapQQPlaylistStub(raw: QQPlaylistStub): Partial<Playlist> {
   return {
-    id: qqId(raw.dissid),
+    id: toIdString(raw.dissid),
     name: raw.dissname ?? "",
     images: [{ url: httpsUrl(raw.imgurl) }],
     totalTracks: raw.songnum ?? 0,
@@ -179,7 +176,7 @@ function stripTags(s: string | undefined): string {
 /** Search (/getSmartbox -> response.data.song.itemlist[]): { mid, name, singer(string) } */
 export function mapQQSmartboxSong(raw: QQSmartboxItem): Partial<Track> {
   return {
-    id: qqId(raw.mid),
+    id: toIdString(raw.mid),
     name: stripTags(raw.name),
     durationMs: 0,
     artists: raw.singer ? [{ name: stripTags(raw.singer) }] : [],
@@ -188,24 +185,24 @@ export function mapQQSmartboxSong(raw: QQSmartboxItem): Partial<Track> {
 
 /** Singer search (/getSmartbox -> response.data.singer.itemlist[]): { mid, name, pic } */
 export function mapQQSmartboxSinger(raw: QQSmartboxItem): Partial<Artist> {
-  const mid = qqId(raw.mid);
+  const mid = toIdString(raw.mid);
   const url = httpsUrl(raw.pic) || singerImage(mid, 300);
   return {
     id: mid,
     name: stripTags(raw.name),
-    images: url ? [{ url }] : [],
+    images: singleImage(url),
   };
 }
 
 /** Album search (/getSmartbox -> response.data.album.itemlist[]): { mid, name, pic, singer } */
 export function mapQQSmartboxAlbum(raw: QQSmartboxItem): Partial<Album> {
-  const mid = qqId(raw.mid);
+  const mid = toIdString(raw.mid);
   const url = httpsUrl(raw.pic) || albumImage(mid, 300);
   return {
     id: mid,
     name: stripTags(raw.name),
     alias: [],
-    images: url ? [{ url }] : [],
+    images: singleImage(url),
     totalTracks: 0,
     artists: raw.singer ? [{ name: stripTags(raw.singer) }] : [],
   };
@@ -219,7 +216,7 @@ export function mapQQChart(raw: QQChart): {
   period?: string;
 } {
   return {
-    id: qqId(raw.id ?? raw.topId ?? raw.topid),
+    id: toIdString(raw.id ?? raw.topId ?? raw.topid),
     title: raw.title ?? raw.topTitle ?? "",
     image: httpsUrl(raw.frontPicUrl ?? raw.headPicUrl ?? raw.picUrl ?? raw.macHeadPicUrl ?? ""),
     period: raw.updateTime ?? raw.intro ?? undefined,
@@ -234,16 +231,16 @@ export function mapQQRankSong(raw: QQTrack, index?: number): Partial<Track> {
   const albumUrl = raw.cover ? httpsUrl(raw.cover) : albumImage(albumMid, 300);
   return {
     index,
-    id: qqId(raw.songId ?? raw.mid),
+    id: toIdString(raw.songId ?? raw.mid),
     name: raw.title ?? raw.name ?? raw.songname ?? "",
-    durationMs: (raw.interval ?? 0) * 1000,
+    durationMs: secondsToMs(raw.interval),
     artists: raw.singerName
-      ? [{ id: qqId(raw.singerMid), name: raw.singerName }]
-      : (raw.singer ?? []).map((a) => ({ id: qqId(a.mid), name: a.name ?? "" })),
+      ? [{ id: toIdString(raw.singerMid), name: raw.singerName }]
+      : (raw.singer ?? []).map((a) => ({ id: toIdString(a.mid), name: a.name ?? "" })),
     album: {
-      id: qqId(albumMid),
+      id: toIdString(albumMid),
       name: raw.albumName ?? "",
-      images: albumUrl ? [{ url: albumUrl }] : [],
+      images: singleImage(albumUrl),
     },
   };
 }
@@ -254,14 +251,14 @@ export function mapQQNewAlbum(raw: QQNewAlbum): Partial<Album> {
   const albumUrl = albumImage(albumMid, 300);
   const firstSinger = raw.singers?.[0];
   return {
-    id: qqId(albumMid),
+    id: toIdString(albumMid),
     name: raw.name ?? "",
-    images: albumUrl ? [{ url: albumUrl }] : [],
+    images: singleImage(albumUrl),
     totalTracks: raw.ex?.track_nums ?? 0,
     artists: firstSinger
       ? [
           {
-            id: qqId(firstSinger.mid),
+            id: toIdString(firstSinger.mid),
             name: firstSinger.name ?? "",
           },
         ]
