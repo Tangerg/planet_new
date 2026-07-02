@@ -28,7 +28,7 @@ import {
   coverTransform,
 } from "@/components/coverflow/geometry";
 import { useScreenActions } from "@/hooks/screenActions";
-import { useCoverFlowInput } from "@/hooks/useCoverFlowInput";
+import { useCoverFlowInput } from "@/components/coverflow/useCoverFlowInput";
 
 type Props<T extends VibeTrack | VibeCollection> = {
   items: FlowItem<T>[];
