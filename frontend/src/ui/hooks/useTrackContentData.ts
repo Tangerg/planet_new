@@ -5,7 +5,8 @@ import type { Lyric } from "@domain/model/lyric";
 
 import { useMediaService } from "@/hooks/useMediaService";
 import { usePlayQueueStore } from "@/store/playqueue";
-import { toVibeComment, type VibeComment } from "@/model/adapt";
+import { toVibeComment } from "@/model/adapters/comment";
+import type { VibeComment } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
 
 /**

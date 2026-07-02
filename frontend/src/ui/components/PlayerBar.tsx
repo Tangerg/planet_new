@@ -5,7 +5,7 @@
 // ============================================================
 import React from "react";
 import "./PlayerBar.css";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerTrackIdentity } from "@/components/player-bar/PlayerTrackIdentity";
 import { PlayerScrubber } from "@/components/player-bar/PlayerScrubber";
 import { PlayerUtilities } from "@/components/player-bar/PlayerUtilities";

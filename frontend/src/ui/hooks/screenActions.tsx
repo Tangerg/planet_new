@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import type { CardItem, VibeTrack } from "@/model/adapt";
+import type { CardItem, VibeTrack } from "@/model/vibe";
 
 type MenuEvent = React.MouseEvent | MouseEvent;
 

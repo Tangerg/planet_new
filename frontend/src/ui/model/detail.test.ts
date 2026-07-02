@@ -16,7 +16,7 @@ import type { Artist } from "@domain/model/artist";
 import type { Album } from "@domain/model/album";
 import type { Playlist } from "@domain/model/playlist";
 import type { MusicVideo } from "@domain/model/music-video";
-import type { DetailTarget, VibeCollection, VibeMusicVideo, VibeTrack } from "./adapt";
+import type { DetailTarget, VibeCollection, VibeMusicVideo, VibeTrack } from "./vibe";
 
 const track = (id: string): VibeTrack => ({
   id,

@@ -2,7 +2,7 @@
 // Queue — "Up Next": now-playing hero on the left, windowed queue on the right.
 // ============================================================
 import React, { useRef } from "react";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { HeroBackdrop } from "@/components/primitives";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn } from "@/components/motion";

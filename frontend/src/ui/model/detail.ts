@@ -4,18 +4,17 @@ import { Artist } from "@domain/model/artist";
 import type { MusicVideo } from "@domain/model/music-video";
 import type { Playlist } from "@domain/model/playlist";
 
-import {
-  toVibeAlbum,
-  toVibeArtist,
-  toVibeMusicVideo,
-  toVibePlaylist,
-  toVibeTracks,
-  type ArtistTarget,
-  type DetailTarget,
-  type OpenTarget,
-  type VibeCollection,
-  type VibeMusicVideo,
-} from "@/model/adapt";
+import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
+import { toVibeArtist } from "@/model/adapters/artist";
+import { toVibeMusicVideo } from "@/model/adapters/music-video";
+import { toVibeTracks } from "@/model/adapters/track";
+import type {
+  ArtistTarget,
+  DetailTarget,
+  OpenTarget,
+  VibeCollection,
+  VibeMusicVideo,
+} from "@/model/vibe";
 
 export type DetailKind = "Album" | "Chart" | "Playlist";
 

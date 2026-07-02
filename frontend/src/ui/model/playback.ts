@@ -1,7 +1,8 @@
 import { PlayQueue } from "@domain/model/play-queue";
 import type { Track } from "@domain/model/track";
 
-import { toVibeTrack, type VibeTrack } from "@/model/adapt";
+import { toVibeTrack } from "@/model/adapters/track";
+import type { VibeTrack } from "@/model/vibe";
 
 /**
  * Playback-facing presentation projections. These functions keep queue/domain

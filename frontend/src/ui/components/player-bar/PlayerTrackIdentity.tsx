@@ -1,4 +1,4 @@
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
 import { Art } from "@/components/primitives";

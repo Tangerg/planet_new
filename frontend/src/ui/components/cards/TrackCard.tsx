@@ -4,7 +4,7 @@
 // a detail screen). Composed from CardShell + Art + PlayFab + ArtistLink.
 // ============================================================
 import React from "react";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { RiseFab } from "@/components/lift";

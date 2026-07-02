@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { RefObject } from "react";
 
-import type { VibeTrack } from "@/model/adapt";
+import type { VibeTrack } from "@/model/vibe";
 
 export function useQueueActions(opts: {
   addToQueue: (track: VibeTrack) => void;

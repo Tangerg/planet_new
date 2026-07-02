@@ -9,7 +9,7 @@ import type {
   VibeComment,
   VibeMusicVideo,
   VibeTrack,
-} from "@/model/adapt";
+} from "@/model/vibe";
 import type { Lyric } from "@domain/model/lyric";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
 import type { Settings } from "@/model/defaults";

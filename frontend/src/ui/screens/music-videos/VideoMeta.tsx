@@ -1,4 +1,4 @@
-import type { VibeMusicVideo } from "@/model/adapt";
+import type { VibeMusicVideo } from "@/model/vibe";
 import { compactCount } from "@shared/number";
 
 /** One-line MV metadata: quality · duration · play count (blanks dropped). */

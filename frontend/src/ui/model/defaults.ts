@@ -2,7 +2,7 @@
 // App-level defaults & config — values that were previously hard-coded inline
 // across Shell / screens, centralised so they're tuned in one place.
 // ============================================================
-import type { VibeTrack } from "./adapt";
+import type { VibeTrack } from "./vibe";
 
 /** Accent palette offered in Settings; the first is the boot default. */
 export const ACCENT_OPTIONS = ["#0fff83", "#ff2188", "#19d3c5", "#ff5a3c", "#7a5cff"] as const;

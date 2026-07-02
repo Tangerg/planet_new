@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { VibeArtist } from "@/model/adapt";
+import type { VibeArtist } from "@/model/vibe";
 import { useCatalog, useProviderSearch, useToplists } from "@/hooks/useCatalogData";
 import { useDailyRecommendations, usePlayRecord, useUserPlaylists } from "@/hooks/useLibraryData";
 import { useMusicVideoDiscovery } from "@/hooks/useMusicVideoData";

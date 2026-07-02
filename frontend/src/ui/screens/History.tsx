@@ -4,7 +4,7 @@
 // small/bounded so plain rows, not windowed.
 // ============================================================
 import React from "react";
-import type { ArtistRef, VibeTrack } from "@/model/adapt";
+import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { groupHistory } from "@/model/derive";
 import { HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";

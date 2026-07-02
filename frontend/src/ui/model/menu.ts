@@ -1,4 +1,4 @@
-import type { ArtistTarget, CardItem, VibeTrack } from "@/model/adapt";
+import type { ArtistTarget, CardItem, VibeTrack } from "@/model/vibe";
 
 export type MenuItem = {
   label?: string;

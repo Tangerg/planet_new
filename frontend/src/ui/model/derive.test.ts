@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { collectionMeta, collectionSub, sortTracks } from "./derive";
-import type { VibeCollection, VibeTrack } from "./adapt";
+import type { VibeCollection, VibeTrack } from "./vibe";
 
 const collection = (overrides: Partial<VibeCollection> = {}): VibeCollection => ({
   id: "c",

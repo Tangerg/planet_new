@@ -4,7 +4,7 @@
 // the small cover (`.clrt`).
 // ============================================================
 import React, { useState } from "react";
-import type { CardItem } from "@/model/adapt";
+import type { CardItem } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";

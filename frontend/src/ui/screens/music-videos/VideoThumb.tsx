@@ -1,7 +1,7 @@
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";
-import type { VibeMusicVideo } from "@/model/adapt";
+import type { VibeMusicVideo } from "@/model/vibe";
 
 /** 16:9 MV card used in the hub and detail rails: cover + hover play affordance. */
 export function VideoThumb({

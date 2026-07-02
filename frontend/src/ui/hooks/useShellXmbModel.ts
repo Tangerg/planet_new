@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { MediaService } from "@core";
 
-import type { ScreenData, VibeTrack } from "@/model/adapt";
+import type { ScreenData, VibeTrack } from "@/model/vibe";
 import { buildWorlds } from "@/model/navigation";
 
 type Deps = {

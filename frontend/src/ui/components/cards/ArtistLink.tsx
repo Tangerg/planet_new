@@ -5,7 +5,7 @@
 // callers can always use it in place of a bare `{track.artist}`.
 // ============================================================
 import React from "react";
-import type { ArtistRef } from "@/model/adapt";
+import type { ArtistRef } from "@/model/vibe";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
 

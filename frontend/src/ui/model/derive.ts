@@ -5,7 +5,7 @@
 // the logic unit-testable, separate from rendering.
 // ============================================================
 import type { Image } from "@domain/model/image";
-import type { VibeTrack, VibeCollection } from "./adapt";
+import type { VibeTrack, VibeCollection } from "./vibe";
 
 // ── CoverFlow items ──────────────────────────────────────────────────
 

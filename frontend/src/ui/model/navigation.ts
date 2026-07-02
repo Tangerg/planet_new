@@ -13,7 +13,7 @@
  */
 import type { ProviderCapability } from "@domain";
 
-import type { ScreenData, VibeTrack } from "@/model/adapt";
+import type { ScreenData, VibeTrack } from "@/model/vibe";
 
 /** One XMB sub-item (a launcher tile under a category). */
 export type XmbItemModel = {

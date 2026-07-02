@@ -29,7 +29,7 @@ import {
   type VibeCollection,
   type VibeMusicVideo,
   type VibeTrack,
-} from "@/model/adapt";
+} from "@/model/vibe";
 import { normalizeDetailTarget } from "@/model/detail";
 import { createNavSnapshot, isLauncherSnapshot, type NavSnapshot } from "@/model/shell-navigation";
 import {

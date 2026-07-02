@@ -6,7 +6,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import type { ArtistTarget, CardItem, VibeTrack } from "@/model/adapt";
+import type { ArtistTarget, CardItem, VibeTrack } from "@/model/vibe";
 import type { ScreenActions } from "@/hooks/screenActions";
 import { collectionMenuItems, trackMenuItems, type MenuState } from "@/model/menu";
 

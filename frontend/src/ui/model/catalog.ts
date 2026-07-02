@@ -1,15 +1,10 @@
 import type { Chart } from "@domain/model/chart";
 import type { Personalized } from "@domain/model/personalized";
 
-import {
-  seedOf,
-  toVibeAlbum,
-  toVibeArtist,
-  toVibePlaylist,
-  toVibeTracks,
-  type ScreenData,
-  type VibeCollection,
-} from "@/model/adapt";
+import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
+import { toVibeArtist } from "@/model/adapters/artist";
+import { toVibeTracks } from "@/model/adapters/track";
+import { seedOf, type ScreenData, type VibeCollection } from "@/model/vibe";
 
 export function catalogScreenData(personalized?: Personalized): ScreenData {
   return {

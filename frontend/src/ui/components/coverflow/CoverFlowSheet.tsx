@@ -4,7 +4,7 @@ import { artPair } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { Sheet } from "@/components/Sheet";
 import type { FlowItem } from "@/model/derive";
-import type { VibeTrack } from "@/model/adapt";
+import type { VibeTrack } from "@/model/vibe";
 import { activateOnKey } from "@/lib/keys";
 
 /**

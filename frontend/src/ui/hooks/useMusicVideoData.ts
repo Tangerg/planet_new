@@ -4,13 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Artist } from "@domain/model/artist";
 
 import { useMediaService } from "@/hooks/useMediaService";
-import {
-  toVibeComment,
-  toVibeMusicVideos,
-  type VibeArtist,
-  type VibeComment,
-  type VibeMusicVideo,
-} from "@/model/adapt";
+import { toVibeComment } from "@/model/adapters/comment";
+import { toVibeMusicVideos } from "@/model/adapters/music-video";
+import type { VibeArtist, VibeComment, VibeMusicVideo } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
 
 export function useMusicVideoDiscovery(artists: VibeArtist[]): {
