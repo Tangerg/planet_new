@@ -24,7 +24,6 @@ export function toVibeTrack(real: Partial<DomainTrack>, i?: number): VibeTrack {
     duration: Track.durationFormatted(real),
     playUrl: real.playUrl,
     musicVideoId: real.musicVideoId,
-    available: true,
     source: real,
   };
 }

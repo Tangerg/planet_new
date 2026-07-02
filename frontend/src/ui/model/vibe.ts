@@ -25,7 +25,6 @@ export type VibeTrack = {
   duration: string;
   playUrl?: string;
   musicVideoId?: string;
-  available?: boolean;
   /** Mix/edit label, e.g. "live", "acoustic" ("studio" is treated as none). */
   version?: string;
   vipOnly?: boolean;

@@ -80,6 +80,19 @@ export const Track = {
     return Track.playbackAvailability(t, policy).canStart;
   },
 
+  /**
+   * The provider can play audio, but not *this* track — the signal a list row
+   * uses to dim itself. Deliberately NOT `!isPlayable`: a provider with no
+   * playback capability at all (Mock) reports false so its rows stay interactive
+   * as a dev source, rather than every row showing "unavailable".
+   */
+  isUnavailable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
+    const canPlayAnything = Boolean(
+      policy?.canResolveFullPlayback || policy?.canUsePreviewPlayback,
+    );
+    return canPlayAnything && !Track.isPlayable(t, policy);
+  },
+
   /** Clone tracks and apply resolved provider playback URLs by id, preserving order. */
   withResolvedPlayUrls(tracks: readonly Track[], urls: readonly TrackPlayUrl[]): Track[] {
     const byTrackId = new Map(urls.map((url) => [url.id, url.playUrl]));
