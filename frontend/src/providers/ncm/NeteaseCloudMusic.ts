@@ -1,7 +1,7 @@
 import type { KyInstance } from "ky";
 import ky from "ky";
 
-import { Provider } from "./provider";
+import { Provider } from "../provider";
 import type {
   ProviderCapability,
   Account,
@@ -19,21 +19,21 @@ import type { Comment } from "@domain/model/comment";
 import type { MusicVideo } from "@domain/model/music-video";
 import type { Personalized } from "@domain/model/personalized";
 import type { SearchResult } from "@domain/model/search";
-import { NCM_CAPABILITIES } from "./ncm/capabilities";
-import { beginNcmLogin, fetchNcmAccount, fetchNcmUid, logoutNcm } from "./ncm/account";
-import { fetchNcmPersonalized, fetchNcmToplists } from "./ncm/catalog";
-import { fetchNcmMusicVideoComments, fetchNcmTrackComments } from "./ncm/comments";
-import { fetchNcmAlbumDetail, fetchNcmArtistDetail, fetchNcmPlaylistDetail } from "./ncm/details";
+import { NCM_CAPABILITIES } from "./capabilities";
+import { beginNcmLogin, fetchNcmAccount, fetchNcmUid, logoutNcm } from "./account";
+import { fetchNcmPersonalized, fetchNcmToplists } from "./catalog";
+import { fetchNcmMusicVideoComments, fetchNcmTrackComments } from "./comments";
+import { fetchNcmAlbumDetail, fetchNcmArtistDetail, fetchNcmPlaylistDetail } from "./details";
 import {
   fetchNcmDailyRecommendations,
   fetchNcmLikedTrackIds,
   fetchNcmPlayRecord,
   fetchNcmUserPlaylists,
   setNcmLiked,
-} from "./ncm/library";
-import { fetchNcmArtistMusicVideos, fetchNcmMusicVideoDetail } from "./ncm/music-videos";
-import { searchNcm } from "./ncm/search";
-import { fetchNcmLyrics, fetchNcmPlayUrls, fetchNcmTrackDetails } from "./ncm/tracks";
+} from "./library";
+import { fetchNcmArtistMusicVideos, fetchNcmMusicVideoDetail } from "./music-videos";
+import { searchNcm } from "./search";
+import { fetchNcmLyrics, fetchNcmPlayUrls, fetchNcmTrackDetails } from "./tracks";
 
 export type Options = {
   host: string;

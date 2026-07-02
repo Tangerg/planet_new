@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapNcmMusicVideo, mapNcmTrack } from "./ncm";
+import { mapNcmMusicVideo, mapNcmTrack } from "./mapper";
 
 describe("NCM mapper", () => {
   it("maps linked music-video id from a track node", () => {

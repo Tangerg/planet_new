@@ -2,7 +2,7 @@ import type { KyInstance } from "ky";
 
 import type { Account, CredentialStore, LoginFlow, LoginStatus } from "@domain";
 
-import { coverSet } from "../mappers/ncm";
+import { coverSet } from "./mapper";
 import type {
   NcmAccountResponse,
   NcmQrCheckResponse,

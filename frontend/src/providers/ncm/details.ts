@@ -11,7 +11,7 @@ import {
   mapNcmFeaturedArtist,
   mapNcmPlaylist,
   mapNcmTrack,
-} from "../mappers/ncm";
+} from "./mapper";
 import type {
   NcmAlbumDetailResponse,
   NcmArtistAlbumsResponse,

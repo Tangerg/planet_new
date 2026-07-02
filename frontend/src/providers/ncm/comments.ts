@@ -2,7 +2,7 @@ import type { KyInstance } from "ky";
 
 import { Comment } from "@domain/model/comment";
 
-import { mapNcmComment } from "../mappers/ncm";
+import { mapNcmComment } from "./mapper";
 import type { NcmCommentsResponse } from "./types";
 
 async function fetchComments(http: KyInstance, endpoint: string, id: string): Promise<Comment[]> {

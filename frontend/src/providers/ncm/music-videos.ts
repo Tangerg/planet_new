@@ -3,7 +3,7 @@ import type { KyInstance } from "ky";
 import type { MusicVideo } from "@domain/model/music-video";
 import { httpsUrl } from "@shared/url";
 
-import { mapNcmMusicVideo } from "../mappers/ncm";
+import { mapNcmMusicVideo } from "./mapper";
 import type {
   NcmArtistMusicVideosResponse,
   NcmMusicVideoCountsResponse,

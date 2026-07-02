@@ -3,7 +3,7 @@ import type { KyInstance } from "ky";
 import type { Playlist } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 
-import { mapNcmPlaylistStub, mapNcmTrack } from "../mappers/ncm";
+import { mapNcmPlaylistStub, mapNcmTrack } from "./mapper";
 import type {
   NcmDailyRecommendationsResponse,
   NcmLikedTrackIdsResponse,
