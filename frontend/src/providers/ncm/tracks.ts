@@ -69,18 +69,23 @@ export async function fetchNcmTrackDetails(
 
 export async function fetchNcmPlayUrls(
   http: KyInstance,
-  ids: readonly string[],
+  playbackIds: readonly string[],
 ): Promise<TrackPlayUrl[]> {
-  if (ids.length === 0) return [];
+  if (playbackIds.length === 0) return [];
   const res = await http
     .get("song/url/v1", {
       searchParams: {
         level: "exhigh",
-        id: ids.join(","),
+        id: playbackIds.join(","),
       },
     })
     .json<NcmPlayUrlResponse>();
   return (res.data ?? [])
     .filter((track): track is { id: string | number; url: string } => !!track.url)
-    .map((track): TrackPlayUrl => ({ id: track.id.toString(), playUrl: httpsUrl(track.url) }));
+    .map(
+      (track): TrackPlayUrl => ({
+        playbackId: track.id.toString(),
+        playUrl: httpsUrl(track.url),
+      }),
+    );
 }

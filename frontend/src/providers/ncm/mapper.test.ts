@@ -13,6 +13,7 @@ describe("NCM mapper", () => {
       al: { id: 123, name: "乐与怒", picUrl: "http://p1.music.126.net/cover.jpg" },
     });
 
+    expect(track.playbackId).toBe("347230");
     expect(track.musicVideoId).toBe("5436712");
     expect(track.album?.images?.[0]?.url).toContain("https://");
   });
@@ -30,6 +31,7 @@ describe("NCM mapper", () => {
       },
       {
         playUrl: "https://example.com/mv.mp4",
+        playbackResolved: true,
         quality: 1080,
         counts: { commentCount: 12, likedCount: 34, shareCount: 56 },
       },
@@ -39,6 +41,7 @@ describe("NCM mapper", () => {
       id: "5436712",
       name: "广岛之恋",
       playUrl: "https://example.com/mv.mp4",
+      playbackResolved: true,
       quality: 1080,
       playCount: 1000,
       commentCount: 12,

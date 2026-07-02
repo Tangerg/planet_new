@@ -25,6 +25,9 @@ export function toVibeMusicVideo(mv: Partial<DomainMusicVideo>): VibeMusicVideo 
     likedCount: mv.likedCount,
     shareCount: mv.shareCount,
     playUrl: mv.playUrl,
+    playbackResolved: mv.playbackResolved,
+    requiresSubscription: mv.requiresSubscription,
+    available: mv.available,
     quality: mv.quality,
   };
 }

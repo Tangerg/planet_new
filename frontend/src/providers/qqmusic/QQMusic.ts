@@ -137,17 +137,17 @@ export class QQMusic extends Provider {
     return parseLyrics(lrc);
   }
 
-  async playUrls(ids: string[]): Promise<TrackPlayUrl[]> {
-    if (ids.length === 0) return [];
+  async playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]> {
+    if (playbackIds.length === 0) return [];
     // /getMusicPlay accepts comma-separated batches.
     const res = await this.http
-      .get("getMusicPlay", { searchParams: { songmid: ids.join(",") } })
+      .get("getMusicPlay", { searchParams: { songmid: playbackIds.join(",") } })
       .json<QQMusicPlayResponse>();
     const playUrl = res.data?.playUrl ?? {};
     const out: TrackPlayUrl[] = [];
     for (const [songmid, info] of Object.entries(playUrl)) {
       if (info?.url) {
-        out.push({ id: songmid, playUrl: info.url });
+        out.push({ playbackId: songmid, playUrl: info.url });
       }
     }
     return out;

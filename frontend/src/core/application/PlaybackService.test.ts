@@ -16,7 +16,13 @@ function defer<T>(): Deferred<T> {
   return { promise, resolve };
 }
 
-const track = (id: string): Track => ({ id, name: id, durationMs: 1000, artists: [] });
+const track = (id: string): Track => ({
+  id,
+  playbackId: id,
+  name: id,
+  durationMs: 1000,
+  artists: [],
+});
 
 /** Minimal harness: a fake queue capability + a provider stub. play() only ever
  *  touches PLAY_QUEUE and the provider, so nothing else needs resolving. */

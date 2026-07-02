@@ -89,13 +89,15 @@ export function mapNcmTrack(raw: NcmTrack, opts: MapTrackOptions = {}): Partial<
   const artistsRaw = raw.ar ?? raw.artists ?? [];
   const album = albumRaw ? mapNcmAlbumStub(albumRaw) : opts.fallbackAlbum;
   const mvId = raw.mv ?? raw.mvid ?? raw.mvId;
+  const id = toIdString(raw.id);
   return {
     index: opts.index,
-    id: toIdString(raw.id),
+    id,
     name: raw.name ?? "",
     durationMs: raw.dt ?? raw.duration ?? 0,
     album,
     artists: artistsRaw.map(mapNcmArtist),
+    playbackId: id || undefined,
     musicVideoId: mvId ? mvId.toString() : undefined,
     // Neutral availability facts (see domain Track): fee 1 = VIP tier;
     // noCopyrightRcmd present = NCM holds no licence for the track.
@@ -191,6 +193,7 @@ export function mapNcmComment(raw: NcmComment): Comment {
 
 export type MapMusicVideoOptions = {
   playUrl?: string;
+  playbackResolved?: boolean;
   quality?: number;
   counts?: {
     commentCount?: number;
@@ -224,6 +227,7 @@ export function mapNcmMusicVideo(raw: NcmMusicVideo, opts: MapMusicVideoOptions 
     likedCount: opts.counts?.likedCount ?? raw.likedCount,
     shareCount: opts.counts?.shareCount ?? raw.shareCount,
     playUrl: opts.playUrl,
+    playbackResolved: opts.playbackResolved,
     quality: opts.quality,
   };
 }

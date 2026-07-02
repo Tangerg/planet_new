@@ -8,6 +8,7 @@ import { SearchResult } from "@domain/model/search";
 import type { Comment } from "@domain/model/comment";
 import type { Track } from "@domain/model/track";
 import { MusicVideo } from "@domain/model/music-video";
+import type { MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import type { ProviderCapability } from "@domain";
 import { warnReadFailure } from "@shared/debug";
 
@@ -47,6 +48,13 @@ export class MediaService {
   /** Whether the active provider supports a capability (lyrics, search, …). */
   supports(cap: ProviderCapability): boolean {
     return this.getProvider().supports(cap);
+  }
+
+  /** Active provider's MV playback/detail resolution policy. */
+  musicVideoPlaybackPolicy(): MusicVideoAvailabilityPolicy {
+    return {
+      canResolvePlayback: this.supports("musicVideoDetail"),
+    };
   }
 
   /** Home / personalized catalog (playlists, albums, artists, tracks). */

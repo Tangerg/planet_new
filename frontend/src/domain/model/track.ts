@@ -23,6 +23,13 @@ export type Track = {
   previewUrl?: string;
   /** Full playable URL, filled in after on-demand resolution. */
   playUrl?: string;
+  /**
+   * Provider-specific key used to resolve a playable stream URL. Often the same
+   * as `id`, but not guaranteed (for example QQ chart rows may expose a numeric
+   * song id while playback needs songmid). Undefined means "cannot be resolved
+   * into a stream from this payload".
+   */
+  playbackId?: string;
   /** Linked music-video id, when the provider exposes one. */
   musicVideoId?: string;
   /** Full playback needs a paid subscription/entitlement the current listener may
@@ -34,7 +41,7 @@ export type Track = {
 };
 
 export type TrackPlayUrl = {
-  id: string;
+  playbackId: string;
   playUrl: string;
 };
 
@@ -100,11 +107,11 @@ export const Track = {
     return canPlayAnything && !Track.isPlayable(t, policy);
   },
 
-  /** Clone tracks and apply resolved provider playback URLs by id, preserving order. */
+  /** Clone tracks and apply resolved provider playback URLs by playback id, preserving order. */
   withResolvedPlayUrls(tracks: readonly Track[], urls: readonly TrackPlayUrl[]): Track[] {
-    const byTrackId = new Map(urls.map((url) => [url.id, url.playUrl]));
+    const byPlaybackId = new Map(urls.map((url) => [url.playbackId, url.playUrl]));
     return tracks.map((track) => {
-      const playUrl = byTrackId.get(track.id);
+      const playUrl = track.playbackId ? byPlaybackId.get(track.playbackId) : undefined;
       return playUrl ? { ...track, playUrl } : { ...track };
     });
   },
@@ -115,6 +122,19 @@ export const Track = {
     const seen = new Set<string>();
     for (const track of tracks) {
       const id = track.id?.trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+    }
+    return ids;
+  },
+
+  /** Playback lookup keys from a track set, de-duplicated in encounter order. */
+  uniquePlaybackIds(tracks: readonly Partial<Track>[]): string[] {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const track of tracks) {
+      const id = track.playbackId?.trim();
       if (!id || seen.has(id)) continue;
       seen.add(id);
       ids.push(id);

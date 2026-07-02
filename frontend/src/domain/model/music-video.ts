@@ -22,8 +22,33 @@ export type MusicVideo = {
   shareCount?: number;
   /** Resolved playable MV URL, filled by providers that support it. */
   playUrl?: string;
+  /** Whether the provider already attempted to resolve the MV playback URL. */
+  playbackResolved?: boolean;
+  /** Full MV playback needs a paid subscription/entitlement the current listener may lack. */
+  requiresSubscription?: boolean;
+  /** `false` = provider does not license this MV for playback. Undefined = available/unknown. */
+  available?: boolean;
   /** Chosen resolution, e.g. 1080. */
   quality?: number;
+};
+
+export type MusicVideoAvailabilityStatus = "ready" | "resolvable" | "unavailable";
+
+export type MusicVideoUnavailableReason =
+  | "missing-video-id"
+  | "provider-unsupported"
+  | "missing-url"
+  | "not-available";
+
+export type MusicVideoAvailabilityPolicy = {
+  /** Provider can fetch MV detail / playback URL from a music-video id. */
+  canResolvePlayback?: boolean;
+};
+
+export type MusicVideoAvailability = {
+  status: MusicVideoAvailabilityStatus;
+  canStart: boolean;
+  reason?: MusicVideoUnavailableReason;
 };
 
 export const MusicVideo = {
@@ -51,8 +76,30 @@ export const MusicVideo = {
     return formatDuration(mv.durationMs ?? 0, [Minute, Second]);
   },
 
-  isPlayable(mv: Partial<MusicVideo>): boolean {
-    return Boolean(mv.playUrl);
+  playbackAvailability(
+    mv: Partial<MusicVideo>,
+    policy: MusicVideoAvailabilityPolicy = {},
+  ): MusicVideoAvailability {
+    if (mv.available === false) {
+      return { status: "unavailable", canStart: false, reason: "not-available" };
+    }
+    if (mv.playUrl) return { status: "ready", canStart: true };
+    if (!mv.id) return { status: "unavailable", canStart: false, reason: "missing-video-id" };
+    if (policy.canResolvePlayback && !mv.playbackResolved) {
+      return { status: "resolvable", canStart: true };
+    }
+    if (policy.canResolvePlayback) {
+      return { status: "unavailable", canStart: false, reason: "missing-url" };
+    }
+    return { status: "unavailable", canStart: false, reason: "provider-unsupported" };
+  },
+
+  isPlayable(mv: Partial<MusicVideo>, policy?: MusicVideoAvailabilityPolicy): boolean {
+    return MusicVideo.playbackAvailability(mv, policy).canStart;
+  },
+
+  isUnavailable(mv: Partial<MusicVideo>, policy?: MusicVideoAvailabilityPolicy): boolean {
+    return !MusicVideo.isPlayable(mv, policy);
   },
 
   uniqueById(videos: readonly Partial<MusicVideo>[]): Partial<MusicVideo>[] {

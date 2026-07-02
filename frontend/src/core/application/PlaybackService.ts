@@ -49,10 +49,10 @@ export class PlaybackService {
     const resolutionPolicy = this.playbackPolicy();
 
     let urls: readonly TrackPlayUrl[] = [];
-    const idsToResolve = intent.trackIdsToResolve(resolutionPolicy);
-    if (idsToResolve.length) {
+    const playbackIdsToResolve = intent.playbackIdsToResolve(resolutionPolicy);
+    if (playbackIdsToResolve.length) {
       try {
-        urls = await provider.playUrls(idsToResolve);
+        urls = await provider.playUrls(playbackIdsToResolve);
       } catch (error) {
         // We only get here for a provider that *claims* playback support (the
         // resolution policy gated on it), so a throw is a real resolve failure,

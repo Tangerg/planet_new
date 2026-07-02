@@ -11,6 +11,7 @@ import type {
   VibeTrack,
 } from "@/model/vibe";
 import type { Lyric } from "@domain/model/lyric";
+import type { MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
 import type { Settings } from "@/model/defaults";
 import { XMB } from "@/screens/XMB";
@@ -99,6 +100,7 @@ type MusicVideoBundle = {
   musicVideosLoading: boolean;
   musicVideoRail: VibeMusicVideo[];
   musicVideoComments: VibeComment[];
+  playbackPolicy: MusicVideoAvailabilityPolicy;
 };
 
 type SettingsBundle = {
@@ -155,8 +157,14 @@ export function ShellScreenRouter(props: Props) {
     playRecord,
   } = props.library;
   const { lyrics, comments, detail, artistObj } = props.content;
-  const { musicVideoObj, musicVideos, musicVideosLoading, musicVideoRail, musicVideoComments } =
-    props.musicVideo;
+  const {
+    musicVideoObj,
+    musicVideos,
+    musicVideosLoading,
+    musicVideoRail,
+    musicVideoComments,
+    playbackPolicy: musicVideoPlaybackPolicy,
+  } = props.musicVideo;
   const { settings, setSettings, accent, setAccent, accentOptions, heroTreatment } = props.settings;
   const mono = heroTreatment === "mono";
 
@@ -231,6 +239,7 @@ export function ShellScreenRouter(props: Props) {
         video={musicVideoObj}
         related={musicVideoRail}
         accent={accent}
+        playbackPolicy={musicVideoPlaybackPolicy}
         onPlay={(mv) => {
           onPause();
           openMusicVideoTheater(mv);
@@ -247,6 +256,7 @@ export function ShellScreenRouter(props: Props) {
         video={musicVideoObj}
         comments={musicVideoComments}
         accent={accent}
+        playbackPolicy={musicVideoPlaybackPolicy}
         onClose={goBack}
       />
     );

@@ -41,6 +41,7 @@ describe("QQ Music mapper", () => {
     expect(playlist.images[0]?.url).toBe("https://qpic.y.qq.com/cover.jpg");
     expect(playlist.tracks[0]).toMatchObject({
       id: "song-mid",
+      playbackId: "song-mid",
       name: "Shape of You",
       durationMs: 210000,
       artists: [{ id: "17", name: "J.Fla" }],
@@ -53,6 +54,7 @@ describe("QQ Music mapper", () => {
       mapQQSmartboxSong({ mid: 1001, name: "<em>晴天</em>", singer: "<em>周杰伦</em>" }),
     ).toMatchObject({
       id: "1001",
+      playbackId: "1001",
       name: "晴天",
       artists: [{ name: "周杰伦" }],
     });
@@ -93,8 +95,14 @@ describe("QQ Music mapper", () => {
       artists: [{ id: "88", name: "王菲" }],
       album: { id: "99" },
     });
+    expect(song.playbackId).toBeUndefined();
     expect(albumImage(99, 500)).toContain("T002R500x500M00099.jpg");
     expect(singerImage(88, 300)).toContain("T001R300x300M00088.jpg");
+
+    expect(mapQQRankSong({ songId: 300, mid: "song-mid" })).toMatchObject({
+      id: "300",
+      playbackId: "song-mid",
+    });
   });
 
   it("tolerates bare song payloads with safe domain defaults", () => {

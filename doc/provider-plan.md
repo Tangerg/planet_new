@@ -125,7 +125,7 @@ type Playback =
   | { kind: "sdk"; uri: string }   // 交给 SDK device
 ```
 
-`playUrls(ids): TrackPlayUrl[]` 泛化为 `resolvePlayback(ids): Playback[]`。Control 插件加第二播放后端:`kind:"url"` 走现有路径;`kind:"sdk"` 把 play/pause/seek/volume 转发给 SDK 控制器,进度从 SDK 事件回灌 `play_time_changed`/`track_duration_changed`(**复用事件总线,不在 UI 复制播放态**)。capability 加 `"sdkPlayback"`。
+`playUrls(playbackIds): TrackPlayUrl[]` 泛化为 `resolvePlayback(playbackIds): Playback[]`。Control 插件加第二播放后端:`kind:"url"` 走现有路径;`kind:"sdk"` 把 play/pause/seek/volume 转发给 SDK 控制器,进度从 SDK 事件回灌 `play_time_changed`/`track_duration_changed`(**复用事件总线,不在 UI 复制播放态**)。capability 加 `"sdkPlayback"`。
 
 > ⚠️ 这是唯一会碰内核播放核心的维度,爆炸半径最大。**默认不做**,只在确认要官方全曲、且 DRM 验证通过后启动(见阶段 D)。
 
@@ -147,7 +147,7 @@ type Playback =
 | `IProvider` 方法 | Meting 调用 | capability |
 |---|---|---|
 | `search(q)` | `?type=search&keyword=` | `search` |
-| `playUrls(ids)` | `?type=url&id=` → 直链 | `fullPlayback` |
+| `playUrls(playbackIds)` | `?type=url&id=` → 直链 | `fullPlayback` |
 | `lyric(id)` | `?type=lyric&id=` | `lyric` |
 | `playlistDetail/albumDetail` | `?type=playlist/album&id=` | … |
 
@@ -159,7 +159,7 @@ type Playback =
 
 1. 新增 `@domain/ports/auth.ts`(见维度 1);`ProviderCapability` 加 `"userAuth"`。
 2. Token 存储落 Go 侧(首次引入 Wails binding:`SaveToken/LoadToken/DeleteToken`)。
-3. UI:provider 若 `supports("userAuth")` 显示账户入口;登录逻辑放 `hooks.ts`,vibe 屏幕保持纯展示。
+3. UI:provider 若 `supports("userAuth")` 显示账户入口;登录逻辑放 `ui/hooks/`,vibe 屏幕保持纯展示。
 
 | 爆炸半径 | 中。新增端口 + 首次 Go binding;现有 4 provider 不实现该接口、不受影响。 |
 |---|---|

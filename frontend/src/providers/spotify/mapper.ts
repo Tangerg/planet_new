@@ -24,6 +24,7 @@ export function toTrack(
   return {
     index,
     id: t.id,
+    playbackId: t.id,
     name: t.name,
     durationMs: t.duration_ms,
     explicit: t.explicit,

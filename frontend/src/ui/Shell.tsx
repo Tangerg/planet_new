@@ -274,6 +274,7 @@ export default function Shell() {
         musicVideosLoading,
         musicVideoRail,
         musicVideoComments,
+        playbackPolicy: media.musicVideoPlaybackPolicy(),
       }}
       settings={{
         settings,

@@ -6,8 +6,8 @@ import type { VibeTrack } from "@/model/vibe";
 
 /**
  * Playback-facing presentation projections. These functions keep queue/domain
- * semantics outside React hooks while still returning the legacy vibe shapes
- * the current UI renders.
+ * semantics outside React hooks while returning the Vibe display shapes the
+ * current UI renders.
  */
 export function currentTrackView(track: Track | undefined): VibeTrack | undefined {
   return track ? toVibeTrack(track) : undefined;
