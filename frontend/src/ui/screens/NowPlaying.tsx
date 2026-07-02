@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React from "react";
 import { motion } from "motion/react";
 import type { ArtistRef, VibeComment, VibeTrack } from "@/model/adapt";
 import { Art, artBg, artPair } from "@/components/primitives";
@@ -14,9 +14,8 @@ import { TagStack } from "@/components/now-playing/TagStack";
 import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
 import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
-import { activeLyricIndex, type Lyric } from "@domain/model/lyric";
-import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
-import { lyricLinesOrFallback } from "@/model/now-playing";
+import type { Lyric } from "@domain/model/lyric";
+import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
 
 type Props = {
   track?: VibeTrack;
@@ -52,86 +51,33 @@ export const NowPlaying = React.memo(function NowPlaying({
   onPrev,
   onOpenArtist,
 }: Props) {
-  // Read the live clock here (not threaded from Shell) so only Now Playing
-  // re-renders on the progress tick — see usePlaybackProgress.
-  const { positionSec: progressSec } = usePlaybackProgress();
-  const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
-  const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
-  const touch = useRef<{ x: number; y: number } | null>(null);
-  const queueScrollRef = useRef<HTMLDivElement>(null);
-  // Portal target for the queue Sheet — keeps it positioned within this screen.
-  const rootRef = useRef<HTMLDivElement>(null);
-  // Memoized so the lyric auto-advance effect below depends on a stable value
-  // (the fallback array literal would otherwise be new every render).
-  const lines = useMemo(() => lyricLinesOrFallback(lyrics), [lyrics]);
-  const [active, setActive] = useState(0);
   const { t } = useTranslation();
-
-  // Sync active lyric line to real playback progress. Lyric timestamps are in
-  // milliseconds; `progressSec` is in seconds.
-  const lyricScrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const idx = activeLyricIndex(lines, progressSec * 1000);
-    setActive((prev) => (prev === idx ? prev : idx));
-  }, [progressSec, lines]);
+  const {
+    mode,
+    setMode,
+    queueOpen,
+    setQueueOpen,
+    lines,
+    active,
+    lyricsMode,
+    commentsMode,
+    panelOpen,
+    rootRef,
+    lyricScrollRef,
+    queueScrollRef,
+    touchHandlers,
+  } = useNowPlayingModel({ lyrics, initialMode, onNext, onPrev });
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
   const coverSeed = track?.coverSeed || 0;
   const grad = track?.gradient;
-  const lyricsMode = mode === "lyrics";
-  const commentsMode = mode === "comments";
-  const panelOpen = mode !== "cover";
   const NP_EASE = "cubic-bezier(.16,1,.3,1)";
-
-  // axis navigation: Down = queue, Up = lyrics (capture phase wins over global spatial-nav)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        setQueueOpen(true);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        e.stopPropagation();
-        if (queueOpen) setQueueOpen(false);
-        else setMode((m) => (m === "lyrics" ? "cover" : "lyrics"));
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [queueOpen]);
-
-  // TagStack and ModeTag are defined at module scope above
 
   return (
     <FadeIn
       ref={rootRef}
       className="relative h-full overflow-hidden bg-[#08080b]"
-      onTouchStart={(e: React.TouchEvent) => {
-        const t = e.touches[0];
-        touch.current = { x: t.clientX, y: t.clientY };
-      }}
-      onTouchEnd={(e: React.TouchEvent) => {
-        if (!touch.current) return;
-        const t = e.changedTouches[0];
-        const dx = t.clientX - touch.current.x,
-          dy = t.clientY - touch.current.y;
-        const ax = Math.abs(dx),
-          ay = Math.abs(dy);
-        touch.current = null;
-        if (Math.max(ax, ay) < 40) return;
-        if (ax > ay) {
-          if (dx < 0) onNext?.();
-          else onPrev?.();
-        } // left=next, right=prev
-        else if (dy < 0) {
-          if (queueOpen) setQueueOpen(false);
-          else setMode((m) => (m === "lyrics" ? "cover" : "lyrics"));
-        } // up=lyrics
-        else {
-          setQueueOpen(true);
-        } // down=queue
-      }}
+      {...touchHandlers}
     >
       {/* close */}
       <Button
