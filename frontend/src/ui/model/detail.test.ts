@@ -49,7 +49,7 @@ describe("detail read-model helpers", () => {
   test("decides whether a collection summary needs provider detail", () => {
     expect(shouldFetchDetailTarget(summary())).toBe(true);
     expect(shouldFetchDetailTarget(summary({ id: "" }))).toBe(false);
-    expect(shouldFetchDetailTarget(summary({ _real: false }))).toBe(false);
+    expect(shouldFetchDetailTarget(summary({ fetchDetail: false }))).toBe(false);
     expect(shouldFetchDetailTarget(summary({ tracks: [track("t")] }))).toBe(false);
   });
 

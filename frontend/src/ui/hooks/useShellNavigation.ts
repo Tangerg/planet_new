@@ -108,7 +108,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     [openDetail],
   );
   const openChart = useCallback(
-    (c: VibeCollection) => openDetail({ ...c, kind: "Chart", _real: true }),
+    (c: VibeCollection) => openDetail({ ...c, kind: "Chart", fetchDetail: true }),
     [openDetail],
   );
   const openArtist = useCallback(

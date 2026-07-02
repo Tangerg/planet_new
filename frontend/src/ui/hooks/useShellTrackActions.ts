@@ -62,7 +62,7 @@ export function useShellTrackActions({
       owner: "You",
       coverSeed: 0,
       gradient: ["#2a0420", "#ff4fa3"],
-      _real: false,
+      fetchDetail: false,
       description: "Everything you've hearted, in one place.",
       tracks: catalog.allTracks.filter((track) => liked.has(track.id)),
     });

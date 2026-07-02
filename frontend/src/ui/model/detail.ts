@@ -44,7 +44,7 @@ export function normalizeDetailTarget(input: OpenTarget): DetailTarget {
 }
 
 export function shouldFetchDetailTarget(target: DetailTarget): boolean {
-  return Boolean(target.id && target._real !== false && target.tracks.length === 0);
+  return Boolean(target.id && target.fetchDetail !== false && target.tracks.length === 0);
 }
 
 export async function loadDetailTarget(

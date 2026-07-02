@@ -53,7 +53,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const albums = data.albums;
   const artists = data.artists;
   // "每日推荐" as a synthetic playlist of the day's songs (no provider fetch on
-  // open — tracks are already loaded, so _real:false). It headlines the hero.
+  // open — tracks are already loaded, so fetchDetail:false). It headlines the hero.
   const dailyMix = useMemo<VibeCollection | undefined>(
     () =>
       daily.length
@@ -68,7 +68,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
             images: daily[0].images,
             description: "Songs picked for you today — refreshed every morning.",
             tracks: daily,
-            _real: false,
+            fetchDetail: false,
           }
         : undefined,
     [daily],

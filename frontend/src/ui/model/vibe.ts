@@ -38,8 +38,9 @@ export type VibeTrack = {
   /** The domain track this view was projected from. Carried so a "play" gesture
    *  can hand the kernel the full entity without re-fetching (the queue stores
    *  domain tracks and re-projects them for Now Playing). Absent only on
-   *  hand-built view tracks like the placeholder. */
-  source?: Partial<Track>;
+   *  hand-built view tracks like the placeholder. Boundary rule: only the track
+   *  adapter writes it (hence `readonly`), only `toTrack()` reads it back. */
+  readonly source?: Partial<Track>;
 };
 
 /** Display shape for a collection (playlist / album / chart). */
@@ -66,8 +67,10 @@ export type VibeCollection = {
   title?: string;
   /** Detail variant tag — "chart" switches the track list to ranked rows. */
   variant?: string;
-  /** Whether the detail should be fetched from the provider (false = mock-only). */
-  _real?: boolean;
+  /** Whether opening this collection should fetch full detail from the provider.
+   *  Default (undefined) = fetch; explicit `false` = tracks already loaded
+   *  (mock / synthetic collections like Daily Mix, Liked Songs). */
+  fetchDetail?: boolean;
 };
 
 /** Display shape for an artist. */
@@ -131,7 +134,7 @@ export type OpenTarget = CardItem & {
   year?: number;
   variant?: string;
   tracks?: VibeTrack[];
-  _real?: boolean;
+  fetchDetail?: boolean;
 };
 
 export type DetailTarget = OpenTarget & { tracks: VibeTrack[] };
