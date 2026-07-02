@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { MediaService } from "./MediaService";
 import type { MusicProvider } from "@domain";
 import { SearchResult } from "@domain/model/search";
@@ -166,6 +166,29 @@ describe("MediaService optional provider reads", () => {
     await expect(service.musicVideoDetail("mv")).resolves.toBeUndefined();
     await expect(service.artistMusicVideos("artist")).resolves.toEqual([]);
     await expect(service.musicVideoComments("mv")).resolves.toEqual([]);
+  });
+
+  test("surfaces a supported read that faulted (observable), but stays silent when unsupported", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const failing = new MediaService(() =>
+      makeProvider({
+        capabilities: new Set(["search"]),
+        search: async () => {
+          throw new Error("boom");
+        },
+      }),
+    );
+    await expect(failing.search("song")).resolves.toEqual(SearchResult.empty());
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("fake.search read failed");
+
+    warn.mockClear();
+    const unsupported = new MediaService(() => makeProvider({}));
+    await expect(unsupported.search("song")).resolves.toEqual(SearchResult.empty());
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
   });
 
   test("skips empty searches and empty track batches before provider calls", async () => {

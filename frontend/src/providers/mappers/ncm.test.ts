@@ -48,4 +48,11 @@ describe("NCM mapper", () => {
     expect(mv.artists[0]).toEqual({ id: "8926", name: "莫文蔚" });
     expect(mv.images[0]?.url).toContain("https://");
   });
+
+  it("tolerates a bare track payload with safe domain defaults", () => {
+    const track = mapNcmTrack({});
+    expect(track).toMatchObject({ id: "", name: "", durationMs: 0, artists: [] });
+    expect(track.album).toBeUndefined();
+    expect(track.musicVideoId).toBeUndefined();
+  });
 });
