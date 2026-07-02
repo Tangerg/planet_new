@@ -167,7 +167,7 @@ export function TrackRow({
               {track.version}
             </span>
           )}
-          {track.vipOnly && (
+          {track.requiresSubscription && (
             <span
               className={badgeCls + " font-bold"}
               style={{ color: "#06060a", background: accent }}

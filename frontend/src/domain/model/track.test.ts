@@ -66,6 +66,17 @@ describe("Track", () => {
     expect(Track.isPlayable({ id: "1" }, { canResolveFullPlayback: true })).toBe(true);
   });
 
+  test("treats an unlicensed track as unavailable regardless of policy", () => {
+    expect(Track.playbackAvailability({ id: "1", available: false })).toEqual({
+      status: "unavailable",
+      canStart: false,
+      reason: "not-available",
+    });
+    expect(
+      Track.isUnavailable({ id: "1", available: false }, { canResolveFullPlayback: true }),
+    ).toBe(true);
+  });
+
   test("marks a track unavailable only when the provider can play but this track can't", () => {
     const full = { canResolveFullPlayback: true };
     const previewOnly = { canUsePreviewPlayback: true };

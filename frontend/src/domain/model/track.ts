@@ -25,6 +25,12 @@ export type Track = {
   playUrl?: string;
   /** Linked music-video id, when the provider exposes one. */
   musicVideoId?: string;
+  /** Full playback needs a paid subscription/entitlement the current listener may
+   *  lack. Provider-neutral: each provider maps its own tier concept onto it. */
+  requiresSubscription?: boolean;
+  /** Whether the provider licenses this track for playback at all. `false` = not
+   *  licensed / removed / region-locked (provider-neutral). Undefined = available. */
+  available?: boolean;
 };
 
 export type TrackPlayUrl = {
@@ -87,6 +93,7 @@ export const Track = {
    * as a dev source, rather than every row showing "unavailable".
    */
   isUnavailable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
+    if (t.available === false) return true; // not licensed → always dimmed
     const canPlayAnything = Boolean(
       policy?.canResolveFullPlayback || policy?.canUsePreviewPlayback,
     );

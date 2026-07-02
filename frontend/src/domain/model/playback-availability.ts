@@ -1,6 +1,10 @@
 export type PlaybackAvailabilityStatus = "ready" | "resolvable" | "preview" | "unavailable";
 
-export type PlaybackUnavailableReason = "missing-track-id" | "provider-unsupported" | "missing-url";
+export type PlaybackUnavailableReason =
+  | "missing-track-id"
+  | "provider-unsupported"
+  | "missing-url"
+  | "not-available";
 
 export type PlaybackAvailabilityPolicy = {
   /** Provider can resolve a full stream URL from a track id on demand. */
@@ -19,6 +23,8 @@ type PlaybackAvailabilityTrack = {
   id?: string;
   playUrl?: string;
   previewUrl?: string;
+  /** `false` = provider does not license this track for playback (removed / region-locked). */
+  available?: boolean;
 };
 
 export const PlaybackAvailability = {
@@ -26,6 +32,9 @@ export const PlaybackAvailability = {
     track: Partial<PlaybackAvailabilityTrack>,
     policy: PlaybackAvailabilityPolicy = {},
   ): PlaybackAvailability {
+    if (track.available === false) {
+      return { status: "unavailable", canStart: false, reason: "not-available" };
+    }
     if (track.playUrl) return { status: "ready", canStart: true };
     if (track.id && policy.canResolveFullPlayback) return { status: "resolvable", canStart: true };
     if (track.previewUrl && policy.canUsePreviewPlayback !== false) {
