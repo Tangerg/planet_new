@@ -4,6 +4,7 @@
   "rules": {
     "unicorn/no-useless-spread": "off",
     "typescript/no-this-alias": "off",
+    "typescript/consistent-type-imports": "error",
     "react-hooks/exhaustive-deps": "error",
     "react-hooks/rules-of-hooks": "error"
   },

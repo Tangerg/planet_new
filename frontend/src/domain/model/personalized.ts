@@ -1,7 +1,7 @@
-import { Playlist } from "./playlist";
-import { Album } from "./album";
-import { Track } from "./track";
-import { Artist } from "./artist";
+import type { Playlist } from "./playlist";
+import type { Album } from "./album";
+import type { Track } from "./track";
+import type { Artist } from "./artist";
 
 export type Personalized = {
   playlists: Partial<Playlist>[];

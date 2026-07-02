@@ -8,14 +8,8 @@ import {
   ProviderRegistry,
   AudioEngine,
 } from "@core/plugin";
-import {
-  LocalCredentialStore,
-  Mock,
-  NeteaseCloudMusic,
-  Provider,
-  QQMusic,
-  Spotify,
-} from "@providers";
+import type { Provider } from "@providers";
+import { LocalCredentialStore, Mock, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
 import { PlayQueueStoreBridge } from "@/store/bridge";
 

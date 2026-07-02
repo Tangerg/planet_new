@@ -1,7 +1,7 @@
-import { Album } from "./album";
-import { Artist } from "./artist";
-import { Playlist } from "./playlist";
-import { Track } from "./track";
+import type { Album } from "./album";
+import type { Artist } from "./artist";
+import type { Playlist } from "./playlist";
+import type { Track } from "./track";
 
 /**
  * Unified search result. Each provider fills whichever dimensions it supports;

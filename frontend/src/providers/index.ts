@@ -1,5 +1,5 @@
 import { Provider } from "./provider";
-import { MusicProvider, ProviderCapability } from "@domain";
+import type { MusicProvider, ProviderCapability } from "@domain";
 import { NeteaseCloudMusic } from "./NeteaseCloudMusic";
 import { Spotify } from "./Spotify";
 import { Mock } from "./Mock";

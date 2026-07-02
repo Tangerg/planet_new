@@ -22,6 +22,8 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    /* 类型-only 导入必须用 `import type`(配合 isolatedModules,打包器擦除更干净) */
+    "verbatimModuleSyntax": true,
 
     /* —— React JSX —— */
     "jsx": "react-jsx",

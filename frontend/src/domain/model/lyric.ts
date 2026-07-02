@@ -1,4 +1,4 @@
-import { FormattedDuration } from "./duration";
+import type { FormattedDuration } from "./duration";
 import { parseTimestamp } from "@shared/time";
 
 export type Lyric = {
