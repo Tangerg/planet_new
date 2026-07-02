@@ -6,6 +6,7 @@ import {
   mapQQPlaylistDetail,
   mapQQRankSong,
   mapQQSmartboxSong,
+  mapQQTrackFromSong,
   singerImage,
 } from "./qqmusic";
 
@@ -94,5 +95,16 @@ describe("QQ Music mapper", () => {
     });
     expect(albumImage(99, 500)).toContain("T002R500x500M00099.jpg");
     expect(singerImage(88, 300)).toContain("T001R300x300M00088.jpg");
+  });
+
+  it("tolerates bare song payloads with safe domain defaults", () => {
+    expect(mapQQTrackFromSong({})).toMatchObject({
+      id: "",
+      name: "",
+      durationMs: 0,
+      artists: [],
+    });
+    // No cover fields → singleImage("") collapses to an empty image list, not [{url:""}].
+    expect(mapQQRankSong({}).album?.images).toEqual([]);
   });
 });
