@@ -9,7 +9,7 @@ import type { Comment } from "@domain/model/comment";
 import type { Track } from "@domain/model/track";
 import { MusicVideo } from "@domain/model/music-video";
 import type { ProviderCapability } from "@domain";
-import { errorMessage, warn } from "@shared/debug";
+import { warnReadFailure } from "@shared/debug";
 
 export type MusicVideoDiscoveryOptions = {
   /** Maximum artist seeds to query. Defaults to a restrained discovery pass. */
@@ -117,7 +117,7 @@ export class MediaService {
         provider.artistMusicVideos(id).catch((error: unknown) => {
           // Tolerate one seed failing (partial discovery still useful), but a
           // systematically failing endpoint stays visible in the console.
-          warn(`${provider.name}.artistMusicVideos(${id}) failed: ${errorMessage(error)}`);
+          warnReadFailure(`${provider.name}.artistMusicVideos(${id})`, error);
           return [];
         }),
       ),
@@ -173,7 +173,7 @@ export class MediaService {
       // response), not "this provider can't do it". Surface it — a silent empty
       // return is indistinguishable from "no data" and hides broken wiring. We
       // still hand back the fallback so one bad read never blanks the whole app.
-      warn(`${provider.name}.${capability} read failed: ${errorMessage(error)}`);
+      warnReadFailure(`${provider.name}.${capability}`, error);
       return fallback;
     }
   }
