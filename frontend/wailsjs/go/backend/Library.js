@@ -26,6 +26,10 @@ export function Home() {
   return window['go']['backend']['Library']['Home']();
 }
 
+export function Lyric(arg1) {
+  return window['go']['backend']['Library']['Lyric'](arg1);
+}
+
 export function PickAndScan() {
   return window['go']['backend']['Library']['PickAndScan']();
 }

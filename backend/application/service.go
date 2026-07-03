@@ -53,11 +53,12 @@ type Service struct {
 	catalog domain.Catalog
 	scanner domain.Scanner
 	picker  FolderPicker
+	lyrics  domain.LyricReader
 	mu      sync.Mutex // serializes scans (one writer at a time)
 }
 
-func NewService(catalog domain.Catalog, scanner domain.Scanner, picker FolderPicker) *Service {
-	return &Service{catalog: catalog, scanner: scanner, picker: picker}
+func NewService(catalog domain.Catalog, scanner domain.Scanner, picker FolderPicker, lyrics domain.LyricReader) *Service {
+	return &Service{catalog: catalog, scanner: scanner, picker: picker, lyrics: lyrics}
 }
 
 // available guards a degraded backend (catalog + scanner are wired together, so
@@ -203,4 +204,22 @@ func (s *Service) Search(query string) (domain.SearchResult, error) {
 		return domain.EmptySearchResult(), err
 	}
 	return s.catalog.Search(query, 50)
+}
+
+// Lyric returns the raw sidecar lyric text (LRC) for a track, "" when it has
+// none. Best-effort: an unknown track or an unreadable path degrades to "" (no
+// lyrics shown) rather than an error, matching the library's graceful-degrade
+// posture — the frontend parses the LRC into timed lines.
+func (s *Service) Lyric(id domain.TrackID) (string, error) {
+	if err := s.available(); err != nil {
+		return "", err
+	}
+	if s.lyrics == nil {
+		return "", nil
+	}
+	path, err := s.catalog.TrackPath(id)
+	if err != nil || path == "" {
+		return "", nil
+	}
+	return s.lyrics.Lyric(path)
 }

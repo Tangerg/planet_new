@@ -14,6 +14,7 @@ vi.mock("@wailsjs/go/backend/Library", () => ({
   ArtistDetail: vi.fn<typeof Library.ArtistDetail>(),
   Tracks: vi.fn<typeof Library.Tracks>(),
   Search: vi.fn<typeof Library.Search>(),
+  Lyric: vi.fn<typeof Library.Lyric>(),
 }));
 
 function track(over: Partial<LocalTrack> = {}): LocalTrack {
@@ -67,8 +68,8 @@ describe("LocalMusic — bridge present", () => {
     expect(provider.name).toBe("Local");
     expect(provider.supports("fullPlayback")).toBe(true);
     expect(provider.supports("search")).toBe(true);
+    expect(provider.supports("lyric")).toBe(true); // sidecar .lrc
     // Network-only concepts the on-device library does not have.
-    expect(provider.supports("lyric")).toBe(false);
     expect(provider.supports("toplist")).toBe(false);
     expect(provider.supports("auth")).toBe(false);
   });
@@ -200,7 +201,18 @@ describe("LocalMusic — bridge present", () => {
     expect(Library.Search).not.toHaveBeenCalled();
   });
 
-  it("has no fetched lyrics", async () => {
+  it("parses the sidecar .lrc returned by the bridge into timed lines", async () => {
+    vi.mocked(Library.Lyric).mockResolvedValue("[00:01.000]hello\n[00:02.500]world\n");
+    const lines = await provider.lyric("t1");
+    expect(Library.Lyric).toHaveBeenCalledWith("t1");
+    expect(lines).toEqual([
+      { duration: 1000, content: "hello" },
+      { duration: 2500, content: "world" },
+    ]);
+  });
+
+  it("returns no lines when the track has no sidecar lyric", async () => {
+    vi.mocked(Library.Lyric).mockResolvedValue("");
     expect(await provider.lyric("t1")).toEqual([]);
   });
 });
@@ -232,6 +244,7 @@ describe("LocalMusic — no bridge (plain browser)", () => {
       albums: [],
       playlists: [],
     });
+    expect(await provider.lyric("t1")).toEqual([]);
 
     for (const fn of [
       Library.Home,
@@ -240,6 +253,7 @@ describe("LocalMusic — no bridge (plain browser)", () => {
       Library.ArtistDetail,
       Library.Tracks,
       Library.Search,
+      Library.Lyric,
     ]) {
       // prettier-ignore
       expect(fn).not.toHaveBeenCalled();

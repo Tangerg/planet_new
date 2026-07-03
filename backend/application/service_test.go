@@ -16,6 +16,7 @@ type fakeCatalog struct {
 	savedAt    int64
 	added      int
 	total      int
+	path       string // TrackPath result
 }
 
 func (f *fakeCatalog) Save(folder string, metas []domain.TrackMetadata, at int64) (int, int, error) {
@@ -42,6 +43,12 @@ func (f *fakeCatalog) TracksByArtist(domain.ArtistID) ([]domain.Track, error) { 
 func (f *fakeCatalog) Search(string, int) (domain.SearchResult, error) {
 	return domain.SearchResult{Tracks: f.recent, Albums: f.albums, Artists: f.artists}, nil
 }
+func (f *fakeCatalog) TrackPath(domain.TrackID) (string, error) { return f.path, nil }
+
+// fakeLyrics maps an audio path to its sidecar lyric text; unknown paths yield "".
+type fakeLyrics struct{ byPath map[string]string }
+
+func (f fakeLyrics) Lyric(audioPath string) (string, error) { return f.byPath[audioPath], nil }
 
 type fakeScanner struct {
 	metas []domain.TrackMetadata
@@ -61,7 +68,7 @@ func (p fakePicker) Pick() (string, error) { return p.folder, nil }
 func TestScanFolderOrchestratesScannerIntoCatalog(t *testing.T) {
 	cat := &fakeCatalog{added: 2, total: 5}
 	scanner := fakeScanner{metas: []domain.TrackMetadata{{Path: "/m/a.mp3"}, {Path: "/m/b.mp3"}, {Path: "/m/c.mp3"}}, seen: 3}
-	svc := NewService(cat, scanner, fakePicker{})
+	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{})
 
 	report, err := svc.ScanFolder("/m")
 	if err != nil {
@@ -80,7 +87,7 @@ func TestScanFolderOrchestratesScannerIntoCatalog(t *testing.T) {
 
 func TestPickAndScanUsesPickerThenScans(t *testing.T) {
 	cat := &fakeCatalog{added: 1, total: 1}
-	svc := NewService(cat, fakeScanner{seen: 1}, fakePicker{folder: "/chosen"})
+	svc := NewService(cat, fakeScanner{seen: 1}, fakePicker{folder: "/chosen"}, fakeLyrics{})
 
 	report, err := svc.PickAndScan()
 	if err != nil {
@@ -93,7 +100,7 @@ func TestPickAndScanUsesPickerThenScans(t *testing.T) {
 
 func TestPickAndScanCancelledIsNoOp(t *testing.T) {
 	cat := &fakeCatalog{}
-	svc := NewService(cat, fakeScanner{}, fakePicker{folder: ""}) // user cancelled
+	svc := NewService(cat, fakeScanner{}, fakePicker{folder: ""}, fakeLyrics{}) // user cancelled
 
 	report, err := svc.PickAndScan()
 	if err != nil {
@@ -113,7 +120,7 @@ func TestHomeComposesCatalogReads(t *testing.T) {
 		artists: []domain.Artist{{ID: "ar"}},
 		recent:  []domain.Track{{ID: "t"}},
 	}
-	home, err := NewService(cat, fakeScanner{}, fakePicker{}).Home()
+	home, err := NewService(cat, fakeScanner{}, fakePicker{}, fakeLyrics{}).Home()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,12 +130,39 @@ func TestHomeComposesCatalogReads(t *testing.T) {
 }
 
 func TestUnavailableWhenCatalogNil(t *testing.T) {
-	svc := NewService(nil, nil, fakePicker{}) // infra failed to open
+	svc := NewService(nil, nil, fakePicker{}, nil) // infra failed to open
 
 	if _, err := svc.Home(); err != ErrUnavailable {
 		t.Errorf("Home err = %v, want ErrUnavailable", err)
 	}
 	if _, err := svc.ScanFolder("/x"); err != ErrUnavailable {
 		t.Errorf("ScanFolder err = %v, want ErrUnavailable", err)
+	}
+}
+
+func TestLyricReadsSidecarForTrackPath(t *testing.T) {
+	cat := &fakeCatalog{path: "/m/song.flac"}
+	lyr := fakeLyrics{byPath: map[string]string{"/m/song.flac": "[00:01.00]hi"}}
+	svc := NewService(cat, fakeScanner{}, fakePicker{}, lyr)
+
+	got, err := svc.Lyric("t1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "[00:01.00]hi" {
+		t.Errorf("Lyric = %q, want the sidecar text resolved via TrackPath", got)
+	}
+}
+
+func TestLyricEmptyWhenTrackHasNoPath(t *testing.T) {
+	cat := &fakeCatalog{} // TrackPath returns ""
+	svc := NewService(cat, fakeScanner{}, fakePicker{}, fakeLyrics{})
+
+	got, err := svc.Lyric("missing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "" {
+		t.Errorf("Lyric = %q, want empty for an unknown track", got)
 	}
 }
