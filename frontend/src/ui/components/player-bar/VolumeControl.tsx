@@ -1,8 +1,7 @@
 import { useState } from "react";
-import * as HoverCard from "@radix-ui/react-hover-card";
-import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/controls/Button";
+import { HoverCard } from "@/components/controls/HoverCard";
 import { Slider } from "@/components/controls/Slider";
 import { Icon } from "@/infra/icons";
 import { volumeLevel } from "@/model/player";
@@ -25,8 +24,23 @@ export function VolumeControl({ accent, tintA, tintB, volume, onVolume }: Props)
   const VolumeIcon = volumeIconByLevel[volumeLevel(volume)];
 
   return (
-    <HoverCard.Root open={open} onOpenChange={setOpen} openDelay={0} closeDelay={120}>
-      <HoverCard.Trigger asChild>
+    <HoverCard
+      open={open}
+      onOpenChange={setOpen}
+      openDelay={0}
+      closeDelay={120}
+      side="top"
+      align="center"
+      sideOffset={12}
+      className="volpop z-[9000] flex flex-col items-center gap-3 rounded-[14px] px-[9px] pb-[13px] pt-[15px]"
+      style={{
+        background: `linear-gradient(120deg, ${tintA}38, ${tintB}38), rgba(247,246,244,.86)`,
+        border: "0.5px solid rgba(255,255,255,.6)",
+        WebkitBackdropFilter: "blur(22px) saturate(180%)",
+        backdropFilter: "blur(22px) saturate(180%)",
+        boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
+      }}
+      trigger={
         <Button
           className="grid place-items-center p-[5px]"
           style={{ color: "rgba(20,20,24,.78)" }}
@@ -35,82 +49,60 @@ export function VolumeControl({ accent, tintA, tintB, volume, onVolume }: Props)
         >
           <VolumeIcon size={18} />
         </Button>
-      </HoverCard.Trigger>
-      <AnimatePresence>
-        {open && (
-          <HoverCard.Portal forceMount>
-            <HoverCard.Content side="top" align="center" sideOffset={12} asChild forceMount>
-              <motion.div
-                className="volpop z-[9000] flex flex-col items-center gap-3 rounded-[14px] px-[9px] pb-[13px] pt-[15px]"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                style={{
-                  background: `linear-gradient(120deg, ${tintA}38, ${tintB}38), rgba(247,246,244,.86)`,
-                  border: "0.5px solid rgba(255,255,255,.6)",
-                  WebkitBackdropFilter: "blur(22px) saturate(180%)",
-                  backdropFilter: "blur(22px) saturate(180%)",
-                  boxShadow: "0 16px 38px -14px rgba(0,0,0,.32)",
-                }}
-              >
-                <span className="block w-[22px] text-center font-mono text-[9.5px] tracking-[0.1em] text-[rgba(20,20,24,0.5)] tabular-nums">
-                  {Math.round(volume)}
-                </span>
-                <Slider
-                  orientation="vertical"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={[volume / 100]}
-                  onValueChange={([v]) => onVolume(Math.round(v * 100))}
-                  thumbLabel="Volume"
-                  style={{
-                    position: "relative",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    width: 12,
-                    height: 96,
-                    cursor: "pointer",
-                    touchAction: "none",
-                  }}
-                  parts={{
-                    track: {
-                      style: {
-                        position: "relative",
-                        width: 4,
-                        height: "100%",
-                        borderRadius: 999,
-                        background: "rgba(20,20,24,.16)",
-                      },
-                    },
-                    range: {
-                      style: {
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        background: accent,
-                        borderRadius: 999,
-                      },
-                    },
-                    thumb: {
-                      style: {
-                        display: "block",
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#fff",
-                        boxShadow: `0 0 0 1px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
-                      },
-                    },
-                  }}
-                />
-              </motion.div>
-            </HoverCard.Content>
-          </HoverCard.Portal>
-        )}
-      </AnimatePresence>
-    </HoverCard.Root>
+      }
+    >
+      <span className="block w-[22px] text-center font-mono text-[9.5px] tracking-[0.1em] text-[rgba(20,20,24,0.5)] tabular-nums">
+        {Math.round(volume)}
+      </span>
+      <Slider
+        orientation="vertical"
+        min={0}
+        max={1}
+        step={0.01}
+        value={[volume / 100]}
+        onValueChange={([v]) => onVolume(Math.round(v * 100))}
+        thumbLabel="Volume"
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: 12,
+          height: 96,
+          cursor: "pointer",
+          touchAction: "none",
+        }}
+        parts={{
+          track: {
+            style: {
+              position: "relative",
+              width: 4,
+              height: "100%",
+              borderRadius: 999,
+              background: "rgba(20,20,24,.16)",
+            },
+          },
+          range: {
+            style: {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              background: accent,
+              borderRadius: 999,
+            },
+          },
+          thumb: {
+            style: {
+              display: "block",
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#fff",
+              boxShadow: `0 0 0 1px ${accent}, 0 1px 3px rgba(0,0,0,.4)`,
+            },
+          },
+        }}
+      />
+    </HoverCard>
   );
 }

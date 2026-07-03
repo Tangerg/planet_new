@@ -1,7 +1,6 @@
-import * as HoverCard from "@radix-ui/react-hover-card";
-import { AnimatePresence, motion } from "motion/react";
 import React, { useLayoutEffect, useRef, useState } from "react";
 
+import { HoverCard } from "@/components/controls/HoverCard";
 import { cn } from "@/lib/cn";
 import "./TextReveal.css";
 
@@ -63,41 +62,26 @@ export function TextReveal({
           overflowWrap: "anywhere",
         };
 
-  // Gate `open` on `clipped` so a fitting label never opens the card; when not
-  // shown, AnimatePresence renders nothing so there's no popover DOM at all.
-  const show = clipped && open;
+  // Gate `open` on `clipped` so a fitting label never opens the card.
   return (
-    <HoverCard.Root open={show} onOpenChange={setOpen} openDelay={160} closeDelay={80}>
-      <HoverCard.Trigger asChild>
+    <HoverCard
+      open={clipped && open}
+      onOpenChange={setOpen}
+      openDelay={160}
+      closeDelay={80}
+      side={side}
+      align={align}
+      sideOffset={8}
+      collisionPadding={16}
+      className={cn("textpop", "scroll")}
+      style={cardStyle}
+      trigger={
         <div ref={ref} className={className} style={{ ...style, ...clamp }}>
           {children}
         </div>
-      </HoverCard.Trigger>
-      <AnimatePresence>
-        {show && (
-          <HoverCard.Portal forceMount>
-            <HoverCard.Content
-              asChild
-              forceMount
-              side={side}
-              align={align}
-              sideOffset={8}
-              collisionPadding={16}
-            >
-              <motion.div
-                className={cn("textpop", "scroll")}
-                style={cardStyle}
-                initial={{ opacity: 0, y: 5, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {full ?? children}
-              </motion.div>
-            </HoverCard.Content>
-          </HoverCard.Portal>
-        )}
-      </AnimatePresence>
-    </HoverCard.Root>
+      }
+    >
+      {full ?? children}
+    </HoverCard>
   );
 }

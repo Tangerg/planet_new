@@ -27,6 +27,20 @@ export default defineConfig(({ mode }) => {
 
     plugins: [tailwindcss(), react()],
 
+    /* Pre-bundle the Base UI subpaths we use so Vite doesn't re-optimize (and
+     * full-reload / occasionally 504) mid-session each time a new one is first
+     * imported during the Radix → Base UI migration. Append here as more are
+     * adopted. */
+    optimizeDeps: {
+      include: [
+        "@base-ui/react/switch",
+        "@base-ui/react/toggle",
+        "@base-ui/react/toggle-group",
+        "@base-ui/react/tooltip",
+        "@base-ui/react/preview-card",
+      ],
+    },
+
     /* Dev-server port. Defaults to Vite's 5173, but set VITE_DEV_PORT to run
      * alongside another Wails app that already holds 5173. strictPort is on only
      * when overridden, so the chosen port matches what `wails dev` is told via
