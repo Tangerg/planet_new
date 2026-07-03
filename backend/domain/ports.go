@@ -25,6 +25,17 @@ type Catalog interface {
 	TracksByAlbum(id AlbumID) ([]Track, error)
 	TracksByArtist(id ArtistID) ([]Track, error)
 	Search(query string, limit int) (SearchResult, error)
+	// TrackPath is the on-disk location of a track's audio file — used to reach
+	// files that live next to it (sidecar lyrics), not returned to the frontend.
+	TrackPath(id TrackID) (string, error)
+}
+
+// LyricReader reads the lyrics that live alongside a track's audio file (a
+// sidecar .lrc), given that file's path. Infrastructure (filesystem) implements
+// it. Returns "" (no error) when the track has no sidecar lyric, so a missing
+// file is a normal "no lyrics" result rather than a failure.
+type LyricReader interface {
+	Lyric(audioPath string) (string, error)
 }
 
 // Scanner is the folder-scan port: walk a directory and read each audio file's

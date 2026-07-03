@@ -14,6 +14,8 @@ export function Artists():Promise<Array<backend.Artist>>;
 
 export function Home():Promise<backend.Home>;
 
+export function Lyric(arg1:string):Promise<string>;
+
 export function PickAndScan():Promise<backend.ScanResult>;
 
 export function PickFolder():Promise<string>;

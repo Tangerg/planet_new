@@ -124,3 +124,9 @@ func (l *Library) Search(query string) (SearchResult, error) {
 		Artists: l.urls.artists(result.Artists),
 	}, nil
 }
+
+// Lyric returns a track's raw sidecar lyric text (LRC), "" when it has none. The
+// frontend parses the LRC into timed lines, so no wire DTO is needed.
+func (l *Library) Lyric(id string) (string, error) {
+	return l.service.Lyric(domain.TrackID(id))
+}

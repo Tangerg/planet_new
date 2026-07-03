@@ -4,7 +4,7 @@ import { Provider } from "../provider";
 import type { ProviderCapability } from "@domain";
 import type { Album } from "@domain/model/album";
 import type { Artist } from "@domain/model/artist";
-import type { Lyric } from "@domain/model/lyric";
+import { parseLyrics, type Lyric } from "@domain/model/lyric";
 import type { Personalized } from "@domain/model/personalized";
 import type { Playlist } from "@domain/model/playlist";
 import type { SearchResult } from "@domain/model/search";
@@ -103,8 +103,10 @@ export class LocalMusic extends Provider {
     };
   }
 
-  /** The library has no fetched lyrics (local files may embed them later). */
-  async lyric(_id: string): Promise<Lyric[]> {
-    return [];
+  /** Read the track's sidecar `.lrc` (next to the audio file) via the bridge and
+   *  parse it into timed lines; empty when the track has no sidecar lyric. */
+  async lyric(id: string): Promise<Lyric[]> {
+    if (!bridgeReady()) return [];
+    return parseLyrics(await Library.Lyric(id));
   }
 }

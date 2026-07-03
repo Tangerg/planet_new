@@ -36,9 +36,9 @@ func New() *App {
 	var service *application.Service
 	if err != nil {
 		fmt.Println("[backend] init failed:", err)
-		service = application.NewService(nil, nil, picker) // inert: reads report unavailable
+		service = application.NewService(nil, nil, picker, nil) // inert: reads report unavailable
 	} else {
-		service = application.NewService(catalog, scanner, picker)
+		service = application.NewService(catalog, scanner, picker, scan.SidecarLyrics{})
 	}
 
 	return &App{
