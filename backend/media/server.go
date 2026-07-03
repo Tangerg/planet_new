@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"changeme/library/domain"
+	"changeme/backend/domain"
 )
 
 // Source is what the server needs from the catalog: resolve an id to a file.

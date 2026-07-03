@@ -4,7 +4,7 @@
 > - `@shared`(`src/shared`)框架无关纯工具 —— 零依赖,最内。
 > - `@domain`(`src/domain`)领域层:实体/值对象(`model/`)+ 端口契约(`ports/`,如 MusicProvider 能力)—— 只依赖 `@shared`。
 > - `@core`(`src/core`)应用/运行时:planet 内核(插件系统/事件总线/manager)+ 播放插件(control/playqueue/progress/volume/lyric/analyser)—— 依赖 domain。
-> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 网络适配器 + 本地库 Local(经 `@wailsjs` 生成桥接 Go `library` 包:扫盘 / SQLite / 回环媒体流)+ mappers,实现 domain 端口 —— 依赖 core+domain。
+> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 网络适配器 + 本地库 Local(经 `@wailsjs` 生成桥接 Go `backend/` 包:整洁架构 domain/application/sqlite/scan/media,扫盘 / SQLite / 回环媒体流)+ mappers,实现 domain 端口 —— 依赖 core+domain。
 > - `@/`(`src/ui`)表现层:逐字移植自示例 **Sonance Vibe**(XMB 启动器 + 共享元素切换)的播放器界面。
 > - `src/app`(组合根 `planet.ts`)+ `src/main.tsx`(入口)在最外,装配具体 provider + 插件进内核。
 >

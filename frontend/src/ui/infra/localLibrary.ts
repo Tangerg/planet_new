@@ -1,5 +1,5 @@
-import * as Library from "@wailsjs/go/library/Library";
-import type { library } from "@wailsjs/go/models";
+import * as Library from "@wailsjs/go/backend/Library";
+import type { backend } from "@wailsjs/go/models";
 
 /**
  * Desktop-shell shim for the on-device music library — the Settings screen's
@@ -23,7 +23,7 @@ function bridgeReady(): boolean {
  * to the scan result, or `undefined` when the picker was cancelled or the desktop
  * bridge is unavailable (a plain-browser dev session).
  */
-export async function scanLocalFolder(): Promise<library.ScanResult | undefined> {
+export async function scanLocalFolder(): Promise<backend.ScanResult | undefined> {
   if (!bridgeReady()) return undefined;
   const result = await Library.PickAndScan();
   return result.folder ? result : undefined; // cancelled → zero result (empty folder)

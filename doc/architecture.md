@@ -1,6 +1,6 @@
 # Planet 架构总览
 
-Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗口配置和 Wails bridge；业务逻辑、播放编排、数据源接入和界面状态主要在前端完成。例外是**本地音乐库**：文件夹扫描、SQLite 元数据、音频流服务在 Go 侧（`library` 包），经 Wails 桥接暴露给前端的 `LocalMusic` provider。
+Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗口配置和 Wails bridge；业务逻辑、播放编排、数据源接入和界面状态主要在前端完成。例外是**本地音乐库**：文件夹扫描、SQLite 元数据、音频流服务在 Go 侧（`backend/` 包，与 `frontend/` 对称），经 Wails 桥接暴露给前端的 `LocalMusic` provider。根目录只保留 `main.go`（入口 + `backend.New()` 组装）。
 
 本文描述当前代码结构。更细的工作约定见 `frontend/CLAUDE.md`。
 
@@ -8,7 +8,7 @@ Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗
 
 ## 1. 项目定位
 
-- 桌面壳：Wails v2 + Go，入口是 `main.go` / `app.go`。
+- 桌面壳：Wails v2 + Go，入口 `main.go`（根目录唯一 `.go`），后端在 `backend/`（组合根 `backend.App` + 音乐库适配器）。
 - 前端：React 19 + TypeScript + Vite + Tailwind v4。
 - 数据：所有外部音乐数据经 `MusicProvider` 端口进入，具体实现位于 `frontend/src/providers`。
 - 播放：浏览器侧 `<audio>` + Web Audio 能力，由 `core` 插件封装。
@@ -37,7 +37,7 @@ Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗
 └─────────────────────────────────────────────────────────────┘
 ```
 
-`Local` reaches down into the Go `library` package (below) over the Wails bridge;
+`Local` reaches down into the Go `backend` package (below) over the Wails bridge;
 the others are network API adapters.
 
 ---
@@ -46,8 +46,12 @@ the others are network API adapters.
 
 ```
 planet_new/
-├─ app.go / main.go              Wails app shell
-├─ library/                      Go on-device library (clean-architecture: domain / sqlite / scan / media / app)
+├─ main.go                       Wails entry (root's only .go; assembles via backend.New)
+├─ backend/                      Go desktop-shell side, clean-architecture layers:
+│    domain/                       framework-free entities, value objects, ports
+│    application/                  use-case service (orchestration, FolderPicker port)
+│    sqlite/ scan/ media/          port implementations (repo, scanner, loopback server)
+│    app.go / library.go / dto.go  composition root + Wails-bound adapter + wire DTOs
 ├─ build/                        Wails packaging assets (incl. darwin ATS plist)
 ├─ doc/                          Project docs
 ├─ go.mod / wails.json           Go and Wails config
@@ -109,11 +113,11 @@ Concrete providers:
 | `NeteaseCloudMusic` | Local NCM API service, supports richer real catalog/playback flows; the default/fallback provider. |
 | `QQMusic` | Local QQ Music API service. |
 | `Spotify` | Spotify Web API; playback is preview-limited where available. |
-| `LocalMusic` | On-device library via the Go `library` package over the Wails bridge; full playback of local files. |
+| `LocalMusic` | On-device library via the Go `backend` package over the Wails bridge; full playback of local files. |
 
 Provider selection starts in `frontend/src/app/planet.ts`: all constructible providers are mounted, and `ProviderRegistry` chooses the active one by name. Runtime switching goes through the registry, not through UI imports of concrete adapters — the Settings screen's source switch reads provider names off the runtime registry (`engine.providers`) rather than importing the adapters.
 
-**On-device library (Go `library` package).** The Go side mirrors the frontend's clean-architecture layering, one package per layer with the dependency rule pointing inward: `domain` (framework-free entities, value objects `TrackID`/`Duration`/`Cover`, the tag-normalization rules on `TrackMetadata`, and the `Catalog`/`Scanner` ports) ← `sqlite` (repository), `scan` (filesystem + tag reader), `media` (loopback server) as port implementations ← `library` (the Wails-bound application service: orchestration + DTO projection). Only `library` is bound; the domain never imports SQL, the filesystem, or Wails. `ScanFolder` walks a directory, reads tags via `dhowden/tag`, probes duration (MP3/FLAC/WAV), and upserts into an embedded SQLite catalog (`modernc.org/sqlite`, pure-Go / `CGO_ENABLED=0`). Audio + cover art are streamed to the webview by a **loopback HTTP server** (`http.ServeContent`, so Range/seek work); each track's `playUrl` is an absolute `http://127.0.0.1:<port>/media/<id>` URL that works identically in `wails dev` and a production build. A standalone server is used rather than the Wails asset handler because the asset handler diverges on media/range requests between dev and platforms. macOS needs an ATS exception for `127.0.0.1` (`build/darwin/Info*.plist`). The `LocalMusic` provider reaches the Go service through the generated `@wailsjs` bridge and maps its neutral DTOs into domain entities; because tracks arrive with `playUrl` already resolved, playback needs no `playUrls()` round-trip. The Settings screen triggers scans via a native folder dialog (`ui/infra/localLibrary.ts`, a desktop-shell shim alongside `ui/infra/wails.ts`).
+**On-device library (Go `backend` package).** The Go side mirrors the frontend's clean-architecture layering, one package per layer with the dependency rule pointing inward: `domain` (framework-free entities, value objects `TrackID`/`Duration`/`Cover`, the tag-normalization rules on `TrackMetadata`, and the `Catalog`/`Scanner` ports) ← `application` (the framework-free use-case `Service`: scan orchestration + reads, depending only on ports incl. a `FolderPicker`) ← `sqlite` (repository), `scan` (filesystem + tag reader), `media` (loopback server) as port implementations ← the `backend` package itself (composition root `App` + the Wails-bound `Library` adapter: string-id boundary, delegates to the service, projects DTOs + loopback URLs). Only the `Library` adapter is bound; the `application`/`domain` layers never import SQL, the filesystem, or Wails (the native dialog is behind the `FolderPicker` port, implemented by a Wails adapter and injected at the composition root). `ScanFolder` walks a directory, reads tags via `dhowden/tag`, probes duration (MP3/FLAC/WAV), and upserts into an embedded SQLite catalog (`modernc.org/sqlite`, pure-Go / `CGO_ENABLED=0`). Audio + cover art are streamed to the webview by a **loopback HTTP server** (`http.ServeContent`, so Range/seek work); each track's `playUrl` is an absolute `http://127.0.0.1:<port>/media/<id>` URL that works identically in `wails dev` and a production build. A standalone server is used rather than the Wails asset handler because the asset handler diverges on media/range requests between dev and platforms. macOS needs an ATS exception for `127.0.0.1` (`build/darwin/Info*.plist`). The `LocalMusic` provider reaches the Go service through the generated `@wailsjs` bridge and maps its neutral DTOs into domain entities; because tracks arrive with `playUrl` already resolved, playback needs no `playUrls()` round-trip. The Settings screen triggers scans via a native folder dialog (`ui/infra/localLibrary.ts`, a desktop-shell shim alongside `ui/infra/wails.ts`).
 
 ---
 

@@ -1,4 +1,4 @@
-export namespace library {
+export namespace backend {
 	
 	export class Album {
 	    id: string;

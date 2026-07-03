@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"changeme/library/domain"
+	"changeme/backend/domain"
 
 	_ "modernc.org/sqlite" // registers the pure-Go "sqlite" driver
 )

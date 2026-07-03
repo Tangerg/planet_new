@@ -1,6 +1,6 @@
-package library
+package backend
 
-import "changeme/library/domain"
+import "changeme/backend/domain"
 
 // Wire DTOs — the shape the frontend consumes (Wails generates matching
 // TypeScript). Kept flat + provider-neutral; the frontend mapper translates them

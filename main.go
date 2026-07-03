@@ -1,10 +1,9 @@
 package main
 
 import (
-	"context"
 	"embed"
 
-	"changeme/library"
+	"changeme/backend"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -15,13 +14,8 @@ import (
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
-	// On-device music library (folder scan + SQLite + loopback media server),
-	// bound so the frontend `LocalMusic` provider can reach it over the JS bridge.
-	lib := library.New()
+	app := backend.New()
 
-	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "PLANET",
 		Width:  1280,
@@ -33,14 +27,8 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 8, G: 8, B: 11, A: 1},
-		OnStartup: func(ctx context.Context) {
-			app.startup(ctx)
-			library.Attach(ctx, lib)
-		},
-		Bind: []interface{}{
-			app,
-			lib,
-		},
+		OnStartup:        app.Startup,
+		Bind:             app.Bind(),
 	})
 
 	if err != nil {

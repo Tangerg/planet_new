@@ -1,4 +1,4 @@
-import * as Library from "@wailsjs/go/library/Library";
+import * as Library from "@wailsjs/go/backend/Library";
 
 import { Provider } from "../provider";
 import type { ProviderCapability } from "@domain";
