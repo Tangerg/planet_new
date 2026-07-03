@@ -59,7 +59,6 @@ export default defineConfig(({ mode }) => {
           manualChunks: (id: string) => {
             if (id.includes("node_modules/")) {
               if (id.includes("/react-dom/") || id.includes("/react/")) return "vendor-react";
-              if (id.includes("/@radix-ui/")) return "vendor-radix";
               if (id.includes("/@base-ui/")) return "vendor-baseui";
               if (id.includes("/@tanstack/")) return "vendor-tanstack";
               if (id.includes("/zustand/") || id.includes("/ky/")) return "vendor-state";

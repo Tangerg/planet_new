@@ -1,33 +1,24 @@
-import { Slot } from "@radix-ui/react-slot";
 import React from "react";
 import { cn } from "@/lib/cn";
 import "./Button.css";
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  /** Render onto the child element (Radix Slot) instead of a <button>. */
-  asChild?: boolean;
-};
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 /**
  * Base button: the reset + keyboard `:focus-visible` ring + tactile `:active`
- * press that every control should share (the hand-rolled `<button>`s had none).
- * The per-context look stays inline / in Tailwind classes and is passed through
- * via `style`/`className` — `.btn` only adds behavior, so adopting it is visually
- * non-destructive. `asChild` (Radix Slot) lets non-button triggers reuse it.
+ * press that every control shares. `.btn` only adds behavior, so adopting it is
+ * visually non-destructive — the per-context look stays in `className`/`style`.
+ *
+ * It's a plain styled `<button>` with no headless-library dependency: the former
+ * `asChild` (Radix Slot) affordance was dropped once every trigger moved to Base
+ * UI's `render` prop, leaving it unused. A trigger that wraps this Button passes
+ * it through the library's `render`, which merges the trigger props + ref onto
+ * the button — so no Slot is needed. (If Button-as-`<a>` is ever wanted, compose
+ * it back via Base UI's `useRender`.)
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { asChild, className, type, ...rest },
+  { className, type, ...rest },
   ref,
 ) {
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      ref={ref}
-      className={cn("btn", className)}
-      // Slot forwards type to whatever element it renders; only set the default
-      // when we own the <button> (an <a>/<div> child shouldn't get type).
-      type={asChild ? undefined : (type ?? "button")}
-      {...rest}
-    />
-  );
+  return <button ref={ref} className={cn("btn", className)} type={type ?? "button"} {...rest} />;
 });
