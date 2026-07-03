@@ -1,12 +1,14 @@
 @reference "../../../index.css";
 
-/* Radix-backed switch; visuals match the former hand-rolled toggle. */
+/* Base UI-backed switch; visuals match the former hand-rolled toggle. State is
+   driven off Base UI's `data-checked` (Radix used `data-state="checked"`).
+   inline-block so the non-button root still honors its width/height. */
 .vswitch {
-  @apply relative h-[26px] w-[46px] flex-none cursor-pointer rounded-full border-0 p-0;
+  @apply relative inline-block h-[26px] w-[46px] flex-none cursor-pointer rounded-full border-0 p-0;
   background: rgba(255, 255, 255, 0.16);
   transition: background 0.2s;
 }
-.vswitch[data-state="checked"] {
+.vswitch[data-checked] {
   background: var(--accent);
 }
 .vswitch-thumb {
@@ -15,6 +17,8 @@
   transition: transform 0.2s;
   will-change: transform;
 }
-.vswitch-thumb[data-state="checked"] {
+/* Drive the thumb from the root's state, so it works regardless of whether the
+   thumb part carries its own data attribute. */
+.vswitch[data-checked] .vswitch-thumb {
   transform: translateX(20px);
 }

@@ -1,4 +1,4 @@
-import * as RadixSwitch from "@radix-ui/react-switch";
+import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import React from "react";
 import "./Switch.css";
 
@@ -10,24 +10,24 @@ export type SwitchProps = {
 };
 
 /**
- * Radix-backed switch. Replaces the hand-rolled `role="switch"` div (manual
- * aria-checked + keydown); Radix supplies the button semantics, keyboard, and
- * focus for free. Visuals live in vibe.css (`.vswitch` / `.vswitch-thumb`),
- * driven off Radix's `data-state`, so the look is unchanged.
+ * Base UI-backed switch — the pilot for the gradual Radix → Base UI migration.
+ * Base UI supplies the switch semantics, keyboard, and focus. Visuals live in
+ * Switch.css, driven off Base UI's `data-checked` attribute (Radix exposed
+ * `data-state="checked"`). The wrapper's public API is unchanged, so consumers
+ * stay untouched — that's what makes the swap incremental.
  */
-export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
-  { checked, onCheckedChange, ...rest },
-  ref,
-) {
-  return (
-    <RadixSwitch.Root
-      ref={ref}
-      className="vswitch"
-      checked={checked}
-      onCheckedChange={onCheckedChange}
-      {...rest}
-    >
-      <RadixSwitch.Thumb className="vswitch-thumb" />
-    </RadixSwitch.Root>
-  );
-});
+export const Switch = React.forwardRef<React.ComponentRef<typeof BaseSwitch.Root>, SwitchProps>(
+  function Switch({ checked, onCheckedChange, ...rest }, ref) {
+    return (
+      <BaseSwitch.Root
+        ref={ref}
+        className="vswitch"
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        {...rest}
+      >
+        <BaseSwitch.Thumb className="vswitch-thumb" />
+      </BaseSwitch.Root>
+    );
+  },
+);
