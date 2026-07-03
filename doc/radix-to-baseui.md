@@ -15,6 +15,7 @@
 - **删包时机**:某组件的**最后一个消费方**迁移后,`yarn remove @radix-ui/react-xxx`(否则 knip 报未用依赖)。
 - **分块**:`vite.config.ts` 加了 `vendor-baseui` chunk。
 - **每步**:`yarn run check` 全绿 + 实机 smoke,单独 commit,勾掉清单。
+- **Motion 退出动画**:Base UI 靠 `element.getAnimations()`(WAAPI)判断关闭时保持挂载多久。Motion 只有 `opacity`/`transform`/`filter`/`clipPath` 走 WAAPI 能被检测到;**`y`/`x`/`scale` 简写是 JS 独立 transform,不被检测 → exit 不可见**。所以 exit 动画要写成 `transform: "translateY(…)"`/`"scale(…)"` 而非简写(Sheet 滑出踩过);或至少让 exit 同时动 `opacity` 撑住挂载(HoverCard 如此)。
 
 ## 清单(顺序:低风险 → 高风险)
 
@@ -25,7 +26,7 @@
 - [x] **HoverCard → PreviewCard** —— 新抽 `controls/HoverCard.tsx` 封装(Base UI PreviewCard + Motion enter/exit,`Portal keepMounted` + `AnimatePresence` + `Popup render={motion.div}`),`TextReveal`/`VolumeControl` 改为消费封装(不再直接用);delay/closeDelay 移到 Trigger;已删 `@radix-ui/react-hover-card`。vite `optimizeDeps.include` 预登记 @base-ui 子路径,消除 re-optimize 抖动
 - [x] **Slider** —— Base UI 加 `Control` 层(Root›Control›Track›Indicator+Thumb),`Range`→`Indicator`,`onValueCommit`→`onValueCommitted`,单 thumb 回调是 number→封装归一化回数组;Control 给方向感知的 fill 布局。封装已存,两消费方(PlayerScrubber/VolumeControl)零改动;已删 `@radix-ui/react-slider`
 - [x] **Sheet(Dialog)** —— Overlay→Backdrop、Content→Popup;`forceMount`→Portal `keepMounted`;autofocus 抑制 `onOpenAutoFocus/onCloseAutoFocus`→Popup `initialFocus/finalFocus={false}`;Motion 滑入照 keepMounted+AnimatePresence+render;Portal container 保留。封装已存,3 消费方(LoginSheet/CoverFlowSheet/UpNextSheet)零改动;已删 `@radix-ui/react-dialog`
-- [ ] Menu(DropdownMenu)—— 键盘/子菜单/Escape 焦点返回要重点 smoke
+- [x] **Menu(DropdownMenu → Menu)** —— Content→Positioner+Popup;`onSelect`→`Item onClick`(closeOnClick 默认 true);虚拟 span trigger 走 `render` + `nativeButton={false}`;`data-highlighted` 保留(Menu.css 不改);enter-only 动画(关闭即卸载,无 exit);transformOrigin 用 Base UI `var(--transform-origin)`;已删 `@radix-ui/react-dropdown-menu`
 - [ ] **Button**(Slot/asChild → `useRender`)—— **放最后**,牵动全仓 ~15 处 `asChild`
 
 迁完全部即可移除最后的 `@radix-ui/*` 与 `vendor-radix` chunk。

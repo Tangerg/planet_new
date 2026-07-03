@@ -1,14 +1,16 @@
 import React from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Menu } from "@base-ui/react/menu";
 import { motion } from "motion/react";
 import { Icon } from "@/infra/icons";
 import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
 
 // ============================================================
-// ContextMenu — right-click menu using Radix DropdownMenu primitives.
-// Edge-aware positioning, keyboard navigation, and ARIA accessibility
-// are handled by Radix; styling lives in the co-located Menu.css.
+// ContextMenu — right-click menu on Base UI Menu primitives. Edge-aware
+// positioning, keyboard navigation, and ARIA accessibility are handled by Base
+// UI; styling lives in the co-located Menu.css. The menu is mounted only while
+// open (Shell renders it on right-click), so there's an enter animation but no
+// exit — closing unmounts it.
 // ============================================================
 type Props = {
   x: number;
@@ -20,34 +22,36 @@ type Props = {
 
 export function ContextMenu({ x, y, items, onClose, accent }: Props) {
   return (
-    <DropdownMenu.Root open onOpenChange={(open) => !open && onClose()}>
-      {/* Virtual trigger at the cursor position so Radix positions the content there. */}
-      <DropdownMenu.Trigger asChild>
-        <span
-          aria-hidden
-          className="pointer-events-none fixed h-0 w-0"
-          style={{ left: x, top: y }}
-        />
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="ctxmenu glass-pop"
-          sideOffset={0}
-          collisionPadding={10}
-          asChild
-        >
-          <motion.div
-            className="z-[9000] min-w-[212px]"
-            style={{ transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)" }}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.14, ease: [0.32, 0.72, 0, 1] }}
+    <Menu.Root open onOpenChange={(open) => !open && onClose()}>
+      {/* Virtual trigger at the cursor so Base UI anchors the popup there. */}
+      <Menu.Trigger
+        nativeButton={false}
+        render={
+          <span
+            aria-hidden
+            className="pointer-events-none fixed h-0 w-0"
+            style={{ left: x, top: y }}
+          />
+        }
+      />
+      <Menu.Portal>
+        <Menu.Positioner className="z-[9000]" sideOffset={0} collisionPadding={10}>
+          <Menu.Popup
+            className="ctxmenu glass-pop min-w-[212px]"
+            render={
+              <motion.div
+                style={{ transformOrigin: "var(--transform-origin)" }}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.14, ease: [0.32, 0.72, 0, 1] }}
+              />
+            }
           >
             {items.map((it, i) =>
               it.sep ? (
-                <DropdownMenu.Separator key={i} className="ctxsep" />
+                <Menu.Separator key={i} className="ctxsep" />
               ) : (
-                <DropdownMenu.Item key={i} className="ctxitem" onSelect={() => it.onClick?.()}>
+                <Menu.Item key={i} className="ctxitem" onClick={() => it.onClick?.()}>
                   {it.icon && (
                     <span
                       className="ctxico"
@@ -62,12 +66,12 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
                     {it.label}
                   </span>
                   {it.hint && <span className="ctxhint">{it.hint}</span>}
-                </DropdownMenu.Item>
+                </Menu.Item>
               ),
             )}
-          </motion.div>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }
