@@ -1,9 +1,7 @@
 import { PreviewCard } from "@base-ui/react/preview-card";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
-
-type Side = "top" | "bottom" | "left" | "right";
-type Align = "start" | "center" | "end";
+import type { PopupAlign, PopupSide } from "./popup";
 
 export type HoverCardProps = {
   open: boolean;
@@ -12,8 +10,8 @@ export type HoverCardProps = {
   closeDelay?: number;
   /** The element the card hangs off; it opens on hover / focus. */
   trigger: React.ReactElement;
-  side?: Side;
-  align?: Align;
+  side?: PopupSide;
+  align?: PopupAlign;
   sideOffset?: number;
   collisionPadding?: number;
   /** Popup surface class + inline style. */
