@@ -4,7 +4,7 @@
    lets the atmospheric backdrop bleed through (blur + saturate pick up the page
    hue); edges feathered to transparent (mask) so it melts into the page. Shown
    only when the source text overflows. The gradient fill, backdrop-filter, mask
-   and Radix transform-origin have no Tailwind equivalent, so they stay raw. */
+   and popup transform-origin have no Tailwind equivalent, so they stay raw. */
 .textpop {
   @apply max-w-[400px] text-[14px] font-light;
   max-height: min(58vh, 460px);
@@ -17,8 +17,8 @@
   backdrop-filter: blur(60px) saturate(132%) brightness(0.94);
   -webkit-mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
   mask-image: radial-gradient(130% 125% at 50% 42%, #000 64%, transparent 112%);
-  /* enter/exit are Motion (TextReveal.tsx); origin points at Radix's computed
+  /* enter/exit are Motion (TextReveal.tsx); origin points at Base UI's computed
      value so the scale grows from the side the card opens on. */
-  transform-origin: var(--radix-hover-card-content-transform-origin);
+  transform-origin: var(--transform-origin);
   z-index: 9000;
 }
