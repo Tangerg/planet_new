@@ -8,7 +8,7 @@ import type { VibeTrack } from "@/model/vibe";
 import { activateOnKey } from "@/lib/keys";
 
 /**
- * The expanded in-place tracklist for the centered cover — a Radix Dialog Sheet
+ * The expanded in-place tracklist for the centered cover — a Base UI Dialog Sheet
  * (Escape / click-outside) sliding up from the carousel floor. Tinted from the
  * centered cover's palette.
  */

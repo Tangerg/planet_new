@@ -211,7 +211,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         </div>
       )}
 
-      {/* tracklist sheet — Radix Dialog (Escape / click-outside), Motion slide */}
+      {/* tracklist sheet — Base UI Dialog (Escape / click-outside), Motion slide */}
       {tracksFor && (
         <CoverFlowSheet
           open={expanded}

@@ -10,7 +10,7 @@ export type SwitchProps = {
 };
 
 /**
- * Base UI-backed switch — the pilot for the gradual Radix → Base UI migration.
+ * Base UI-backed switch.
  * Base UI supplies the switch semantics, keyboard, and focus. Visuals live in
  * Switch.css, driven off Base UI's `data-checked` attribute (Radix exposed
  * `data-state="checked"`). The wrapper's public API is unchanged, so consumers

@@ -1,5 +1,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import React from "react";
+import type { PopupSide } from "./popup";
 
 /**
  * Small dark tooltip (Spotify-style) that names what a control does on hover /
@@ -14,7 +15,7 @@ export const TooltipProvider = BaseTooltip.Provider;
 type TooltipProps = {
   /** The text shown on hover (e.g. "Enable repeat", "Lyrics"). */
   label: string;
-  side?: "top" | "bottom" | "left" | "right";
+  side?: PopupSide;
   children: React.ReactElement;
 };
 

@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 
 import { HoverCard } from "@/components/controls/HoverCard";
+import type { PopupAlign, PopupSide } from "@/components/controls/popup";
 import { cn } from "@/lib/cn";
 import "./TextReveal.css";
 
@@ -13,8 +14,8 @@ type Props = {
   style?: React.CSSProperties;
   /** Override popover content (defaults to `children`). */
   full?: React.ReactNode;
-  side?: "top" | "bottom" | "left" | "right";
-  align?: "start" | "center" | "end";
+  side?: PopupSide;
+  align?: PopupAlign;
   /** Extra style for the popover surface (e.g. a wider maxWidth for paragraphs). */
   cardStyle?: React.CSSProperties;
 };
