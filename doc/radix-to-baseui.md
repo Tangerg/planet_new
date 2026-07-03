@@ -23,7 +23,7 @@
 - [x] **ToggleGroup** —— value 单串↔数组在封装内适配;items 用 Base UI `Toggle`;5 处 `[data-state="on"]`→`[data-pressed]`(ToggleGroup.css×4 + ViewToggle.css×1),已删 `@radix-ui/react-toggle-group`
 - [x] **Tooltip** —— 无 asChild:trigger 走 `render={children}`;结构 Portal→Positioner→Popup;`side`/`sideOffset` 移到 Positioner;Provider 属性 `delayDuration`/`skipDelayDuration`→`delay`/`timeout`(Shell 1 行);已删 `@radix-ui/react-tooltip`
 - [x] **HoverCard → PreviewCard** —— 新抽 `controls/HoverCard.tsx` 封装(Base UI PreviewCard + Motion enter/exit,`Portal keepMounted` + `AnimatePresence` + `Popup render={motion.div}`),`TextReveal`/`VolumeControl` 改为消费封装(不再直接用);delay/closeDelay 移到 Trigger;已删 `@radix-ui/react-hover-card`。vite `optimizeDeps.include` 预登记 @base-ui 子路径,消除 re-optimize 抖动
-- [ ] Slider
+- [x] **Slider** —— Base UI 加 `Control` 层(Root›Control›Track›Indicator+Thumb),`Range`→`Indicator`,`onValueCommit`→`onValueCommitted`,单 thumb 回调是 number→封装归一化回数组;Control 给方向感知的 fill 布局。封装已存,两消费方(PlayerScrubber/VolumeControl)零改动;已删 `@radix-ui/react-slider`
 - [ ] Sheet(Dialog)—— 焦点/Portal 敏感,登录面板要重点 smoke
 - [ ] Menu(DropdownMenu)—— 键盘/子菜单/Escape 焦点返回要重点 smoke
 - [ ] **Button**(Slot/asChild → `useRender`)—— **放最后**,牵动全仓 ~15 处 `asChild`
