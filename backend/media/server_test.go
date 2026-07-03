@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"changeme/library/domain"
+	"changeme/backend/domain"
 )
 
 // fakeSource resolves any valid id to the same fixture file/ext.

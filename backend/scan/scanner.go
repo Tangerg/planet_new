@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"changeme/library/domain"
+	"changeme/backend/domain"
 
 	"github.com/dhowden/tag"
 )

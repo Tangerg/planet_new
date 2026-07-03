@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"changeme/library/domain"
+	"changeme/backend/domain"
 )
 
 func newTestCatalog(t *testing.T) *Catalog {
