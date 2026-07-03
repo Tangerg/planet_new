@@ -288,7 +288,7 @@ export default function Shell() {
   );
 
   return (
-    <TooltipProvider delayDuration={350} skipDelayDuration={500}>
+    <TooltipProvider delay={350} timeout={500}>
       <MorphProvider morph={morph}>
         <ScreenActionsProvider actions={actions}>
           <div className="win-stage">
