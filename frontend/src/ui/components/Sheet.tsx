@@ -1,16 +1,17 @@
 // ============================================================
-// Sheet — a bottom drawer built on Radix Dialog. Replaces the hand-rolled
+// Sheet — a bottom drawer built on Base UI Dialog. Replaces the hand-rolled
 // slide-up panels (NowPlaying "Up Next", CoverFlow tracklist) that could only
-// be dismissed via their drag handle. Radix now provides Escape, click-outside
-// (the dimmed overlay), scroll-lock and ARIA dialog semantics for free; the
+// be dismissed via their drag handle. Base UI provides Escape, click-outside
+// (the dimmed backdrop), scroll-lock and ARIA dialog semantics for free; the
 // Motion slide is preserved (AnimatePresence keeps it mounted through the exit).
 //
 // Portal `container` keeps the sheet positioned WITHIN a screen (absolute), not
 // the whole window — pass the screen root ref so geometry matches the old
-// in-place panel. Autofocus is suppressed on purpose so opening doesn't yank
-// focus off the carousel/cover (keyboard/axis-nav is handled by the screens).
+// in-place panel. `initialFocus`/`finalFocus={false}` suppress autofocus on
+// purpose so opening doesn't yank focus off the carousel/cover (keyboard/axis-nav
+// is handled by the screens).
 // ============================================================
-import * as Dialog from "@radix-ui/react-dialog";
+import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
 import { cn } from "@/lib/cn";
@@ -54,37 +55,37 @@ export function Sheet({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
         {open && (
-          <Dialog.Portal forceMount container={container ?? undefined}>
-            <Dialog.Overlay asChild forceMount>
-              <motion.div
-                className={cn("absolute inset-0", overlayClassName)}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ background: "rgba(0,0,0,.32)" }}
-              />
-            </Dialog.Overlay>
-            <Dialog.Content
-              asChild
-              forceMount
-              aria-describedby={undefined}
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              onCloseAutoFocus={(e) => e.preventDefault()}
+          <Dialog.Portal keepMounted container={container ?? undefined}>
+            <Dialog.Backdrop
+              className={cn("absolute inset-0", overlayClassName)}
+              style={{ background: "rgba(0,0,0,.32)" }}
+              render={
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              }
+            />
+            <Dialog.Popup
+              className={cn("scroll absolute inset-x-0 bottom-0", className)}
+              style={style}
+              initialFocus={false}
+              finalFocus={false}
+              render={
+                <motion.div
+                  ref={contentRef}
+                  initial={{ y: "102%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "102%" }}
+                  transition={{ duration: durationSec, ease: EASE }}
+                />
+              }
             >
-              <motion.div
-                ref={contentRef}
-                className={cn("scroll absolute inset-x-0 bottom-0", className)}
-                style={style}
-                initial={{ y: "102%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "102%" }}
-                transition={{ duration: durationSec, ease: EASE }}
-              >
-                <Dialog.Title className="sr-only">{label}</Dialog.Title>
-                {children}
-              </motion.div>
-            </Dialog.Content>
+              <Dialog.Title className="sr-only">{label}</Dialog.Title>
+              {children}
+            </Dialog.Popup>
           </Dialog.Portal>
         )}
       </AnimatePresence>
