@@ -76,6 +76,4 @@ const planet = new Planet({
 
 /** The application Engine — the UI's single handle to the kernel (events +
  *  playback/media/auth use-cases + provider selection). */
-export const engine = new Engine(planet, credentials, {
-  resolveAudioAnalysisSource: loopbackMediaSource,
-});
+export const engine = new Engine(planet, credentials);

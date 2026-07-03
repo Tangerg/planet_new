@@ -64,6 +64,11 @@ export class Playback extends Plugin {
       return;
     }
     try {
+      // The element is tapped into Web Audio (analyser), so its output flows
+      // through the AudioContext — a suspended context would mute playback.
+      // Resume it on the play gesture before starting the element.
+      const ctx = this.context.audioContext;
+      if (ctx.state === "suspended") await ctx.resume();
       await this.context.audioElement.play();
       this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
     } catch {
