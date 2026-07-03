@@ -1,3 +1,8 @@
+// Package library is the application layer for the on-device music source: the
+// Wails-bound service that orchestrates the domain ports (Catalog + Scanner) and
+// the media server, and projects domain entities to wire DTOs. It is the only
+// package main binds; the frontend `LocalMusic` provider reaches it over the
+// generated JS bridge.
 package library
 
 import (
@@ -9,28 +14,34 @@ import (
 	"sync"
 	"time"
 
+	"changeme/library/domain"
+	"changeme/library/media"
+	"changeme/library/scan"
+	"changeme/library/sqlite"
+
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// Library is the Wails-bound on-device music service. It is constructed once at
-// startup (opening the DB + media server), bound into the runtime, and reached
-// from the frontend `LocalMusic` provider over the generated JS bridge.
-//
-// Read methods return empty slices (never nil) so the TypeScript side gets `[]`,
-// and guard a missing store so a DB-open failure degrades to an empty library
-// rather than crashing the app shell.
+// The SQLite catalog also satisfies the media server's Source port.
+var _ media.Source = (*sqlite.Catalog)(nil)
+
+// Library orchestrates scanning + catalog reads + media serving. It depends on
+// the domain ports (interfaces) so reads can be driven off a fake in tests;
+// concrete adapters are wired in New. Read methods return empty (never nil)
+// slices and guard a missing catalog, so a DB-open failure degrades to an empty
+// library rather than crashing the app shell.
 type Library struct {
-	ctx       context.Context
-	store     *store
-	media     *mediaServer
-	coversDir string
-	mu        sync.Mutex // serializes scans (one writer at a time)
-	ready     bool
+	ctx     context.Context
+	catalog domain.Catalog
+	scanner domain.Scanner
+	media   *media.Server
+	urls    mediaURLs
+	mu      sync.Mutex // serializes scans (one writer at a time)
+	ready   bool
 }
 
-// New opens the database + media server under the OS app-config dir. Failures are
-// logged and leave the Library inert (methods return errors / empty results)
-// instead of aborting app startup.
+// New opens the database + media server under the OS app-config dir. Failures
+// are logged and leave the Library inert rather than aborting app startup.
 func New() *Library {
 	l := &Library{}
 	if err := l.open(); err != nil {
@@ -45,35 +56,37 @@ func (l *Library) open() error {
 		return err
 	}
 	dataDir := filepath.Join(base, "PLANET")
-	l.coversDir = filepath.Join(dataDir, "covers")
-	if err := os.MkdirAll(l.coversDir, 0o755); err != nil {
+	coversDir := filepath.Join(dataDir, "covers")
+	if err := os.MkdirAll(coversDir, 0o755); err != nil {
 		return err
 	}
 
-	l.media, err = startMediaServer(l.coversDir)
+	catalog, err := sqlite.Open(filepath.Join(dataDir, "library.db"))
 	if err != nil {
 		return err
 	}
-	l.store, err = openStore(filepath.Join(dataDir, "library.db"), l.media.baseURL)
+	server, err := media.Start(coversDir, catalog) // catalog satisfies media.Source
 	if err != nil {
 		return err
 	}
-	l.media.store = l.store
+
+	l.catalog = catalog
+	l.scanner = scan.New(coversDir)
+	l.media = server
+	l.urls = mediaURLs{base: server.BaseURL()}
 	l.ready = true
 	return nil
 }
 
 // Attach captures the Wails runtime context (needed for native dialogs), called
-// from the app's OnStartup. It is a package function rather than a method on the
-// bound struct on purpose: a bound method taking context.Context would surface on
-// the JS bridge and make Wails emit a `context.Context` reference the generated
-// TypeScript can't resolve. Keeping it off the struct keeps the bindings clean.
-func Attach(ctx context.Context, l *Library) {
-	l.ctx = ctx
-}
+// from the app's OnStartup. It is a package function rather than a bound method
+// on purpose: a bound method taking context.Context would surface on the JS
+// bridge and make Wails emit a context.Context reference the generated
+// TypeScript can't resolve.
+func Attach(ctx context.Context, l *Library) { l.ctx = ctx }
 
 func (l *Library) check() error {
-	if !l.ready || l.store == nil {
+	if !l.ready || l.catalog == nil {
 		return errors.New("local library unavailable")
 	}
 	return nil
@@ -81,8 +94,7 @@ func (l *Library) check() error {
 
 // ── scanning ─────────────────────────────────────────────────────────────────
 
-// PickFolder opens a native directory chooser and returns the chosen path, or ""
-// if the user cancels.
+// PickFolder opens a native directory chooser; returns "" if the user cancels.
 func (l *Library) PickFolder() (string, error) {
 	if l.ctx == nil {
 		return "", errors.New("runtime not ready")
@@ -102,7 +114,7 @@ func (l *Library) PickAndScan() (ScanResult, error) {
 	return l.ScanFolder(folder)
 }
 
-// ScanFolder indexes every audio file under `folder` into the library.
+// ScanFolder indexes every audio file under folder into the library.
 func (l *Library) ScanFolder(folder string) (ScanResult, error) {
 	if err := l.check(); err != nil {
 		return ScanResult{}, err
@@ -111,18 +123,18 @@ func (l *Library) ScanFolder(folder string) (ScanResult, error) {
 	defer l.mu.Unlock()
 
 	start := time.Now()
-	files, scanned, err := scanFolder(folder, l.coversDir)
+	metas, seen, err := l.scanner.Scan(folder)
 	if err != nil {
 		return ScanResult{}, err
 	}
-	epoch := time.Now().UnixMilli()
-	added, total, err := l.store.scanUpsert(folder, files, epoch)
+	at := time.Now().UnixMilli()
+	added, total, err := l.catalog.Save(folder, metas, at)
 	if err != nil {
 		return ScanResult{}, err
 	}
 	return ScanResult{
 		Folder:     folder,
-		Scanned:    scanned,
+		Scanned:    seen,
 		Added:      added,
 		Total:      total,
 		DurationMs: time.Since(start).Milliseconds(),
@@ -135,7 +147,7 @@ func (l *Library) TrackCount() (int, error) {
 	if err := l.check(); err != nil {
 		return 0, err
 	}
-	return l.store.countTracks()
+	return l.catalog.Count()
 }
 
 func (l *Library) Home() (Home, error) {
@@ -143,16 +155,21 @@ func (l *Library) Home() (Home, error) {
 	if err := l.check(); err != nil {
 		return home, err
 	}
-	var err error
-	if home.RecentTracks, err = l.store.recentTracks(24); err != nil {
+	recent, err := l.catalog.RecentTracks(24)
+	if err != nil {
 		return home, err
 	}
-	if home.Albums, err = l.store.listAlbums(); err != nil {
+	albums, err := l.catalog.Albums()
+	if err != nil {
 		return home, err
 	}
-	if home.Artists, err = l.store.listArtists(); err != nil {
+	artists, err := l.catalog.Artists()
+	if err != nil {
 		return home, err
 	}
+	home.RecentTracks = l.urls.tracks(recent)
+	home.Albums = l.urls.albums(albums)
+	home.Artists = l.urls.artists(artists)
 	return home, nil
 }
 
@@ -160,21 +177,24 @@ func (l *Library) AllTracks() ([]Track, error) {
 	if err := l.check(); err != nil {
 		return []Track{}, err
 	}
-	return l.store.allTracks()
+	tracks, err := l.catalog.AllTracks()
+	return l.urls.tracks(tracks), err
 }
 
 func (l *Library) Albums() ([]Album, error) {
 	if err := l.check(); err != nil {
 		return []Album{}, err
 	}
-	return l.store.listAlbums()
+	albums, err := l.catalog.Albums()
+	return l.urls.albums(albums), err
 }
 
 func (l *Library) Artists() ([]Artist, error) {
 	if err := l.check(); err != nil {
 		return []Artist{}, err
 	}
-	return l.store.listArtists()
+	artists, err := l.catalog.Artists()
+	return l.urls.artists(artists), err
 }
 
 func (l *Library) AlbumDetail(id string) (AlbumDetail, error) {
@@ -182,17 +202,16 @@ func (l *Library) AlbumDetail(id string) (AlbumDetail, error) {
 	if err := l.check(); err != nil {
 		return detail, err
 	}
-	album, err := l.store.albumByID(id)
+	album, err := l.catalog.Album(domain.AlbumID(id))
+	if err != nil || album == nil {
+		return detail, err
+	}
+	tracks, err := l.catalog.TracksByAlbum(album.ID)
 	if err != nil {
 		return detail, err
 	}
-	if album == nil {
-		return detail, nil
-	}
-	detail.Album = *album
-	if detail.Tracks, err = l.store.tracksByAlbum(id); err != nil {
-		return detail, err
-	}
+	detail.Album = l.urls.album(*album)
+	detail.Tracks = l.urls.tracks(tracks)
 	return detail, nil
 }
 
@@ -201,28 +220,37 @@ func (l *Library) ArtistDetail(id string) (ArtistDetail, error) {
 	if err := l.check(); err != nil {
 		return detail, err
 	}
-	artist, err := l.store.artistByID(id)
+	artist, err := l.catalog.Artist(domain.ArtistID(id))
+	if err != nil || artist == nil {
+		return detail, err
+	}
+	albums, err := l.catalog.AlbumsByArtist(artist.ID)
 	if err != nil {
 		return detail, err
 	}
-	if artist == nil {
-		return detail, nil
-	}
-	detail.Artist = *artist
-	if detail.Albums, err = l.store.albumsByArtist(id); err != nil {
+	tracks, err := l.catalog.TracksByArtist(artist.ID)
+	if err != nil {
 		return detail, err
 	}
-	if detail.Tracks, err = l.store.tracksByArtist(id); err != nil {
-		return detail, err
-	}
+	detail.Artist = l.urls.artist(*artist)
+	detail.Albums = l.urls.albums(albums)
+	detail.Tracks = l.urls.tracks(tracks)
 	return detail, nil
 }
 
 func (l *Library) Tracks(ids []string) ([]Track, error) {
+	if len(ids) == 0 {
+		return []Track{}, nil
+	}
 	if err := l.check(); err != nil {
 		return []Track{}, err
 	}
-	return l.store.tracksByIDs(ids)
+	tids := make([]domain.TrackID, len(ids))
+	for i, id := range ids {
+		tids[i] = domain.TrackID(id)
+	}
+	tracks, err := l.catalog.Tracks(tids)
+	return l.urls.tracks(tracks), err
 }
 
 func (l *Library) Search(query string) (SearchResult, error) {
@@ -230,5 +258,13 @@ func (l *Library) Search(query string) (SearchResult, error) {
 	if err := l.check(); err != nil {
 		return empty, err
 	}
-	return l.store.search(query, 50)
+	result, err := l.catalog.Search(query, 50)
+	if err != nil {
+		return empty, err
+	}
+	return SearchResult{
+		Tracks:  l.urls.tracks(result.Tracks),
+		Albums:  l.urls.albums(result.Albums),
+		Artists: l.urls.artists(result.Artists),
+	}, nil
 }
