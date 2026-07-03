@@ -1,5 +1,6 @@
 import * as Library from "@wailsjs/go/backend/Library";
 import type { backend } from "@wailsjs/go/models";
+import { wailsGoBridgeReady } from "./wails";
 
 /**
  * Desktop-shell shim for the on-device music library — the Settings screen's
@@ -13,18 +14,13 @@ import type { backend } from "@wailsjs/go/models";
  *  literal because the UI layer must not import the providers layer. */
 export const LOCAL_PROVIDER_NAME = "Local";
 
-/** The Go bridge only exists inside the Wails webview. */
-function bridgeReady(): boolean {
-  return typeof window !== "undefined" && "go" in window;
-}
-
 /**
  * Open a native folder picker and index it into the on-device library. Resolves
  * to the scan result, or `undefined` when the picker was cancelled or the desktop
  * bridge is unavailable (a plain-browser dev session).
  */
 export async function scanLocalFolder(): Promise<backend.ScanResult | undefined> {
-  if (!bridgeReady()) return undefined;
+  if (!wailsGoBridgeReady()) return undefined;
   const result = await Library.PickAndScan();
   return result.folder ? result : undefined; // cancelled → zero result (empty folder)
 }

@@ -125,6 +125,14 @@ func (l *Library) Search(query string) (SearchResult, error) {
 	}, nil
 }
 
+// StreamURL maps a playback URL to a loopback, CORS-clean URL: our own /media is
+// returned unchanged, a remote provider URL is wrapped in the /stream byte-proxy.
+// The frontend routes both audible playback and Web Audio analysis through it, so
+// the main <audio> is always same-origin and can be sampled without tainting.
+func (l *Library) StreamURL(raw string) string {
+	return l.urls.stream(raw)
+}
+
 // Lyric returns a track's raw sidecar lyric text (LRC), "" when it has none. The
 // frontend parses the LRC into timed lines, so no wire DTO is needed.
 func (l *Library) Lyric(id string) (string, error) {

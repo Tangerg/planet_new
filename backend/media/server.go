@@ -6,8 +6,10 @@
 package media
 
 import (
+	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,7 +29,10 @@ type Source interface {
 // rejected before it can touch the filesystem (no traversal).
 var idPattern = regexp.MustCompile(`^[0-9a-f]{16}$`)
 
-// Server owns the loopback listener and serves /media/<id> and /cover/<albumId>.
+// Server owns the loopback listener and serves /media/<id>, /cover/<albumId>,
+// plus /stream?url=<remote>: a CORS byte-proxy that turns a remote provider URL
+// into a loopback (CORS-clean) one, so the webview can play it AND feed it to
+// Web Audio without cross-origin tainting.
 type Server struct {
 	baseURL   string
 	coversDir string
@@ -48,6 +53,7 @@ func Start(coversDir string, source Source) (*Server, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/media/", s.serveMedia)
 	mux.HandleFunc("/cover/", s.serveCover)
+	mux.HandleFunc("/stream", s.serveStream)
 	srv := &http.Server{Handler: cors(mux)}
 	go func() { _ = srv.Serve(ln) }()
 	return s, nil
@@ -94,6 +100,60 @@ func (s *Server) serveCover(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, filepath.Join(s.coversDir, id+"."+ext))
+}
+
+// serveStream is a CORS byte-proxy for a remote audio URL: it forwards the
+// client's Range so seek/206 keeps working, relays the upstream's content
+// headers, and (via the cors wrapper) adds the loopback ACAO so the webview can
+// both play it and feed it to a Web Audio analyser untainted.
+func (s *Server) serveStream(w http.ResponseWriter, r *http.Request) {
+	raw := r.URL.Query().Get("url")
+	target, err := url.Parse(raw)
+	if err != nil || target.Host == "" || (target.Scheme != "http" && target.Scheme != "https") {
+		http.Error(w, "invalid stream url", http.StatusBadRequest)
+		return
+	}
+
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target.String(), nil)
+	if err != nil {
+		http.Error(w, "invalid stream request", http.StatusBadRequest)
+		return
+	}
+	if rng := r.Header.Get("Range"); rng != "" {
+		req.Header.Set("Range", rng)
+	}
+	if ua := r.UserAgent(); ua != "" {
+		req.Header.Set("User-Agent", ua)
+	} else {
+		req.Header.Set("User-Agent", "Mozilla/5.0 PlanetMusic/1.0")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, "stream source unavailable", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	copyHeaders(w.Header(), resp.Header, []string{
+		"Accept-Ranges",
+		"Cache-Control",
+		"Content-Length",
+		"Content-Range",
+		"Content-Type",
+		"ETag",
+		"Last-Modified",
+	})
+	w.WriteHeader(resp.StatusCode)
+	_, _ = io.Copy(w, resp.Body)
+}
+
+func copyHeaders(dst, src http.Header, names []string) {
+	for _, name := range names {
+		for _, value := range src.Values(name) {
+			dst.Add(name, value)
+		}
+	}
 }
 
 // cors lets the webview origin load media cross-origin; loopback is a trusted

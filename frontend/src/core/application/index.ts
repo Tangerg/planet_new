@@ -6,3 +6,4 @@ export * from "./PlaybackService";
 export * from "./MediaService";
 export * from "./AuthService";
 export * from "./LibraryService";
+export * from "./AudioAnalysisService";

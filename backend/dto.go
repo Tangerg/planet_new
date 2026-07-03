@@ -1,6 +1,11 @@
 package backend
 
-import "changeme/backend/domain"
+import (
+	"net/url"
+	"strings"
+
+	"changeme/backend/domain"
+)
 
 // Wire DTOs — the shape the frontend consumes (Wails generates matching
 // TypeScript). Kept flat + provider-neutral; the frontend mapper translates them
@@ -79,6 +84,17 @@ type ScanResult struct {
 type mediaURLs struct{ base string }
 
 func (u mediaURLs) media(id domain.TrackID) string { return u.base + "/media/" + id.String() }
+
+// stream maps a playback URL to a loopback, CORS-clean URL the webview can feed
+// to Web Audio without tainting: our own /media (local files) is already
+// loopback and returned unchanged; a remote CDN URL is wrapped in the /stream
+// byte-proxy. Idempotent, so routing every play URL through it is safe.
+func (u mediaURLs) stream(raw string) string {
+	if raw == "" || strings.HasPrefix(raw, u.base) {
+		return raw
+	}
+	return u.base + "/stream?url=" + url.QueryEscape(raw)
+}
 
 func (u mediaURLs) cover(c domain.Cover) string {
 	if !c.Present() {

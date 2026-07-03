@@ -13,6 +13,17 @@ func TestMediaURLsProjectLoopbackURLs(t *testing.T) {
 	if track.PlayURL != "http://127.0.0.1:9999/media/trk1" {
 		t.Errorf("track playURL = %q", track.PlayURL)
 	}
+	// A remote CDN URL is wrapped (and query-escaped) in the /stream byte-proxy.
+	if u.stream("https://cdn.example/song.mp3?br=320000") != "http://127.0.0.1:9999/stream?url=https%3A%2F%2Fcdn.example%2Fsong.mp3%3Fbr%3D320000" {
+		t.Errorf("stream URL was not escaped correctly")
+	}
+	if u.stream("") != "" {
+		t.Error("empty stream URL should stay empty")
+	}
+	// Idempotent: an already-loopback URL (our own /media) is not double-proxied.
+	if got := u.stream(track.PlayURL); got != track.PlayURL {
+		t.Errorf("stream(%q) = %q, want it returned unchanged", track.PlayURL, got)
+	}
 	if track.CoverURL != "http://127.0.0.1:9999/cover/alb1" {
 		t.Errorf("track coverURL = %q", track.CoverURL)
 	}

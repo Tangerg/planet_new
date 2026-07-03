@@ -46,6 +46,10 @@ export function Search(arg1) {
   return window['go']['backend']['Library']['Search'](arg1);
 }
 
+export function StreamURL(arg1) {
+  return window['go']['backend']['Library']['StreamURL'](arg1);
+}
+
 export function TrackCount() {
   return window['go']['backend']['Library']['TrackCount']();
 }
