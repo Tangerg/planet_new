@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
         "@base-ui/react/tooltip",
         "@base-ui/react/preview-card",
         "@base-ui/react/slider",
+        "@base-ui/react/dialog",
       ],
     },
 
