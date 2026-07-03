@@ -1,6 +1,6 @@
 @reference "../../../index.css";
 
-/* Radix ToggleGroup variants, keyed off [data-state]:
+/* Base UI ToggleGroup variants, keyed off [data-pressed]:
    .tabs/.tab — artist/profile/library section tabs (centred accent underline);
    .seg      — settings segmented control (accent fill);
    .sortseg  — detail track sort selector. Underline pseudo + accent fills + the
@@ -20,7 +20,7 @@
 .tab:hover {
   color: var(--tx-2);
 }
-.tab[data-state="on"] {
+.tab[data-pressed] {
   color: var(--tx);
 }
 /* short centred accent underline (Listen1-style) — old shrinks, new grows */
@@ -38,7 +38,7 @@
   box-shadow: 0 0 10px -1px var(--accent);
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.tab[data-state="on"]::after {
+.tab[data-pressed]::after {
   transform: translateX(-50%) scaleX(1);
 }
 
@@ -51,7 +51,7 @@
     background 0.15s,
     color 0.15s;
 }
-.seg button[data-state="on"] {
+.seg button[data-pressed] {
   background: var(--accent);
   color: #06060a;
 }
@@ -65,7 +65,7 @@
     background 0.15s,
     color 0.15s;
 }
-.sortseg button[data-state="on"] {
+.sortseg button[data-pressed] {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }

@@ -13,7 +13,7 @@
 .viewtoggle button:hover {
   color: var(--tx-2);
 }
-.viewtoggle button[data-state="on"] {
+.viewtoggle button[data-pressed] {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
