@@ -5,7 +5,11 @@ import { PlaybackService } from "./PlaybackService";
 import { MediaService } from "./MediaService";
 import { AuthService } from "./AuthService";
 import { LibraryService } from "./LibraryService";
-import { AudioAnalysisService } from "./AudioAnalysisService";
+import { AudioAnalysisService, type AudioAnalysisSourceResolver } from "./AudioAnalysisService";
+
+export type EngineOptions = {
+  resolveAudioAnalysisSource?: AudioAnalysisSourceResolver;
+};
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
@@ -29,6 +33,7 @@ export class Engine {
   constructor(
     private readonly planet: Planet,
     credentials: CredentialStore,
+    options: EngineOptions = {},
   ) {
     const getProvider = (): MusicProvider => {
       const provider = this.providers.active;
@@ -41,7 +46,7 @@ export class Engine {
     this.media = new MediaService(getProvider);
     this.auth = new AuthService(getProvider, credentials);
     this.library = new LibraryService(getProvider);
-    this.audio = new AudioAnalysisService(planet);
+    this.audio = new AudioAnalysisService(planet, options.resolveAudioAnalysisSource);
   }
 
   /** The kernel event bus — UI store-bridges subscribe here for playback/state. */

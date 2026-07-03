@@ -27,27 +27,12 @@ export const TRANSPORT = defineCapability<Playback>("transport");
 export class Playback extends Plugin {
   public static readonly id = "playback";
 
-  /**
-   * Maps a track's play URL to the loopback, CORS-clean URL the shared <audio>
-   * should load. Local files are already loopback; remote provider streams get
-   * wrapped in the media server's proxy, so the audible element is always
-   * same-origin — playable AND samplable by Web Audio without tainting. Injected
-   * at the composition root; defaults to identity for tests / plain browser.
-   */
-  constructor(
-    private readonly resolveSource: (playUrl: string) => string | Promise<string> = (u) => u,
-  ) {
-    super();
-  }
-
   get id(): string {
     return Playback.id;
   }
 
   protected onInit(): void {
     this.context.registry.provide(TRANSPORT, this);
-    // CORS mode so the (loopback) stream can also feed a Web Audio analyser.
-    this.context.audioElement.crossOrigin = "anonymous";
     this.context.audioElement.addEventListener("ended", this.onEnded);
     this.context.hooks.on("queue:current-changed", this.onCurrentChanged, this);
   }
@@ -64,11 +49,6 @@ export class Playback extends Plugin {
       return;
     }
     try {
-      // The element is tapped into Web Audio (analyser), so its output flows
-      // through the AudioContext — a suspended context would mute playback.
-      // Resume it on the play gesture before starting the element.
-      const ctx = this.context.audioContext;
-      if (ctx.state === "suspended") await ctx.resume();
       await this.context.audioElement.play();
       this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
     } catch {
@@ -98,7 +78,7 @@ export class Playback extends Plugin {
       this.stop();
       return;
     }
-    this.context.audioElement.src = await this.resolveSource(track.playUrl);
+    this.context.audioElement.src = track.playUrl;
     await this.resume();
   };
 }
