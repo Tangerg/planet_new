@@ -20,7 +20,7 @@
 
 - [x] **Switch**(pilot)—— `data-state`→`data-checked`,已删 `@radix-ui/react-switch`
 - [x] **Toggle** —— `pressed`/`onPressedChange` 同名,按下态本就内联(无 CSS 耦合),已删 `@radix-ui/react-toggle`
-- [ ] ToggleGroup
+- [x] **ToggleGroup** —— value 单串↔数组在封装内适配;items 用 Base UI `Toggle`;5 处 `[data-state="on"]`→`[data-pressed]`(ToggleGroup.css×4 + ViewToggle.css×1),已删 `@radix-ui/react-toggle-group`
 - [ ] Tooltip
 - [ ] HoverCard → **PreviewCard**(消费方:`TextReveal`、`VolumeControl`)
 - [ ] Slider
