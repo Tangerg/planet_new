@@ -74,11 +74,15 @@ export function Sheet({
               initialFocus={false}
               finalFocus={false}
               render={
+                // Animate the `transform` property (not Motion's `y` shorthand):
+                // Base UI keeps the popup mounted through the exit only while it
+                // detects a WAAPI animation via getAnimations(), which Motion runs
+                // for `transform`/`opacity` but not for the JS-driven `y`.
                 <motion.div
                   ref={contentRef}
-                  initial={{ y: "102%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "102%" }}
+                  initial={{ transform: "translateY(102%)" }}
+                  animate={{ transform: "translateY(0%)" }}
+                  exit={{ transform: "translateY(102%)" }}
                   transition={{ duration: durationSec, ease: EASE }}
                 />
               }
