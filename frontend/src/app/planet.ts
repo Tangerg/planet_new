@@ -11,7 +11,7 @@ import {
 import type { Provider } from "@providers";
 import { LocalCredentialStore, LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
-import { loopbackMediaSource } from "@/infra/audioAnalysis";
+import { loopbackMediaSource } from "@/infra/mediaSource";
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
 const env = import.meta.env;
