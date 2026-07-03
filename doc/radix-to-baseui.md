@@ -22,7 +22,7 @@
 - [x] **Toggle** —— `pressed`/`onPressedChange` 同名,按下态本就内联(无 CSS 耦合),已删 `@radix-ui/react-toggle`
 - [x] **ToggleGroup** —— value 单串↔数组在封装内适配;items 用 Base UI `Toggle`;5 处 `[data-state="on"]`→`[data-pressed]`(ToggleGroup.css×4 + ViewToggle.css×1),已删 `@radix-ui/react-toggle-group`
 - [x] **Tooltip** —— 无 asChild:trigger 走 `render={children}`;结构 Portal→Positioner→Popup;`side`/`sideOffset` 移到 Positioner;Provider 属性 `delayDuration`/`skipDelayDuration`→`delay`/`timeout`(Shell 1 行);已删 `@radix-ui/react-tooltip`
-- [ ] HoverCard → **PreviewCard**(消费方:`TextReveal`、`VolumeControl`)
+- [x] **HoverCard → PreviewCard** —— 新抽 `controls/HoverCard.tsx` 封装(Base UI PreviewCard + Motion enter/exit,`Portal keepMounted` + `AnimatePresence` + `Popup render={motion.div}`),`TextReveal`/`VolumeControl` 改为消费封装(不再直接用);delay/closeDelay 移到 Trigger;已删 `@radix-ui/react-hover-card`。vite `optimizeDeps.include` 预登记 @base-ui 子路径,消除 re-optimize 抖动
 - [ ] Slider
 - [ ] Sheet(Dialog)—— 焦点/Portal 敏感,登录面板要重点 smoke
 - [ ] Menu(DropdownMenu)—— 键盘/子菜单/Escape 焦点返回要重点 smoke
