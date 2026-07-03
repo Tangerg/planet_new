@@ -1,4 +1,4 @@
-package library
+package scan
 
 import (
 	"encoding/binary"
@@ -6,14 +6,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"changeme/library/domain"
 )
 
-// probeDurationMs returns the playback length of an audio file in milliseconds,
-// best-effort. `dhowden/tag` reads tags but not stream length, so we parse the
-// container ourselves for the common desktop formats (MP3, FLAC, WAV). Unknown
-// or unparseable formats return 0 — the UI renders that as "--:--" rather than a
-// wrong number, and the <audio> element still reports the true length on play.
-func probeDurationMs(path string) int {
+// probeDuration returns an audio file's playback length, best-effort. dhowden/tag
+// reads tags but not stream length, so we parse the container ourselves for the
+// common desktop formats (MP3, FLAC, WAV). Unknown or unparseable formats return
+// zero — the UI renders that as "--:--" rather than a wrong number, and the
+// <audio> element still reports the true length on play.
+func probeDuration(path string) domain.Duration {
 	f, err := os.Open(path)
 	if err != nil {
 		return 0
@@ -22,34 +24,32 @@ func probeDurationMs(path string) int {
 
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".flac":
-		return flacDurationMs(f)
+		return domain.Duration(flacMillis(f))
 	case ".wav":
-		return wavDurationMs(f)
+		return domain.Duration(wavMillis(f))
 	case ".mp3":
-		return mp3DurationMs(f)
+		return domain.Duration(mp3Millis(f))
 	default:
 		return 0
 	}
 }
 
 // ── FLAC ─────────────────────────────────────────────────────────────────────
-// STREAMINFO is the first metadata block; its trailing 64 bits pack sampleRate
-// (20) + channels (3) + bitsPerSample (5) + totalSamples (36).
+// STREAMINFO's trailing 64 bits pack sampleRate (20) + channels (3) +
+// bitsPerSample (5) + totalSamples (36).
 
-func flacDurationMs(f *os.File) int {
+func flacMillis(f *os.File) int {
 	var magic [4]byte
 	if _, err := io.ReadFull(f, magic[:]); err != nil || string(magic[:]) != "fLaC" {
 		return 0
 	}
-	// STREAMINFO body starts after the 4-byte block header; the sampleRate +
-	// totalSamples window sits 10 bytes into the body (file offset 4+4+10 = 18).
-	var buf [8]byte
+	var buf [8]byte // sampleRate + totalSamples window, 10 bytes into the body
 	if _, err := f.ReadAt(buf[:], 18); err != nil {
 		return 0
 	}
 	v := binary.BigEndian.Uint64(buf[:])
 	sampleRate := v >> 44
-	totalSamples := v & 0xFFFFFFFFF // low 36 bits
+	totalSamples := v & 0xFFFFFFFFF
 	if sampleRate == 0 || totalSamples == 0 {
 		return 0
 	}
@@ -57,9 +57,9 @@ func flacDurationMs(f *os.File) int {
 }
 
 // ── WAV ──────────────────────────────────────────────────────────────────────
-// duration = data-chunk bytes / byteRate (from the fmt chunk).
+// duration = data-chunk bytes / byteRate.
 
-func wavDurationMs(f *os.File) int {
+func wavMillis(f *os.File) int {
 	var riff [12]byte
 	if _, err := io.ReadFull(f, riff[:]); err != nil {
 		return 0
@@ -102,10 +102,8 @@ func wavDurationMs(f *os.File) int {
 // estimate from the first frame's bitrate.
 
 var mp3BitrateKbps = map[int][16]int{
-	// MPEG1 Layer3
-	13: {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0},
-	// MPEG2/2.5 Layer3
-	23: {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},
+	13: {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0}, // MPEG1 Layer3
+	23: {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},     // MPEG2/2.5 Layer3
 }
 
 var mp3SampleRates = map[int][4]int{
@@ -114,31 +112,29 @@ var mp3SampleRates = map[int][4]int{
 	0: {11025, 12000, 8000, 0},  // MPEG2.5
 }
 
-func mp3DurationMs(f *os.File) int {
-	// Skip an ID3v2 tag if present (10-byte header + syncsafe size).
+func mp3Millis(f *os.File) int {
 	var start int64
 	var id3 [10]byte
 	if _, err := io.ReadFull(f, id3[:]); err == nil && string(id3[0:3]) == "ID3" {
+		// Skip an ID3v2 tag: 10-byte header + syncsafe (7-bit) size.
 		size := int64(id3[6]&0x7f)<<21 | int64(id3[7]&0x7f)<<14 | int64(id3[8]&0x7f)<<7 | int64(id3[9]&0x7f)
 		start = 10 + size
 	}
 
-	// Read the first frame header.
 	var h [4]byte
 	if _, err := f.ReadAt(h[:], start); err != nil {
 		return 0
 	}
 	if h[0] != 0xFF || h[1]&0xE0 != 0xE0 {
-		return 0 // no frame sync where expected
+		return 0
 	}
 	versionBits := int(h[1]>>3) & 3 // 3=MPEG1, 2=MPEG2, 0=MPEG2.5
 	layerBits := int(h[1]>>1) & 3   // 1=Layer3
 	if layerBits != 1 {
-		return 0 // only Layer3 tables provided
+		return 0
 	}
 	bitrateIdx := int(h[2]>>4) & 0xF
 	sampleRateIdx := int(h[2]>>2) & 3
-	padding := int(h[2]>>1) & 1
 
 	rates, ok := mp3SampleRates[versionBits]
 	if !ok {
@@ -156,36 +152,29 @@ func mp3DurationMs(f *os.File) int {
 
 	samplesPerFrame := 1152
 	if versionBits != 3 {
-		samplesPerFrame = 576 // MPEG2/2.5 Layer3
+		samplesPerFrame = 576
 	}
 
-	// Xing/Info header offset within the frame depends on version + channel mode.
 	channelMode := int(h[3]>>6) & 3 // 3 = mono
 	var xingOffset int64
-	if versionBits == 3 { // MPEG1
-		if channelMode == 3 {
-			xingOffset = 21
-		} else {
-			xingOffset = 36
-		}
-	} else { // MPEG2 / 2.5
-		if channelMode == 3 {
-			xingOffset = 13
-		} else {
-			xingOffset = 21
-		}
+	switch {
+	case versionBits == 3 && channelMode == 3:
+		xingOffset = 21
+	case versionBits == 3:
+		xingOffset = 36
+	case channelMode == 3:
+		xingOffset = 13
+	default:
+		xingOffset = 21
 	}
 
 	var tag [8]byte
 	if _, err := f.ReadAt(tag[:], start+xingOffset); err == nil {
-		id := string(tag[0:4])
-		if id == "Xing" || id == "Info" {
-			flags := binary.BigEndian.Uint32(tag[4:8])
-			if flags&0x1 != 0 { // frames field present
+		if id := string(tag[0:4]); id == "Xing" || id == "Info" {
+			if binary.BigEndian.Uint32(tag[4:8])&0x1 != 0 { // frames field present
 				var fb [4]byte
 				if _, err := f.ReadAt(fb[:], start+xingOffset+8); err == nil {
-					frames := binary.BigEndian.Uint32(fb[:])
-					if frames > 0 {
+					if frames := binary.BigEndian.Uint32(fb[:]); frames > 0 {
 						return int(uint64(frames) * uint64(samplesPerFrame) * 1000 / uint64(sampleRate))
 					}
 				}
@@ -193,7 +182,6 @@ func mp3DurationMs(f *os.File) int {
 		}
 	}
 
-	// CBR estimate from the audio-data byte length.
 	if bitrate == 0 {
 		return 0
 	}
@@ -205,6 +193,5 @@ func mp3DurationMs(f *os.File) int {
 	if audioBytes <= 0 {
 		return 0
 	}
-	_ = padding // frame-precise sizing not needed for the CBR estimate
 	return int(audioBytes * 8 * 1000 / int64(bitrate))
 }
