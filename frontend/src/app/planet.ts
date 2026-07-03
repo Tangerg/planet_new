@@ -11,7 +11,7 @@ import {
 import type { Provider } from "@providers";
 import { LocalCredentialStore, LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
-import { audioAnalysisSource } from "@/infra/audioAnalysis";
+import { loopbackMediaSource } from "@/infra/mediaSource";
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
 const env = import.meta.env;
@@ -63,7 +63,7 @@ const { providers, active } = buildProviders();
 const planet = new Planet({
   plugins: [
     ...providers,
-    new Playback(),
+    new Playback(loopbackMediaSource),
     new PlayQueue(),
     new Volume(),
     new Progress(),
@@ -76,6 +76,4 @@ const planet = new Planet({
 
 /** The application Engine — the UI's single handle to the kernel (events +
  *  playback/media/auth use-cases + provider selection). */
-export const engine = new Engine(planet, credentials, {
-  resolveAudioAnalysisSource: audioAnalysisSource,
-});
+export const engine = new Engine(planet, credentials);

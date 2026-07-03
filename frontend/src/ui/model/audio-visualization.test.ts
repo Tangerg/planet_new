@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { idleSpectrumBand, smoothSpectrum, spectrumFrame } from "./audio-visualization";
+import { smoothSpectrum, spectrumFrame } from "./audio-visualization";
 
 describe("audio visualization model", () => {
   it("compresses FFT bytes into semantic bands and energy groups", () => {
@@ -26,13 +26,6 @@ describe("audio visualization model", () => {
   it("smooths attacks faster than releases", () => {
     expect(smoothSpectrum([0], [1], 0.4, 0.1)[0]).toBeCloseTo(0.4);
     expect(smoothSpectrum([1], [0], 0.4, 0.1)[0]).toBeCloseTo(0.9);
-  });
-
-  it("keeps idle bands subtle and bounded", () => {
-    const value = idleSpectrumBand(2, 8, 12);
-
-    expect(value).toBeGreaterThanOrEqual(0.018);
-    expect(value).toBeLessThanOrEqual(0.12);
   });
 
   it("rejects invalid band counts", () => {

@@ -5,13 +5,7 @@ import type { Planet } from "../kernel";
 import { AudioAnalysisService } from "./AudioAnalysisService";
 
 function makeService(analyser?: Partial<AnalyserNode>) {
-  const port = analyser
-    ? {
-        analyser: () => analyser as AnalyserNode,
-        setSource: vi.fn<(url: string) => Promise<void>>().mockResolvedValue(undefined),
-        stop: vi.fn<() => void>(),
-      }
-    : null;
+  const port = analyser ? { analyser: () => analyser as AnalyserNode } : null;
   const planet = {
     resolve: vi.fn<(cap: unknown) => typeof port>((cap) => (cap === AUDIO_ANALYSER ? port : null)),
   } as unknown as Planet;
@@ -70,25 +64,8 @@ describe("AudioAnalysisService", () => {
     expect(getByteFrequencyData).not.toHaveBeenCalled();
   });
 
-  it("resolves and starts the analysis-only audio source", async () => {
-    const { port } = makeService({ fftSize: 128, frequencyBinCount: 1 });
-    const withResolver = new AudioAnalysisService(
-      {
-        resolve: vi.fn<(cap: unknown) => typeof port>((cap) =>
-          cap === AUDIO_ANALYSER ? port : null,
-        ),
-      } as unknown as Planet,
-      (url) => `probe:${url}`,
-    );
-
-    await expect(withResolver.useSource("https://cdn.example/song.mp3")).resolves.toBe(true);
-    expect(port?.setSource).toHaveBeenCalledWith("probe:https://cdn.example/song.mp3");
-  });
-
-  it("stops the probe when no playable source is available", async () => {
-    const { service, port } = makeService({ fftSize: 128, frequencyBinCount: 1 });
-
-    await expect(service.useSource(undefined)).resolves.toBe(false);
-    expect(port?.stop).toHaveBeenCalledOnce();
+  it("reports supported when the analyser capability is mounted", () => {
+    const { service } = makeService({ fftSize: 128, frequencyBinCount: 1 });
+    expect(service.supported).toBe(true);
   });
 });

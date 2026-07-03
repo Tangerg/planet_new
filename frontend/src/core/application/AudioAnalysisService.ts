@@ -11,22 +11,18 @@ export type AudioAnalysisOptions = {
   maxDecibels?: number;
 };
 
-export type AudioAnalysisSourceResolver = (playUrl: string) => string | Promise<string>;
-
 const DEFAULT_FFT_SIZE = 128;
-const identitySource: AudioAnalysisSourceResolver = (playUrl) => playUrl;
 
 /**
- * Read-only audio analysis use case. It exposes the shared analyser tap without
- * letting UI components resolve kernel plugins directly. Sampling is pull-based
- * so visualizers can run in their own RAF loop instead of pushing 60fps data
- * through React state, Zustand, or the event bus.
+ * Read-only audio analysis use case. It exposes the shared analyser tap over the
+ * audible playback element without letting UI components resolve kernel plugins
+ * directly. There is no source to manage — the analyser passively follows the
+ * player — so callers only sample. Sampling is pull-based so visualizers run in
+ * their own RAF loop instead of pushing 60fps data through React state, Zustand,
+ * or the event bus.
  */
 export class AudioAnalysisService {
-  constructor(
-    private readonly planet: Planet,
-    private readonly resolveSource: AudioAnalysisSourceResolver = identitySource,
-  ) {}
+  constructor(private readonly planet: Planet) {}
 
   get supported(): boolean {
     return this.planet.resolve(AUDIO_ANALYSER) !== null;
@@ -34,32 +30,6 @@ export class AudioAnalysisService {
 
   frequencyBinCount(fftSize = DEFAULT_FFT_SIZE): number {
     return Math.max(1, Math.floor(fftSize / 2));
-  }
-
-  async useSource(playUrl: string | undefined): Promise<boolean> {
-    const port = this.planet.resolve(AUDIO_ANALYSER);
-    if (!port) return false;
-    if (!playUrl) {
-      port.stop();
-      return false;
-    }
-
-    try {
-      const source = await this.resolveSource(playUrl);
-      if (!source) {
-        port.stop();
-        return false;
-      }
-      await port.setSource(source);
-      return true;
-    } catch {
-      port.stop();
-      return false;
-    }
-  }
-
-  stop(): void {
-    this.planet.resolve(AUDIO_ANALYSER)?.stop();
   }
 
   sampleFrequencyData(target: FrequencyData, options: AudioAnalysisOptions = {}): boolean {
