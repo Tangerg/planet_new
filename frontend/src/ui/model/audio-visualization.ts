@@ -73,3 +73,10 @@ export function smoothSpectrum(
     return prev + (value - prev) * clamp(0, 1, amount);
   });
 }
+
+export function idleSpectrumBand(index: number, count: number, timeSec: number): number {
+  const position = count > 1 ? index / (count - 1) : 0;
+  const drift = Math.sin(timeSec * 1.4 + index * 0.74) * 0.5 + 0.5;
+  const center = 1 - Math.abs(position - 0.5) * 1.35;
+  return clamp(0.018, 0.12, 0.025 + drift * 0.035 + center * 0.025);
+}
