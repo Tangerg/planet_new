@@ -19,7 +19,7 @@
 ## 清单(顺序:低风险 → 高风险)
 
 - [x] **Switch**(pilot)—— `data-state`→`data-checked`,已删 `@radix-ui/react-switch`
-- [ ] Toggle(`data-state` 类)
+- [x] **Toggle** —— `pressed`/`onPressedChange` 同名,按下态本就内联(无 CSS 耦合),已删 `@radix-ui/react-toggle`
 - [ ] ToggleGroup
 - [ ] Tooltip
 - [ ] HoverCard → **PreviewCard**(消费方:`TextReveal`、`VolumeControl`)

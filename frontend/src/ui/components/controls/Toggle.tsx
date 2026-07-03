@@ -1,18 +1,19 @@
-import * as RadixToggle from "@radix-ui/react-toggle";
+import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import React from "react";
 import { cn } from "@/lib/cn";
 import "./Button.css";
 
-export type ToggleProps = React.ComponentPropsWithoutRef<typeof RadixToggle.Root>;
+export type ToggleProps = React.ComponentPropsWithoutRef<typeof BaseToggle>;
 
 /**
- * On/off control (shuffle · repeat · like). Radix Toggle adds `aria-pressed` +
- * `data-state` over a plain button; `.btn` supplies the chrome reset shared with
- * <Button>. The per-state colour stays inline (driven by the live accent prop).
+ * On/off control (shuffle · repeat · like). Base UI Toggle adds `aria-pressed` +
+ * `data-pressed` over a native button; `.btn` supplies the chrome reset shared
+ * with <Button>. The per-state colour stays inline (driven by the live accent
+ * prop), so no data-attribute CSS is coupled here.
  */
 export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
   { className, ...rest },
   ref,
 ) {
-  return <RadixToggle.Root ref={ref} className={cn("btn", className)} {...rest} />;
+  return <BaseToggle ref={ref} className={cn("btn", className)} {...rest} />;
 });
