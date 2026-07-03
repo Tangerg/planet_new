@@ -24,6 +24,8 @@ export function ScanFolder(arg1:string):Promise<backend.ScanResult>;
 
 export function Search(arg1:string):Promise<backend.SearchResult>;
 
+export function StreamURL(arg1:string):Promise<string>;
+
 export function TrackCount():Promise<number>;
 
 export function Tracks(arg1:Array<string>):Promise<Array<backend.Track>>;

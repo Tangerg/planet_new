@@ -3,12 +3,20 @@ package media
 import (
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"changeme/backend/domain"
 )
+
+// streamURL builds the loopback /stream proxy URL for a remote source, mirroring
+// what mediaURLs.stream does on the wire side.
+func streamURL(s *Server, raw string) string {
+	return s.BaseURL() + "/stream?url=" + url.QueryEscape(raw)
+}
 
 // fakeSource resolves any valid id to the same fixture file/ext.
 type fakeSource struct {
@@ -87,6 +95,60 @@ func TestServerRejectsBadIDs(t *testing.T) {
 		resp.Body.Close()
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("media id %q status=%d, want 404", id, resp.StatusCode)
+		}
+	}
+}
+
+func TestServerProxiesStreamAudioWithRangeAndCORS(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Range") != "bytes=2-5" {
+			t.Errorf("upstream Range = %q, want bytes=2-5", r.Header.Get("Range"))
+		}
+		w.Header().Set("Content-Type", "audio/mpeg")
+		w.Header().Set("Accept-Ranges", "bytes")
+		w.Header().Set("Content-Range", "bytes 2-5/10")
+		w.WriteHeader(http.StatusPartialContent)
+		_, _ = w.Write([]byte("cdef"))
+	}))
+	defer upstream.Close()
+
+	srv, err := Start(t.TempDir(), fakeSource{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, _ := http.NewRequest(http.MethodGet, streamURL(srv, upstream.URL+"/song.mp3"), nil)
+	req.Header.Set("Range", "bytes=2-5")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusPartialContent || string(body) != "cdef" {
+		t.Fatalf("stream proxy: status=%d body=%q, want 206/cdef", resp.StatusCode, body)
+	}
+	if resp.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Error("missing CORS header on stream response")
+	}
+	if resp.Header.Get("Content-Range") != "bytes 2-5/10" {
+		t.Errorf("Content-Range = %q, want upstream value", resp.Header.Get("Content-Range"))
+	}
+}
+
+func TestServerRejectsInvalidStreamURL(t *testing.T) {
+	srv, err := Start(t.TempDir(), fakeSource{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, raw := range []string{"", "file:///tmp/song.mp3", "ftp://example.com/song.mp3"} {
+		resp, err := http.Get(streamURL(srv, raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("stream url %q status=%d, want 400", raw, resp.StatusCode)
 		}
 	}
 }

@@ -12,6 +12,7 @@ import { PlayerUtilities } from "@/components/player-bar/PlayerUtilities";
 import { TransportControls } from "@/components/player-bar/TransportControls";
 import { useMorph } from "@/infra/morph";
 import { artPair } from "@/components/primitives";
+import { BreathingLight } from "@/components/visualizer/BreathingLight";
 
 type Props = {
   track?: VibeTrack;
@@ -90,6 +91,14 @@ export const PlayerBar = React.memo(function PlayerBar({
           background: `linear-gradient(120deg, ${a}38, ${b}38), rgba(247,246,244,.62)`,
           borderTop: "0.5px solid rgba(255,255,255,.5)",
         }}
+      />
+
+      <BreathingLight
+        playing={playing && !!track?.playUrl}
+        playUrl={track?.playUrl}
+        accent={accent}
+        tintA={a}
+        tintB={b}
       />
 
       <PlayerTrackIdentity
