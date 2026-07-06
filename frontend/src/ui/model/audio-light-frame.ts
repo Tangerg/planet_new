@@ -13,6 +13,14 @@ export type AudioLightFrame = AudioLightFrameState & {
   energy: number;
 };
 
+// Colour drifts on a slow, breathing timescale — deliberately decoupled from the
+// beat: the pulse/brightness rides `energy` (bands, smoothed fast) so it still
+// punches on transients, while the HUE eases between spectral characters over
+// ~0.5–1s instead of flickering per note. Gentler than the band smoothing, and
+// attack barely faster than release so a rising character leads without twitch.
+const COLOR_ATTACK = 0.09;
+const COLOR_RELEASE = 0.055;
+
 export function initialAudioLightFrameState(bandCount: number): AudioLightFrameState {
   return { bands: Array.from({ length: bandCount }, () => 0) };
 }
@@ -39,7 +47,7 @@ export function nextAudioLightFrame({
   const profile = spectrumProfile(bands);
   const nextSignature = read && profile.active ? spectrumColorSignature(bytes) : undefined;
   const signature = nextSignature
-    ? smoothColorSignature(previous.signature, nextSignature)
+    ? smoothColorSignature(previous.signature, nextSignature, COLOR_ATTACK, COLOR_RELEASE)
     : previous.signature;
   const idle = 0.12 + (0.5 + Math.sin(timeMs / 1000 + 0.4) * 0.5) * 0.18;
   const energy = profile.active
