@@ -25,41 +25,18 @@ export type SpectralLightColors = {
   stops: readonly SpectralColorStop[];
 };
 
-const LUXURY_PALETTE: readonly HslColor[] = [
-  { h: 352, s: 30, l: 49 },
-  { h: 16, s: 42, l: 44 },
-  { h: 31, s: 45, l: 48 },
-  { h: 45, s: 38, l: 55 },
-  { h: 78, s: 30, l: 42 },
-  { h: 138, s: 36, l: 42 },
-  { h: 162, s: 34, l: 46 },
-  { h: 188, s: 30, l: 54 },
-];
-
-type SpectralHslOptions = {
-  primary: number;
-  secondary: number;
-  offset: number;
-  anchor: HslColor;
-  energy: number;
-  contrast: number;
-  satBias: number;
-  lightBias: number;
-  active: boolean;
-};
-
-type LaneColorOptions = {
-  value: number;
-  previous: number;
-  next: number;
-  at: number;
-  index: number;
-  centroid: number;
-  contrast: number;
-  energy: number;
-  anchor: HslColor;
-  active: boolean;
-};
+// ── Cyberpunk / vaporwave temperature ramp ──────────────────────────────────
+// Pitch → colour TEMPERATURE: LOW frequencies read COOL, HIGH read WARM (the
+// requested mapping). The ramp runs a neon sweep — electric cyan → blue → violet
+// → magenta → hot pink → red — so a bass moment glows cold and an airy/bright one
+// burns hot, with the whole thing living in the vaporwave zone (no muddy
+// green/yellow, deliberately embracing the blue/purple the old palette banned).
+// WARM_HUE = 366 wraps to 6° (red), keeping the sweep monotonic across the seam.
+const COOL_HUE = 186;
+const WARM_HUE = 366;
+const HUE_SPAN = WARM_HUE - COOL_HUE;
+// Neon base saturation — high on purpose; music energy pushes it toward 100.
+const NEON_SAT = 90;
 
 function parseHexColor(hex: string, fallback: HslColor): HslColor {
   const value = hex.trim().replace("#", "");
@@ -73,7 +50,7 @@ function parseHexColor(hex: string, fallback: HslColor): HslColor {
   const lightness = (max + min) / 2;
   const delta = max - min;
 
-  if (delta === 0) return { h: 145, s: 0, l: lightness * 100 };
+  if (delta === 0) return { h: 280, s: 0, l: lightness * 100 };
 
   const saturation = delta / (1 - Math.abs(2 * lightness - 1));
   let hue = 0;
@@ -88,142 +65,54 @@ function parseHexColor(hex: string, fallback: HslColor): HslColor {
   };
 }
 
-function tune(
-  color: HslColor,
-  hueShift: number,
-  saturationShift: number,
-  lightnessShift: number,
-): HslColor {
-  return {
-    h: (color.h + hueShift + 360) % 360,
-    s: clamp(0, 100, color.s + saturationShift),
-    l: clamp(0, 100, color.l + lightnessShift),
-  };
-}
-
 function blendHue(from: number, to: number, amount: number): number {
   const delta = ((to - from + 540) % 360) - 180;
   return (from + delta * clamp(0, 1, amount) + 360) % 360;
 }
 
-/**
- * Fold any real into [0,1] via a period-2 triangle wave. Unlike `fract()` (which
- * this replaced), it has NO seam: the value eases back down instead of snapping
- * 0.99→0.01, so the palette hue sweeps smoothly across the wheel AND reverses at
- * the ends rather than jumping crimson↔cyan whenever the spectral sum crosses an
- * integer. That discontinuity was the source of the visualizer's colour "jumps".
- */
-function foldUnit(value: number): number {
-  const wrapped = ((value % 2) + 2) % 2;
-  return 1 - Math.abs(1 - wrapped);
+/** Frequency position (0 = lowest/cool, 1 = highest/warm) → neon temperature hue.
+ *  `drift` is a slow time rotation the painter feeds in for the psychedelic shimmer. */
+function temperatureHue(at: number, drift: number): number {
+  return (COOL_HUE + clamp(0, 1, at) * HUE_SPAN + drift + 720) % 360;
 }
 
-function mixChannel(from: number, to: number, amount: number): number {
-  return from + (to - from) * clamp(0, 1, amount);
+/** Signature centroid → its position on the cool→warm axis (the "dominant pitch"). */
+function centroidPosition(signature: SpectralColorSignature): number {
+  return normalizeFftByte(signature.centroid);
 }
 
-function mixHsl(from: HslColor, to: HslColor, amount: number): HslColor {
-  return {
-    h: blendHue(from.h, to.h, amount),
-    s: mixChannel(from.s, to.s, amount),
-    l: mixChannel(from.l, to.l, amount),
-  };
-}
+type NeonColorOptions = {
+  /** Position on the cool→warm frequency axis. */
+  at: number;
+  /** Raw FFT byte energy for this band (drives saturation + lightness). */
+  value: number;
+  /** Local spectral flux (band vs neighbours) — adds shimmer/lift. */
+  flux: number;
+  /** Overall track energy (lifts lightness so louder = more radiant). */
+  energy: number;
+  /** Slow time hue rotation (psychedelic drift). */
+  drift: number;
+  /** Track accent hue, mixed in only when idle so a paused bar keeps its identity. */
+  accentHue: number;
+  /** How much the accent bends the temperature hue (0 when playing = pure spectrum). */
+  accentPull: number;
+};
 
-function luxuryPaletteColor(seed: number): HslColor {
-  const position = clamp(0, 0.999, seed) * (LUXURY_PALETTE.length - 1);
-  const index = Math.floor(position);
-  const next = Math.min(LUXURY_PALETTE.length - 1, index + 1);
-  return mixHsl(
-    LUXURY_PALETTE[index] ?? LUXURY_PALETTE[0],
-    LUXURY_PALETTE[next] ?? LUXURY_PALETTE[0],
-    position - index,
-  );
-}
-
-function isCheapBluePurpleHue(hue: number): boolean {
-  const normalized = (hue + 360) % 360;
-  return normalized >= 210 && normalized <= 320;
-}
-
-function restrainAnchor(anchor: HslColor, seed: number): HslColor {
-  const fallback = luxuryPaletteColor(seed);
-  const h = isCheapBluePurpleHue(anchor.h) ? fallback.h : anchor.h;
-  return {
-    h,
-    s: clamp(22, 54, anchor.s),
-    l: clamp(30, 58, anchor.l),
-  };
-}
-
-function spectralHsl({
-  primary,
-  secondary,
-  offset,
-  anchor,
-  energy,
-  contrast,
-  satBias,
-  lightBias,
-  active,
-}: SpectralHslOptions): HslColor {
-  const normalized = normalizeFftByte(primary);
-  const secondaryNorm = normalizeFftByte(secondary);
-  const seed = foldUnit(
-    normalized * 0.53 + secondaryNorm * 0.31 + offset * 0.0017 + contrast * 0.11,
-  );
-  const base = luxuryPaletteColor(seed);
-  const anchorAmount = active ? 0.1 : 0.68;
-  const color = mixHsl(base, restrainAnchor(anchor, seed), anchorAmount);
-  return {
-    h: color.h,
-    s: clamp(34, 70, color.s + normalized * 10 + contrast * 8 + satBias * 0.28),
-    l: clamp(28, 64, color.l + secondaryNorm * 5 + energy * 7 + lightBias * 0.35),
-  };
-}
-
-function anchorForLane(
-  at: number,
-  bassAnchor: HslColor,
-  bodyAnchor: HslColor,
-  airAnchor: HslColor,
-): HslColor {
-  if (at <= 0.5) return mixHsl(bassAnchor, bodyAnchor, at / 0.5);
-  return mixHsl(bodyAnchor, airAnchor, (at - 0.5) / 0.5);
-}
-
-function spectralLaneColor({
-  value,
-  previous,
-  next,
+function neonColor({
   at,
-  index,
-  centroid,
-  contrast,
+  value,
+  flux,
   energy,
-  anchor,
-  active,
-}: LaneColorOptions): HslColor {
-  const normalized = normalizeFftByte(value);
-  const localFlux = normalizeFftByte(Math.abs(next - previous));
-  const contrastNorm = normalizeFftByte(contrast);
-  const centroidNorm = normalizeFftByte(centroid);
-  const seed = foldUnit(
-    normalized * 0.47 +
-      centroidNorm * 0.24 +
-      contrastNorm * 0.13 +
-      localFlux * 0.11 +
-      at * 0.33 +
-      index * 0.071,
-  );
-  const base = luxuryPaletteColor(seed);
-  const anchorAmount = active ? 0.06 + (1 - contrastNorm) * 0.1 : 0.66;
-  const color = mixHsl(base, restrainAnchor(anchor, seed), anchorAmount);
-
+  drift,
+  accentHue,
+  accentPull,
+}: NeonColorOptions): HslColor {
+  const norm = normalizeFftByte(value);
+  const hue = blendHue(temperatureHue(at, drift), accentHue, accentPull);
   return {
-    h: color.h,
-    s: clamp(34, 70, color.s + normalized * 12 + contrastNorm * 6 + localFlux * 5),
-    l: clamp(27, 64, color.l + normalized * 5 + energy * 7 + localFlux * 4),
+    h: hue,
+    s: clamp(60, 100, NEON_SAT + norm * 10 + flux * 12),
+    l: clamp(40, 72, 44 + norm * 20 + energy * 10 + flux * 8),
   };
 }
 
@@ -248,18 +137,16 @@ function profileFallbackSignature(profile: SpectrumProfile): SpectralColorSignat
 
 function spectralStops({
   signature,
-  profile,
   energy,
-  bassAnchor,
-  bodyAnchor,
-  airAnchor,
+  drift,
+  accentHue,
+  accentPull,
 }: {
   signature: SpectralColorSignature;
-  profile: SpectrumProfile;
   energy: number;
-  bassAnchor: HslColor;
-  bodyAnchor: HslColor;
-  airAnchor: HslColor;
+  drift: number;
+  accentHue: number;
+  accentPull: number;
 }): SpectralColorStop[] {
   const lanes = signature.lanes.length
     ? signature.lanes
@@ -268,23 +155,11 @@ function spectralStops({
     const at = lanes.length === 1 ? 0.5 : index / (lanes.length - 1);
     const previous = lanes[Math.max(0, index - 1)] ?? value;
     const next = lanes[Math.min(lanes.length - 1, index + 1)] ?? value;
-    const anchor = anchorForLane(at, bassAnchor, bodyAnchor, airAnchor);
-    const localFlux = normalizeFftByte(Math.abs(next - previous));
+    const flux = normalizeFftByte(Math.abs(next - previous));
     return {
       at,
-      color: spectralLaneColor({
-        value,
-        previous,
-        next,
-        at,
-        index,
-        centroid: signature.centroid,
-        contrast: signature.contrast,
-        energy,
-        anchor,
-        active: profile.active,
-      }),
-      intensity: clamp(0, 1, normalizeFftByte(value) + localFlux * 0.35),
+      color: neonColor({ at, value, flux, energy, drift, accentHue, accentPull }),
+      intensity: clamp(0, 1, normalizeFftByte(value) + flux * 0.4),
     };
   });
 }
@@ -295,100 +170,50 @@ export function spectralLightColors({
   tintB,
   profile,
   signature,
+  hueDrift = 0,
 }: {
   accent: string;
   tintA: string;
   tintB: string;
   profile: SpectrumProfile;
   signature?: SpectralColorSignature;
+  /** Slow time hue rotation from the painter (psychedelic shimmer). */
+  hueDrift?: number;
 }): SpectralLightColors {
-  const fallbackAccent = { h: 145, s: 100, l: 54 };
-  const bassAnchor = parseHexColor(tintA, { h: 155, s: 58, l: 52 });
-  const bodyAnchor = parseHexColor(accent, fallbackAccent);
-  const airAnchor = parseHexColor(tintB, { h: 190, s: 72, l: 58 });
   const color = signature ?? profileFallbackSignature(profile);
+  const active = profile.active;
 
   const low = clamp(0, 1, profile.low);
   const mid = clamp(0, 1, profile.mid);
   const peak = clamp(0, 1, profile.peak);
-  const energy = clamp(0, 1, low * 0.52 + mid * 0.3 + peak * 0.18);
-  const contrast = normalizeFftByte(color.contrast);
+  const energy = clamp(0, 1, low * 0.5 + mid * 0.3 + peak * 0.2);
+
+  // Accent identity bleeds in only when idle; when playing the colour is pure
+  // spectrum temperature (the bar reflects the MUSIC's pitch, not the album).
+  const accentHsl = parseHexColor(accent, { h: 300, s: 90, l: 58 });
+  const tintAHsl = parseHexColor(tintA, { h: 200, s: 88, l: 56 });
+  const tintBHsl = parseHexColor(tintB, { h: 330, s: 90, l: 60 });
+  const idleHue = blendHue(tintAHsl.h, tintBHsl.h, 0.5);
+  const accentHue = active ? accentHsl.h : idleHue;
+  const accentPull = active ? 0 : 0.55;
+
+  const centroid = centroidPosition(color);
+  const contrastFlux = normalizeFftByte(color.contrast);
+  const neon = (at: number, value: number, flux = contrastFlux): HslColor =>
+    neonColor({ at, value, flux, energy, drift: hueDrift, accentHue, accentPull });
 
   return {
-    bass: spectralHsl({
-      primary: color.bass,
-      secondary: color.lowMid,
-      offset: 12,
-      anchor: bassAnchor,
-      energy,
-      contrast,
-      satBias: 4,
-      lightBias: -5,
-      active: profile.active,
-    }),
-    warmth: spectralHsl({
-      primary: color.lowMid,
-      secondary: color.mid,
-      offset: 64,
-      anchor: tune(bassAnchor, 22, 0, 0),
-      energy,
-      contrast,
-      satBias: 8,
-      lightBias: -1,
-      active: profile.active,
-    }),
-    body: spectralHsl({
-      primary: color.mid,
-      secondary: color.centroid,
-      offset: 132,
-      anchor: bodyAnchor,
-      energy,
-      contrast,
-      satBias: 12,
-      lightBias: 2,
-      active: profile.active,
-    }),
-    spark: spectralHsl({
-      primary: color.highMid,
-      secondary: color.air,
-      offset: 214,
-      anchor: tune(bodyAnchor, 34, -8, 4),
-      energy,
-      contrast,
-      satBias: 16,
-      lightBias: 9,
-      active: profile.active,
-    }),
-    air: spectralHsl({
-      primary: color.air,
-      secondary: color.centroid,
-      offset: 292,
-      anchor: airAnchor,
-      energy,
-      contrast,
-      satBias: 10,
-      lightBias: 7,
-      active: profile.active,
-    }),
-    line: spectralHsl({
-      primary: color.centroid,
-      secondary: color.mid,
-      offset: color.contrast * 0.7,
-      anchor: bodyAnchor,
-      energy,
-      contrast,
-      satBias: 20,
-      lightBias: 10,
-      active: profile.active,
-    }),
-    stops: spectralStops({
-      signature: color,
-      profile,
-      energy,
-      bassAnchor,
-      bodyAnchor,
-      airAnchor,
-    }),
+    // Cool end.
+    bass: neon(0.04, color.bass),
+    warmth: neon(0.26, color.lowMid),
+    // Dominant colour — sits at the centroid, so bass-heavy → cool, airy → hot.
+    body: neon(centroid, color.mid),
+    spark: neon(clamp(0, 1, centroid + 0.26), color.highMid),
+    // Warm end.
+    air: neon(0.96, color.air),
+    // The bright "hot" line rides the dominant pitch.
+    line: neon(centroid, color.contrast, clamp(0, 1, contrastFlux + 0.15)),
+    stops: spectralStops({ signature: color, energy, drift: hueDrift, accentHue, accentPull }),
   };
 }
 
