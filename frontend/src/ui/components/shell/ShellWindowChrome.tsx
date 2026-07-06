@@ -31,7 +31,13 @@ export function ShellWindowChrome({
   const { t } = useTranslation();
   return (
     <>
-      <div aria-hidden className="absolute inset-x-0 top-0 z-[55] h-[30px]" style={dragStyle} />
+      {/* Frameless-window drag handle for the top edge. Its z-index must sit
+          ABOVE the screens' background / scroll layers (z ≤ 3) so a drag over
+          their empty top band moves the window — but BELOW any control that lives
+          up here (NowPlaying's close, Detail's sticky header at z-30): a strip
+          stacked over a control silently turns the control's clicks into window
+          drags. The faux traffic lights / tools float above everything at z-60. */}
+      <div aria-hidden className="absolute inset-x-0 top-0 z-[10] h-[30px]" style={dragStyle} />
 
       <div className="traffic" style={noDragStyle}>
         {(
