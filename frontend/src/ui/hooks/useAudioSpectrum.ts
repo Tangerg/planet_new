@@ -6,7 +6,6 @@ import { useAudioAnalysisService } from "./useAudioAnalysisService";
 
 type UseAudioSpectrumOptions = AudioAnalysisOptions & {
   enabled: boolean;
-  playUrl?: string;
 };
 
 export type AudioSpectrumSampler = {
@@ -20,13 +19,11 @@ export type AudioSpectrumSampler = {
  * React state hook: callers pull data inside requestAnimationFrame and draw
  * directly, keeping 60fps visual data out of the app state graph.
  *
- * The analyser passively taps the shared player, so there's no source to load
- * or tear down here — `playUrl` only gates the sampler on/off (idle when nothing
- * is playing); the first `sample()` lazily wires the tap.
+ * The analyser probe follows playback inside the kernel; callers pull data
+ * directly inside RAF and never pass media URLs through the UI layer.
  */
 export function useAudioSpectrum({
   enabled,
-  playUrl,
   fftSize = 128,
   smoothingTimeConstant = 0.86,
   minDecibels,
@@ -34,7 +31,7 @@ export function useAudioSpectrum({
 }: UseAudioSpectrumOptions): AudioSpectrumSampler {
   const audio = useAudioAnalysisService();
   const reduceMotion = useReducedMotion();
-  const active = enabled && reduceMotion !== true && !!playUrl;
+  const active = enabled && reduceMotion !== true;
   const options = useMemo(
     () => ({ fftSize, smoothingTimeConstant, minDecibels, maxDecibels }),
     [fftSize, smoothingTimeConstant, minDecibels, maxDecibels],

@@ -11,6 +11,7 @@
 // ============================================================
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import type { FlowItem } from "@/model/derive";
@@ -37,6 +38,7 @@ type Props<T extends VibeTrack | VibeCollection> = {
   /** Receives the source object (track or collection), not the flow wrapper. */
   onOpen: (item: T) => void;
   onPlay: (item: T) => void;
+  canPlay?: (item: T) => boolean;
   accent: string;
   tracksFor?: (item: T) => VibeTrack[];
   onPlayTrack?: (track: VibeTrack) => void;
@@ -50,11 +52,13 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
   setCenter,
   onOpen,
   onPlay,
+  canPlay,
   accent,
   tracksFor,
   onPlayTrack,
   round,
 }: Props<T>) {
+  const { t } = useTranslation();
   const { trackMenu, collMenu } = useScreenActions();
   // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
   const rootRef = useRef<HTMLDivElement>(null);
@@ -126,7 +130,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
                 cover={COVER}
                 round={round}
                 accent={accent}
-                showPlay={isC && !round}
+                showPlay={isC && !round && (canPlay?.(it.obj) ?? true)}
                 transform={coverTransform(i - center)}
                 onActivate={() =>
                   isC ? (expandable ? setExpanded((e) => !e) : onOpen(it.obj)) : setCenter(i)
@@ -199,7 +203,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
               <Button
                 key={i}
                 onClick={() => setCenter(i)}
-                aria-label={"Go to " + (i + 1)}
+                aria-label={t("a11y.goToSlide", { index: i + 1 })}
                 className="h-[7px] rounded-full p-0 transition-[width,background-color] duration-300"
                 style={{
                   width: i === center ? 22 : 7,

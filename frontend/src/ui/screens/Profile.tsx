@@ -2,7 +2,7 @@
 // Profile — restrained music identity: square image · thin account type · rows.
 // ============================================================
 import React, { useState } from "react";
-import { Account } from "@domain/model/account";
+import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
@@ -11,7 +11,7 @@ import { FadeIn } from "@/components/motion";
 import { LoginSheet } from "@/components/LoginSheet";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useAuth } from "@/hooks/useAuth";
-import { compactCount } from "@shared/number";
+import { profileScreenModel } from "@/model/profile";
 
 type ProfileScreenProps = {
   accent: string;
@@ -21,15 +21,24 @@ type ProfileScreenProps = {
 };
 
 export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: ProfileScreenProps) {
+  const { t } = useTranslation();
   const open = useMorphOpen();
   const { supported, loggedIn, account, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
-  const items = playlists.slice(0, 4);
   const [active, setActive] = useState(0);
-  // Real counts once logged in; the anonymous demo identity keeps its placeholder.
-  const followers = loggedIn && account ? compactCount(Account.followerCount(account)) : "598";
-  const following = loggedIn && account ? compactCount(Account.followingCount(account)) : "6";
-  const name = Account.displayName(account, "Lily Tran");
+  const model = profileScreenModel({
+    account,
+    activePlaylistIndex: active,
+    loggedIn,
+    playlists,
+    supported,
+  });
+  const connectionLabel = loggedIn
+    ? t("profile.connected")
+    : supported
+      ? t("profile.notConnected")
+      : t("profile.localProfile");
+  const authActionLabel = supported ? (loggedIn ? t("profile.logout") : t("profile.login")) : "";
   return (
     <FadeIn className="relative h-full overflow-hidden bg-[#08080b]">
       <Art
@@ -53,9 +62,11 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
       >
         <div className="min-w-0">
           <div className="mlabel mb-4 text-[11px]" style={{ color: accent }}>
-            Netease Cloud Music
+            {t("profile.brand")}
           </div>
-          <div className="text-[72px] font-extralight leading-none tracking-[0.01em]">Profile</div>
+          <div className="text-[72px] font-extralight leading-none tracking-[0.01em]">
+            {t("profile.title")}
+          </div>
 
           <div className="mt-[78px] flex min-w-0 items-start gap-10">
             <Art
@@ -70,29 +81,33 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
             />
             <div className="min-w-0 pt-[30px]">
               <div className="mlabel mb-[20px] inline-block pb-[8px]" style={{ color: accent }}>
-                {loggedIn ? "Connected" : supported ? "Not connected" : "Local profile"}
+                {connectionLabel}
               </div>
               <div className="max-w-[560px] truncate text-[42px] font-extralight leading-tight">
-                {name}
+                {model.name}
               </div>
               <div className="mt-[30px] flex items-center gap-10">
                 <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em]">{followers}</div>
-                  <div className="mlabel mt-2 text-[10px] text-white/38">Followers</div>
+                  <div className="font-mono text-[18px] tracking-[0.1em]">{model.followers}</div>
+                  <div className="mlabel mt-2 text-[10px] text-white/38">
+                    {t("profile.followers")}
+                  </div>
                 </div>
                 <div className="h-[42px] w-px bg-white/16" />
                 <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em]">{following}</div>
-                  <div className="mlabel mt-2 text-[10px] text-white/38">Following</div>
+                  <div className="font-mono text-[18px] tracking-[0.1em]">{model.following}</div>
+                  <div className="mlabel mt-2 text-[10px] text-white/38">
+                    {t("profile.following")}
+                  </div>
                 </div>
               </div>
 
-              {supported && (
+              {authActionLabel && (
                 <Button
                   onClick={loggedIn ? () => void logout() : () => setLoginOpen(true)}
                   className="mlabel mt-[74px] inline-flex items-center gap-3 px-0 py-2 text-[10px] text-white/55"
                 >
-                  {loggedIn ? "Log out" : "Log in with NetEase"}
+                  {authActionLabel}
                   <Icon.back size={13} className="rotate-180" />
                 </Button>
               )}
@@ -103,11 +118,10 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
         <div className="flex min-w-0 items-center">
           <div className="w-full max-w-[560px]">
             <div className="mb-[22px] inline-block bg-[rgba(6,6,9,.82)] px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-white/85">
-              Playlist
+              {t("common.playlist")}
             </div>
             <div className="flex flex-col gap-3">
-              {items.map((p, i) => {
-                const on = i === active;
+              {model.playlists.map(({ active: on, playlist: p, trackCount }, i) => {
                 return (
                   <Button
                     key={p.id}
@@ -146,7 +160,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
                         className="mlabel mt-[7px] text-[10px]"
                         style={{ color: on ? accent : "rgba(255,255,255,.32)" }}
                       >
-                        {p.trackCount ?? p.tracks.length} tracks
+                        {t("counts.tracks", { count: trackCount })}
                       </div>
                       {on && (
                         <div className="mt-[15px] h-px w-full" style={{ background: accent }} />

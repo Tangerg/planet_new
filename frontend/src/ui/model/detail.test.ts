@@ -2,15 +2,21 @@ import { describe, expect, test } from "vitest";
 
 import {
   detailKindOf,
+  detailHeroTitleSize,
+  detailSelectedTracks,
+  detailSelectionOrderIds,
+  firstDetailSelectedTrack,
   loadArtistTarget,
   loadDetailTarget,
   loadMusicVideoDetail,
   mergeDetailTarget,
   mergeMusicVideoDetail,
+  nextDetailSelection,
   normalizeDetailTarget,
   shouldFetchArtistTarget,
   shouldFetchDetailTarget,
   shouldFetchMusicVideoDetail,
+  weightedDisplayLength,
 } from "./detail";
 import type { Artist } from "@domain/model/artist";
 import type { Album } from "@domain/model/album";
@@ -39,6 +45,16 @@ const summary = (overrides: Partial<DetailTarget> = {}): DetailTarget => ({
 });
 
 describe("detail read-model helpers", () => {
+  test("sizes detail hero titles by weighted display length", () => {
+    expect(weightedDisplayLength("Daily Mix")).toBe(9);
+    expect(weightedDisplayLength("今天从《月牙湾》听起私人雷达")).toBe(28);
+    expect(detailHeroTitleSize("Short")).toBe(64);
+    expect(detailHeroTitleSize("今天从《月牙湾》听起私人雷达")).toBe(52);
+    expect(
+      detailHeroTitleSize("这是一段非常非常长的中文歌单标题用于测试字号收敛并且仍然优雅显示"),
+    ).toBe(34);
+  });
+
   test("normalizes loose open targets into concrete detail targets", () => {
     expect(normalizeDetailTarget({ id: "1", name: "Any", coverSeed: 1 }).tracks).toEqual([]);
     expect(detailKindOf({ kind: "Album" })).toBe("Album");
@@ -51,6 +67,48 @@ describe("detail read-model helpers", () => {
     expect(shouldFetchDetailTarget(summary({ id: "" }))).toBe(false);
     expect(shouldFetchDetailTarget(summary({ fetchDetail: false }))).toBe(false);
     expect(shouldFetchDetailTarget(summary({ tracks: [track("t")] }))).toBe(false);
+  });
+
+  test("updates detail selection by toggle or sorted shift range", () => {
+    const sorted = [track("a"), track("b"), track("c"), track("d")].map((t, i) => ({ t, i }));
+    const orderedIds = detailSelectionOrderIds(sorted);
+
+    expect([
+      ...nextDetailSelection({
+        anchorId: null,
+        extendRange: false,
+        orderedIds,
+        selected: new Set(),
+        trackId: "b",
+      }),
+    ]).toEqual(["b"]);
+    expect([
+      ...nextDetailSelection({
+        anchorId: "b",
+        extendRange: true,
+        orderedIds,
+        selected: new Set(["b"]),
+        trackId: "d",
+      }),
+    ]).toEqual(["b", "c", "d"]);
+    expect([
+      ...nextDetailSelection({
+        anchorId: "missing",
+        extendRange: true,
+        orderedIds,
+        selected: new Set(["b"]),
+        trackId: "b",
+      }),
+    ]).toEqual([]);
+  });
+
+  test("projects selected detail tracks for batch actions", () => {
+    const tracks = [track("a"), track("b"), track("c")];
+    const selected = new Set(["b", "c"]);
+
+    expect(detailSelectedTracks(tracks, selected).map((t) => t.id)).toEqual(["b", "c"]);
+    expect(firstDetailSelectedTrack(tracks, selected)?.id).toBe("b");
+    expect(firstDetailSelectedTrack(tracks, new Set(["missing"]))).toBeUndefined();
   });
 
   test("loads collection detail by domain kind", async () => {

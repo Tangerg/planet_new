@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthService } from "./useAuthService";
 import { useMediaService } from "./useMediaService";
 import { useAuthStore } from "@/store/auth";
+import { accountQueryEnabled } from "@/model/account-query";
 import { queryKeys } from "@/model/queryKeys";
 
 /**
@@ -26,7 +27,7 @@ export function useAuth() {
   const { data: account } = useQuery({
     queryKey: queryKeys.account(media.providerName),
     queryFn: () => auth.account(),
-    enabled: auth.supported && loggedIn,
+    enabled: accountQueryEnabled({ loggedIn, authSupported: auth.supported }),
     retry: false,
   });
 

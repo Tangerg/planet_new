@@ -17,3 +17,8 @@ export function errorMessage(error: unknown): string {
 export function warnReadFailure(subject: string, error: unknown): void {
   warn(`${subject} read failed: ${errorMessage(error)}`);
 }
+
+/** Report a recoverable command/write failure with the same stable shape. */
+export function warnWriteFailure(subject: string, error: unknown): void {
+  warn(`${subject} write failed: ${errorMessage(error)}`);
+}

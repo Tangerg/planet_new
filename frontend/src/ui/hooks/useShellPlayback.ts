@@ -23,8 +23,8 @@ export function useShellPlayback() {
   const repeatOne = playback.repeat === RepeatMode.ONE;
   const queue = playback.upNext;
 
-  const setPlaying = useCallback(() => togglePlay(), [togglePlay]);
-  const setShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
+  const onTogglePlay = useCallback(() => togglePlay(), [togglePlay]);
+  const onToggleShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
   const onToggleRepeat = useCallback(() => toggleRepeat(), [toggleRepeat]);
   const playNext = useCallback(() => playNextFn(), [playNextFn]);
   const playPrev = useCallback(() => playPrevFn(), [playPrevFn]);
@@ -39,8 +39,8 @@ export function useShellPlayback() {
     repeatOne,
     queue,
     togglePlay,
-    setPlaying,
-    setShuffle,
+    onTogglePlay,
+    onToggleShuffle,
     onToggleRepeat,
     playNext,
     playPrev,

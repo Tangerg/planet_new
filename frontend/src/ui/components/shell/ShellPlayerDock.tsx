@@ -8,12 +8,12 @@ type Props = {
   show: boolean;
   track?: VibeTrack;
   playing: boolean;
-  setPlaying: (value: boolean) => void;
+  onTogglePlay: () => void;
   liked: boolean;
   toggleLike: () => void;
   accent: string;
   shuffle: boolean;
-  setShuffle: (value: boolean) => void;
+  onToggleShuffle: () => void;
   repeat: boolean;
   repeatOne: boolean;
   onToggleRepeat: () => void;
@@ -22,6 +22,7 @@ type Props = {
   onSeek: (percent: number) => void;
   volume: number;
   onVolume: (volume: number) => void;
+  onToggleMute: () => void;
   onOpenNowPlaying: () => void;
   onOpenQueue: () => void;
   onOpenComments: () => void;
@@ -33,12 +34,12 @@ export function ShellPlayerDock({
   show,
   track,
   playing,
-  setPlaying,
+  onTogglePlay,
   liked,
   toggleLike,
   accent,
   shuffle,
-  setShuffle,
+  onToggleShuffle,
   repeat,
   repeatOne,
   onToggleRepeat,
@@ -47,6 +48,7 @@ export function ShellPlayerDock({
   onSeek,
   volume,
   onVolume,
+  onToggleMute,
   onOpenNowPlaying,
   onOpenQueue,
   onOpenComments,
@@ -75,12 +77,12 @@ export function ShellPlayerDock({
             <PlayerBar
               track={track}
               playing={playing}
-              setPlaying={setPlaying}
+              onTogglePlay={onTogglePlay}
               liked={liked}
               toggleLike={toggleLike}
               accent={accent}
               shuffle={shuffle}
-              setShuffle={setShuffle}
+              onToggleShuffle={onToggleShuffle}
               repeat={repeat}
               repeatOne={repeatOne}
               onToggleRepeat={onToggleRepeat}
@@ -91,6 +93,7 @@ export function ShellPlayerDock({
               onSeek={onSeek}
               volume={volume}
               onVolume={onVolume}
+              onToggleMute={onToggleMute}
               onOpenNowPlaying={onOpenNowPlaying}
               onOpenQueue={onOpenQueue}
               onOpenComments={onOpenComments}

@@ -1,9 +1,9 @@
 // ============================================================
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useTranslation } from "react-i18next";
 import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/vibe";
-import { SEARCH_SUGGESTIONS } from "@/model/defaults";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -16,8 +16,8 @@ import { Empty } from "@/components/layout/Empty";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
-
-const EMPTY_RESULTS: SearchResults = { tracks: [], playlists: [], artists: [], albums: [] };
+import { useSearchScreenModel } from "@/hooks/useSearchScreenModel";
+import { firstPlayableCollectionTrack } from "@/model/track-actions";
 
 type SearchScreenProps = {
   onPlay: (track: VibeTrack) => void;
@@ -50,45 +50,25 @@ export function SearchScreen({
   toggleLike,
   search,
 }: SearchScreenProps) {
+  const { t } = useTranslation();
   const open = useMorphOpen();
-  const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS);
-  const [loading, setLoading] = useState(false);
-  // Debounce input 320ms, then call provider.search; an empty query clears results.
-  useEffect(() => {
-    const term = q.trim();
-    if (!term) {
-      setResults(EMPTY_RESULTS);
-      setLoading(false);
-      return;
-    }
-    let alive = true;
-    setLoading(true);
-    const id = setTimeout(() => {
-      const fn = search ?? (async () => EMPTY_RESULTS);
-      fn(term)
-        .then((r) => {
-          if (alive) {
-            setResults(r);
-            setLoading(false);
-          }
-        })
-        .catch(() => {
-          if (alive) setLoading(false);
-        });
-    }, 320);
-    return () => {
-      alive = false;
-      clearTimeout(id);
-    };
-  }, [q, search]);
-  const ql = q.trim().toLowerCase();
-
-  const { tracks, playlists, artists, albums } = results;
-  const chips = SEARCH_SUGGESTIONS;
-  const top = artists[0] || null;
+  const model = useSearchScreenModel({ query: q, search });
+  const { albums, artists, chips, normalizedTerm, playlists, status, topArtist, topTracks } = model;
+  const playCollection = (collection: VibeCollection) => {
+    const track = firstPlayableCollectionTrack(collection);
+    if (track) onPlay(track);
+  };
   const emptyMsg = (text: string) => (
     <Empty className="p-[90px] text-center text-[22px]">{text}</Empty>
   );
+  const statusText =
+    status === "idle"
+      ? t("search.idle")
+      : status === "loading"
+        ? t("search.loading", { query: q })
+        : status === "empty"
+          ? t("search.empty", { query: q })
+          : "";
 
   return (
     <FadeIn
@@ -109,11 +89,12 @@ export function SearchScreen({
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search tracks, playlists, artists, albums…"
+            placeholder={t("search.placeholder")}
+            aria-label={t("common.search")}
             className="flex-1 border-0 bg-transparent font-sans text-[28px] font-light tracking-[0.01em] text-white outline-none"
           />
           {q && (
-            <Button onClick={() => setQ("")} className="text-tx-3">
+            <Button onClick={() => setQ("")} className="text-tx-3" aria-label={t("common.clear")}>
               <Icon.close size={20} />
             </Button>
           )}
@@ -122,7 +103,7 @@ export function SearchScreen({
           {chips.map((c) => (
             <Button
               key={c}
-              className={"chip" + (ql === c.toLowerCase() ? " on" : "")}
+              className={"chip" + (normalizedTerm === c.toLowerCase() ? " on" : "")}
               onClick={() => setQ(c)}
             >
               {c}
@@ -130,12 +111,8 @@ export function SearchScreen({
           ))}
         </div>
 
-        {!q.trim() ? (
-          emptyMsg("Search tracks, playlists, artists & albums…")
-        ) : loading ? (
-          emptyMsg(`Searching “${q}”…`)
-        ) : !tracks.length && !playlists.length && !artists.length && !albums.length ? (
-          emptyMsg(`Nothing for “${q}”…`)
+        {status !== "ready" ? (
+          emptyMsg(statusText || model.emptyMessage)
         ) : (
           <div
             className="mt-10 grid gap-12"
@@ -143,44 +120,44 @@ export function SearchScreen({
           >
             {/* top result */}
             <div>
-              <SectionHead title="Top result" size={22} />
-              {top && (
+              <SectionHead title={t("search.topResult")} size={22} />
+              {topArtist && (
                 <LiftButton
                   scale={1.04}
                   liftY={-6}
                   onClick={(e) =>
                     open(e, {
-                      seed: top.coverSeed,
-                      grad: top.gradient,
-                      image: top.image,
+                      seed: topArtist.coverSeed,
+                      grad: topArtist.gradient,
+                      image: topArtist.image,
                       artSelector: ".grain",
-                      run: () => openArtist(top),
+                      run: () => openArtist(topArtist),
                     })
                   }
                   className="grain relative block w-full overflow-hidden border-0 bg-surf-2 p-6 text-left"
                 >
                   <Art
-                    seed={top.coverSeed}
-                    grad={top.gradient}
-                    image={top.image}
-                    images={top.images}
+                    seed={topArtist.coverSeed}
+                    grad={topArtist.gradient}
+                    image={topArtist.image}
+                    images={topArtist.images}
                     className="rounded-full"
                     style={{ width: 96, height: 96, boxShadow: "0 12px 30px rgba(0,0,0,.5)" }}
                     mono
                   />
                   <div className="mt-5 line-clamp-2 text-[30px] font-light [overflow-wrap:anywhere]">
-                    {top.name}
+                    {topArtist.name}
                   </div>
                   <span className="tag mt-[14px]" style={{ display: "inline-block" }}>
-                    Artist
+                    {t("common.artist")}
                   </span>
                 </LiftButton>
               )}
             </div>
             {/* songs */}
             <div>
-              <SectionHead title="Songs" size={22} />
-              {tracks.slice(0, 6).map((t, i) => (
+              <SectionHead title={t("common.songs")} size={22} />
+              {topTracks.map((t, i) => (
                 <TrackRow
                   key={t.id}
                   track={t}
@@ -200,7 +177,7 @@ export function SearchScreen({
 
         {playlists.length > 0 && (
           <section className="mt-[44px]">
-            <SectionHead title="Playlists" />
+            <SectionHead title={t("common.playlists")} />
             <CardRail
               count={playlists.length}
               itemWidth={176}
@@ -214,7 +191,7 @@ export function SearchScreen({
                     liftScale={1.12}
                     liftY={-6}
                     onOpen={() => openPlaylist(p)}
-                    onPlay={() => openPlaylist(p)}
+                    onPlay={firstPlayableCollectionTrack(p) ? () => playCollection(p) : undefined}
                   />
                 );
               }}
@@ -224,7 +201,7 @@ export function SearchScreen({
 
         {artists.length > 0 && (
           <section className="mt-[44px]">
-            <SectionHead title="Artists" />
+            <SectionHead title={t("common.artists")} />
             <CardRail
               count={artists.length}
               itemWidth={176}
@@ -235,7 +212,7 @@ export function SearchScreen({
                   <MediaCard
                     item={a}
                     round
-                    sub="Artist"
+                    sub={t("common.artist")}
                     liftScale={1.12}
                     liftY={-6}
                     onOpen={() => openArtist(a)}
@@ -247,7 +224,7 @@ export function SearchScreen({
         )}
         {albums.length > 0 && (
           <section className="mt-6">
-            <SectionHead title="Albums" />
+            <SectionHead title={t("common.albums")} />
             <CardRail
               count={albums.length}
               itemWidth={176}
@@ -261,7 +238,7 @@ export function SearchScreen({
                     liftScale={1.12}
                     liftY={-6}
                     onOpen={() => openAlbum(al)}
-                    onPlay={() => openAlbum(al)}
+                    onPlay={firstPlayableCollectionTrack(al) ? () => playCollection(al) : undefined}
                   />
                 );
               }}

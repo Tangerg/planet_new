@@ -6,6 +6,7 @@
 // doesn't also fire.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { RiseFab } from "@/components/lift";
 import { Icon } from "@/infra/icons";
 
@@ -18,11 +19,12 @@ type PlayFabProps = {
 };
 
 export function PlayFab({ onPlay, size = 18, className, style, ...rest }: PlayFabProps) {
+  const { t } = useTranslation();
   return (
     <RiseFab
       className={className}
       style={style}
-      aria-label={rest["aria-label"] ?? "Play"}
+      aria-label={rest["aria-label"] ?? t("common.play")}
       onClick={(e: React.MouseEvent) => {
         e.stopPropagation();
         onPlay();

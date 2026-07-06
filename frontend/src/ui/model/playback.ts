@@ -1,7 +1,7 @@
 import { PlayQueue } from "@domain/model/play-queue";
 import type { Track } from "@domain/model/track";
 
-import { toVibeTrack } from "@/model/adapters/track";
+import { toTrack, toVibeTrack } from "@/model/adapters/track";
 import type { VibeTrack } from "@/model/vibe";
 
 /**
@@ -22,4 +22,23 @@ export function upNextView(
   current: Track | undefined,
 ): VibeTrack[] {
   return PlayQueue.upNext(tracks ?? [], current).map((track) => toVibeTrack(track));
+}
+
+export function playbackCommandQueue(
+  list: readonly VibeTrack[] | null | undefined,
+  track: VibeTrack,
+): Track[] {
+  return (list?.length ? list : [track]).map(toTrack);
+}
+
+export function playbackCommandTarget(track: VibeTrack): Track {
+  return toTrack(track);
+}
+
+export function shufflePlaybackCommandQueue(list: readonly VibeTrack[]): Track[] {
+  return list.map(toTrack);
+}
+
+export function queueCommandTrack(track: VibeTrack): Track {
+  return toTrack(track);
 }

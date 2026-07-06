@@ -12,3 +12,6 @@ export function toVibeComment(comment: Comment): VibeComment {
     timeLabel: Comment.timeLabel(comment),
   };
 }
+
+export const toVibeComments = (comments?: readonly Comment[]) =>
+  (comments ?? []).map((comment) => toVibeComment(comment));

@@ -1,6 +1,7 @@
 import type { VibeMusicVideo } from "@/model/vibe";
 import { useArtistMusicVideos, useMusicVideoComments } from "@/hooks/useMusicVideoData";
 import { useComments, useLyric } from "@/hooks/useTrackContentData";
+import { shellContentQueryPlan, shellMusicVideoRail } from "@/model/shell-content";
 
 type Deps = {
   view: string;
@@ -17,18 +18,17 @@ export function useShellScreenContent({
   musicVideoId,
   musicVideoRelated,
 }: Deps) {
+  const plan = shellContentQueryPlan(view);
   const lyrics = useLyric();
-  const comments = useComments(currentTrackId, view === "comments" || view === "np");
+  const comments = useComments(currentTrackId, plan.loadTrackComments);
 
-  const musicVideoScreen = view === "mv-detail" || view === "mv-theater";
-  const musicVideoTheater = view === "mv-theater";
-  const relatedMusicVideos = useArtistMusicVideos(musicVideoArtistId, musicVideoScreen);
-  const musicVideoComments = useMusicVideoComments(musicVideoId, musicVideoTheater);
+  const relatedMusicVideos = useArtistMusicVideos(musicVideoArtistId, plan.loadMusicVideoRail);
+  const musicVideoComments = useMusicVideoComments(musicVideoId, plan.loadMusicVideoComments);
 
   return {
     lyrics,
     comments,
-    musicVideoRail: relatedMusicVideos.length ? relatedMusicVideos : musicVideoRelated,
+    musicVideoRail: shellMusicVideoRail(relatedMusicVideos, musicVideoRelated),
     musicVideoComments,
   };
 }

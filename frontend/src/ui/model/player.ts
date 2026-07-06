@@ -1,23 +1,39 @@
+import { Volume } from "@domain/model/volume";
+
 export type VolumeLevel = "muted" | "low" | "high";
 
-export function effectiveDuration(durationSec: number, fallbackSec: number | undefined): number {
-  return durationSec > 0 ? durationSec : fallbackSec || 1;
-}
-
-export function playbackPosition(
-  positionSec: number,
-  durationSec: number,
-  scrubSec: number | null,
-): number {
-  return scrubSec ?? Math.min(positionSec, durationSec);
-}
+export const VOLUME_STEP = 5;
 
 export function volumeLevel(volume: number): VolumeLevel {
-  if (volume === 0) return "muted";
+  if (Volume.of(volume).muted) return "muted";
   return volume <= 50 ? "low" : "high";
 }
 
+export function clampVolume(volume: number): number {
+  return Volume.of(volume).level;
+}
+
+export function nextVolumeLevel(
+  volume: number,
+  direction: "up" | "down",
+  step = VOLUME_STEP,
+): number {
+  return clampVolume(volume + (direction === "up" ? step : -step));
+}
+
+export function volumeSliderValue(volume: number): number {
+  return clampVolume(volume) / 100;
+}
+
+export function volumeFromSliderValue(value: number | undefined): number {
+  return clampVolume((value ?? 0) * 100);
+}
+
+export function likedShortcutTarget(currentId: string | undefined): string | null {
+  return currentId || null;
+}
+
 export function repeatTooltip(repeat: boolean, repeatOne: boolean): string {
-  if (!repeat) return "Enable repeat";
-  return repeatOne ? "Disable repeat" : "Enable repeat one";
+  if (!repeat) return "player.enableRepeat";
+  return repeatOne ? "player.disableRepeat" : "player.enableRepeatOne";
 }

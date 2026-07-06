@@ -3,6 +3,13 @@ import { useEffect, useRef } from "react";
 
 import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import type { FlowItem } from "@/model/derive";
+import {
+  clampCoverFlowCenter,
+  coverFlowDragCenter,
+  coverFlowKeyAction,
+  coverFlowWheelMotion,
+  nextCoverFlowCenter,
+} from "@/model/cover-flow-input";
 import { useEventCallback } from "@/hooks/useEventCallback";
 
 // `drag` is dual-use: a number accumulates horizontal wheel delta, an object
@@ -31,32 +38,39 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
   onPointerUp: (e: React.PointerEvent) => void;
 } {
   const { items, center, expanded, expandable, onOpen, setCenter, setExpanded } = params;
-  const clamp = (n: number) => Math.max(0, Math.min(items.length - 1, n));
   const drag = useRef<DragState>(null);
 
   const onKey = useEventCallback((e: KeyboardEvent) => {
-    if (e.key === "ArrowLeft") {
+    const action = coverFlowKeyAction({
+      key: e.key,
+      expanded,
+      expandable: Boolean(expandable),
+    });
+    if (action === "none") return;
+
+    if (action === "previous") {
       e.preventDefault();
       e.stopPropagation();
-      setCenter((c) => clamp(c - 1));
-    } else if (e.key === "ArrowRight") {
+      setCenter((c) => nextCoverFlowCenter(c, items.length, "previous"));
+    } else if (action === "next") {
       e.preventDefault();
       e.stopPropagation();
-      setCenter((c) => clamp(c + 1));
-    } else if (e.key === "ArrowDown") {
+      setCenter((c) => nextCoverFlowCenter(c, items.length, "next"));
+    } else if (action === "expand") {
       e.preventDefault();
       e.stopPropagation();
-      if (expandable) setExpanded(true);
-    } else if (e.key === "ArrowUp") {
-      if (expanded) {
+      setExpanded(true);
+    } else if (action === "collapse") {
+      e.preventDefault();
+      e.stopPropagation();
+      setExpanded(false);
+    } else if (action === "open") {
+      const item = items[clampCoverFlowCenter(center, items.length)];
+      if (item) {
         e.preventDefault();
         e.stopPropagation();
-        setExpanded(false);
+        onOpen(item.obj);
       }
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      onOpen(items[center].obj);
     }
   });
 
@@ -68,13 +82,10 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
   const onWheel = (e: React.WheelEvent) => {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
       const wheelDelta = typeof drag.current === "number" ? drag.current : 0;
-      drag.current = wheelDelta + e.deltaX;
-      if (drag.current > 60) {
-        setCenter((c) => clamp(c + 1));
-        drag.current = 0;
-      } else if (drag.current < -60) {
-        setCenter((c) => clamp(c - 1));
-        drag.current = 0;
+      const motion = coverFlowWheelMotion(wheelDelta, e.deltaX);
+      drag.current = motion.accumulatedDelta;
+      if (motion.centerDelta !== 0) {
+        setCenter((c) => clampCoverFlowCenter(c + motion.centerDelta, items.length));
       }
     }
   };
@@ -84,8 +95,14 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current || typeof drag.current !== "object") return;
-    const d = e.clientX - drag.current.x;
-    setCenter(clamp(drag.current.start - Math.round(d / 120)));
+    setCenter(
+      coverFlowDragCenter({
+        currentX: e.clientX,
+        itemCount: items.length,
+        startCenter: drag.current.start,
+        startX: drag.current.x,
+      }),
+    );
   };
   const onPointerUp = (e: React.PointerEvent) => {
     (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);

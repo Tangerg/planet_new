@@ -12,11 +12,13 @@ import { Icon } from "@/infra/icons";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn, Rise, XFade } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
+import { useTranslation } from "react-i18next";
 import { TrackCollectionView } from "@/components/TrackCollectionView";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { useDetailScreenModel } from "@/hooks/useDetailScreenModel";
+import { detailHeroTitleSize } from "@/model/detail";
 
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
@@ -41,6 +43,7 @@ export function PlaylistDetailScreen({
   accent,
   onOpenArtist,
 }: PlaylistDetailScreenProps) {
+  const { t } = useTranslation();
   const p = playlist;
   const total = p.tracks.length;
   const {
@@ -65,14 +68,7 @@ export function PlaylistDetailScreen({
     playSelected,
   } = useDetailScreenModel(p.tracks, onPlay, onShufflePlay);
 
-  // Real-world names run long; a fixed 64px title wraps a long CJK name to two
-  // lines and deforms the hero. Scale the title down so it stays ~one line (CJK
-  // glyphs count double for width); the 2-line clamp below is only a safety net.
-  const nameWeight = [...(p.name || "")].reduce(
-    (a: number, ch: string) => a + (/[⺀-鿿＀-￯]/.test(ch) ? 2 : 1),
-    0,
-  );
-  const heroTitleSize = nameWeight > 48 ? 34 : nameWeight > 36 ? 42 : nameWeight > 24 ? 52 : 64;
+  const heroTitleSize = detailHeroTitleSize(p.name);
 
   return (
     <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
@@ -98,7 +94,7 @@ export function PlaylistDetailScreen({
           <Button
             onClick={playFirst}
             disabled={!hasTracks}
-            aria-label="Play"
+            aria-label={t("common.play")}
             className="grid h-10 w-10 flex-none place-items-center rounded-full"
             style={{ background: accent, color: "#06060a", boxShadow: `0 6px 18px -4px ${accent}` }}
           >
@@ -132,7 +128,7 @@ export function PlaylistDetailScreen({
               className="flex-none"
             />
             <div className="min-w-0 flex-1">
-              <span className="mlabel text-white/70">{p.kind || "Playlist"}</span>
+              <span className="mlabel text-white/70">{p.kind || t("common.playlist")}</span>
               <TextReveal
                 lines={2}
                 full={<span style={{ fontSize: 20, fontWeight: 300 }}>{p.name}</span>}
@@ -164,7 +160,7 @@ export function PlaylistDetailScreen({
                 </TextReveal>
               )}
               <div className="mlabel mt-[14px] truncate text-white/50">
-                {p.owner} · {total} tracks
+                {p.owner} · {t("counts.tracks", { count: total })}
               </div>
               <div className="mt-[26px] flex gap-[14px]">
                 <Button
@@ -173,10 +169,10 @@ export function PlaylistDetailScreen({
                   onClick={playFirst}
                   disabled={!hasTracks}
                 >
-                  <Icon.play size={15} /> Play
+                  <Icon.play size={15} /> {t("common.play")}
                 </Button>
                 <Button className="pill-ghost" onClick={shuffleAll} disabled={!hasTracks}>
-                  <Icon.infinity size={15} /> Shuffle
+                  <Icon.infinity size={15} /> {t("common.shuffle")}
                 </Button>
               </div>
             </div>
@@ -185,20 +181,22 @@ export function PlaylistDetailScreen({
           {/* CONTENT — width-capped, centered, with view toggle */}
           <PageColumn className={"pt-2 " + (view === "flow" ? "pb-[30px]" : "pb-10")}>
             <div className="mb-[14px] flex items-center justify-between">
-              <SectionHead title="Tracks" size={22} />
+              <SectionHead title={t("common.tracks")} size={22} />
               <div className="flex items-center gap-4">
                 {view === "list" && (
                   <div className="flex items-center gap-1">
-                    <span className="mlabel mr-1 text-[10px] text-white/35">Sort</span>
+                    <span className="mlabel mr-1 text-[10px] text-white/35">
+                      {t("common.sort")}
+                    </span>
                     <ToggleGroup
-                      ariaLabel="Sort tracks"
+                      ariaLabel={t("detail.sortTracks")}
                       className="sortseg"
                       value={sort}
                       onValueChange={(v) => setSort(v as SortMode)}
                       items={[
                         { value: "order", label: "#" },
-                        { value: "title", label: "Title" },
-                        { value: "duration", label: "Time" },
+                        { value: "title", label: t("common.title") },
+                        { value: "duration", label: t("common.time") },
                       ]}
                     />
                   </div>
@@ -248,23 +246,25 @@ export function PlaylistDetailScreen({
               boxShadow: "0 18px 50px -12px rgba(0,0,0,.7)",
             }}
           >
-            <span className="mlabel text-[11px] text-white">{sel.size} selected</span>
+            <span className="mlabel text-[11px] text-white">
+              {t("counts.selected", { count: sel.size })}
+            </span>
             <Button
               className="mlabel rounded-full px-[14px] py-2 text-[10px]"
               onClick={enqueueSelected}
               style={{ background: accent, color: "#06060a" }}
             >
-              Add to queue
+              {t("common.addToQueue")}
             </Button>
             <Button
               className="mlabel rounded-full border border-white/20 bg-transparent px-[14px] py-2 text-[10px] text-white"
               onClick={playSelected}
             >
-              Play
+              {t("common.play")}
             </Button>
             <Button
               onClick={clearSel}
-              aria-label="Clear"
+              aria-label={t("common.clear")}
               className="grid place-items-center p-1 text-white/60"
             >
               <Icon.close size={16} />

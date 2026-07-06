@@ -4,22 +4,25 @@
 // gently on hover; "Open" flies the morph from the banner.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import { artBg } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { LiftCard } from "@/components/lift";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
+import { collectionTrackCount } from "@/model/derive";
 
 type HeroBannerProps = {
   playlist: VibeCollection;
   onOpen: () => void;
-  onPlay: () => void;
+  onPlay?: () => void;
   accent: string;
 };
 
 export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps) {
   const open = useMorphOpen();
+  const { t } = useTranslation();
   return (
     <LiftCard
       className="grain relative mb-10 h-[320px] overflow-hidden"
@@ -54,7 +57,7 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
       />
       <div className="absolute inset-0 z-[4] flex max-w-[640px] flex-col justify-center px-14">
         <span className="tag self-start" style={{ background: accent, color: "#06060a" }}>
-          Featured
+          {t("forYou.featured")}
         </span>
         {/* Real playlist names run long; clamp so the fixed-height banner holds. */}
         <div className="mb-[14px] mt-4 line-clamp-2 text-[46px] font-extralight leading-[1.04] tracking-[0.005em] [overflow-wrap:anywhere]">
@@ -64,13 +67,15 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
           {playlist.description}
         </div>
         <div className="mt-[26px] flex items-center gap-[14px]">
-          <Button
-            className="pill-accent inline-flex items-center gap-2.5"
-            onClick={onPlay}
-            style={{ fontSize: 12, padding: "13px 30px" }}
-          >
-            <Icon.play size={15} /> Play
-          </Button>
+          {onPlay && (
+            <Button
+              className="pill-accent inline-flex items-center gap-2.5"
+              onClick={onPlay}
+              style={{ fontSize: 12, padding: "13px 30px" }}
+            >
+              <Icon.play size={15} /> {t("common.play")}
+            </Button>
+          )}
           <Button
             onClick={(e) =>
               open(e, {
@@ -82,9 +87,11 @@ export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps
             }
             className="pill-ghost"
           >
-            Open
+            {t("common.open")}
           </Button>
-          <span className="mlabel ml-1.5 text-white/50">{playlist.tracks.length} tracks</span>
+          <span className="mlabel ml-1.5 text-white/50">
+            {t("counts.tracks", { count: collectionTrackCount(playlist) })}
+          </span>
         </div>
       </div>
     </LiftCard>

@@ -22,6 +22,9 @@ export function toVibePlaylist(playlist: Partial<DomainPlaylist>): VibeCollectio
   };
 }
 
+export const toVibePlaylists = (playlists?: readonly Partial<DomainPlaylist>[]) =>
+  (playlists ?? []).map((playlist) => toVibePlaylist(playlist));
+
 export function toVibeAlbum(album: Partial<DomainAlbum>): VibeCollection {
   const artistName = Album.artistNames(album);
   return {

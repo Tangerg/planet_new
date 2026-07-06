@@ -11,6 +11,7 @@ type Props = {
 export function ModeTag({ active, onClick, children }: Props) {
   return (
     <Button
+      aria-pressed={!!active}
       className="mlabel cursor-pointer px-[12px] py-[7px] text-[10px]"
       onClick={onClick}
       style={{

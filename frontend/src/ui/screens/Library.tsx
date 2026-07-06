@@ -2,9 +2,16 @@
 // Library — your collections, as grid · list · cover-flow, plus a songs tab.
 // Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
 // ============================================================
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/vibe";
-import { collectionSub, collectionMeta, collectionFlowItems } from "@/model/derive";
+import { collectionSub, collectionTrackCount } from "@/model/derive";
+import {
+  LIBRARY_INITIAL_FLOW_CENTER,
+  libraryScreenModel,
+  libraryTracksForCollection,
+} from "@/model/library";
+import { clampFlowCenter } from "@/model/flow";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -16,6 +23,7 @@ import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
+import { firstPlayableCollectionTrack } from "@/model/track-actions";
 
 type LibraryScreenProps = {
   data: ScreenData;
@@ -51,33 +59,48 @@ export function LibraryScreen({
   onTab,
   onView,
 }: LibraryScreenProps) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [flowCenter, setFlowCenter] = useState(2);
+  const [flowCenter, setFlowCenter] = useState(LIBRARY_INITIAL_FLOW_CENTER);
   useEffect(() => {
-    setFlowCenter(2);
+    setFlowCenter(LIBRARY_INITIAL_FLOW_CENTER);
   }, [tab]); // recentre the flow per collection
-  const tracks = data.allTracks;
-  const half = Math.ceil(tracks.length / 2);
-  const cardTab = tab === "playlists" || tab === "albums" || tab === "artists";
-
-  // the active collection, normalised so grid / list / flow share one source.
-  // Artists are projected into the collection shape (an honest map, not a cast):
-  // only cover fields + id/name are read on the artist branch, so empty tracks +
-  // an "Artist" kind suffice; openOf/tracksOf special-case the tab anyway.
-  const coll: VibeCollection[] =
-    tab === "albums"
-      ? data.albums
-      : tab === "artists"
-        ? data.artists.map((a): VibeCollection => ({ ...a, kind: "Artist", tracks: [] }))
-        : data.playlists;
+  const model = useMemo(() => libraryScreenModel(data, tab, view), [data, tab, view]);
+  const { cardTab, collections, flowItems, flowMode, round, songColumns, tabs, tracks } = model;
+  const tabLabels: Record<string, string> = {
+    albums: t("common.albums"),
+    artists: t("common.artists"),
+    playlists: t("common.playlists"),
+    songs: t("common.songs"),
+  };
+  const collectionSubtitle = (collection: VibeCollection) => {
+    if (tab === "playlists") return t("common.playlist");
+    return collectionSub(collection, tab);
+  };
+  const collectionMetaLabel = (collection: VibeCollection) => {
+    const count = t("counts.tracks", { count: collectionTrackCount(collection) });
+    if (tab === "albums") return [collection.year, count].filter(Boolean).join(" · ");
+    if (tab === "artists") return "";
+    return count;
+  };
+  const localizedFlowItems = flowItems.map((item) => ({
+    ...item,
+    sub: collectionSubtitle(item.obj),
+  }));
   const openOf = (o: VibeCollection) =>
-    tab === "albums" ? openAlbum(o) : tab === "artists" ? openArtist(o) : openPlaylist(o);
-  const tracksOf = (o: VibeCollection) =>
-    tab === "artists" ? tracks.filter((t) => t.artistId === o.id) : o.tracks || [];
-  const round = tab === "artists";
-  const flowItems = collectionFlowItems(coll, (o) => collectionSub(o, tab));
+    model.collectionRoute === "album"
+      ? openAlbum(o)
+      : model.collectionRoute === "artist"
+        ? openArtist(o)
+        : openPlaylist(o);
+  const tracksOf = (o: VibeCollection) => libraryTracksForCollection(tab, tracks, o);
+  const playCollection = (collection: VibeCollection) => {
+    const track = firstPlayableCollectionTrack({ tracks: tracksOf(collection) });
+    if (track) onPlay(track);
+  };
+  const canPlayCollection = (collection: VibeCollection) =>
+    Boolean(firstPlayableCollectionTrack({ tracks: tracksOf(collection) }));
 
-  const flowMode = cardTab && view === "flow";
   return (
     <FadeIn
       ref={scrollRef}
@@ -96,20 +119,15 @@ export function LibraryScreen({
             flex: flowMode ? "0 0 auto" : 1,
           }}
         >
-          <div className="mb-[22px] text-[36px] font-extralight">Your Library</div>
+          <div className="mb-[22px] text-[36px] font-extralight">{t("library.title")}</div>
           <div className="tabs mb-[30px]">
             <ToggleGroup
-              ariaLabel="Library section"
+              ariaLabel={t("library.section")}
               className="tabgroup"
               itemClassName="tab"
               value={tab}
               onValueChange={onTab}
-              items={[
-                { value: "playlists", label: "Playlists" },
-                { value: "albums", label: "Albums" },
-                { value: "artists", label: "Artists" },
-                { value: "songs", label: "Songs" },
-              ]}
+              items={tabs.map((it) => ({ ...it, label: tabLabels[it.value] ?? it.label }))}
             />
             {cardTab && (
               <ViewToggle
@@ -131,16 +149,14 @@ export function LibraryScreen({
             {cardTab && view === "flow" && (
               <div className="-mx-12 min-h-0 flex-1">
                 <CoverFlow
-                  items={flowItems}
+                  items={localizedFlowItems}
                   round={round}
-                  center={Math.min(flowCenter, flowItems.length - 1)}
+                  center={clampFlowCenter(flowCenter, flowItems.length)}
                   setCenter={setFlowCenter}
                   accent={accent}
                   onOpen={openOf}
-                  onPlay={(al) => {
-                    const ts = tracksOf(al);
-                    if (ts[0]) onPlay(ts[0]);
-                  }}
+                  onPlay={playCollection}
+                  canPlay={canPlayCollection}
                   tracksFor={tracksOf}
                   onPlayTrack={onPlay}
                 />
@@ -148,20 +164,24 @@ export function LibraryScreen({
             )}
             {cardTab && view === "grid" && (
               <CardGrid
-                count={coll.length}
+                count={collections.length}
                 minColumnWidth={176}
                 gap={24}
                 estimateRowHeight={240}
-                itemKey={(i) => coll[i].id}
+                itemKey={(i) => collections[i].id}
                 renderItem={(i) => {
-                  const o = coll[i];
+                  const o = collections[i];
                   return (
                     <MediaCard
                       item={o}
                       round={round}
-                      sub={collectionSub(o, tab)}
+                      sub={collectionSubtitle(o)}
                       onOpen={() => openOf(o)}
-                      onPlay={tab === "artists" ? undefined : () => openOf(o)}
+                      onPlay={
+                        tab === "artists" || !canPlayCollection(o)
+                          ? undefined
+                          : () => playCollection(o)
+                      }
                     />
                   );
                 }}
@@ -169,19 +189,23 @@ export function LibraryScreen({
             )}
             {cardTab && view === "list" && (
               <VList
-                count={coll.length}
+                count={collections.length}
                 estimateSize={66}
-                itemKey={(i) => coll[i].id}
+                itemKey={(i) => collections[i].id}
                 renderItem={(i) => {
-                  const o = coll[i];
+                  const o = collections[i];
                   return (
                     <CollectionRow
                       item={o}
                       round={round}
-                      sub={collectionSub(o, tab)}
-                      meta={collectionMeta(o, tab)}
+                      sub={collectionSubtitle(o)}
+                      meta={collectionMetaLabel(o)}
                       onOpen={() => openOf(o)}
-                      onPlay={tab === "artists" ? undefined : () => openOf(o)}
+                      onPlay={
+                        tab === "artists" || !canPlayCollection(o)
+                          ? undefined
+                          : () => playCollection(o)
+                      }
                     />
                   );
                 }}
@@ -190,12 +214,12 @@ export function LibraryScreen({
             {tab === "songs" && (
               <div className="grid grid-cols-2 gap-x-10">
                 <VList
-                  count={half}
+                  count={songColumns.left.length}
                   estimateSize={66}
-                  itemKey={(i) => tracks[i].id}
+                  itemKey={(i) => songColumns.left[i].id}
                   renderItem={(i) => (
                     <TrackRow
-                      track={tracks[i]}
+                      track={songColumns.left[i]}
                       index={i + 1}
                       onPlay={onPlay}
                       current={current}
@@ -208,13 +232,13 @@ export function LibraryScreen({
                   )}
                 />
                 <VList
-                  count={tracks.length - half}
+                  count={songColumns.right.length}
                   estimateSize={66}
-                  itemKey={(i) => tracks[half + i].id}
+                  itemKey={(i) => songColumns.right[i].id}
                   renderItem={(i) => (
                     <TrackRow
-                      track={tracks[half + i]}
-                      index={half + i + 1}
+                      track={songColumns.right[i]}
+                      index={songColumns.split + i + 1}
                       onPlay={onPlay}
                       current={current}
                       playing={playing}

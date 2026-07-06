@@ -241,8 +241,3 @@ export function HeroBackdrop({
     </>
   );
 }
-
-export function fmt(sec: number): string {
-  sec = Math.max(0, Math.floor(sec));
-  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
-}

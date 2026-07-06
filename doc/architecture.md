@@ -184,6 +184,9 @@ Screens are pure presentation and receive `VibeTrack` view models. Playing one h
 **Track identity vs playback key.**
 `Track.id` is the domain identity used for selection, queue matching, and navigation. Stream URL resolution uses `Track.playbackId` instead. They are often the same (NCM / Spotify), but not guaranteed: QQ chart rows may expose a numeric `songId` while playback resolution needs `songmid`. A track without `playbackId` is not provider-resolvable even if it has an `id`; this keeps list UI from promising playback that the provider cannot actually start.
 
+**Audible playback vs analysis source.**
+The playback plugin always loads `Track.playUrl` directly into the audible `<audio>` element. Web Audio visualization is a separate analysis-only path: `AudioEngine` owns a hidden probe element, and only that probe may use a `MediaAnalysisSourceResolver` to resolve a CORS-clean loopback/proxy URL. Do not route the audible player through the analysis resolver — provider playback compatibility is more important than sampling convenience, and the probe can fail back to idle motion without muting the real player.
+
 **MV availability is separate from track playback availability.**
 `MusicVideo.playbackAvailability(video, policy)` owns MV-specific rules (missing MV id, provider unsupported, URL not yet resolved, resolved-but-missing URL, provider licence unavailable). Do not fold MV state into `Track.isUnavailable()`; songs and official music videos are related media, but their playback resolution paths and failure reasons differ.
 

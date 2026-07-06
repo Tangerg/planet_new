@@ -4,6 +4,7 @@ import type { VibeArtist } from "@/model/vibe";
 import { useCatalog, useProviderSearch, useToplists } from "@/hooks/useCatalogData";
 import { useDailyRecommendations, usePlayRecord, useUserPlaylists } from "@/hooks/useLibraryData";
 import { useMusicVideoDiscovery } from "@/hooks/useMusicVideoData";
+import { shellLibraryData } from "@/model/shell-content";
 import { useAuthStore } from "@/store/auth";
 
 export function useShellLibraryData() {
@@ -16,7 +17,7 @@ export function useShellLibraryData() {
   const loggedIn = useAuthStore((state) => state.loggedIn);
   const userPlaylists = useUserPlaylists();
   const libraryData = useMemo(
-    () => (loggedIn && userPlaylists.length ? { ...catalog, playlists: userPlaylists } : catalog),
+    () => shellLibraryData(catalog, loggedIn, userPlaylists),
     [loggedIn, userPlaylists, catalog],
   );
   const playRecord = usePlayRecord();

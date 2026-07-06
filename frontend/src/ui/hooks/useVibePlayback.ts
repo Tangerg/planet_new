@@ -6,9 +6,16 @@ import { RepeatMode } from "@domain/model/repeat";
 import { useEngine } from "@/hooks/useEngine";
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
-import { toTrack } from "@/model/adapters/track";
 import type { VibeTrack } from "@/model/vibe";
-import { currentTrackView, playbackQueueView, upNextView } from "@/model/playback";
+import {
+  currentTrackView,
+  playbackCommandQueue,
+  playbackCommandTarget,
+  playbackQueueView,
+  queueCommandTrack,
+  shufflePlaybackCommandQueue,
+  upNextView,
+} from "@/model/playback";
 
 /**
  * Bridge between the vibe UI and PlaybackService.
@@ -49,16 +56,14 @@ export function useVibePlayback() {
 
   const play = useCallback(
     async (list: VibeTrack[], track: VibeTrack) => {
-      const domainList = (list?.length ? list : [track]).map(toTrack);
-      const domainTrack = toTrack(track);
-      await playbackService.play(domainList, domainTrack);
+      await playbackService.play(playbackCommandQueue(list, track), playbackCommandTarget(track));
     },
     [playbackService],
   );
 
   const shufflePlay = useCallback(
     async (list: VibeTrack[]) => {
-      await playbackService.shufflePlay(list.map(toTrack));
+      await playbackService.shufflePlay(shufflePlaybackCommandQueue(list));
     },
     [playbackService],
   );
@@ -71,13 +76,14 @@ export function useVibePlayback() {
   const next = useCallback(() => playbackService.next(), [playbackService]);
   const prev = useCallback(() => playbackService.previous(), [playbackService]);
   const addToQueue = useCallback(
-    (track: VibeTrack) => playbackService.addToQueue(toTrack(track)),
+    (track: VibeTrack) => playbackService.addToQueue(queueCommandTrack(track)),
     [playbackService],
   );
   const toggleShuffle = useCallback(() => playbackService.toggleShuffle(), [playbackService]);
   const toggleRepeat = useCallback(() => playbackService.cycleRepeat(), [playbackService]);
   const seek = useCallback((pct: number) => playbackService.seek(pct), [playbackService]);
   const setVolume = useCallback((v: number) => playbackService.setVolume(v), [playbackService]);
+  const toggleMute = useCallback(() => playbackService.toggleMute(), [playbackService]);
 
   return {
     current,
@@ -98,5 +104,6 @@ export function useVibePlayback() {
     toggleRepeat,
     seek,
     setVolume,
+    toggleMute,
   };
 }

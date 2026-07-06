@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 
 import { artPair } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
@@ -31,12 +32,13 @@ export function CoverFlowSheet({
   onPlayTrack?: (track: VibeTrack) => void;
   trackMenu: (e: React.MouseEvent, track: VibeTrack) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
       container={container}
-      label="Tracklist"
+      label={t("common.tracks")}
       className="z-[500] h-[56%]"
       overlayClassName="z-[499]"
       durationSec={0.52}
@@ -50,7 +52,7 @@ export function CoverFlowSheet({
     >
       <button
         type="button"
-        aria-label="Collapse"
+        aria-label={t("common.collapse")}
         onClick={() => onOpenChange(false)}
         className="btn grid w-full cursor-pointer place-items-center pb-1 pt-3"
       >
@@ -63,7 +65,7 @@ export function CoverFlowSheet({
               {item?.name}
             </span>
             <span className="mlabel flex-none whitespace-nowrap text-white/40">
-              {tracks.length} tracks
+              {t("counts.tracks", { count: tracks.length })}
             </span>
           </div>
           <Button
@@ -71,29 +73,29 @@ export function CoverFlowSheet({
             style={{ fontSize: 11, padding: "9px 18px" }}
             onClick={onOpen}
           >
-            Open
+            {t("common.open")}
           </Button>
         </div>
-        {tracks.map((t, i) => (
+        {tracks.map((track, i) => (
           <div
-            key={t.id + i}
+            key={track.id + i}
             // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich track row (art + meta), not valid native button content
             role="button"
             tabIndex={0}
-            aria-label={t.title}
-            onClick={() => onPlayTrack && onPlayTrack(t)}
-            onKeyDown={activateOnKey(() => onPlayTrack?.(t))}
-            onContextMenu={(e) => trackMenu(e, t)}
+            aria-label={t("a11y.playItem", { name: track.title })}
+            onClick={() => onPlayTrack && onPlayTrack(track)}
+            onKeyDown={activateOnKey(() => onPlayTrack?.(track))}
+            onContextMenu={(e) => trackMenu(e, track)}
             className="flex cursor-pointer items-center gap-[14px] border-b border-white/[0.06] py-[9px]"
           >
             <span className="mlabel w-[18px] flex-none text-center text-[11px] text-white/[0.32]">
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px]">{t.title}</div>
-              <div className="truncate text-[12px] font-light text-white/45">{t.artist}</div>
+              <div className="truncate text-[14px]">{track.title}</div>
+              <div className="truncate text-[12px] font-light text-white/45">{track.artist}</div>
             </div>
-            <span className="mlabel flex-none text-[10px] text-white/[0.32]">{t.duration}</span>
+            <span className="mlabel flex-none text-[10px] text-white/[0.32]">{track.duration}</span>
           </div>
         ))}
       </div>

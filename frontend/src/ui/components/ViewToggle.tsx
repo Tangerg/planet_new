@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { Icon } from "@/infra/icons";
 import "./ViewToggle.css";
@@ -15,17 +17,18 @@ type ViewToggleProps = {
  * `.viewtoggle` design-system class — so it lives here, not in ui/components.
  */
 export function ViewToggle({ value, onChange, style }: ViewToggleProps) {
+  const { t } = useTranslation();
   return (
     <ToggleGroup
-      ariaLabel="View mode"
+      ariaLabel={t("common.viewMode")}
       className="viewtoggle"
       value={value}
       onValueChange={onChange}
       style={style}
       items={[
-        { value: "list", label: <Icon.list size={17} />, "aria-label": "List view" },
-        { value: "grid", label: <Icon.grid size={17} />, "aria-label": "Grid view" },
-        { value: "flow", label: <Icon.flow size={17} />, "aria-label": "Cover flow view" },
+        { value: "list", label: <Icon.list size={17} />, "aria-label": t("common.listView") },
+        { value: "grid", label: <Icon.grid size={17} />, "aria-label": t("common.gridView") },
+        { value: "flow", label: <Icon.flow size={17} />, "aria-label": t("a11y.coverFlowView") },
       ]}
     />
   );

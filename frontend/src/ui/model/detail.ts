@@ -14,6 +14,7 @@ import type {
   OpenTarget,
   VibeCollection,
   VibeMusicVideo,
+  VibeTrack,
 } from "@/model/vibe";
 
 export type DetailKind = "Album" | "Chart" | "Playlist";
@@ -32,6 +33,18 @@ export type MusicVideoDetailReader = {
   musicVideoDetail(id: string): Promise<MusicVideo | undefined>;
 };
 
+export function weightedDisplayLength(value: string): number {
+  return [...value].reduce((total, ch) => total + (/[⺀-鿿＀-￯]/.test(ch) ? 2 : 1), 0);
+}
+
+export function detailHeroTitleSize(name: string | undefined): number {
+  const weight = weightedDisplayLength(name ?? "");
+  if (weight > 48) return 34;
+  if (weight > 36) return 42;
+  if (weight > 24) return 52;
+  return 64;
+}
+
 export function detailKindOf(target: Pick<OpenTarget, "kind">): DetailKind {
   if (target.kind === "Album") return "Album";
   if (target.kind === "Chart") return "Chart";
@@ -44,6 +57,53 @@ export function normalizeDetailTarget(input: OpenTarget): DetailTarget {
 
 export function shouldFetchDetailTarget(target: DetailTarget): boolean {
   return Boolean(target.id && target.fetchDetail !== false && target.tracks.length === 0);
+}
+
+export function detailSelectionOrderIds(sorted: readonly { t: Pick<VibeTrack, "id"> }[]): string[] {
+  return sorted.map((row) => row.t.id);
+}
+
+export function nextDetailSelection({
+  anchorId,
+  extendRange,
+  orderedIds,
+  selected,
+  trackId,
+}: {
+  anchorId: string | null;
+  extendRange: boolean;
+  orderedIds: readonly string[];
+  selected: ReadonlySet<string>;
+  trackId: string;
+}): Set<string> {
+  const next = new Set(selected);
+  if (extendRange && anchorId != null) {
+    const a = orderedIds.indexOf(anchorId);
+    const b = orderedIds.indexOf(trackId);
+    if (a > -1 && b > -1) {
+      const [lo, hi] = a < b ? [a, b] : [b, a];
+      for (let k = lo; k <= hi; k++) next.add(orderedIds[k]);
+      return next;
+    }
+  }
+
+  if (next.has(trackId)) next.delete(trackId);
+  else next.add(trackId);
+  return next;
+}
+
+export function detailSelectedTracks<T extends Pick<VibeTrack, "id">>(
+  tracks: readonly T[],
+  selected: ReadonlySet<string>,
+): T[] {
+  return tracks.filter((track) => selected.has(track.id));
+}
+
+export function firstDetailSelectedTrack<T extends Pick<VibeTrack, "id">>(
+  tracks: readonly T[],
+  selected: ReadonlySet<string>,
+): T | undefined {
+  return tracks.find((track) => selected.has(track.id));
 }
 
 export async function loadDetailTarget(

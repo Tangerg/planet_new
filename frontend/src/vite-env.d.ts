@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Active provider; defaults to "mock" when unset. */
-  readonly VITE_PROVIDER?: "mock" | "spotify" | "netease" | "qqmusic";
+  /** Active provider; defaults to "netease" when unset. */
+  readonly VITE_PROVIDER?: "spotify" | "netease" | "qqmusic" | "local";
   readonly VITE_NETEASE_HOST?: string;
   readonly VITE_QQMUSIC_HOST?: string;
   readonly VITE_SPOTIFY_CLIENT_ID?: string;

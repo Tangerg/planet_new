@@ -86,9 +86,10 @@ type mediaURLs struct{ base string }
 func (u mediaURLs) media(id domain.TrackID) string { return u.base + "/media/" + id.String() }
 
 // stream maps a playback URL to a loopback, CORS-clean URL the webview can feed
-// to Web Audio without tainting: our own /media (local files) is already
+// to Web Audio without tainting. Our own /media (local files) is already
 // loopback and returned unchanged; a remote CDN URL is wrapped in the /stream
-// byte-proxy. Idempotent, so routing every play URL through it is safe.
+// byte-proxy. This is intended for analysis/probing, not as the default audible
+// playback path.
 func (u mediaURLs) stream(raw string) string {
 	if raw == "" || strings.HasPrefix(raw, u.base) {
 		return raw

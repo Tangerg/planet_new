@@ -2,6 +2,7 @@ import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";
 import type { VibeMusicVideo } from "@/model/vibe";
+import { useTranslation } from "react-i18next";
 
 /** 16:9 MV card used in the hub and detail rails: cover + hover play affordance. */
 export function VideoThumb({
@@ -13,6 +14,7 @@ export function VideoThumb({
   accent: string;
   onOpen: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Button
       onClick={onOpen}
@@ -44,7 +46,7 @@ export function VideoThumb({
       </Art>
       <div className="mt-3 truncate text-[15px] font-light text-white/88">{video.title}</div>
       <div className="mlabel mt-1 truncate text-[10px] text-white/38">
-        {video.artist || "Music Video"}
+        {video.artist || t("common.musicVideo")}
       </div>
     </Button>
   );

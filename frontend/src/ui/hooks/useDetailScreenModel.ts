@@ -3,6 +3,12 @@ import { useMemo, useRef, useState } from "react";
 
 import type { VibeTrack } from "@/model/vibe";
 import { sortTracks, type SortMode } from "@/model/derive";
+import {
+  detailSelectedTracks,
+  detailSelectionOrderIds,
+  firstDetailSelectedTrack,
+  nextDetailSelection,
+} from "@/model/detail";
 import { useScreenActions } from "@/hooks/screenActions";
 
 /** Hero band height; also the scroll offset that reveals the condensed header. */
@@ -30,25 +36,18 @@ export function useDetailScreenModel(
   const stickyRef = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(() => sortTracks(tracks, sort), [tracks, sort]);
+  const selectionOrderIds = useMemo(() => detailSelectionOrderIds(sorted), [sorted]);
 
   // Shift-click extends the selection across the *sorted* range from the anchor.
   const toggleSel = (track: VibeTrack, e: React.MouseEvent) => {
     setSel((prev) => {
-      const n = new Set(prev);
-      if (e.shiftKey && lastSel.current != null) {
-        const ids = sorted.map((s) => s.t.id);
-        const a = ids.indexOf(lastSel.current);
-        const b = ids.indexOf(track.id);
-        if (a > -1 && b > -1) {
-          const [lo, hi] = a < b ? [a, b] : [b, a];
-          for (let k = lo; k <= hi; k++) n.add(ids[k]);
-        }
-      } else if (n.has(track.id)) {
-        n.delete(track.id);
-      } else {
-        n.add(track.id);
-      }
-      return n;
+      return nextDetailSelection({
+        anchorId: lastSel.current,
+        extendRange: e.shiftKey,
+        orderedIds: selectionOrderIds,
+        selected: prev,
+        trackId: track.id,
+      });
     });
     lastSel.current = track.id;
   };
@@ -74,11 +73,11 @@ export function useDetailScreenModel(
     if (hasTracks) onShufflePlay(tracks);
   };
   const enqueueSelected = () => {
-    tracks.filter((t) => sel.has(t.id)).forEach((t) => enqueue(t.id));
+    detailSelectedTracks(tracks, sel).forEach((t) => enqueue(t.id));
     clearSel();
   };
   const playSelected = () => {
-    const first = tracks.find((t) => sel.has(t.id));
+    const first = firstDetailSelectedTrack(tracks, sel);
     if (first) onPlay(first);
     clearSel();
   };

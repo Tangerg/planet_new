@@ -2,6 +2,7 @@ import type React from "react";
 
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { trackFlowItems } from "@/model/derive";
+import { clampFlowCenter } from "@/model/flow";
 import { CoverFlow } from "@/components/CoverFlow";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { TrackCard } from "@/components/cards/TrackCard";
@@ -107,7 +108,7 @@ export function TrackCollectionView({
     <div className="-mx-12" style={{ height: flowHeight }}>
       <CoverFlow
         items={trackFlowItems(tracks)}
-        center={Math.min(flowCenter, tracks.length - 1)}
+        center={clampFlowCenter(flowCenter, tracks.length)}
         setCenter={setFlowCenter}
         accent={accent}
         onOpen={onPlay}

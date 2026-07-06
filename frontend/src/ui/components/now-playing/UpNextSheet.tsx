@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { Equalizer, Art } from "@/components/primitives";
@@ -36,6 +37,7 @@ export function UpNextSheet({
   onPlay,
   onOpenArtist,
 }: Props) {
+  const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
 
   return (
@@ -43,7 +45,7 @@ export function UpNextSheet({
       open={open}
       onOpenChange={onOpenChange}
       container={container}
-      label="Up Next"
+      label={t("common.upNext")}
       contentRef={contentRef}
       className="z-[22] h-[70%]"
       overlayClassName="z-[21]"
@@ -58,7 +60,7 @@ export function UpNextSheet({
     >
       <button
         type="button"
-        aria-label="Collapse queue"
+        aria-label={t("a11y.collapseQueue")}
         onClick={() => onOpenChange(false)}
         className="btn grid w-full cursor-pointer place-items-center pb-1 pt-[13px]"
       >
@@ -66,8 +68,12 @@ export function UpNextSheet({
       </button>
       <div className="px-11 pb-11 pt-2">
         <div className="mb-4 flex items-baseline gap-[13px]">
-          <span className="text-[24px] font-extralight tracking-[0.05em]">Up Next</span>
-          <span className="mlabel text-white/40">{queue.length} tracks</span>
+          <span className="text-[24px] font-extralight tracking-[0.05em]">
+            {t("common.upNext")}
+          </span>
+          <span className="mlabel text-white/40">
+            {t("counts.tracks", { count: queue.length })}
+          </span>
         </div>
         <div className="mb-2 flex items-center gap-[14px] border-b border-white/10 pb-[14px] pt-2.5">
           <span className="grid w-[18px] place-items-center">
@@ -96,7 +102,7 @@ export function UpNextSheet({
               />
             </div>
           </div>
-          <span className="mlabel text-[10px] text-white/40">Now</span>
+          <span className="mlabel text-[10px] text-white/40">{t("common.now")}</span>
         </div>
         {queue.length > 0 ? (
           <VirtualList
@@ -111,7 +117,7 @@ export function UpNextSheet({
                   // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich queue row (art + meta), not valid native button content
                   role="button"
                   tabIndex={0}
-                  aria-label={queued.title}
+                  aria-label={t("a11y.playItem", { name: queued.title })}
                   onClick={() => onPlay?.(queued)}
                   onKeyDown={activateOnKey(() => onPlay?.(queued))}
                   onContextMenu={(e) => trackMenu(e, queued)}
@@ -142,7 +148,7 @@ export function UpNextSheet({
             }}
           />
         ) : (
-          <Empty className="p-[30px]">Queue is empty.</Empty>
+          <Empty className="p-[30px]">{t("queue.empty")}</Empty>
         )}
       </div>
     </Sheet>

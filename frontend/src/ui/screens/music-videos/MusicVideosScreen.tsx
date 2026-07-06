@@ -1,4 +1,5 @@
 import type { VibeMusicVideo } from "@/model/vibe";
+import { useTranslation } from "react-i18next";
 import { artBg } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { CardRail } from "@/components/layout/CardRail";
@@ -8,6 +9,7 @@ import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { LiftCard } from "@/components/lift";
 import { Icon } from "@/infra/icons";
+import { musicVideosScreenModel } from "@/model/music-video-screen";
 
 import { VideoMeta } from "./VideoMeta";
 import { VideoThumb } from "./VideoThumb";
@@ -25,9 +27,9 @@ export function MusicVideosScreen({
   accent,
   onOpenVideo,
 }: MusicVideosScreenProps) {
-  const featured = videos[0];
-  const rest = videos.slice(1);
-  const related = videos;
+  const { t } = useTranslation();
+  const model = musicVideosScreenModel(videos, isLoading);
+  const { featured, rest, related } = model;
 
   return (
     <ScreenScaffold
@@ -42,20 +44,22 @@ export function MusicVideosScreen({
         <div className="mb-[30px] flex items-end justify-between">
           <div>
             <div className="mlabel mb-2 text-[10px]" style={{ color: accent }}>
-              Netease Cloud Music
+              {t("profile.brand")}
             </div>
-            <div className="text-[36px] font-extralight tracking-[0.01em]">Music Videos</div>
+            <div className="text-[36px] font-extralight tracking-[0.01em]">
+              {t("musicVideos.title")}
+            </div>
           </div>
           {featured && <VideoMeta video={featured} />}
         </div>
 
-        {isLoading ? (
-          <Empty className="mt-20 p-[90px] text-center text-[22px]">Loading music videos...</Empty>
-        ) : !featured ? (
+        {model.state === "loading" ? (
           <Empty className="mt-20 p-[90px] text-center text-[22px]">
-            No music videos from this provider yet.
+            {t("musicVideos.loading")}
           </Empty>
-        ) : (
+        ) : model.state === "empty" ? (
+          <Empty className="mt-20 p-[90px] text-center text-[22px]">{t("musicVideos.empty")}</Empty>
+        ) : featured ? (
           <>
             {/* Featured hero — same treatment as the ForYou HeroBanner (blurred
                 cover fill + contained frame on the right, dark left scrim, hover
@@ -94,7 +98,7 @@ export function MusicVideosScreen({
               />
               <div className="absolute inset-0 z-[4] flex max-w-[640px] flex-col justify-center px-14">
                 <span className="tag self-start" style={{ background: accent, color: "#06060a" }}>
-                  Featured MV
+                  {t("musicVideos.featured")}
                 </span>
                 <div className="mb-[12px] mt-4 line-clamp-2 text-[46px] font-extralight leading-[1.04] tracking-[0.005em] [overflow-wrap:anywhere]">
                   {featured.title}
@@ -111,7 +115,7 @@ export function MusicVideosScreen({
                     style={{ fontSize: 12, padding: "13px 30px" }}
                     onClick={() => onOpenVideo(featured, related)}
                   >
-                    <Icon.play size={15} /> Open
+                    <Icon.play size={15} /> {t("common.open")}
                   </Button>
                   <VideoMeta video={featured} />
                 </div>
@@ -120,7 +124,7 @@ export function MusicVideosScreen({
 
             {rest.length > 0 && (
               <section className="mb-10">
-                <SectionHead title="Artist Videos" />
+                <SectionHead title={t("musicVideos.artistVideos")} />
                 <CardRail
                   count={rest.length}
                   itemWidth={224}
@@ -140,7 +144,7 @@ export function MusicVideosScreen({
               </section>
             )}
           </>
-        )}
+        ) : null}
       </PageColumn>
     </ScreenScaffold>
   );

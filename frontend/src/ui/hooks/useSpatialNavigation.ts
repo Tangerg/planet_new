@@ -7,50 +7,18 @@ import { useEffect } from "react";
 import type { RefObject } from "react";
 
 import { useEventCallback } from "@/hooks/useEventCallback";
+import {
+  nearestSpatialCandidate,
+  shouldLetTextInputHandleArrow,
+  spatialDirectionFromKey,
+  type SpatialCandidate,
+} from "@/model/spatial-navigation";
 
-/** Pick the nearest focusable in a direction (by geometry). */
-function nearestInDirection(
-  current: HTMLElement,
-  dir: string,
-  candidates: HTMLElement[],
-): HTMLElement | null {
-  const c = current.getBoundingClientRect();
-  const cx = c.left + c.width / 2,
-    cy = c.top + c.height / 2;
-  let best: HTMLElement | null = null,
-    bestScore = Infinity;
-  for (const el of candidates) {
-    if (el === current) continue;
-    const r = el.getBoundingClientRect();
-    const x = r.left + r.width / 2,
-      y = r.top + r.height / 2;
-    const dx = x - cx,
-      dy = y - cy;
-    let primary: number, secondary: number;
-    if (dir === "right") {
-      if (dx <= 4) continue;
-      primary = dx;
-      secondary = Math.abs(dy);
-    } else if (dir === "left") {
-      if (dx >= -4) continue;
-      primary = -dx;
-      secondary = Math.abs(dy);
-    } else if (dir === "down") {
-      if (dy <= 4) continue;
-      primary = dy;
-      secondary = Math.abs(dx);
-    } else {
-      if (dy >= -4) continue;
-      primary = -dy;
-      secondary = Math.abs(dx);
-    }
-    const score = primary + secondary * 2.2;
-    if (score < bestScore) {
-      bestScore = score;
-      best = el;
-    }
-  }
-  return best;
+function spatialCandidate(el: HTMLElement): SpatialCandidate<HTMLElement> {
+  return {
+    item: el,
+    rect: el.getBoundingClientRect(),
+  };
 }
 
 export function useSpatialNavigation(
@@ -79,18 +47,17 @@ export function useSpatialNavigation(
     const onKey = (e: KeyboardEvent) => {
       const ae = document.activeElement as HTMLElement | null;
       const inInput = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
-      const arrows: Record<string, string> = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-      };
-      if (arrows[e.key]) {
-        if (inInput && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return;
+      const direction = spatialDirectionFromKey(e.key);
+      if (direction) {
+        if (shouldLetTextInputHandleArrow(e.key, ae?.tagName)) return;
         const items = list();
         if (!items.length) return;
         const cur = ae && root.contains(ae) ? ae : items[0];
-        const next = nearestInDirection(cur, arrows[e.key], items);
+        const next = nearestSpatialCandidate(
+          spatialCandidate(cur),
+          direction,
+          items.map(spatialCandidate),
+        );
         if (next) {
           e.preventDefault();
           next.focus();

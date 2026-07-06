@@ -30,6 +30,7 @@ import { NowPlaying } from "@/screens/NowPlaying";
 import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
 import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
 import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
+import type { NowPlayingMode } from "@/model/now-playing";
 
 // Screen props grouped by bounded context so the router is a screen *assembler*,
 // not a 50-field forwarder. Field names mirror the values each screen consumes;
@@ -48,13 +49,13 @@ type PlaybackBundle = {
 };
 
 type NavigationBundle = {
-  navigate: (view: string) => void;
   goBack: () => void;
   startForward: (item: XmbItemModel, rect: DOMRect) => void;
   openDetail: (target: VibeCollection) => void;
   albumDetail: (target: VibeCollection) => void;
   openChart: (target: VibeCollection) => void;
   openArtist: (target: ArtistTarget) => void;
+  openLibrary: (tab: string, view?: string) => void;
   openMusicVideo: (video: VibeMusicVideo) => void;
   openMusicVideoTheater: (video: VibeMusicVideo) => void;
   // XMB launcher cursor — transient highlight state Shell holds across mounts.
@@ -110,6 +111,7 @@ type SettingsBundle = {
   setAccent: (accent: string) => void;
   accentOptions: string[];
   heroTreatment: "mono" | "color";
+  nowPlayingInitialMode: NowPlayingMode;
 };
 
 type Props = {
@@ -128,13 +130,13 @@ export function ShellScreenRouter(props: Props) {
   const { playing, current, hasCurrentTrack, queue, onPlay, onPause, onNext, onPrev, shufflePlay } =
     props.playback;
   const {
-    navigate,
     goBack,
     startForward,
     openDetail,
     albumDetail,
     openChart,
     openArtist,
+    openLibrary,
     openMusicVideo,
     openMusicVideoTheater,
     cats,
@@ -198,7 +200,8 @@ export function ShellScreenRouter(props: Props) {
         openPlaylist={openDetail}
         openAlbum={albumDetail}
         openArtist={openArtist}
-        onNav={navigate}
+        openLibrary={openLibrary}
+        onPlay={onPlay}
       />
     );
   }
@@ -405,7 +408,7 @@ export function ShellScreenRouter(props: Props) {
         current={current}
         onNext={onNext}
         onPrev={onPrev}
-        initialMode={settings.npMode === "LYRICS" ? "lyrics" : "cover"}
+        initialMode={props.settings.nowPlayingInitialMode}
         onClose={goBack}
         onOpenArtist={openArtist}
       />

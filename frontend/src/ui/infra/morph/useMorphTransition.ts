@@ -100,6 +100,7 @@ export function useMorphTransition(
   const lastTile = useRef<MorphLastTile | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafIds = useRef<number[]>([]);
+  const transitionRun = useRef(0);
   transRef.current = trans;
 
   const reduceMo = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -113,6 +114,13 @@ export function useMorphTransition(
     rafIds.current.forEach((id) => cancelAnimationFrame(id));
     rafIds.current = [];
   }, []);
+
+  const abortTransition = useCallback(() => {
+    transitionRun.current++;
+    clearAll();
+    transRef.current = null;
+    setTrans(null);
+  }, [clearAll]);
 
   useEffect(() => {
     return () => {
@@ -150,7 +158,11 @@ export function useMorphTransition(
 
   const startForward = useCallback(
     (item: MorphSource, rect: DOMRect) => {
-      if (transRef.current) return;
+      if (transRef.current) {
+        abortTransition();
+        item.run?.();
+        return;
+      }
       if (!viewRef.current || reduceMo()) {
         if (item.run) item.run();
         return;
@@ -181,8 +193,16 @@ export function useMorphTransition(
         hero: null,
         measured: false,
       };
+      const runId = ++transitionRun.current;
       transRef.current = next;
       setTrans(next);
+      timers.current.push(
+        setTimeout(() => {
+          if (transitionRun.current !== runId) return;
+          transRef.current = null;
+          setTrans(null);
+        }, 1400),
+      );
       // reveal/clear are scheduled when the morph phase actually begins (see the
       // phase-flip effect), NOT here: a heavy outgoing screen can jank the main
       // thread before the morph starts, and a trans-set-relative reveal would cut
@@ -193,7 +213,11 @@ export function useMorphTransition(
   );
 
   const startReverse = useCallback(() => {
-    if (transRef.current) return;
+    if (transRef.current) {
+      abortTransition();
+      setView("xmb");
+      return;
+    }
     const lt = lastTile.current;
     const from = view;
     if (!viewRef.current || !lt || reduceMo()) {
@@ -222,17 +246,27 @@ export function useMorphTransition(
       hero: !!src,
       measured: true,
     };
+    const runId = ++transitionRun.current;
     transRef.current = next;
     setTrans(next);
     setView("xmb");
+    timers.current.push(
+      setTimeout(() => {
+        if (transitionRun.current !== runId) return;
+        transRef.current = null;
+        setTrans(null);
+      }, 1400),
+    );
     const revId1 = requestAnimationFrame(() => {
       const revId2 = requestAnimationFrame(() => {
+        if (transitionRun.current !== runId) return;
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
         // Same anchoring as the forward path: schedule the clear from the real
         // morph start (after any pre-morph jank from a heavy collapsing screen),
         // so the reverse collapse's shape tween isn't cut short → no snap.
         timers.current.push(
           setTimeout(() => {
+            if (transitionRun.current !== runId) return;
             transRef.current = null;
             setTrans(null);
           }, 740),
@@ -266,16 +300,24 @@ export function useMorphTransition(
   // Advance the forward transition to the morph phase.
   useEffect(() => {
     if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
+    const runId = transitionRun.current;
     const outer = requestAnimationFrame(() => {
       const inner = requestAnimationFrame(() => {
+        if (transitionRun.current !== runId) return;
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
         // Anchor reveal/clear to the real morph start (after any pre-morph jank),
         // so the .58s shape tween always gets its full window and the square→circle
         // radius finishes before the hero hand-off — fixes the snap when entering
         // from a heavy screen (e.g. the control bar → disc from ForYou).
-        timers.current.push(setTimeout(() => setTrans((t) => t && { ...t, phase: "reveal" }), 600));
         timers.current.push(
           setTimeout(() => {
+            if (transitionRun.current !== runId) return;
+            setTrans((t) => t && { ...t, phase: "reveal" });
+          }, 600),
+        );
+        timers.current.push(
+          setTimeout(() => {
+            if (transitionRun.current !== runId) return;
             transRef.current = null;
             setTrans(null);
           }, 980),

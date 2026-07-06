@@ -1,13 +1,12 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-
 import type { Lyric } from "@domain/model/lyric";
 
 import { useMediaService } from "@/hooks/useMediaService";
 import { usePlayQueueStore } from "@/store/playqueue";
-import { toVibeComment } from "@/model/adapters/comment";
+import { toVibeComments } from "@/model/adapters/comment";
+import { trackCommentsQueryEnabled } from "@/model/content-query";
 import type { VibeComment } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
+import { useProjectedQuery } from "@/hooks/useProjectedQuery";
 
 /**
  * Current-track lyrics ([] when none). The Lyrics plugin follows
@@ -24,10 +23,11 @@ export function useLyric(): readonly Lyric[] {
  */
 export function useComments(trackId: string | undefined, enabled: boolean): VibeComment[] {
   const media = useMediaService();
-  const { data } = useQuery({
+  const { data } = useProjectedQuery({
     queryKey: queryKeys.comments(media.providerName, trackId),
     queryFn: () => media.comments(trackId ?? ""),
-    enabled: enabled && !!trackId && media.supports("comments"),
+    enabled: trackCommentsQueryEnabled(trackId, enabled, (cap) => media.supports(cap)),
+    project: toVibeComments,
   });
-  return useMemo(() => (data ?? []).map(toVibeComment), [data]);
+  return data;
 }

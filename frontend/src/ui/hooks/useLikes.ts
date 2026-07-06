@@ -14,6 +14,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLibraryService } from "@/hooks/useLibraryService";
 import { useMediaService } from "@/hooks/useMediaService";
 import { queryKeys } from "@/model/queryKeys";
+import {
+  appendHistoryTrack,
+  likesAreAccountBacked,
+  likeSyncMergePlan,
+  likedSetForSource,
+  optimisticLikeUpdate,
+  toggleLocalLiked,
+} from "@/model/likes";
+import { warnWriteFailure } from "@shared/debug";
 
 export function useLikes(currentTrack: VibeTrack | undefined) {
   const currentTrackId = currentTrack?.id;
@@ -22,7 +31,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   const { loggedIn } = useAuth();
   const qc = useQueryClient();
   // Account-backed likes only when logged in to a library-capable provider.
-  const synced = loggedIn && library.supported;
+  const synced = likesAreAccountBacked(loggedIn, library.supported);
 
   const [localLiked, setLocalLiked] = useState<Set<string>>(new Set());
   const [history, setHistory] = useState<VibeTrack[]>([]);
@@ -35,7 +44,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   });
 
   const liked = useMemo<Set<string>>(
-    () => (synced ? new Set(accountIds ?? []) : localLiked),
+    () => likedSetForSource({ accountIds, localLiked, synced }),
     [synced, accountIds, localLiked],
   );
 
@@ -45,16 +54,14 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
         // Optimistic: flip the cached id list, fire the sync, let it settle.
         const key = queryKeys.likedIds(media.providerName);
         const cur = qc.getQueryData<string[]>(key) ?? [];
-        const willLike = !cur.includes(id);
-        qc.setQueryData<string[]>(key, willLike ? [...cur, id] : cur.filter((x) => x !== id));
-        void library.setLiked(id, willLike).catch(() => qc.invalidateQueries({ queryKey: key }));
-      } else {
-        setLocalLiked((prev) => {
-          const n = new Set(prev);
-          if (n.has(id)) n.delete(id);
-          else n.add(id);
-          return n;
+        const { ids, willLike } = optimisticLikeUpdate(cur, id);
+        qc.setQueryData<string[]>(key, ids);
+        void library.setLiked(id, willLike).catch((error) => {
+          warnWriteFailure(`${media.providerName}.setLiked(${id})`, error);
+          void qc.invalidateQueries({ queryKey: key });
         });
+      } else {
+        setLocalLiked((prev) => toggleLocalLiked(prev, id));
       }
     },
     [synced, qc, library, media.providerName],
@@ -65,15 +72,20 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   // Guarded by a ref so it runs once per login transition, never in a loop.
   const mergedRef = useRef(false);
   useEffect(() => {
-    if (!synced) {
-      mergedRef.current = false;
-      return;
-    }
-    if (mergedRef.current) return;
-    mergedRef.current = true;
-    if (localLiked.size === 0) return;
-    const ids = [...localLiked];
-    void Promise.all(ids.map((id) => library.setLiked(id, true).catch(() => {}))).then(() => {
+    const plan = likeSyncMergePlan({
+      localLiked,
+      mergedThisSession: mergedRef.current,
+      synced,
+    });
+    mergedRef.current = plan.mergedThisSession;
+    if (plan.idsToSync.length === 0) return;
+    void Promise.all(
+      plan.idsToSync.map((id) =>
+        library.setLiked(id, true).catch((error) => {
+          warnWriteFailure(`${media.providerName}.setLiked(${id})`, error);
+        }),
+      ),
+    ).then(() => {
       setLocalLiked(new Set());
       void qc.invalidateQueries({ queryKey: queryKeys.likedIds(media.providerName) });
     });
@@ -84,7 +96,7 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   // Record play history (dropping consecutive duplicates).
   useEffect(() => {
     if (!currentTrackId || !currentTrack) return;
-    setHistory((h) => (h[h.length - 1]?.id === currentTrackId ? h : [...h, currentTrack]));
+    setHistory((h) => appendHistoryTrack(h, currentTrack));
   }, [currentTrackId, currentTrack]);
 
   return { liked, toggleLike, isLiked, history, settings, setSettings };

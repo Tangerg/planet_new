@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/controls/Button";
 import { Equalizer } from "@/components/primitives";
@@ -9,6 +10,7 @@ type Props = {
   showTools: boolean;
   showBack: boolean;
   playing: boolean;
+  canOpenNowPlaying: boolean;
   onBack: () => void;
   onNowPlaying: () => void;
   onMenu: React.MouseEventHandler<HTMLButtonElement>;
@@ -21,10 +23,12 @@ export function ShellWindowChrome({
   showTools,
   showBack,
   playing,
+  canOpenNowPlaying,
   onBack,
   onNowPlaying,
   onMenu,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <>
       <div aria-hidden className="absolute inset-x-0 top-0 z-[55] h-[30px]" style={dragStyle} />
@@ -32,7 +36,7 @@ export function ShellWindowChrome({
       <div className="traffic" style={noDragStyle}>
         {(
           [
-            ["r", "Close", () => wailsRuntime()?.Quit?.()],
+            ["r", t("common.close"), () => wailsRuntime()?.Quit?.()],
             ["y", "Minimise", () => wailsRuntime()?.WindowMinimise?.()],
             ["g", "Maximise", () => wailsRuntime()?.WindowToggleMaximise?.()],
           ] as const
@@ -44,14 +48,18 @@ export function ShellWindowChrome({
       {showTools && (
         <div className="win-tools" style={noDragStyle}>
           {showBack && (
-            <Button onClick={onBack} aria-label="Back">
+            <Button onClick={onBack} aria-label={t("common.back")}>
               <Icon.back size={20} />
             </Button>
           )}
-          <Button onClick={onNowPlaying} aria-label="Now playing">
+          <Button
+            onClick={onNowPlaying}
+            aria-label={t("common.nowPlaying")}
+            disabled={!canOpenNowPlaying}
+          >
             <Equalizer playing={playing} color="currentColor" size={18} />
           </Button>
-          <Button onClick={onMenu} aria-label="More actions">
+          <Button onClick={onMenu} aria-label={t("common.moreActions")}>
             <Icon.kebab size={20} />
           </Button>
         </div>
