@@ -6,6 +6,7 @@ import type { FlowItem } from "@/model/derive";
 import {
   clampCoverFlowCenter,
   coverFlowDragCenter,
+  coverFlowDragStarted,
   coverFlowKeyAction,
   coverFlowWheelMotion,
   nextCoverFlowCenter,
@@ -13,8 +14,10 @@ import {
 import { useEventCallback } from "@/hooks/useEventCallback";
 
 // `drag` is dual-use: a number accumulates horizontal wheel delta, an object
-// tracks an in-flight pointer drag (start pointer x + start center), null idle.
-type DragState = number | { x: number; start: number } | null;
+// tracks an in-flight pointer press, null idle. `dragging` flips true only once
+// the press travels past the click/drag threshold — until then the pointer is
+// left UNCAPTURED so the press stays a click that reaches the card underneath.
+type DragState = number | { x: number; start: number; pointerId: number; dragging: boolean } | null;
 
 /**
  * Input driving for the CoverFlow carousel — keyboard (window, capture phase so
@@ -90,22 +93,34 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
     }
   };
   const onPointerDown = (e: React.PointerEvent) => {
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    drag.current = { x: e.clientX, start: center };
+    // Do NOT capture yet: a plain click must reach the card / play fab. Capture
+    // is deferred to onPointerMove once the press is confirmed a drag.
+    drag.current = { x: e.clientX, start: center, pointerId: e.pointerId, dragging: false };
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current || typeof drag.current !== "object") return;
+    const state = drag.current;
+    if (!state || typeof state !== "object") return;
+    if (!state.dragging) {
+      if (!coverFlowDragStarted(state.x, e.clientX)) return;
+      // Confirmed drag: capture now so it survives the pointer leaving the rail,
+      // and let the follow-up click be swallowed (a drag must not activate a card).
+      state.dragging = true;
+      (e.currentTarget as HTMLElement).setPointerCapture?.(state.pointerId);
+    }
     setCenter(
       coverFlowDragCenter({
         currentX: e.clientX,
         itemCount: items.length,
-        startCenter: drag.current.start,
-        startX: drag.current.x,
+        startCenter: state.start,
+        startX: state.x,
       }),
     );
   };
   const onPointerUp = (e: React.PointerEvent) => {
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    const state = drag.current;
+    if (state && typeof state === "object" && state.dragging) {
+      (e.currentTarget as HTMLElement).releasePointerCapture?.(state.pointerId);
+    }
     drag.current = null;
   };
 
