@@ -7,6 +7,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
+import type { CardActivation } from "@/components/cards/activation";
 import { Art, artPair } from "@/components/primitives";
 import { LiftCard } from "@/components/lift";
 import { PlayFab } from "@/components/cards/PlayFab";
@@ -14,8 +15,7 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { activateOnKey } from "@/lib/keys";
 
-type MediaCardProps<T extends CardItem> = {
-  item: T;
+type MediaCardProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   round?: boolean;
   /** Lift intensity — gentler for rail/wrapping cards (square covers use 1.22). */
@@ -23,14 +23,6 @@ type MediaCardProps<T extends CardItem> = {
   liftY?: number;
   /** Art render-width hint for image-variant selection. */
   px?: number;
-  /** Callbacks take the item so callers pass ONE reused handler reference (not a
-   *  fresh `() => open(item)` per cell). That keeps the memoized card from
-   *  re-rendering on every scroll windowing tick — see the React.memo note below. */
-  onOpen: (item: T) => void;
-  onPlay?: (item: T) => void;
-  /** Show the play fab. Default true; pass false to hide it per-item (e.g. a
-   *  collection with no playable track) while keeping onPlay a stable reference. */
-  playable?: boolean;
 };
 
 function MediaCardInner<T extends CardItem>({
@@ -113,7 +105,8 @@ function MediaCardInner<T extends CardItem>({
 }
 
 // React.memo: leaf of every card grid/rail; the windowed grid/rail re-invokes
-// renderItem for all visible cells on each scroll tick. With stable per-item
-// callbacks (above) the shallow compare bails, so only entering cards render.
-// The cast preserves the generic call signature that React.memo erases.
+// renderItem for all visible cells on each scroll tick. With the stable per-item
+// callbacks the CardActivation contract mandates, the shallow compare bails so
+// only entering cards render. The cast preserves the generic call signature that
+// React.memo erases.
 export const MediaCard = React.memo(MediaCardInner) as typeof MediaCardInner;

@@ -27,7 +27,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
-import { firstPlayableCollectionTrack } from "@/model/track-actions";
+import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 
 type ArtistScreenProps = {
   artist: ArtistTarget;
@@ -82,11 +82,7 @@ export function ArtistScreen({
     artist.listeners ? t("counts.listeners", { count: artist.listeners }) : undefined,
     ...(artist.genres ?? []),
   ].filter((label): label is string => Boolean(label));
-  const playAlbum = (album: VibeCollection) => {
-    const track = firstPlayableCollectionTrack(album);
-    if (track) onPlay(track);
-  };
-  const canPlayAlbum = (album: VibeCollection) => Boolean(firstPlayableCollectionTrack(album));
+  const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
 
   return (
     <FadeIn className="relative h-full bg-[#0a0a0d]">
@@ -241,8 +237,8 @@ export function ArtistScreen({
                         item={al}
                         sub={artistAlbumSubtitle(al)}
                         onOpen={onOpenAlbum}
-                        onPlay={playAlbum}
-                        playable={canPlayAlbum(al)}
+                        onPlay={playCollection}
+                        playable={canPlayCollection(al)}
                       />
                     );
                   }}
@@ -263,8 +259,8 @@ export function ArtistScreen({
                           .filter(Boolean)
                           .join(" · ")}
                         onOpen={onOpenAlbum}
-                        onPlay={playAlbum}
-                        playable={canPlayAlbum(al)}
+                        onPlay={playCollection}
+                        playable={canPlayCollection(al)}
                       />
                     );
                   }}
@@ -278,8 +274,8 @@ export function ArtistScreen({
                     setCenter={setFlowCenter}
                     accent={accent}
                     onOpen={onOpenAlbum}
-                    onPlay={playAlbum}
-                    canPlay={canPlayAlbum}
+                    onPlay={playCollection}
+                    canPlay={canPlayCollection}
                     tracksFor={(al) => al.tracks}
                     onPlayTrack={onPlay}
                   />
