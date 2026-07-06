@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
+import type { CardActivation } from "@/components/cards/activation";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -13,18 +14,10 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { activateOnKey } from "@/lib/keys";
 
-type CollectionRowProps<T extends CardItem> = {
-  item: T;
+type CollectionRowProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   meta?: string;
   round?: boolean;
-  /** Callbacks take the item so callers pass ONE reused handler reference — see
-   *  the React.memo note below (keeps the row off the per-scroll re-render path). */
-  onOpen: (item: T) => void;
-  onPlay?: (item: T) => void;
-  /** Show the play affordance. Default true; pass false to hide it per-item while
-   *  keeping onPlay a stable reference. */
-  playable?: boolean;
 };
 
 function CollectionRowInner<T extends CardItem>({
@@ -114,7 +107,7 @@ function CollectionRowInner<T extends CardItem>({
 }
 
 // React.memo: leaf of the windowed collection list; VList re-invokes renderItem
-// for all visible rows on each scroll tick. Stable per-item callbacks let the
-// shallow compare bail so only entering rows render. The cast preserves the
-// generic call signature that React.memo erases.
+// for all visible rows on each scroll tick. The stable per-item callbacks the
+// CardActivation contract mandates let the shallow compare bail so only entering
+// rows render. The cast preserves the generic call signature that React.memo erases.
 export const CollectionRow = React.memo(CollectionRowInner) as typeof CollectionRowInner;

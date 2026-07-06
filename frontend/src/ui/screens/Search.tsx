@@ -1,7 +1,7 @@
 // ============================================================
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
-import React, { useCallback } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -17,7 +17,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useSearchScreenModel } from "@/hooks/useSearchScreenModel";
-import { firstPlayableCollectionTrack } from "@/model/track-actions";
+import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 
 type SearchScreenProps = {
   onPlay: (track: VibeTrack) => void;
@@ -55,13 +55,7 @@ export function SearchScreen({
   const model = useSearchScreenModel({ query: q, search });
   const { albums, artists, chips, normalizedTerm, playlists, status, topArtist, topTracks } = model;
   // Stable so the memoized rail cards don't re-render on every keystroke.
-  const playCollection = useCallback(
-    (collection: VibeCollection) => {
-      const track = firstPlayableCollectionTrack(collection);
-      if (track) onPlay(track);
-    },
-    [onPlay],
-  );
+  const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
   const emptyMsg = (text: string) => (
     <Empty className="p-[90px] text-center text-[22px]">{text}</Empty>
   );
@@ -196,7 +190,7 @@ export function SearchScreen({
                     liftY={-6}
                     onOpen={openPlaylist}
                     onPlay={playCollection}
-                    playable={!!firstPlayableCollectionTrack(p)}
+                    playable={canPlayCollection(p)}
                   />
                 );
               }}
@@ -244,7 +238,7 @@ export function SearchScreen({
                     liftY={-6}
                     onOpen={openAlbum}
                     onPlay={playCollection}
-                    playable={!!firstPlayableCollectionTrack(al)}
+                    playable={canPlayCollection(al)}
                   />
                 );
               }}

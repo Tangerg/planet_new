@@ -16,8 +16,8 @@ import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
+import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { forYouCollectionRoute, forYouScreenModel } from "@/model/for-you";
-import { firstPlayableCollectionTrack } from "@/model/track-actions";
 import { activateOnKey } from "@/lib/keys";
 
 type ForYouScreenProps = {
@@ -60,18 +60,11 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     "Good afternoon": t("forYou.afternoon"),
     "Good evening": t("forYou.evening"),
   };
-  // Stable handlers so the memoized rail cards below don't re-render on every
-  // scroll windowing tick (or when the chip state changes).
+  const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
+  // Stable so the memoized rail/tile cards don't re-render when the chip toggles.
   const openTile = useCallback(
     (t: VibeCollection) => (forYouCollectionRoute(t) === "album" ? openAlbum(t) : openPlaylist(t)),
     [openAlbum, openPlaylist],
-  );
-  const playCollection = useCallback(
-    (collection: VibeCollection) => {
-      const track = firstPlayableCollectionTrack(collection);
-      if (track) onPlay(track);
-    },
-    [onPlay],
   );
 
   if (!featured) return <FadeIn className="h-full" />;
@@ -107,9 +100,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
           playlist={featured}
           accent={accent}
           onOpen={() => openPlaylist(featured)}
-          onPlay={
-            firstPlayableCollectionTrack(featured) ? () => playCollection(featured) : undefined
-          }
+          onPlay={canPlayCollection(featured) ? () => playCollection(featured) : undefined}
         />
 
         {/* quick tiles — grid-cols-4 is repeat(4, minmax(0,1fr)): a long tile name
@@ -156,7 +147,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                   />
                   <span className="tname">{tile.name}</span>
                 </div>
-                {firstPlayableCollectionTrack(tile) && (
+                {canPlayCollection(tile) && (
                   <Button
                     className="tfab"
                     aria-label={t("a11y.playItem", { name: tile.name })}
@@ -188,7 +179,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 liftY={-6}
                 onOpen={openPlaylist}
                 onPlay={playCollection}
-                playable={!!firstPlayableCollectionTrack(p)}
+                playable={canPlayCollection(p)}
               />
             );
           }}
@@ -209,7 +200,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 liftY={-6}
                 onOpen={openAlbum}
                 onPlay={playCollection}
-                playable={!!firstPlayableCollectionTrack(al)}
+                playable={canPlayCollection(al)}
               />
             );
           }}

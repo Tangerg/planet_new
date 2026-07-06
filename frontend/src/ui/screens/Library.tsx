@@ -93,13 +93,17 @@ export function LibraryScreen({
       : model.collectionRoute === "artist"
         ? openArtist(o)
         : openPlaylist(o);
+  // Library resolves a collection's tracks per active tab (they're lazy on the
+  // object), so it can't use the shared collection.tracks-based useCollectionPlayback
+  // — it plays over the resolved list instead.
   const tracksOf = (o: VibeCollection) => libraryTracksForCollection(tab, tracks, o);
+  const firstPlayable = (o: VibeCollection) =>
+    firstPlayableCollectionTrack({ tracks: tracksOf(o) });
   const playCollection = (collection: VibeCollection) => {
-    const track = firstPlayableCollectionTrack({ tracks: tracksOf(collection) });
+    const track = firstPlayable(collection);
     if (track) onPlay(track);
   };
-  const canPlayCollection = (collection: VibeCollection) =>
-    Boolean(firstPlayableCollectionTrack({ tracks: tracksOf(collection) }));
+  const canPlayCollection = (collection: VibeCollection) => Boolean(firstPlayable(collection));
 
   return (
     <FadeIn
