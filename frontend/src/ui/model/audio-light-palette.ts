@@ -106,8 +106,16 @@ function blendHue(from: number, to: number, amount: number): number {
   return (from + delta * clamp(0, 1, amount) + 360) % 360;
 }
 
-function fract(value: number): number {
-  return value - Math.floor(value);
+/**
+ * Fold any real into [0,1] via a period-2 triangle wave. Unlike `fract()` (which
+ * this replaced), it has NO seam: the value eases back down instead of snapping
+ * 0.99→0.01, so the palette hue sweeps smoothly across the wheel AND reverses at
+ * the ends rather than jumping crimson↔cyan whenever the spectral sum crosses an
+ * integer. That discontinuity was the source of the visualizer's colour "jumps".
+ */
+function foldUnit(value: number): number {
+  const wrapped = ((value % 2) + 2) % 2;
+  return 1 - Math.abs(1 - wrapped);
 }
 
 function mixChannel(from: number, to: number, amount: number): number {
@@ -161,13 +169,15 @@ function spectralHsl({
 }: SpectralHslOptions): HslColor {
   const normalized = normalizeFftByte(primary);
   const secondaryNorm = normalizeFftByte(secondary);
-  const seed = fract(normalized * 0.53 + secondaryNorm * 0.31 + offset * 0.0017 + contrast * 0.11);
+  const seed = foldUnit(
+    normalized * 0.53 + secondaryNorm * 0.31 + offset * 0.0017 + contrast * 0.11,
+  );
   const base = luxuryPaletteColor(seed);
   const anchorAmount = active ? 0.1 : 0.68;
   const color = mixHsl(base, restrainAnchor(anchor, seed), anchorAmount);
   return {
     h: color.h,
-    s: clamp(28, 68, color.s + normalized * 10 + contrast * 8 + satBias * 0.28),
+    s: clamp(34, 70, color.s + normalized * 10 + contrast * 8 + satBias * 0.28),
     l: clamp(28, 64, color.l + secondaryNorm * 5 + energy * 7 + lightBias * 0.35),
   };
 }
@@ -198,7 +208,7 @@ function spectralLaneColor({
   const localFlux = normalizeFftByte(Math.abs(next - previous));
   const contrastNorm = normalizeFftByte(contrast);
   const centroidNorm = normalizeFftByte(centroid);
-  const seed = fract(
+  const seed = foldUnit(
     normalized * 0.47 +
       centroidNorm * 0.24 +
       contrastNorm * 0.13 +
@@ -212,7 +222,7 @@ function spectralLaneColor({
 
   return {
     h: color.h,
-    s: clamp(30, 70, color.s + normalized * 12 + contrastNorm * 6 + localFlux * 5),
+    s: clamp(34, 70, color.s + normalized * 12 + contrastNorm * 6 + localFlux * 5),
     l: clamp(27, 64, color.l + normalized * 5 + energy * 7 + localFlux * 4),
   };
 }
