@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import React, { useEffect, type RefObject } from "react";
 
 import type { Lyric } from "@domain/model/lyric";
 
@@ -12,8 +12,18 @@ type Props = {
 /**
  * Timed lyric rendering plus active-line centering. The screen owns layout;
  * this component owns the lyric-reading behavior.
+ *
+ * React.memo: its LyricsPanel host re-renders on every progress tick, but the
+ * active line only advances every few seconds. Memoizing means the whole lyric
+ * list (up to a few hundred lines) is re-laid only when `active` actually
+ * changes — not several times a second.
  */
-export function LyricLines({ lines, accent, active, scrollRef }: Props) {
+export const LyricLines = React.memo(function LyricLines({
+  lines,
+  accent,
+  active,
+  scrollRef,
+}: Props) {
   useEffect(() => {
     const container = scrollRef.current;
     const el = container?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);
@@ -72,4 +82,4 @@ export function LyricLines({ lines, accent, active, scrollRef }: Props) {
       })}
     </div>
   );
-}
+});

@@ -8,7 +8,7 @@ import { Button } from "@/components/controls/Button";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
 import { CommentList } from "@/components/CommentList";
-import { LyricLines } from "@/components/now-playing/LyricLines";
+import { LyricsPanel } from "@/components/now-playing/LyricsPanel";
 import { ModeTag } from "@/components/now-playing/ModeTag";
 import { TagStack } from "@/components/now-playing/TagStack";
 import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
@@ -58,22 +58,13 @@ export const NowPlaying = React.memo(function NowPlaying({
     setMode,
     queueOpen,
     setQueueOpen,
-    lines,
-    active,
     lyricsMode,
     commentsMode,
     panelOpen,
     rootRef,
-    lyricScrollRef,
     queueScrollRef,
     touchHandlers,
-  } = useNowPlayingModel({
-    lyrics,
-    initialMode,
-    noLyricsText: t("player.noLyrics"),
-    onNext,
-    onPrev,
-  });
+  } = useNowPlayingModel({ initialMode, onNext, onPrev });
 
   const trackModel = nowPlayingTrackModel(track, {
     producedBy: (name) => t("player.producedBy", { name }),
@@ -249,14 +240,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               <CommentList comments={comments} />
             </div>
           ) : (
-            <div ref={lyricScrollRef} className="scroll h-full">
-              <LyricLines
-                lines={lines}
-                accent={accent}
-                active={active}
-                scrollRef={lyricScrollRef}
-              />
-            </div>
+            <LyricsPanel lyrics={lyrics} noLyricsText={t("player.noLyrics")} accent={accent} />
           )}
         </NpSwap>
       </div>
