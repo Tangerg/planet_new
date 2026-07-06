@@ -13,16 +13,29 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { activateOnKey } from "@/lib/keys";
 
-type CollectionRowProps = {
-  item: CardItem;
+type CollectionRowProps<T extends CardItem> = {
+  item: T;
   sub?: string;
   meta?: string;
   round?: boolean;
-  onOpen: () => void;
-  onPlay?: () => void;
+  /** Callbacks take the item so callers pass ONE reused handler reference — see
+   *  the React.memo note below (keeps the row off the per-scroll re-render path). */
+  onOpen: (item: T) => void;
+  onPlay?: (item: T) => void;
+  /** Show the play affordance. Default true; pass false to hide it per-item while
+   *  keeping onPlay a stable reference. */
+  playable?: boolean;
 };
 
-export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: CollectionRowProps) {
+function CollectionRowInner<T extends CardItem>({
+  item,
+  sub,
+  meta,
+  round,
+  onOpen,
+  onPlay,
+  playable = true,
+}: CollectionRowProps<T>) {
   const { t } = useTranslation();
   const [hover, setHover] = useState(false);
   const open = useMorphOpen();
@@ -34,7 +47,7 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
       image: item.image,
       round,
       artSelector: ".clrt",
-      run: onOpen,
+      run: () => onOpen(item),
     });
   const activateFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
@@ -69,11 +82,11 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
           />
         </div>
         {/* artists (round) are people, not playable — no cover play fab */}
-        {onPlay && !round && hover && (
+        {onPlay && !round && playable && hover && (
           <Button
             onClick={(e) => {
               e.stopPropagation();
-              onPlay();
+              onPlay(item);
             }}
             aria-label={t("a11y.playItem", { name: item.name })}
             className="absolute inset-0 grid place-items-center text-white"
@@ -99,3 +112,9 @@ export function CollectionRow({ item, sub, meta, round, onOpen, onPlay }: Collec
     </div>
   );
 }
+
+// React.memo: leaf of the windowed collection list; VList re-invokes renderItem
+// for all visible rows on each scroll tick. Stable per-item callbacks let the
+// shallow compare bail so only entering rows render. The cast preserves the
+// generic call signature that React.memo erases.
+export const CollectionRow = React.memo(CollectionRowInner) as typeof CollectionRowInner;

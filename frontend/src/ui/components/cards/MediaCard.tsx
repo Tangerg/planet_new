@@ -14,8 +14,8 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { activateOnKey } from "@/lib/keys";
 
-type MediaCardProps = {
-  item: CardItem;
+type MediaCardProps<T extends CardItem> = {
+  item: T;
   sub?: string;
   round?: boolean;
   /** Lift intensity — gentler for rail/wrapping cards (square covers use 1.22). */
@@ -23,11 +23,17 @@ type MediaCardProps = {
   liftY?: number;
   /** Art render-width hint for image-variant selection. */
   px?: number;
-  onOpen: () => void;
-  onPlay?: () => void;
+  /** Callbacks take the item so callers pass ONE reused handler reference (not a
+   *  fresh `() => open(item)` per cell). That keeps the memoized card from
+   *  re-rendering on every scroll windowing tick — see the React.memo note below. */
+  onOpen: (item: T) => void;
+  onPlay?: (item: T) => void;
+  /** Show the play fab. Default true; pass false to hide it per-item (e.g. a
+   *  collection with no playable track) while keeping onPlay a stable reference. */
+  playable?: boolean;
 };
 
-export function MediaCard({
+function MediaCardInner<T extends CardItem>({
   item,
   sub,
   round,
@@ -36,7 +42,8 @@ export function MediaCard({
   px = 176,
   onOpen,
   onPlay,
-}: MediaCardProps) {
+  playable = true,
+}: MediaCardProps<T>) {
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { collMenu } = useScreenActions();
@@ -47,7 +54,7 @@ export function MediaCard({
       image: item.image,
       round,
       artSelector: ".art",
-      run: onOpen,
+      run: () => onOpen(item),
     });
   const activateFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
@@ -81,11 +88,11 @@ export function MediaCard({
           />
         </div>
         {/* artists (round) are people, not playable — no cover play fab */}
-        {onPlay && !round && (
+        {onPlay && !round && playable && (
           <PlayFab
             className="playfab"
             aria-label={t("a11y.playItem", { name: item.name })}
-            onPlay={onPlay}
+            onPlay={() => onPlay(item)}
           />
         )}
       </div>
@@ -104,3 +111,9 @@ export function MediaCard({
     </LiftCard>
   );
 }
+
+// React.memo: leaf of every card grid/rail; the windowed grid/rail re-invokes
+// renderItem for all visible cells on each scroll tick. With stable per-item
+// callbacks (above) the shallow compare bails, so only entering cards render.
+// The cast preserves the generic call signature that React.memo erases.
+export const MediaCard = React.memo(MediaCardInner) as typeof MediaCardInner;

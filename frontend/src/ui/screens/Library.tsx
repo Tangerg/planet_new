@@ -176,12 +176,9 @@ export function LibraryScreen({
                       item={o}
                       round={round}
                       sub={collectionSubtitle(o)}
-                      onOpen={() => openOf(o)}
-                      onPlay={
-                        tab === "artists" || !canPlayCollection(o)
-                          ? undefined
-                          : () => playCollection(o)
-                      }
+                      onOpen={openOf}
+                      onPlay={playCollection}
+                      playable={tab !== "artists" && canPlayCollection(o)}
                     />
                   );
                 }}
@@ -200,12 +197,9 @@ export function LibraryScreen({
                       round={round}
                       sub={collectionSubtitle(o)}
                       meta={collectionMetaLabel(o)}
-                      onOpen={() => openOf(o)}
-                      onPlay={
-                        tab === "artists" || !canPlayCollection(o)
-                          ? undefined
-                          : () => playCollection(o)
-                      }
+                      onOpen={openOf}
+                      onPlay={playCollection}
+                      playable={tab !== "artists" && canPlayCollection(o)}
                     />
                   );
                 }}

@@ -240,8 +240,9 @@ export function ArtistScreen({
                       <MediaCard
                         item={al}
                         sub={artistAlbumSubtitle(al)}
-                        onOpen={() => onOpenAlbum(al)}
-                        onPlay={canPlayAlbum(al) ? () => playAlbum(al) : undefined}
+                        onOpen={onOpenAlbum}
+                        onPlay={playAlbum}
+                        playable={canPlayAlbum(al)}
                       />
                     );
                   }}
@@ -261,8 +262,9 @@ export function ArtistScreen({
                         meta={[al.year, t("counts.tracks", { count: artistAlbumTrackCount(al) })]
                           .filter(Boolean)
                           .join(" · ")}
-                        onOpen={() => onOpenAlbum(al)}
-                        onPlay={canPlayAlbum(al) ? () => playAlbum(al) : undefined}
+                        onOpen={onOpenAlbum}
+                        onPlay={playAlbum}
+                        playable={canPlayAlbum(al)}
                       />
                     );
                   }}
@@ -300,7 +302,7 @@ export function ArtistScreen({
                         sub={t("common.artist")}
                         liftScale={1.12}
                         liftY={-6}
-                        onOpen={() => onOpenArtist(ar)}
+                        onOpen={onOpenArtist}
                       />
                     );
                   }}
