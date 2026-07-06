@@ -7,7 +7,7 @@ import React from "react";
 import "./PlayerBar.css";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerTrackIdentity } from "@/components/player-bar/PlayerTrackIdentity";
-import { PlayerScrubber } from "@/components/player-bar/PlayerScrubber";
+import { LiveScrubber } from "@/components/player-bar/LiveScrubber";
 import { PlayerUtilities } from "@/components/player-bar/PlayerUtilities";
 import { TransportControls } from "@/components/player-bar/TransportControls";
 import { useMorph } from "@/infra/morph";
@@ -33,9 +33,6 @@ type Props = {
   onToggleRepeat: () => void;
   onNext?: () => void;
   onPrev?: () => void;
-  /** Real playback progress / total, in seconds (from the kernel). */
-  positionSec: number;
-  durationSec: number;
   /** Seek to a 0..100 percent of the track. */
   onSeek: (pct: number) => void;
   /** Volume on the kernel's 0..100 scale, with its setter. */
@@ -63,8 +60,6 @@ export const PlayerBar = React.memo(function PlayerBar({
   onToggleRepeat,
   onNext,
   onPrev,
-  positionSec,
-  durationSec,
   onSeek,
   volume,
   onVolume,
@@ -112,13 +107,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         onPrev={onPrev}
       />
 
-      <PlayerScrubber
-        positionSec={positionSec}
-        durationSec={durationSec}
-        fallbackDurationSec={track?.durSec}
-        accent={accent}
-        onSeek={onSeek}
-      />
+      <LiveScrubber fallbackDurationSec={track?.durSec} accent={accent} onSeek={onSeek} />
 
       <PlayerUtilities
         liked={liked}

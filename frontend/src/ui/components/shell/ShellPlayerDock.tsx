@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerBar } from "@/components/PlayerBar";
-import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 
 type Props = {
   show: boolean;
@@ -55,9 +54,9 @@ export function ShellPlayerDock({
   onOpenLyrics,
   onOpenArtist,
 }: Props) {
-  // Subscribe to the frequent progress tick here, not in Shell — only this dock
-  // (and Now Playing) re-render as the clock advances.
-  const { positionSec, durationSec } = usePlaybackProgress();
+  // The frequent progress tick is subscribed one level deeper, inside the bar's
+  // LiveScrubber leaf — so neither this dock (nor its Motion slide wrapper) nor
+  // the memoized PlayerBar re-render several times a second as the clock advances.
   return (
     <>
       <div aria-hidden style={{ flex: `0 0 ${show ? 84 : 0}px` }} />
@@ -88,8 +87,6 @@ export function ShellPlayerDock({
               onToggleRepeat={onToggleRepeat}
               onNext={onNext}
               onPrev={onPrev}
-              positionSec={positionSec}
-              durationSec={durationSec}
               onSeek={onSeek}
               volume={volume}
               onVolume={onVolume}
