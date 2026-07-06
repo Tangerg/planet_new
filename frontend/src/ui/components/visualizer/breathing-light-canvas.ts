@@ -1,3 +1,5 @@
+import { clamp } from "@shared/math";
+
 import {
   hsla,
   spectralLightColors,
@@ -21,22 +23,82 @@ export type BreathingLightPaintInput = {
   frame: AudioLightFrame;
 };
 
-type PaintStop = {
-  at: number;
-  color: HslColor;
-  intensity: number;
-};
-
 type SpectralPaintColors = ReturnType<typeof spectralLightColors>;
 
-function addSpectralStops(
-  gradient: CanvasGradient,
-  stops: readonly PaintStop[],
+// Flame/wave layers, back → front. Stacked with additive ("lighter") blending so
+// the shared base burns bright (all overlap) and the tips fade (one layer) — the
+// flame falloff comes for free. Each drifts at its own speed/phase for a churning,
+// psychedelic motion; `reactive` is how hard the band energy throws the tongues up.
+type FlameLayer = {
+  waves: number;
+  speed: number;
+  amp: number;
+  phase: number;
+  alpha: number;
+  reactive: number;
+};
+
+const FLAME_LAYERS: readonly FlameLayer[] = [
+  { waves: 1.5, speed: 0.7, amp: 0.55, phase: 0, alpha: 0.2, reactive: 0.72 },
+  { waves: 2.4, speed: -1.0, amp: 0.42, phase: 2.1, alpha: 0.18, reactive: 0.86 },
+  { waves: 3.3, speed: 1.6, amp: 0.3, phase: 4.2, alpha: 0.15, reactive: 1.0 },
+];
+
+function stopsGradient(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  colors: SpectralPaintColors,
   alpha: (intensity: number) => number,
-): void {
-  for (const stop of stops) {
-    gradient.addColorStop(stop.at, hsla(stop.color, alpha(stop.intensity)));
+): CanvasGradient {
+  // Cool (bass) on the left → warm (treble) on the right.
+  const gradient = ctx.createLinearGradient(0, 0, width, 0);
+  for (const stop of colors.stops) {
+    gradient.addColorStop(clamp(0, 1, stop.at), hsla(stop.color, alpha(stop.intensity)));
   }
+  return gradient;
+}
+
+/** Flame-tongue height (0..~1.2) at horizontal position u∈[0,1]. */
+function flameHeight(
+  u: number,
+  timeSec: number,
+  bands: readonly number[],
+  pulse: number,
+  layer: FlameLayer,
+): number {
+  const band = bands[Math.min(bands.length - 1, Math.floor(u * bands.length))] ?? 0;
+  const w1 = Math.sin(u * layer.waves * Math.PI * 2 + timeSec * layer.speed + layer.phase);
+  const w2 = Math.sin(
+    u * layer.waves * 1.9 * Math.PI * 2 - timeSec * layer.speed * 0.6 + layer.phase,
+  );
+  const flow = w1 * 0.62 + w2 * 0.38;
+  const base = 0.14 + pulse * 0.22;
+  const tongue = flow * layer.amp * (0.26 + band * 0.95);
+  return clamp(0, 1.25, base + band * layer.reactive + tongue);
+}
+
+function paintFlameLayer(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  timeSec: number,
+  bands: readonly number[],
+  colors: SpectralPaintColors,
+  pulse: number,
+  layer: FlameLayer,
+): void {
+  ctx.fillStyle = stopsGradient(ctx, width, colors, (intensity) => layer.alpha * (0.4 + intensity));
+  ctx.beginPath();
+  ctx.moveTo(0, height + 2);
+  const steps = 80;
+  for (let s = 0; s <= steps; s++) {
+    const u = s / steps;
+    const h = flameHeight(u, timeSec, bands, pulse, layer);
+    ctx.lineTo(u * width, height - h * height);
+  }
+  ctx.lineTo(width, height + 2);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function paintAmbientWash(
@@ -46,9 +108,13 @@ function paintAmbientWash(
   colors: SpectralPaintColors,
   pulse: number,
 ): void {
-  const wash = ctx.createLinearGradient(0, 0, width, 0);
-  addSpectralStops(wash, colors.stops, (intensity) => 0.05 + pulse * 0.08 + intensity * 0.055);
-  ctx.fillStyle = wash;
+  // A low base so quiet passages still carry the cool→warm temperature field.
+  ctx.fillStyle = stopsGradient(
+    ctx,
+    width,
+    colors,
+    (intensity) => 0.05 + pulse * 0.06 + intensity * 0.05,
+  );
   ctx.fillRect(0, 0, width, height);
 }
 
@@ -56,23 +122,21 @@ function paintBloom(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  colors: SpectralPaintColors,
+  dominant: HslColor,
   pulse: number,
   centerX: number,
   radius: number,
 ): void {
-  ctx.globalCompositeOperation = "lighter";
-  const bloom = ctx.createRadialGradient(centerX, height * 0.48, 0, centerX, height * 0.48, radius);
-  bloom.addColorStop(0, hsla(colors.body, 0.1 + pulse * 0.35));
-  bloom.addColorStop(0.26, hsla(colors.spark, 0.05 + pulse * 0.15));
-  bloom.addColorStop(0.48, hsla(colors.warmth, 0.05 + pulse * 0.12));
-  bloom.addColorStop(0.74, hsla(colors.air, 0.03 + pulse * 0.12));
+  // A travelling neon bloom in the dominant pitch colour — the psychedelic core.
+  const bloom = ctx.createRadialGradient(centerX, height * 0.72, 0, centerX, height * 0.72, radius);
+  bloom.addColorStop(0, hsla(dominant, 0.12 + pulse * 0.4));
+  bloom.addColorStop(0.42, hsla(dominant, 0.05 + pulse * 0.16));
   bloom.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = bloom;
   ctx.fillRect(0, 0, width, height);
 }
 
-function paintBreathLine(
+function paintCrest(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -82,25 +146,21 @@ function paintBreathLine(
   pulse: number,
   playing: boolean,
 ): void {
-  const baseY = height * 0.62;
-  const amplitude = height * (0.08 + pulse * 0.12);
-  const line = ctx.createLinearGradient(0, 0, width, 0);
-  addSpectralStops(line, colors.stops, (intensity) => 0.035 + pulse * 0.12 + intensity * 0.08);
-
-  ctx.strokeStyle = line;
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = playing ? 0.22 : 0.08;
+  // A bright hot filament riding the tallest flame crest — the neon "wave" line.
+  const crest = FLAME_LAYERS[0];
+  ctx.strokeStyle = stopsGradient(ctx, width, colors, (intensity) => 0.5 + intensity * 0.5);
+  ctx.lineWidth = 1.4;
+  ctx.globalAlpha = playing ? 0.5 : 0.16;
   ctx.beginPath();
-
-  for (let i = 0; i <= 96; i++) {
-    const x = (i / 96) * width;
-    const band = bands[Math.floor((i / 96) * bands.length)] ?? 0;
-    const wave = Math.sin(timeSec * 2.1 + i * 0.18) * (0.35 + band * 0.65);
-    const y = baseY + wave * amplitude;
-    if (i === 0) ctx.moveTo(x, y);
+  const steps = 80;
+  for (let s = 0; s <= steps; s++) {
+    const u = s / steps;
+    const h = flameHeight(u, timeSec, bands, pulse, crest);
+    const x = u * width;
+    const y = height - h * height;
+    if (s === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
-
   ctx.stroke();
   ctx.globalAlpha = 1;
 }
@@ -116,22 +176,33 @@ export function paintBreathingLight({
 }: BreathingLightPaintInput): void {
   ctx.clearRect(0, 0, width, height);
 
-  const idleBreath = 0.5 + Math.sin(timeSec * 1.35) * 0.5;
-  const pulse = playing ? Math.max(frame.energy, 0.18 + idleBreath * 0.2) : 0.08;
-  const drift = Math.sin(timeSec * 0.24) * 0.12;
-  const centerX = width * (0.5 + drift);
-  const radius = Math.max(width * (0.62 + pulse * 0.22), height * 5);
+  const idleBreath = 0.5 + Math.sin(timeSec * 1.1) * 0.5;
+  const pulse = playing
+    ? Math.max(frame.energy, 0.14 + idleBreath * 0.18)
+    : 0.06 + idleBreath * 0.05;
+  // Slow ±16° hue shimmer keeps the sweep alive without leaving the neon zone.
+  const hueDrift = Math.sin(timeSec * 0.06) * 16;
+
   const colors = spectralLightColors({
     accent: skin.accent,
     tintA: skin.tintA,
     tintB: skin.tintB,
     profile: frame.profile,
     signature: frame.signature,
+    hueDrift,
   });
 
-  paintAmbientWash(ctx, width, height, colors, pulse);
-  paintBloom(ctx, width, height, colors, pulse, centerX, radius);
-  paintBreathLine(ctx, width, height, timeSec, frame.bands, colors, pulse, playing);
+  const drift = Math.sin(timeSec * 0.19) * 0.16;
+  const centerX = width * (0.5 + drift);
+  const radius = Math.max(width * (0.5 + pulse * 0.22), height * 4);
 
+  paintAmbientWash(ctx, width, height, colors, pulse);
+
+  ctx.globalCompositeOperation = "lighter";
+  paintBloom(ctx, width, height, colors.line, pulse, centerX, radius);
+  for (const layer of FLAME_LAYERS) {
+    paintFlameLayer(ctx, width, height, timeSec, frame.bands, colors, pulse, layer);
+  }
+  paintCrest(ctx, width, height, timeSec, frame.bands, colors, pulse, playing);
   ctx.globalCompositeOperation = "source-over";
 }
