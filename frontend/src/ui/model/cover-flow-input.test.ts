@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampCoverFlowCenter,
   coverFlowDragCenter,
+  coverFlowDragStarted,
   coverFlowKeyAction,
   coverFlowWheelMotion,
   nextCoverFlowCenter,
@@ -27,6 +28,16 @@ describe("cover flow input model", () => {
     expect(coverFlowWheelMotion(20, 30)).toEqual({ centerDelta: 0, accumulatedDelta: 50 });
     expect(coverFlowWheelMotion(50, 20)).toEqual({ centerDelta: 1, accumulatedDelta: 0 });
     expect(coverFlowWheelMotion(-50, -20)).toEqual({ centerDelta: -1, accumulatedDelta: 0 });
+  });
+
+  it("treats a small pointer travel as a click, larger as a drag", () => {
+    // Below/at the threshold → still a click (leave the pointer uncaptured so the
+    // card underneath stays clickable); beyond it → a drag.
+    expect(coverFlowDragStarted(100, 100)).toBe(false);
+    expect(coverFlowDragStarted(100, 103)).toBe(false);
+    expect(coverFlowDragStarted(100, 96)).toBe(false);
+    expect(coverFlowDragStarted(100, 106)).toBe(true);
+    expect(coverFlowDragStarted(100, 92)).toBe(true);
   });
 
   it("derives the center from pointer drag distance", () => {
