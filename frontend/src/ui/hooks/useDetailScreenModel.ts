@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { VibeTrack } from "@/model/vibe";
 import { sortTracks, type SortMode } from "@/model/derive";
@@ -39,18 +39,24 @@ export function useDetailScreenModel(
   const selectionOrderIds = useMemo(() => detailSelectionOrderIds(sorted), [sorted]);
 
   // Shift-click extends the selection across the *sorted* range from the anchor.
-  const toggleSel = (track: VibeTrack, e: React.MouseEvent) => {
-    setSel((prev) => {
-      return nextDetailSelection({
-        anchorId: lastSel.current,
-        extendRange: e.shiftKey,
-        orderedIds: selectionOrderIds,
-        selected: prev,
-        trackId: track.id,
-      });
-    });
-    lastSel.current = track.id;
-  };
+  // Stable identity (only the sorted order is a real dep) so it can be the
+  // onSelect of memoized rows — selecting a track then re-renders just the two
+  // affected rows, not the whole visible list.
+  const toggleSel = useCallback(
+    (track: VibeTrack, e: React.MouseEvent) => {
+      setSel((prev) =>
+        nextDetailSelection({
+          anchorId: lastSel.current,
+          extendRange: e.shiftKey,
+          orderedIds: selectionOrderIds,
+          selected: prev,
+          trackId: track.id,
+        }),
+      );
+      lastSel.current = track.id;
+    },
+    [selectionOrderIds],
+  );
 
   const clearSel = () => setSel(new Set());
 

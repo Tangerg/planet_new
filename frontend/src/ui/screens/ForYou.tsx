@@ -1,7 +1,7 @@
 // ============================================================
 // ForYou — rich editorial home: hero · quick tiles · card rails.
 // ============================================================
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -60,12 +60,19 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     "Good afternoon": t("forYou.afternoon"),
     "Good evening": t("forYou.evening"),
   };
-  const openTile = (t: VibeCollection) =>
-    forYouCollectionRoute(t) === "album" ? openAlbum(t) : openPlaylist(t);
-  const playCollection = (collection: VibeCollection) => {
-    const track = firstPlayableCollectionTrack(collection);
-    if (track) onPlay(track);
-  };
+  // Stable handlers so the memoized rail cards below don't re-render on every
+  // scroll windowing tick (or when the chip state changes).
+  const openTile = useCallback(
+    (t: VibeCollection) => (forYouCollectionRoute(t) === "album" ? openAlbum(t) : openPlaylist(t)),
+    [openAlbum, openPlaylist],
+  );
+  const playCollection = useCallback(
+    (collection: VibeCollection) => {
+      const track = firstPlayableCollectionTrack(collection);
+      if (track) onPlay(track);
+    },
+    [onPlay],
+  );
 
   if (!featured) return <FadeIn className="h-full" />;
 
@@ -179,8 +186,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={p.kind}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={() => openPlaylist(p)}
-                onPlay={firstPlayableCollectionTrack(p) ? () => playCollection(p) : undefined}
+                onOpen={openPlaylist}
+                onPlay={playCollection}
+                playable={!!firstPlayableCollectionTrack(p)}
               />
             );
           }}
@@ -199,8 +207,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={al.artist}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={() => openAlbum(al)}
-                onPlay={firstPlayableCollectionTrack(al) ? () => playCollection(al) : undefined}
+                onOpen={openAlbum}
+                onPlay={playCollection}
+                playable={!!firstPlayableCollectionTrack(al)}
               />
             );
           }}
@@ -220,7 +229,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={t("common.artist")}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={() => openArtist(ar)}
+                onOpen={openArtist}
               />
             );
           }}

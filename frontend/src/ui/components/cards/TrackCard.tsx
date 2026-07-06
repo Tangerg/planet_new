@@ -21,7 +21,16 @@ type TrackCardProps = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
-export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {
+// React.memo: leaf of the grid track view; TrackCollectionView re-invokes
+// renderItem for every visible cell on each scroll windowing tick. Call sites
+// pass stable onPlay/accent/onOpenArtist + a stable track object, so the shallow
+// compare bails and only entering cards render during a scroll.
+export const TrackCard = React.memo(function TrackCard({
+  track,
+  onPlay,
+  accent,
+  onOpenArtist,
+}: TrackCardProps) {
   const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
   const play = () => onPlay(track);
@@ -92,4 +101,4 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
       </div>
     </LiftCard>
   );
-}
+});

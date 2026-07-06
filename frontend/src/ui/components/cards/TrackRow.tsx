@@ -33,7 +33,14 @@ type TrackRowProps = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
-export function TrackRow({
+// React.memo: this row is the leaf of every virtualized track list, so on each
+// scroll windowing tick the list re-invokes renderItem for all visible rows.
+// Memoizing means only rows whose props actually changed re-render (the row
+// entering the window, or the one whose current/selected/liked flipped) instead
+// of the whole visible set — the difference between a jittery and a 60fps scroll.
+// All call sites pass stable references (onPlay/toggleLike/current/liked/accent)
+// or primitives (index/rank/selected), so the default shallow compare bails.
+export const TrackRow = React.memo(function TrackRow({
   track,
   index,
   onPlay,
@@ -236,4 +243,4 @@ export function TrackRow({
       </span>
     </div>
   );
-}
+});

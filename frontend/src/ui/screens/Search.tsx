@@ -1,7 +1,7 @@
 // ============================================================
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
-import React from "react";
+import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -54,10 +54,14 @@ export function SearchScreen({
   const open = useMorphOpen();
   const model = useSearchScreenModel({ query: q, search });
   const { albums, artists, chips, normalizedTerm, playlists, status, topArtist, topTracks } = model;
-  const playCollection = (collection: VibeCollection) => {
-    const track = firstPlayableCollectionTrack(collection);
-    if (track) onPlay(track);
-  };
+  // Stable so the memoized rail cards don't re-render on every keystroke.
+  const playCollection = useCallback(
+    (collection: VibeCollection) => {
+      const track = firstPlayableCollectionTrack(collection);
+      if (track) onPlay(track);
+    },
+    [onPlay],
+  );
   const emptyMsg = (text: string) => (
     <Empty className="p-[90px] text-center text-[22px]">{text}</Empty>
   );
@@ -190,8 +194,9 @@ export function SearchScreen({
                     sub={p.owner}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={() => openPlaylist(p)}
-                    onPlay={firstPlayableCollectionTrack(p) ? () => playCollection(p) : undefined}
+                    onOpen={openPlaylist}
+                    onPlay={playCollection}
+                    playable={!!firstPlayableCollectionTrack(p)}
                   />
                 );
               }}
@@ -215,7 +220,7 @@ export function SearchScreen({
                     sub={t("common.artist")}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={() => openArtist(a)}
+                    onOpen={openArtist}
                   />
                 );
               }}
@@ -237,8 +242,9 @@ export function SearchScreen({
                     sub={al.artist}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={() => openAlbum(al)}
-                    onPlay={firstPlayableCollectionTrack(al) ? () => playCollection(al) : undefined}
+                    onOpen={openAlbum}
+                    onPlay={playCollection}
+                    playable={!!firstPlayableCollectionTrack(al)}
                   />
                 );
               }}
