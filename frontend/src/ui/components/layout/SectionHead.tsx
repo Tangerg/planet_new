@@ -4,6 +4,7 @@
 // callers that need a bespoke header still use `.sech` directly.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 
 type SectionHeadProps = {
@@ -15,12 +16,13 @@ type SectionHeadProps = {
 };
 
 export function SectionHead({ title, onAll, size, style }: SectionHeadProps) {
+  const { t } = useTranslation();
   return (
     <div className="sech" style={style}>
       <h2 style={size ? { fontSize: size } : undefined}>{title}</h2>
       {onAll && (
         <Button className="all" onClick={onAll}>
-          Show all
+          {t("common.showAll")}
         </Button>
       )}
     </div>

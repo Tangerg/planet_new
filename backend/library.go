@@ -127,8 +127,8 @@ func (l *Library) Search(query string) (SearchResult, error) {
 
 // StreamURL maps a playback URL to a loopback, CORS-clean URL: our own /media is
 // returned unchanged, a remote provider URL is wrapped in the /stream byte-proxy.
-// The frontend routes both audible playback and Web Audio analysis through it, so
-// the main <audio> is always same-origin and can be sampled without tainting.
+// The frontend uses it for Web Audio analysis probes; audible playback remains
+// on the provider/native URL unless a future gateway policy explicitly changes.
 func (l *Library) StreamURL(raw string) string {
 	return l.urls.stream(raw)
 }

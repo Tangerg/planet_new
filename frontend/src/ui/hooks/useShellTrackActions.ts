@@ -3,6 +3,7 @@ import { useCallback, type RefObject } from "react";
 import type { ArtistTarget, OpenTarget, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useQueueActions } from "@/hooks/useQueueActions";
+import { likedSongsOpenTarget, playbackContextForTrack } from "@/model/track-actions";
 
 type Deps = {
   play: (tracks: VibeTrack[], track: VibeTrack) => void;
@@ -36,30 +37,14 @@ export function useShellTrackActions({
   const onPlay = useCallback(
     (track: VibeTrack | undefined) => {
       if (!track) return;
-      const ctx = playContext.current;
-      const list = ctx?.length && ctx.some((item) => item.id === track.id) ? ctx : [track];
+      const list = playbackContextForTrack(track, playContext.current);
       play(list, track);
     },
     [play, playContext],
   );
 
   const likedDetail = useCallback(() => {
-    const real = loggedIn ? userPlaylists[0] : undefined;
-    if (real) {
-      openDetail({ ...real, kind: "Playlist" });
-      return;
-    }
-    openDetail({
-      id: "liked",
-      name: "Liked Songs",
-      kind: "Playlist",
-      owner: "You",
-      coverSeed: 0,
-      gradient: ["#2a0420", "#ff4fa3"],
-      fetchDetail: false,
-      description: "Everything you've hearted, in one place.",
-      tracks: catalog.allTracks.filter((track) => liked.has(track.id)),
-    });
+    openDetail(likedSongsOpenTarget({ catalog, liked, loggedIn, userPlaylists }));
   }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
 
   const { enqueueById } = useQueueActions({

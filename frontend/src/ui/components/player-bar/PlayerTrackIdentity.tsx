@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
@@ -12,32 +14,50 @@ type Props = {
 };
 
 export function PlayerTrackIdentity({ track, accent, onOpenNowPlaying, onOpenArtist }: Props) {
+  const { t } = useTranslation();
+  const openNowPlayingFrom = (element: HTMLElement) => {
+    onOpenNowPlaying(element.closest<HTMLElement>("[data-player-identity]") ?? element);
+  };
   return (
     <div
-      // Children are <div>s (invalid inside a native button), so role="button" +
-      // keyboard handling is the correct accessible pattern here.
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-      role="button"
-      tabIndex={0}
-      aria-label="Open now playing"
-      onClick={(e) => onOpenNowPlaying(e.currentTarget)}
-      onKeyDown={activateOnKey<HTMLDivElement>((e) => onOpenNowPlaying(e.currentTarget))}
+      data-player-identity
       className="relative z-[1] flex w-[224px] min-w-0 flex-none cursor-pointer items-center gap-[11px] pl-[18px] pr-1.5"
     >
-      <Art
-        seed={track?.coverSeed || 0}
-        grad={track?.gradient}
-        image={track?.image}
-        images={track?.images}
+      <div
+        // Children are <div>s (invalid inside a native button), so role="button" +
+        // keyboard handling is the correct accessible pattern here.
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+        role="button"
+        tabIndex={0}
+        aria-label={t("a11y.openNowPlaying")}
+        onClick={(e) => openNowPlayingFrom(e.currentTarget)}
+        onKeyDown={activateOnKey<HTMLDivElement>((e) => openNowPlayingFrom(e.currentTarget))}
         className="flex-none"
-        style={{
-          width: 54,
-          height: 54,
-          boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
-        }}
-      />
+      >
+        <Art
+          seed={track?.coverSeed || 0}
+          grad={track?.gradient}
+          image={track?.image}
+          images={track?.images}
+          className="flex-none"
+          style={{
+            width: 54,
+            height: 54,
+            boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
+          }}
+        />
+      </div>
       <div className="min-w-0">
-        <Marquee className="text-[16px] font-normal">{track?.title || "—"}</Marquee>
+        <div
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+          role="button"
+          tabIndex={0}
+          aria-label={t("a11y.openNowPlaying")}
+          onClick={(e) => openNowPlayingFrom(e.currentTarget)}
+          onKeyDown={activateOnKey<HTMLDivElement>((e) => openNowPlayingFrom(e.currentTarget))}
+        >
+          <Marquee className="text-[16px] font-normal">{track?.title || "—"}</Marquee>
+        </div>
         <Marquee className="text-[13px] font-light text-[rgba(20,20,24,0.55)]">
           <ArtistLinks
             artists={track?.artists}

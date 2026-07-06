@@ -17,7 +17,7 @@ import { BreathingLight } from "@/components/visualizer/BreathingLight";
 type Props = {
   track?: VibeTrack;
   playing: boolean;
-  setPlaying: (v: boolean) => void;
+  onTogglePlay: () => void;
   liked: boolean;
   toggleLike: () => void;
   accent: string;
@@ -26,7 +26,7 @@ type Props = {
   onOpenQueue: () => void;
   onOpenComments: () => void;
   shuffle: boolean;
-  setShuffle: (v: boolean) => void;
+  onToggleShuffle: () => void;
   repeat: boolean;
   /** Whether repeat mode is single-track (renders the repeat-one glyph). */
   repeatOne: boolean;
@@ -41,13 +41,14 @@ type Props = {
   /** Volume on the kernel's 0..100 scale, with its setter. */
   volume: number;
   onVolume: (v: number) => void;
+  onToggleMute: () => void;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export const PlayerBar = React.memo(function PlayerBar({
   track,
   playing,
-  setPlaying,
+  onTogglePlay,
   liked,
   toggleLike,
   accent,
@@ -56,7 +57,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   onOpenQueue,
   onOpenComments,
   shuffle,
-  setShuffle,
+  onToggleShuffle,
   repeat,
   repeatOne,
   onToggleRepeat,
@@ -67,6 +68,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   onSeek,
   volume,
   onVolume,
+  onToggleMute,
   onOpenArtist,
 }: Props) {
   const morph = useMorph();
@@ -93,13 +95,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         }}
       />
 
-      <BreathingLight
-        playing={playing && !!track?.playUrl}
-        playUrl={track?.playUrl}
-        accent={accent}
-        tintA={a}
-        tintB={b}
-      />
+      <BreathingLight playing={playing && !!track?.playUrl} accent={accent} tintA={a} tintB={b} />
 
       <PlayerTrackIdentity
         track={track}
@@ -110,7 +106,7 @@ export const PlayerBar = React.memo(function PlayerBar({
 
       <TransportControls
         playing={playing}
-        setPlaying={setPlaying}
+        onTogglePlay={onTogglePlay}
         accent={accent}
         onNext={onNext}
         onPrev={onPrev}
@@ -128,12 +124,13 @@ export const PlayerBar = React.memo(function PlayerBar({
         liked={liked}
         toggleLike={toggleLike}
         shuffle={shuffle}
-        setShuffle={setShuffle}
+        onToggleShuffle={onToggleShuffle}
         repeat={repeat}
         repeatOne={repeatOne}
         onToggleRepeat={onToggleRepeat}
         volume={volume}
         onVolume={onVolume}
+        onToggleMute={onToggleMute}
         accent={accent}
         tintA={a}
         tintB={b}

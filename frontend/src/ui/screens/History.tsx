@@ -4,8 +4,9 @@
 // small/bounded so plain rows, not windowed.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
-import { groupHistory } from "@/model/derive";
+import { historyScreenModel, type HistorySection } from "@/model/history-screen";
 import { HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { HeroArt } from "@/components/HeroArt";
@@ -44,28 +45,35 @@ export function HistoryScreen({
   accent,
   onOpenArtist,
 }: HistoryScreenProps) {
-  const { today, week, earlier, total, hero } = groupHistory(session, weekRecord, all);
+  const { t } = useTranslation();
+  const model = historyScreenModel(session, weekRecord, all);
+  const { hero, total } = model;
+  const sectionTitle = (label: HistorySection["label"]) =>
+    label === "Today"
+      ? t("history.sectionToday")
+      : label === "This week"
+        ? t("history.sectionWeek")
+        : t("history.sectionAllTime");
 
-  const Group = ({ label, items }: { label: string; items: VibeTrack[] }) =>
-    items.length ? (
-      <div className="mb-9">
-        <SectionHead title={label} style={{ marginBottom: 6 }} />
-        {items.map((t, i) => (
-          <TrackRow
-            key={label + t.id + i}
-            track={t}
-            index={i + 1}
-            onPlay={onPlay}
-            current={current}
-            playing={playing}
-            liked={liked}
-            toggleLike={toggleLike}
-            accent={accent}
-            onOpenArtist={onOpenArtist}
-          />
-        ))}
-      </div>
-    ) : null;
+  const Group = ({ section }: { section: HistorySection }) => (
+    <div className="mb-9">
+      <SectionHead title={sectionTitle(section.label)} style={{ marginBottom: 6 }} />
+      {section.items.map((t, i) => (
+        <TrackRow
+          key={section.label + t.id + i}
+          track={t}
+          index={i + 1}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          onOpenArtist={onOpenArtist}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <FadeIn className="relative h-full bg-[#0a0a0d]">
@@ -83,13 +91,13 @@ export function HistoryScreen({
             />
             <div className="min-w-0 pb-1.5">
               <span className="mlabel" style={{ color: accent, letterSpacing: ".2em" }}>
-                Consumption
+                {t("history.consumption")}
               </span>
               <div className="mb-4 mt-3 text-[56px] font-extralight leading-none tracking-[-0.015em]">
-                History
+                {t("history.title")}
               </div>
               <div className="text-[14px] font-light text-white/[0.55]">
-                Everything you've played recently · {total} tracks
+                {t("history.subtitle", { count: total })}
               </div>
               {hero && (
                 <Button
@@ -97,16 +105,16 @@ export function HistoryScreen({
                   className="pill-accent mt-[22px] inline-flex items-center gap-[9px] font-medium"
                   style={{ padding: "11px 22px", color: "#06060a" }}
                 >
-                  <Icon.play size={16} /> Resume listening
+                  <Icon.play size={16} /> {t("history.resume")}
                 </Button>
               )}
             </div>
           </div>
           {/* grouped lists */}
-          <Group label="Today" items={today} />
-          <Group label="This week" items={week} />
-          <Group label="All-time" items={earlier} />
-          {!total && <Empty className="p-[50px]">Nothing played yet.</Empty>}
+          {model.sections.map((section) => (
+            <Group key={section.label} section={section} />
+          ))}
+          {model.isEmpty && <Empty className="p-[50px]">{t("history.empty")}</Empty>}
         </PageColumn>
       </div>
     </FadeIn>

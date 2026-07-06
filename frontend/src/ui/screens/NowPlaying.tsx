@@ -16,6 +16,7 @@ import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
 import type { Lyric } from "@domain/model/lyric";
 import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
+import { nowPlayingTrackModel } from "@/model/now-playing";
 
 type Props = {
   track?: VibeTrack;
@@ -66,11 +67,19 @@ export const NowPlaying = React.memo(function NowPlaying({
     lyricScrollRef,
     queueScrollRef,
     touchHandlers,
-  } = useNowPlayingModel({ lyrics, initialMode, onNext, onPrev });
+  } = useNowPlayingModel({
+    lyrics,
+    initialMode,
+    noLyricsText: t("player.noLyrics"),
+    onNext,
+    onPrev,
+  });
 
-  const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
-  const coverSeed = track?.coverSeed || 0;
-  const grad = track?.gradient;
+  const trackModel = nowPlayingTrackModel(track, {
+    producedBy: (name) => t("player.producedBy", { name }),
+    writtenBy: (name) => t("player.writtenBy", { name }),
+  });
+  const [a, b] = artPair(trackModel.coverSeed, trackModel.gradient);
   const NP_EASE = "cubic-bezier(.16,1,.3,1)";
 
   return (
@@ -82,7 +91,7 @@ export const NowPlaying = React.memo(function NowPlaying({
       {/* close */}
       <Button
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t("common.close")}
         className="absolute right-14 top-[18px] z-30 p-1 text-white/70"
       >
         <Icon.close size={20} />
@@ -90,10 +99,10 @@ export const NowPlaying = React.memo(function NowPlaying({
 
       {/* full-bleed hero: one atmospheric stage, not a split functional panel. */}
       <Art
-        seed={coverSeed}
-        grad={grad}
-        image={track?.image}
-        images={track?.images}
+        seed={trackModel.coverSeed}
+        grad={trackModel.gradient}
+        image={trackModel.image}
+        images={trackModel.images}
         mono={mono}
         style={{ position: "absolute", inset: 0, height: "100%" }}
       >
@@ -111,37 +120,37 @@ export const NowPlaying = React.memo(function NowPlaying({
           extra={
             <>
               <ModeTag active={mode === "cover"} onClick={() => setMode("cover")}>
-                Cover
+                {t("common.cover")}
               </ModeTag>
               <ModeTag active={lyricsMode} onClick={() => setMode("lyrics")}>
-                Lyrics
+                {t("common.lyrics")}
               </ModeTag>
               <ModeTag active={commentsMode} onClick={() => setMode("comments")}>
-                Comments
+                {t("common.comments")}
               </ModeTag>
-              {track?.quality && (
+              {trackModel.quality && (
                 <span className="mlabel bg-[rgba(6,6,9,.72)] px-[12px] py-[7px] text-[9px] text-white/70">
-                  {track.quality}
+                  {trackModel.quality}
                 </span>
               )}
             </>
           }
         />
         <div className="absolute bottom-[44px] left-12 z-[6] max-w-[min(46%,540px)]">
-          <Marquee className="text-[30px] font-light tracking-[0.02em]">{track?.title}</Marquee>
+          <Marquee className="text-[30px] font-light tracking-[0.02em]">{trackModel.title}</Marquee>
           <Marquee className="mt-0.5 text-[16px] font-light text-white/60">
             <ArtistLinks
-              artists={track?.artists}
-              fallback={track?.artist}
-              fallbackId={track?.artistId}
+              artists={trackModel.artists}
+              fallback={trackModel.artist}
+              fallbackId={trackModel.artistId}
               accent={accent}
               color="rgba(255,255,255,.6)"
               onOpenArtist={onOpenArtist}
             />
           </Marquee>
-          {track?.credits && (
+          {trackModel.creditsLabel && (
             <div className="mlabel mt-[7px] text-[10px] text-white/40">
-              Written by {track.credits.music} · Produced by {track.credits.producer}
+              {trackModel.creditsLabel}
             </div>
           )}
         </div>
@@ -173,15 +182,15 @@ export const NowPlaying = React.memo(function NowPlaying({
             borderRadius: "50%",
             overflow: "hidden",
             position: "relative",
-            background: artBg(coverSeed + 1, grad),
+            background: artBg(trackModel.coverSeed + 1, trackModel.gradient),
             boxShadow: `0 0 90px -10px ${b}, 0 30px 80px rgba(0,0,0,.5)`,
           }}
           animate={{ rotate: 360 }}
           transition={{ duration: 26, ease: "linear", repeat: Infinity }}
         >
-          {track?.image && (
+          {trackModel.image && (
             <img
-              src={track.image}
+              src={trackModel.image}
               alt=""
               draggable={false}
               className="absolute inset-0 h-full w-full object-cover"
@@ -206,6 +215,7 @@ export const NowPlaying = React.memo(function NowPlaying({
 
       {/* lyrics/comments reading layer: transparent over the same image stage. */}
       <div
+        aria-hidden={!panelOpen}
         className="absolute right-0 top-0 z-[5] h-full w-[56%] overflow-hidden"
         style={{
           transform: panelOpen ? "translateX(0)" : "translateX(100%)",
@@ -262,7 +272,7 @@ export const NowPlaying = React.memo(function NowPlaying({
         queue={queue}
         accent={accent}
         tintA={a}
-        grad={grad}
+        grad={trackModel.gradient}
         onPlay={onPlay}
         onOpenArtist={onOpenArtist}
       />

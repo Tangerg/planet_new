@@ -2,7 +2,29 @@ import { describe, expect, it } from "vitest";
 
 import type { Lyric } from "@domain/model/lyric";
 
-import { lyricLinesOrFallback, swipeAction } from "./now-playing";
+import {
+  isNowPlayingCommentsMode,
+  isNowPlayingLyricsMode,
+  isNowPlayingPanelOpen,
+  lyricLinesOrFallback,
+  normalizeNowPlayingMode,
+  nowPlayingCreditsLabel,
+  nowPlayingTrackModel,
+  swipeAction,
+  toggleNowPlayingLyricsMode,
+} from "./now-playing";
+import type { VibeTrack } from "./vibe";
+
+const track = (overrides: Partial<VibeTrack> = {}): VibeTrack => ({
+  id: "track",
+  title: "Track",
+  name: "Track",
+  artist: "Artist",
+  coverSeed: 8,
+  durSec: 10,
+  duration: "0:10",
+  ...overrides,
+});
 
 describe("now-playing model", () => {
   it("provides a stable no-lyrics fallback", () => {
@@ -17,6 +39,59 @@ describe("now-playing model", () => {
 
     expect(result).toEqual(lines);
     expect(result).not.toBe(lines);
+  });
+
+  it("normalizes and derives now-playing modes", () => {
+    expect(normalizeNowPlayingMode("lyrics")).toBe("lyrics");
+    expect(normalizeNowPlayingMode("comments")).toBe("comments");
+    expect(normalizeNowPlayingMode("whatever")).toBe("cover");
+
+    expect(isNowPlayingLyricsMode("lyrics")).toBe(true);
+    expect(isNowPlayingCommentsMode("comments")).toBe(true);
+    expect(isNowPlayingPanelOpen("cover")).toBe(false);
+    expect(isNowPlayingPanelOpen("lyrics")).toBe(true);
+    expect(toggleNowPlayingLyricsMode("lyrics")).toBe("cover");
+    expect(toggleNowPlayingLyricsMode("cover")).toBe("lyrics");
+  });
+
+  it("formats credits without leaking missing fields", () => {
+    expect(nowPlayingCreditsLabel(undefined)).toBeUndefined();
+    expect(nowPlayingCreditsLabel({ music: "A" })).toBe("Written by A");
+    expect(nowPlayingCreditsLabel({ producer: "B" })).toBe("Produced by B");
+    expect(nowPlayingCreditsLabel({ music: "A", producer: "B" })).toBe(
+      "Written by A · Produced by B",
+    );
+  });
+
+  it("projects the current track into display-safe now-playing metadata", () => {
+    expect(
+      nowPlayingTrackModel(
+        track({
+          artist: "Singer",
+          artistId: "artist",
+          credits: { producer: "Producer" },
+          gradient: ["#111", "#222"],
+          image: "cover.jpg",
+          quality: "SQ",
+        }),
+      ),
+    ).toMatchObject({
+      artist: "Singer",
+      artistId: "artist",
+      coverSeed: 8,
+      creditsLabel: "Produced by Producer",
+      gradient: ["#111", "#222"],
+      image: "cover.jpg",
+      quality: "SQ",
+      title: "Track",
+    });
+
+    expect(nowPlayingTrackModel(undefined)).toMatchObject({
+      artist: "",
+      coverSeed: 0,
+      creditsLabel: undefined,
+      title: "",
+    });
   });
 });
 

@@ -1,13 +1,18 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 
 import { Artist } from "@domain/model/artist";
 
 import { useMediaService } from "@/hooks/useMediaService";
-import { toVibeComment } from "@/model/adapters/comment";
+import { toVibeComments } from "@/model/adapters/comment";
 import { toVibeMusicVideos } from "@/model/adapters/music-video";
+import {
+  artistMusicVideoDiscoveryQueryEnabled,
+  artistMusicVideosQueryEnabled,
+  musicVideoCommentsQueryEnabled,
+} from "@/model/content-query";
 import type { VibeArtist, VibeComment, VibeMusicVideo } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
+import { useProjectedQuery } from "@/hooks/useProjectedQuery";
 
 export function useMusicVideoDiscovery(artists: VibeArtist[]): {
   videos: VibeMusicVideo[];
@@ -15,13 +20,14 @@ export function useMusicVideoDiscovery(artists: VibeArtist[]): {
 } {
   const media = useMediaService();
   const artistIds = useMemo(() => Artist.uniqueIds(artists), [artists]);
-  const { data, isLoading } = useQuery({
+  const { data: videos, isLoading } = useProjectedQuery({
     queryKey: queryKeys.musicVideoDiscovery(media.providerName, artistIds),
     queryFn: () => media.discoverArtistMusicVideos(artists),
-    enabled: artistIds.length > 0 && media.supports("artistMusicVideos"),
+    enabled: artistMusicVideoDiscoveryQueryEnabled(artistIds, (cap) => media.supports(cap)),
+    project: toVibeMusicVideos,
   });
   return {
-    videos: useMemo(() => toVibeMusicVideos(data), [data]),
+    videos,
     isLoading,
   };
 }
@@ -31,12 +37,13 @@ export function useArtistMusicVideos(
   enabled: boolean,
 ): VibeMusicVideo[] {
   const media = useMediaService();
-  const { data } = useQuery({
+  const { data } = useProjectedQuery({
     queryKey: queryKeys.artistMusicVideos(media.providerName, artistId),
     queryFn: () => media.artistMusicVideos(artistId ?? ""),
-    enabled: enabled && !!artistId && media.supports("artistMusicVideos"),
+    enabled: artistMusicVideosQueryEnabled(artistId, enabled, (cap) => media.supports(cap)),
+    project: toVibeMusicVideos,
   });
-  return useMemo(() => toVibeMusicVideos(data), [data]);
+  return data;
 }
 
 export function useMusicVideoComments(
@@ -44,10 +51,11 @@ export function useMusicVideoComments(
   enabled: boolean,
 ): VibeComment[] {
   const media = useMediaService();
-  const { data } = useQuery({
+  const { data } = useProjectedQuery({
     queryKey: queryKeys.musicVideoComments(media.providerName, musicVideoId),
     queryFn: () => media.musicVideoComments(musicVideoId ?? ""),
-    enabled: enabled && !!musicVideoId && media.supports("musicVideoComments"),
+    enabled: musicVideoCommentsQueryEnabled(musicVideoId, enabled, (cap) => media.supports(cap)),
+    project: toVibeComments,
   });
-  return useMemo(() => (data ?? []).map(toVibeComment), [data]);
+  return data;
 }

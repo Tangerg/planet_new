@@ -16,6 +16,12 @@ export type MenuState = {
   items: MenuItem[];
 } | null;
 
+type OptionalMenuItem = MenuItem | boolean | null | undefined;
+
+export function isMenuItem(item: OptionalMenuItem): item is MenuItem {
+  return typeof item === "object" && item !== null;
+}
+
 export function artistMenuItem(
   openArtist: (ar: ArtistTarget) => void,
   id: string | undefined,
@@ -35,7 +41,7 @@ export function trackMenuItems(opts: {
   openArtist: (ar: ArtistTarget) => void;
 }): MenuItem[] {
   const { track, onPlay, enqueue, toggleLike, liked, openArtist } = opts;
-  return [
+  const items: OptionalMenuItem[] = [
     { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
     { label: "Add to Queue", icon: "list", onClick: () => enqueue(track.id) },
     { sep: true },
@@ -45,7 +51,8 @@ export function trackMenuItems(opts: {
       onClick: () => toggleLike(track.id),
     },
     artistMenuItem(openArtist, track.artistId, track.artist),
-  ].filter(Boolean) as MenuItem[];
+  ];
+  return items.filter(isMenuItem);
 }
 
 export function collectionMenuItems(opts: {
@@ -54,10 +61,11 @@ export function collectionMenuItems(opts: {
   openArtist: (ar: ArtistTarget) => void;
 }): MenuItem[] {
   const { item, openDetail, openArtist } = opts;
-  return [
+  const items: OptionalMenuItem[] = [
     { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
     artistMenuItem(openArtist, item.artistId, item.artist),
-  ].filter(Boolean) as MenuItem[];
+  ];
+  return items.filter(isMenuItem);
 }
 
 export function appMenuItems(opts: {
@@ -71,7 +79,7 @@ export function appMenuItems(opts: {
   openProfile: () => void;
   openSettings: () => void;
 }): MenuItem[] {
-  return [
+  const items: OptionalMenuItem[] = [
     opts.canGoBack && { label: "Back", icon: "back", onClick: opts.goBack },
     { label: "Home", icon: "compass", onClick: opts.goHome },
     { sep: true },
@@ -81,5 +89,6 @@ export function appMenuItems(opts: {
     { sep: true },
     { label: "Profile", icon: "user", onClick: opts.openProfile },
     { label: "Settings", icon: "gear", onClick: opts.openSettings },
-  ].filter(Boolean) as MenuItem[];
+  ];
+  return items.filter(isMenuItem);
 }

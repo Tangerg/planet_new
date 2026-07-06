@@ -1,21 +1,19 @@
-import { useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import { useMediaService } from "@/hooks/useMediaService";
-import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
-import { toVibeArtist } from "@/model/adapters/artist";
-import { toVibeTracks } from "@/model/adapters/track";
+import { toVibeSearchResults } from "@/model/adapters/search";
 import type { SearchResults, VibeCollection } from "@/model/vibe";
 import { catalogScreenData, toVibeCharts } from "@/model/catalog";
 import { queryKeys } from "@/model/queryKeys";
+import { useProjectedQuery } from "@/hooks/useProjectedQuery";
 
 export function useCatalog() {
   const media = useMediaService();
-  const { data, isLoading } = useQuery({
+  const { data: catalog, isLoading } = useProjectedQuery({
     queryKey: queryKeys.personalized(media.providerName),
     queryFn: () => media.personalized(),
+    project: catalogScreenData,
   });
-  const catalog = useMemo(() => catalogScreenData(data), [data]);
   return { catalog, isLoading };
 }
 
@@ -24,13 +22,7 @@ export function useProviderSearch() {
   const media = useMediaService();
   return useCallback(
     async (query: string): Promise<SearchResults> => {
-      const result = await media.search(query);
-      return {
-        tracks: toVibeTracks(result.tracks),
-        artists: (result.artists ?? []).map(toVibeArtist),
-        albums: (result.albums ?? []).map(toVibeAlbum),
-        playlists: (result.playlists ?? []).map(toVibePlaylist),
-      };
+      return toVibeSearchResults(await media.search(query));
     },
     [media],
   );
@@ -39,9 +31,10 @@ export function useProviderSearch() {
 /** Chart list in vibe shape, for the Charts grid. */
 export function useToplists(): VibeCollection[] {
   const media = useMediaService();
-  const { data } = useQuery({
+  const { data } = useProjectedQuery({
     queryKey: queryKeys.toplists(media.providerName),
     queryFn: () => media.toplists(),
+    project: toVibeCharts,
   });
-  return useMemo<VibeCollection[]>(() => toVibeCharts(data), [data]);
+  return data;
 }

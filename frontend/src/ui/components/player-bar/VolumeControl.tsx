@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/controls/Button";
 import { HoverCard } from "@/components/controls/HoverCard";
 import { Slider } from "@/components/controls/Slider";
 import { Icon } from "@/infra/icons";
-import { volumeLevel } from "@/model/player";
+import { volumeFromSliderValue, volumeLevel, volumeSliderValue } from "@/model/player";
 
 type Props = {
   accent: string;
@@ -12,9 +13,11 @@ type Props = {
   tintB: string;
   volume: number;
   onVolume: (v: number) => void;
+  onToggleMute: () => void;
 };
 
-export function VolumeControl({ accent, tintA, tintB, volume, onVolume }: Props) {
+export function VolumeControl({ accent, tintA, tintB, volume, onVolume, onToggleMute }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const volumeIconByLevel = {
     muted: Icon.volumeMute,
@@ -44,8 +47,8 @@ export function VolumeControl({ accent, tintA, tintB, volume, onVolume }: Props)
         <Button
           className="grid place-items-center p-[5px]"
           style={{ color: "rgba(20,20,24,.78)" }}
-          aria-label="Volume"
-          onClick={() => onVolume(volume > 0 ? 0 : 80)}
+          aria-label={t("common.volume")}
+          onClick={onToggleMute}
         >
           <VolumeIcon size={18} />
         </Button>
@@ -59,9 +62,9 @@ export function VolumeControl({ accent, tintA, tintB, volume, onVolume }: Props)
         min={0}
         max={1}
         step={0.01}
-        value={[volume / 100]}
-        onValueChange={([v]) => onVolume(Math.round(v * 100))}
-        thumbLabel="Volume"
+        value={[volumeSliderValue(volume)]}
+        onValueChange={([v]) => onVolume(volumeFromSliderValue(v))}
+        thumbLabel={t("common.volume")}
         style={{
           position: "relative",
           display: "flex",

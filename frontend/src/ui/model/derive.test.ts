@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
 
-import { collectionMeta, collectionSub, sortTracks } from "./derive";
+import {
+  collectionMeta,
+  collectionSub,
+  collectionTrackCount,
+  collectionTrackCountLabel,
+  sortTracks,
+  trackCountLabel,
+} from "./derive";
 import type { VibeCollection, VibeTrack } from "./vibe";
 
 const collection = (overrides: Partial<VibeCollection> = {}): VibeCollection => ({
@@ -26,8 +33,15 @@ describe("collection labels", () => {
   test("uses provider trackCount before loaded track length", () => {
     expect(collectionMeta(collection({ trackCount: 42 }), "playlists")).toBe("42 tracks");
     expect(collectionMeta(collection({ tracks: [track("1", "One", 1)] }), "playlists")).toBe(
-      "1 tracks",
+      "1 track",
     );
+    expect(
+      collectionTrackCount(collection({ trackCount: 3, tracks: [track("1", "One", 1)] })),
+    ).toBe(3);
+    expect(collectionTrackCountLabel(collection({ tracks: [track("1", "One", 1)] }))).toBe(
+      "1 track",
+    );
+    expect(trackCountLabel(0)).toBe("0 tracks");
   });
 
   test("formats album metadata without leaking undefined year", () => {

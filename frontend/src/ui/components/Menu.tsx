@@ -1,9 +1,31 @@
 import React from "react";
 import { Menu } from "@base-ui/react/menu";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Icon } from "@/infra/icons";
 import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
+
+const MENU_LABEL_KEYS = {
+  "Add to Liked": "menu.addToLiked",
+  "Add to Queue": "menu.addToQueue",
+  Back: "menu.back",
+  "Go to artist": "menu.goToArtist",
+  Home: "menu.home",
+  Library: "menu.library",
+  Open: "menu.open",
+  Play: "menu.play",
+  Profile: "menu.profile",
+  Queue: "menu.queue",
+  "Remove from Liked": "menu.removeFromLiked",
+  Search: "menu.search",
+  Settings: "menu.settings",
+} as const;
+
+function menuLabel(label: string | undefined, t: (key: string) => string): string | undefined {
+  if (!label) return undefined;
+  return t(MENU_LABEL_KEYS[label as keyof typeof MENU_LABEL_KEYS] ?? label);
+}
 
 // ============================================================
 // ContextMenu — right-click menu on Base UI Menu primitives. Edge-aware
@@ -21,6 +43,7 @@ type Props = {
 };
 
 export function ContextMenu({ x, y, items, onClose, accent }: Props) {
+  const { t } = useTranslation();
   return (
     <Menu.Root open onOpenChange={(open) => !open && onClose()}>
       {/* Virtual trigger at the cursor so Base UI anchors the popup there. */}
@@ -63,7 +86,7 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
                     </span>
                   )}
                   <span className="ctxlabel" style={{ color: it.danger ? "#ff6b6b" : "#fff" }}>
-                    {it.label}
+                    {menuLabel(it.label, t)}
                   </span>
                   {it.hint && <span className="ctxhint">{it.hint}</span>}
                 </Menu.Item>

@@ -32,5 +32,5 @@ export function toVibeMusicVideo(mv: Partial<DomainMusicVideo>): VibeMusicVideo 
   };
 }
 
-export const toVibeMusicVideos = (videos?: Partial<DomainMusicVideo>[]) =>
+export const toVibeMusicVideos = (videos?: readonly Partial<DomainMusicVideo>[]) =>
   (videos ?? []).map((video) => toVibeMusicVideo(video));

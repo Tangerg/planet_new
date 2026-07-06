@@ -55,6 +55,96 @@ export type NavActions = {
   openLikedSongs: () => void;
 };
 
+export function nounCount(count: number, noun: string, plural = `${noun}s`): string {
+  return `${count} ${count === 1 ? noun : plural}`;
+}
+
+export type XmbRowMemory = Record<string, number>;
+
+export function clampNavigationIndex(index: number, count: number): number {
+  if (count <= 0) return 0;
+  return Math.max(0, Math.min(count - 1, index));
+}
+
+export function xmbSelectedRow(rows: XmbRowMemory, categoryIndex: number): number {
+  return rows[categoryIndex] || 0;
+}
+
+export function xmbMoveCategory(
+  currentIndex: number,
+  delta: number,
+  categoryCount: number,
+): number {
+  return clampNavigationIndex(currentIndex + delta, categoryCount);
+}
+
+export function xmbSelectRow(
+  rows: XmbRowMemory,
+  categoryIndex: number,
+  rowIndex: number,
+  itemCount: number,
+): XmbRowMemory {
+  return {
+    ...rows,
+    [categoryIndex]: clampNavigationIndex(rowIndex, itemCount),
+  };
+}
+
+export type XmbInputIntent =
+  | "category-previous"
+  | "category-next"
+  | "row-previous"
+  | "row-next"
+  | "open"
+  | "none";
+
+export const XMB_WHEEL_MIN_DELTA = 6;
+export const XMB_WHEEL_AXIS_DEADZONE = 2;
+export const XMB_WHEEL_COOLDOWN_MS = 250;
+
+export function xmbKeyboardIntent(key: string): XmbInputIntent {
+  if (key === "ArrowLeft") return "category-previous";
+  if (key === "ArrowRight") return "category-next";
+  if (key === "ArrowUp") return "row-previous";
+  if (key === "ArrowDown") return "row-next";
+  if (key === "Enter") return "open";
+  return "none";
+}
+
+export function xmbWheelIntent(
+  deltaX: number,
+  deltaY: number,
+  minDelta = XMB_WHEEL_MIN_DELTA,
+  axisDeadzone = XMB_WHEEL_AXIS_DEADZONE,
+): XmbInputIntent {
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  if (Math.max(absX, absY) < minDelta) return "none";
+  if (absX > absY + axisDeadzone) return deltaX > 0 ? "category-next" : "category-previous";
+  return deltaY > 0 ? "row-next" : "row-previous";
+}
+
+export function xmbWheelNavigation({
+  deltaX,
+  deltaY,
+  nextAllowedAt,
+  now,
+  cooldownMs = XMB_WHEEL_COOLDOWN_MS,
+}: {
+  deltaX: number;
+  deltaY: number;
+  nextAllowedAt: number;
+  now: number;
+  cooldownMs?: number;
+}): { intent: XmbInputIntent; nextAllowedAt: number } {
+  if (now < nextAllowedAt) return { intent: "none", nextAllowedAt };
+  const intent = xmbWheelIntent(deltaX, deltaY);
+  return {
+    intent,
+    nextAllowedAt: intent === "none" ? nextAllowedAt : now + cooldownMs,
+  };
+}
+
 /**
  * Build the XMB navigation tree. Now Playing / Library / You / Settings are
  * local (always present); only Discover is provider-gated. Discover entries are
@@ -112,21 +202,25 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       icon: "play",
       label: "Now Playing",
       items: [
-        {
-          key: "player",
-          label: current?.title || "Now Playing",
-          sub: current?.artist,
-          icon: "play",
-          seed: current?.coverSeed || 0,
-          grad: current?.gradient,
-          image: current?.image,
-          dest: "np",
-          run: () => goto("np"),
-        },
+        ...(current
+          ? [
+              {
+                key: "player",
+                label: current.title || "Now Playing",
+                sub: current.artist,
+                icon: "play",
+                seed: current.coverSeed || 0,
+                grad: current.gradient,
+                image: current.image,
+                dest: "np",
+                run: () => goto("np"),
+              },
+            ]
+          : []),
         {
           key: "queue",
           label: "Up Next",
-          sub: queueLength + " tracks queued",
+          sub: `${nounCount(queueLength, "track")} queued`,
           icon: "list",
           seed: 5,
           dest: "queue",
@@ -160,7 +254,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         {
           key: "liked",
           label: "Liked Songs",
-          sub: liked.size + " tracks",
+          sub: nounCount(liked.size, "track"),
           icon: "heart",
           seed: 0,
           grad: ["#2a0420", "#ff4fa3"],
@@ -170,7 +264,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         {
           key: "playlists",
           label: "Playlists",
-          sub: catalog.playlists.length + " playlists",
+          sub: nounCount(catalog.playlists.length, "playlist"),
           icon: "list",
           seed: 1,
           grad: ["#1a0d3a", "#7755ff"],
@@ -180,7 +274,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         {
           key: "albums",
           label: "Albums",
-          sub: catalog.albums.length + " albums",
+          sub: nounCount(catalog.albums.length, "album"),
           icon: "stack",
           seed: 2,
           grad: ["#3a0d10", "#f3727f"],

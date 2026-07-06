@@ -43,6 +43,7 @@ const LazyContextMenu = React.lazy(() =>
 );
 import { ShellScreenRouter } from "@/ShellScreenRouter";
 import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_GLASS_BLUR } from "@/model/defaults";
+import type { NowPlayingMode } from "@/model/now-playing";
 
 export default function Shell() {
   const media = useMediaService();
@@ -64,6 +65,7 @@ export default function Shell() {
      navigation back-stack (which the nav hook owns). ---- */
   const [xmbCategory, setXmbCategory] = useState(1);
   const [xmbRowByCategory, setXmbRowByCategory] = useState<Record<string, number>>({});
+  const [nowPlayingInitialMode, setNowPlayingInitialMode] = useState<NowPlayingMode>("cover");
 
   const {
     playback,
@@ -75,8 +77,8 @@ export default function Shell() {
     repeatOne,
     queue,
     togglePlay,
-    setPlaying,
-    setShuffle,
+    onTogglePlay,
+    onToggleShuffle,
     onToggleRepeat,
     playNext,
     playPrev,
@@ -97,6 +99,7 @@ export default function Shell() {
 
   /* ---- likes / settings / history (extracted hook) ---- */
   const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
+  const settingsNowPlayingMode: NowPlayingMode = settings.npMode === "LYRICS" ? "lyrics" : "cover";
   /* ---- navigation + shared-element transition machine (extracted hook) ----
      Owns the view string, every nav-significant screen slice, the morph engine,
      and the back-stack. Shell composes onPlay / likedDetail / menu / shortcuts /
@@ -131,6 +134,14 @@ export default function Shell() {
     startForward,
     morph,
   } = useShellNavigation(media, queryClient);
+  const openNowPlaying = (mode: NowPlayingMode = settingsNowPlayingMode) => {
+    setNowPlayingInitialMode(mode);
+    navigate("np");
+  };
+  const gotoLauncherView = (target: string) => {
+    if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
+    setView(target);
+  };
   const npView = view === "np";
   const mvTheaterView = view === "mv-theater";
   const homeView = view === "xmb";
@@ -182,6 +193,7 @@ export default function Shell() {
     volume: playback.volume,
     setVolume: playback.setVolume,
     currentId: playback.current?.id,
+    hasCurrentTrack: !!playback.current,
     toggleLike,
   });
 
@@ -201,9 +213,9 @@ export default function Shell() {
     media,
     catalog,
     liked,
-    current,
+    current: playback.current ?? undefined,
     queueLength: queue.length,
-    goto: setView,
+    goto: gotoLauncherView,
     openSearch,
     openLibrary: openLib,
     openLikedSongs: likedDetail,
@@ -227,13 +239,13 @@ export default function Shell() {
         shufflePlay: playback.shufflePlay,
       }}
       navigation={{
-        navigate,
         goBack,
         startForward,
         openDetail,
         albumDetail,
         openChart,
         openArtist,
+        openLibrary: openLib,
         openMusicVideo,
         openMusicVideoTheater,
         cats,
@@ -283,6 +295,7 @@ export default function Shell() {
         setAccent,
         accentOptions: [...ACCENT_OPTIONS],
         heroTreatment,
+        nowPlayingInitialMode,
       }}
     />
   );
@@ -297,8 +310,9 @@ export default function Shell() {
                 showTools={!npView && !mvTheaterView}
                 showBack={!homeView}
                 playing={playing}
+                canOpenNowPlaying={!!playback.current}
                 onBack={goBack}
-                onNowPlaying={() => navigate("np")}
+                onNowPlaying={() => openNowPlaying("cover")}
                 onMenu={openAppMenu}
               />
 
@@ -314,12 +328,12 @@ export default function Shell() {
                 show={showBar}
                 track={current}
                 playing={playing}
-                setPlaying={setPlaying}
+                onTogglePlay={onTogglePlay}
                 liked={isLiked}
                 toggleLike={() => current && toggleLike(current.id)}
                 accent={accent}
                 shuffle={shuffle}
-                setShuffle={setShuffle}
+                onToggleShuffle={onToggleShuffle}
                 repeat={repeat}
                 repeatOne={repeatOne}
                 onToggleRepeat={onToggleRepeat}
@@ -328,10 +342,11 @@ export default function Shell() {
                 onSeek={playback.seek}
                 volume={playback.volume}
                 onVolume={playback.setVolume}
-                onOpenNowPlaying={() => navigate("np")}
+                onToggleMute={playback.toggleMute}
+                onOpenNowPlaying={() => openNowPlaying("cover")}
                 onOpenQueue={() => navigate("queue")}
                 onOpenComments={() => navigate("comments")}
-                onOpenLyrics={() => navigate("np")}
+                onOpenLyrics={() => openNowPlaying("lyrics")}
                 onOpenArtist={openArtist}
               />
             </div>

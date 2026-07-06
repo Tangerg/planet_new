@@ -4,11 +4,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { activeLyricIndex, type Lyric } from "@domain/model/lyric";
 
 import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
-import { lyricLinesOrFallback, swipeAction } from "@/model/now-playing";
+import {
+  isNowPlayingCommentsMode,
+  isNowPlayingLyricsMode,
+  isNowPlayingPanelOpen,
+  lyricLinesOrFallback,
+  normalizeNowPlayingMode,
+  swipeAction,
+  toggleNowPlayingLyricsMode,
+  type NowPlayingMode,
+} from "@/model/now-playing";
 
 type Options = {
   lyrics: readonly Lyric[];
   initialMode: string;
+  noLyricsText?: string;
   onNext?: () => void;
   onPrev?: () => void;
 };
@@ -19,11 +29,11 @@ type Options = {
  * navigation shared by keyboard and swipe (Up = lyrics, Down = queue,
  * Left/Right = skip). Extracting it leaves the screen as pure layout.
  */
-export function useNowPlayingModel({ lyrics, initialMode, onNext, onPrev }: Options) {
+export function useNowPlayingModel({ lyrics, initialMode, noLyricsText, onNext, onPrev }: Options) {
   // Read the live clock here (not threaded from Shell) so only Now Playing
   // re-renders on the progress tick — see usePlaybackProgress.
   const { positionSec: progressSec } = usePlaybackProgress();
-  const [mode, setMode] = useState(initialMode); // cover | lyrics | comments
+  const [mode, setMode] = useState<NowPlayingMode>(() => normalizeNowPlayingMode(initialMode));
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
 
   // Portal target for the queue Sheet; the two scroll containers auto-center.
@@ -34,7 +44,7 @@ export function useNowPlayingModel({ lyrics, initialMode, onNext, onPrev }: Opti
 
   // Memoized so the auto-advance effect depends on a stable value (the fallback
   // array literal would otherwise be new every render).
-  const lines = useMemo(() => lyricLinesOrFallback(lyrics), [lyrics]);
+  const lines = useMemo(() => lyricLinesOrFallback(lyrics, noLyricsText), [lyrics, noLyricsText]);
   const [active, setActive] = useState(0);
 
   // Sync the active lyric line to real progress. Timestamps are ms; progress is s.
@@ -55,7 +65,7 @@ export function useNowPlayingModel({ lyrics, initialMode, onNext, onPrev }: Opti
         e.preventDefault();
         e.stopPropagation();
         if (queueOpen) setQueueOpen(false);
-        else setMode((m) => (m === "lyrics" ? "cover" : "lyrics"));
+        else setMode(toggleNowPlayingLyricsMode);
       }
     };
     window.addEventListener("keydown", onKey, true);
@@ -76,7 +86,7 @@ export function useNowPlayingModel({ lyrics, initialMode, onNext, onPrev }: Opti
     else if (action === "down") setQueueOpen(true);
     else if (action === "up") {
       if (queueOpen) setQueueOpen(false);
-      else setMode((m) => (m === "lyrics" ? "cover" : "lyrics"));
+      else setMode(toggleNowPlayingLyricsMode);
     }
   };
 
@@ -87,9 +97,9 @@ export function useNowPlayingModel({ lyrics, initialMode, onNext, onPrev }: Opti
     setQueueOpen,
     lines,
     active,
-    lyricsMode: mode === "lyrics",
-    commentsMode: mode === "comments",
-    panelOpen: mode !== "cover",
+    lyricsMode: isNowPlayingLyricsMode(mode),
+    commentsMode: isNowPlayingCommentsMode(mode),
+    panelOpen: isNowPlayingPanelOpen(mode),
     rootRef,
     lyricScrollRef,
     queueScrollRef,

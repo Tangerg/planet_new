@@ -1,5 +1,6 @@
 import type { ArtistRef, VibeMusicVideo } from "@/model/vibe";
-import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { useTranslation } from "react-i18next";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { CardRail } from "@/components/layout/CardRail";
@@ -7,7 +8,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { Icon } from "@/infra/icons";
-import { compactCount } from "@shared/number";
+import { musicVideoDetailModel } from "@/model/music-video-screen";
 
 import { VideoMeta } from "./VideoMeta";
 import { VideoThumb } from "./VideoThumb";
@@ -31,10 +32,9 @@ export function MusicVideoDetailScreen({
   onOpenVideo,
   onOpenArtist,
 }: MusicVideoDetailScreenProps) {
-  const artist = video.artists?.[0];
-  const rail = related.filter((mv) => mv.id !== video.id).slice(0, 12);
-  const availability = MusicVideo.playbackAvailability(video, playbackPolicy);
-  const canPlay = availability.canStart;
+  const { t } = useTranslation();
+  const model = musicVideoDetailModel(video, related, playbackPolicy);
+  const { artist, canPlay, commentLabel, rail } = model;
 
   return (
     <ScreenScaffold
@@ -55,7 +55,7 @@ export function MusicVideoDetailScreen({
             onClick={() => onPlay(video)}
             className="group relative block border-0 bg-transparent p-0 text-left"
             disabled={!canPlay}
-            aria-label={`Play ${video.title}`}
+            aria-label={t("a11y.playItem", { name: video.title })}
           >
             <Art
               seed={video.coverSeed}
@@ -84,7 +84,7 @@ export function MusicVideoDetailScreen({
 
           <div className="min-w-0 pb-2">
             {/* Plain mono kind-label, matching the Detail/Artist hero (not a boxed chip). */}
-            <div className="mlabel mb-3 text-white/70">Music Video</div>
+            <div className="mlabel mb-3 text-white/70">{t("common.musicVideo")}</div>
             <div className="line-clamp-2 max-w-[700px] text-[52px] font-extralight leading-[1.04] tracking-[0.005em] [overflow-wrap:anywhere]">
               {video.title}
             </div>
@@ -93,7 +93,7 @@ export function MusicVideoDetailScreen({
               disabled={!artist?.id}
               className="mt-4 block border-0 bg-transparent p-0 text-left text-[19px] font-light text-white/55"
             >
-              {video.artist || "Unknown Artist"}
+              {video.artist || t("common.unknownArtist")}
             </Button>
             {video.description && (
               <p className="mt-6 line-clamp-2 max-w-[560px] text-[14px] font-light leading-[1.6] text-white/52">
@@ -113,12 +113,10 @@ export function MusicVideoDetailScreen({
                   color: canPlay ? "#06060a" : "rgba(255,255,255,.55)",
                 }}
               >
-                <Icon.play size={15} /> Play
+                <Icon.play size={15} /> {t("common.play")}
               </Button>
-              {video.commentCount ? (
-                <span className="mlabel text-[10px] text-white/40">
-                  {compactCount(video.commentCount)} comments
-                </span>
+              {commentLabel ? (
+                <span className="mlabel text-[10px] text-white/40">{commentLabel}</span>
               ) : null}
             </div>
           </div>
@@ -126,7 +124,7 @@ export function MusicVideoDetailScreen({
 
         {rail.length > 0 && (
           <section className="mt-[46px]">
-            <SectionHead title="Artist Videos" />
+            <SectionHead title={t("musicVideos.artistVideos")} />
             <CardRail
               count={rail.length}
               itemWidth={224}

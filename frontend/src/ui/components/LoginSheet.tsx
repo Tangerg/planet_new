@@ -4,15 +4,16 @@
 // by the provider, so on success we just mark logged-in and close.
 // ============================================================
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LoginFlow, LoginStatus } from "@domain";
 import { Sheet } from "@/components/Sheet";
 import { useAuth } from "@/hooks/useAuth";
 
-const STATUS_LABEL: Record<LoginStatus["state"], string> = {
-  pending: "Scan with the NetEase Cloud Music app",
-  scanned: "Scanned — confirm on your phone",
-  authorized: "Logged in",
-  expired: "QR expired — reopen to retry",
+const STATUS_LABEL_KEY: Record<LoginStatus["state"], string> = {
+  pending: "login.pending",
+  scanned: "login.scanned",
+  authorized: "login.authorized",
+  expired: "login.expired",
 };
 
 export function LoginSheet({
@@ -24,6 +25,7 @@ export function LoginSheet({
   onClose: () => void;
   accent: string;
 }) {
+  const { t } = useTranslation();
   const { beginLogin, markLoggedIn } = useAuth();
   const [flow, setFlow] = useState<LoginFlow | null>(null);
   const [status, setStatus] = useState<LoginStatus["state"]>("pending");
@@ -65,7 +67,7 @@ export function LoginSheet({
     <Sheet
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      label="Log in"
+      label={t("login.label")}
       overlayClassName="z-[79]"
       className="z-[80] rounded-t-[26px]"
       style={{
@@ -75,18 +77,18 @@ export function LoginSheet({
       }}
     >
       <div className="flex flex-col items-center gap-5 px-12 py-11">
-        <div className="text-[20px] font-light">Log in to NetEase Cloud Music</div>
+        <div className="text-[20px] font-light">{t("login.title")}</div>
         {flow?.kind === "qr" && flow.image ? (
           <img
             src={flow.image}
-            alt="Login QR code"
+            alt={t("login.qrAlt")}
             className="h-[220px] w-[220px] rounded-2xl bg-white p-2.5"
           />
         ) : (
           <div className="h-[220px] w-[220px] animate-pulse rounded-2xl bg-white/10" />
         )}
         <div className="mlabel text-[11px]" style={{ color: accent }}>
-          {STATUS_LABEL[status]}
+          {t(STATUS_LABEL_KEY[status])}
         </div>
       </div>
     </Sheet>

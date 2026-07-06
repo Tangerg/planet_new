@@ -11,11 +11,22 @@
  */
 import { useEffect } from "react";
 import { useHotkey } from "@tanstack/react-hotkeys";
+import { likedShortcutTarget, nextVolumeLevel } from "@/model/player";
+import {
+  canUsePlaybackShortcut,
+  elementMatchesClosest,
+  nowPlayingShortcutDecision,
+  shiftSearchDecision,
+  shouldGoBackFromShortcut,
+  shouldGoHomeFromShortcut,
+  shouldOpenSearchFromShortcut,
+  SPACE_HANDLED_BY_FOCUSED_CONTROL_SELECTOR,
+  TEXT_ENTRY_SELECTOR,
+} from "@/model/shortcuts";
 
 // Hotkey option presets — stable refs so the hooks don't re-register each render.
 const HK_IGNORE_INPUTS = { ignoreInputs: true }; // Mod combos must NOT clobber text editing
 const HK_PASSIVE = { preventDefault: false, stopPropagation: false }; // Space yields to focused controls
-const VOLUME_STEP = 5;
 
 export type GlobalShortcutHandlers = {
   /** Current view — guards (don't re-open Search while on it, etc.). */
@@ -32,6 +43,7 @@ export type GlobalShortcutHandlers = {
   setVolume: (v: number) => void;
   /** Active track id (undefined when nothing is playing → like is a no-op). */
   currentId?: string;
+  hasCurrentTrack: boolean;
   toggleLike: (id: string) => void;
 };
 
@@ -48,39 +60,50 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
     volume,
     setVolume,
     currentId,
+    hasCurrentTrack,
     toggleLike,
   } = h;
-  const inMvTheater = view === "mv-theater";
+  const playbackShortcutEnabled = canUsePlaybackShortcut(view);
 
-  useHotkey("Escape", () => void (view !== "xmb" && goBack()));
+  useHotkey("Escape", () => void (shouldGoBackFromShortcut(view) && goBack()));
   // "/" jumps to the XMB root (Search has its own: ⌘F + double-Shift). Ignored
   // while typing (single-key default), so it won't fire inside the search box.
-  useHotkey("/", () => void (view !== "xmb" && goHome()));
-  useHotkey("Mod+F", () => void (view !== "search" && openSearch()));
+  useHotkey("/", () => void (shouldGoHomeFromShortcut(view) && goHome()));
+  useHotkey("Mod+F", () => void (shouldOpenSearchFromShortcut(view) && openSearch()));
   // Transport / library — NetEase-style
-  useHotkey("Mod+ArrowLeft", () => void (!inMvTheater && playPrev()), HK_IGNORE_INPUTS);
-  useHotkey("Mod+ArrowRight", () => void (!inMvTheater && playNext()), HK_IGNORE_INPUTS);
-  useHotkey("Mod+ArrowUp", () => setVolume(Math.min(100, volume + VOLUME_STEP)), HK_IGNORE_INPUTS);
-  useHotkey("Mod+ArrowDown", () => setVolume(Math.max(0, volume - VOLUME_STEP)), HK_IGNORE_INPUTS);
-  useHotkey("Mod+L", () => void (currentId && toggleLike(currentId)), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowLeft", () => void (playbackShortcutEnabled && playPrev()), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowRight", () => void (playbackShortcutEnabled && playNext()), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowUp", () => setVolume(nextVolumeLevel(volume, "up")), HK_IGNORE_INPUTS);
+  useHotkey("Mod+ArrowDown", () => setVolume(nextVolumeLevel(volume, "down")), HK_IGNORE_INPUTS);
+  useHotkey(
+    "Mod+L",
+    () => {
+      const target = likedShortcutTarget(currentId);
+      if (target) toggleLike(target);
+    },
+    HK_IGNORE_INPUTS,
+  );
   // ⌘R toggles the Now Playing surface (closest to NetEase's "lyrics" toggle).
   useHotkey(
     "Mod+R",
-    () => void (!inMvTheater && (view === "np" ? goBack() : navigate("np"))),
+    () => {
+      const decision = nowPlayingShortcutDecision(view, hasCurrentTrack);
+      if (decision === "back") goBack();
+      else if (decision === "open") navigate("np");
+    },
     HK_IGNORE_INPUTS,
   );
   // Space = play/pause, but yield to a focused control so it can handle Space (a11y).
   useHotkey(
     "Space",
     (e) => {
-      const el = document.activeElement;
       if (
-        el?.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]')
+        elementMatchesClosest(document.activeElement, SPACE_HANDLED_BY_FOCUSED_CONTROL_SELECTOR)
       ) {
         return;
       }
       e.preventDefault();
-      if (inMvTheater) return;
+      if (!playbackShortcutEnabled) return;
       togglePlay();
     },
     HK_PASSIVE,
@@ -92,18 +115,17 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
   useEffect(() => {
     let lastShiftAt = 0;
     const onShift = (e: KeyboardEvent) => {
-      if (e.key !== "Shift") {
-        lastShiftAt = 0; // any other key breaks the double-tap
-        return;
-      }
-      if (e.repeat) return;
-      const el = document.activeElement;
-      if (el?.closest("input, textarea, [contenteditable='true']")) return;
-      if (e.timeStamp - lastShiftAt < 400 && view !== "search") {
-        lastShiftAt = 0;
+      const decision = shiftSearchDecision({
+        key: e.key,
+        repeat: e.repeat,
+        timeStamp: e.timeStamp,
+        lastShiftAt,
+        typing: elementMatchesClosest(document.activeElement, TEXT_ENTRY_SELECTOR),
+        alreadyInSearch: view === "search",
+      });
+      lastShiftAt = decision.lastShiftAt;
+      if (decision.openSearch) {
         openSearch();
-      } else {
-        lastShiftAt = e.timeStamp;
       }
     };
     window.addEventListener("keydown", onShift);

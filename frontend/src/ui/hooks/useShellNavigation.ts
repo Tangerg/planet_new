@@ -20,6 +20,7 @@ import { useCallback, useRef, useState } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { MediaService } from "@core";
+import { warnReadFailure } from "@shared/debug";
 
 import { useMorphTransition, type MorphLastTile } from "@/infra/morph";
 import {
@@ -31,7 +32,7 @@ import {
   type VibeTrack,
 } from "@/model/vibe";
 import { normalizeDetailTarget } from "@/model/detail";
-import { createNavSnapshot, isLauncherSnapshot, type NavSnapshot } from "@/model/shell-navigation";
+import { createNavSnapshot, NavigationSession, type NavSnapshot } from "@/model/shell-navigation";
 import {
   fetchArtistTarget,
   fetchDetailTarget,
@@ -55,29 +56,18 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
      launcher boundary itself stays the morph engine's job (startReverse), so
      we never push "xmb" — an empty stack means "morph home". Held in a ref:
      it only drives the goBack branch, never rendering. ---- */
-  const navStack = useRef<NavSnapshot<MorphLastTile>[]>([]);
+  const navSession = useRef(new NavigationSession<MorphLastTile>());
   const navSnapRef = useRef<NavSnapshot<MorphLastTile> | null>(null);
 
   /* Current playable context (filled once a detail/artist loads); Shell's
      onPlay(track) plays within this list. */
   const playContext = useRef<VibeTrack[]>([]);
 
-  // Remember the current screen before a forward hop. No-op at the launcher:
-  // the XMB↔screen boundary is the morph engine's (startReverse), not the stack's.
-  // Reads navSnapRef at call time (populated each render, after the morph hook).
-  const pushCurrent = useCallback(() => {
-    const snap = navSnapRef.current;
-    if (!snap || isLauncherSnapshot(snap)) return;
-    navStack.current.push(snap);
-  }, []);
   // Forward navigation to a bare view: push the current screen, then switch.
-  const navigate = useCallback(
-    (v: string) => {
-      pushCurrent();
-      setView(v);
-    },
-    [pushCurrent],
-  );
+  const navigate = useCallback((v: string) => {
+    navSession.current.beginForward(navSnapRef.current);
+    setView(v);
+  }, []);
   // Open Search from anywhere (XMB entry + the global "/" hotkey). pushCurrent is a
   // no-op at the launcher, so this is safe both from the XMB and from a screen.
   const openSearch = useCallback(() => {
@@ -88,20 +78,20 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   /* ---- open detail: fetch the real collection async (switch screen + skeleton now, backfill tracks when data lands) ---- */
   const openDetail = useCallback(
     (input: OpenTarget) => {
-      pushCurrent();
+      const ticket = navSession.current.beginAsyncScreen(navSnapRef.current);
       const obj = normalizeDetailTarget(input);
       setDetail(obj);
       playContext.current = obj.tracks;
       setView("detail");
       fetchDetailTarget({ media, queryClient }, obj)
         .then((merged) => {
-          if (!merged) return;
+          if (!merged || !navSession.current.accepts(ticket)) return;
           playContext.current = merged.tracks;
           setDetail(merged);
         })
-        .catch(() => {});
+        .catch((error) => warnReadFailure(`navigation.detail.${obj.id}`, error));
     },
-    [media, queryClient, pushCurrent],
+    [media, queryClient],
   );
   const albumDetail = useCallback(
     (al: VibeCollection) => openDetail({ ...al, kind: "Album" }),
@@ -113,58 +103,59 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   );
   const openArtist = useCallback(
     (ar: ArtistTarget) => {
-      pushCurrent();
+      const ticket = navSession.current.beginAsyncScreen(navSnapRef.current);
       setArtistObj(ar);
       playContext.current = ar.tracks ?? [];
       setView("artist");
       fetchArtistTarget({ media, queryClient }, ar)
         .then((mapped) => {
-          if (!mapped) return;
+          if (!mapped || !navSession.current.accepts(ticket)) return;
           playContext.current = mapped.tracks ?? [];
           setArtistObj(mapped);
         })
-        .catch(() => {});
+        .catch((error) => warnReadFailure(`navigation.artist.${ar.id}`, error));
     },
-    [media, queryClient, pushCurrent],
+    [media, queryClient],
   );
   const fetchMusicVideo = useCallback(
     (mv: VibeMusicVideo) => {
+      const ticket = navSession.current.beginAsyncBackfill();
       fetchMusicVideoTarget({ media, queryClient }, mv)
-        .then((full) => setMusicVideoObj((current) => mergeFetchedMusicVideo(current, mv.id, full)))
-        .catch(() => {});
+        .then((full) => {
+          if (!navSession.current.accepts(ticket)) return;
+          setMusicVideoObj((current) => mergeFetchedMusicVideo(current, mv.id, full));
+        })
+        .catch((error) => warnReadFailure(`navigation.musicVideo.${mv.id}`, error));
     },
     [media, queryClient],
   );
   const openMusicVideo = useCallback(
     (mv: VibeMusicVideo, related: VibeMusicVideo[] = []) => {
-      pushCurrent();
+      navSession.current.beginForward(navSnapRef.current);
       setMusicVideoObj(mv);
       setMusicVideoRelated(related);
       setView("mv-detail");
       if (!mv.playUrl) fetchMusicVideo(mv);
     },
-    [fetchMusicVideo, pushCurrent],
+    [fetchMusicVideo],
   );
   const openMusicVideoTheater = useCallback(
     (mv?: VibeMusicVideo) => {
       const target = mv ?? musicVideoObj;
       if (!target) return;
-      pushCurrent();
+      navSession.current.beginForward(navSnapRef.current);
       setMusicVideoObj(target);
       setView("mv-theater");
       if (!target.playUrl) fetchMusicVideo(target);
     },
-    [fetchMusicVideo, musicVideoObj, pushCurrent],
+    [fetchMusicVideo, musicVideoObj],
   );
-  const openLib = useCallback(
-    (tab: string, vw?: string) => {
-      pushCurrent();
-      setLibraryTab(tab);
-      setLibraryView(vw || "grid");
-      setView("library");
-    },
-    [pushCurrent],
-  );
+  const openLib = useCallback((tab: string, vw?: string) => {
+    navSession.current.beginForward(navSnapRef.current);
+    setLibraryTab(tab);
+    setLibraryView(vw || "grid");
+    setView("library");
+  }, []);
 
   /* ---- page-to-page transition engine (UI-layer infra: @/infra/morph) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
@@ -196,7 +187,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
      when the stack is empty we're at a launcher-level screen, so hand off to
      the morph engine to collapse home. */
   const goBack = useCallback(() => {
-    const prev = navStack.current.pop();
+    const prev = navSession.current.beginBack();
     if (!prev) {
       startReverse();
       return;
@@ -218,7 +209,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
      direct switch under reduced-motion / no origin tile). Bound to the "/"
      shortcut — a one-press escape hatch out of deep navigation. */
   const goHome = useCallback(() => {
-    navStack.current = [];
+    navSession.current.beginHome();
     startReverse();
   }, [startReverse]);
 

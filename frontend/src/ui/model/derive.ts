@@ -63,12 +63,26 @@ export function collectionSub(c: VibeCollection, tab: string): string {
   return c.kind || "Playlist";
 }
 
+export function trackCountLabel(count: number): string {
+  return `${count} ${count === 1 ? "track" : "tracks"}`;
+}
+
+export function collectionTrackCount(c: Pick<VibeCollection, "trackCount" | "tracks">): number {
+  return c.trackCount ?? c.tracks?.length ?? 0;
+}
+
+export function collectionTrackCountLabel(
+  c: Pick<VibeCollection, "trackCount" | "tracks">,
+): string {
+  return trackCountLabel(collectionTrackCount(c));
+}
+
 /** Row meta (right-aligned count/year) for a library collection, per tab. */
 export function collectionMeta(c: VibeCollection, tab: string): string {
-  const count = c.trackCount ?? c.tracks?.length ?? 0;
-  if (tab === "albums") return [c.year, `${count} tracks`].filter(Boolean).join(" · ");
+  const count = collectionTrackCountLabel(c);
+  if (tab === "albums") return [c.year, count].filter(Boolean).join(" · ");
   if (tab === "artists") return "";
-  return `${count} tracks`;
+  return count;
 }
 
 // ── Track sorting (Detail) ───────────────────────────────────────────

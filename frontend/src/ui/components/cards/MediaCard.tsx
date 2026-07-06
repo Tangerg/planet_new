@@ -1,15 +1,18 @@
 // ============================================================
 // MediaCard — square (or round) cover card for grids & rails: art + hover-rise
-// play fab + title/sub. Composed from CardShell (interaction) + Art + PlayFab.
+// play fab + title/sub. The whole tile opens on mouse click, while cover/title
+// keep keyboard-accessible targets and the play fab remains a sibling action.
 // Opening flies the shared-element morph from the `.art` rect.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
 import { Art, artPair } from "@/components/primitives";
-import { CardShell } from "@/components/cards/CardShell";
+import { LiftCard } from "@/components/lift";
 import { PlayFab } from "@/components/cards/PlayFab";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
+import { activateOnKey } from "@/lib/keys";
 
 type MediaCardProps = {
   item: CardItem;
@@ -34,39 +37,70 @@ export function MediaCard({
   onOpen,
   onPlay,
 }: MediaCardProps) {
+  const { t } = useTranslation();
   const open = useMorphOpen();
   const { collMenu } = useScreenActions();
+  const activate = (e: React.MouseEvent | React.KeyboardEvent) =>
+    open(e, {
+      seed: item.coverSeed,
+      grad: item.gradient,
+      image: item.image,
+      round,
+      artSelector: ".art",
+      run: onOpen,
+    });
+  const activateFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    activate(e);
+  };
   return (
-    <CardShell
+    <LiftCard
       className={"mcard gridcard" + (round ? " round" : "")}
       scale={liftScale}
       liftY={liftY}
-      onActivate={(e) =>
-        open(e, {
-          seed: item.coverSeed,
-          grad: item.gradient,
-          image: item.image,
-          round,
-          artSelector: ".art",
-          run: onOpen,
-        })
-      }
+      onClick={activate}
       onContextMenu={(e) => collMenu(e, item)}
     >
-      <Art
-        seed={item.coverSeed}
-        grad={item.gradient}
-        image={item.image}
-        images={item.images}
-        px={px}
-        className="art"
-        glow={round ? undefined : artPair(item.coverSeed, item.gradient)[1]}
-      >
+      <div className="relative">
+        <div
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich art surface, not valid native button content
+          role="button"
+          tabIndex={0}
+          aria-label={item.name}
+          onClick={activateFromTarget}
+          onKeyDown={activateOnKey(activateFromTarget)}
+        >
+          <Art
+            seed={item.coverSeed}
+            grad={item.gradient}
+            image={item.image}
+            images={item.images}
+            px={px}
+            className="art"
+            glow={round ? undefined : artPair(item.coverSeed, item.gradient)[1]}
+          />
+        </div>
         {/* artists (round) are people, not playable — no cover play fab */}
-        {onPlay && !round && <PlayFab className="playfab" onPlay={onPlay} />}
-      </Art>
-      <div className="ttl">{item.name}</div>
+        {onPlay && !round && (
+          <PlayFab
+            className="playfab"
+            aria-label={t("a11y.playItem", { name: item.name })}
+            onPlay={onPlay}
+          />
+        )}
+      </div>
+      <div
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- title is a secondary open target
+        role="button"
+        tabIndex={0}
+        aria-label={item.name}
+        onClick={activateFromTarget}
+        onKeyDown={activateOnKey(activateFromTarget)}
+        className="ttl"
+      >
+        {item.name}
+      </div>
       {sub && <div className="sub">{sub}</div>}
-    </CardShell>
+    </LiftCard>
   );
 }

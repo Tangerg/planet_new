@@ -9,6 +9,7 @@
 // ./xmb geometry; keyboard driving is useXmbKeyboard.
 // ============================================================
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
@@ -16,7 +17,14 @@ import { FlowWaves } from "@/components/xmb/FlowWaves";
 import { XmbCategoryRail } from "@/components/xmb/XmbCategoryRail";
 import { XmbItemColumn } from "@/components/xmb/XmbItemColumn";
 import { useXmbKeyboard } from "@/components/xmb/useXmbKeyboard";
-import type { XmbCat, XmbItemModel } from "@/model/navigation";
+import {
+  type XmbCat,
+  type XmbItemModel,
+  type XmbRowMemory,
+  xmbMoveCategory,
+  xmbSelectedRow,
+  xmbSelectRow,
+} from "@/model/navigation";
 
 type Props = {
   cats: XmbCat[];
@@ -28,8 +36,8 @@ type Props = {
   onOpen?: (m: XmbItemModel, rect: DOMRect) => void;
   cState?: number;
   setCState?: (n: number) => void;
-  rowsState?: Record<string, number>;
-  setRowsState?: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  rowsState?: XmbRowMemory;
+  setRowsState?: React.Dispatch<React.SetStateAction<XmbRowMemory>>;
 };
 
 export const XMB = React.memo(function XMB({
@@ -44,21 +52,20 @@ export const XMB = React.memo(function XMB({
   rowsState,
   setRowsState,
 }: Props) {
+  const { t } = useTranslation();
   const [cI, setCI] = useState(1); // active category (fallback)
-  const [rowsI, setRowsI] = useState<Record<string, number>>({}); // remembered item index per category (fallback)
+  const [rowsI, setRowsI] = useState<XmbRowMemory>({}); // remembered item index per category (fallback)
   const c = cState != null ? cState : cI;
   const setC = setCState || setCI;
   const rows = rowsState != null ? rowsState : rowsI;
   const setRows = setRowsState || setRowsI;
-  const it = rows[c] || 0;
+  const it = xmbSelectedRow(rows, c);
   const cat = cats[c];
   const item = cat.items[it];
 
-  const setItem = (n: number) =>
-    setRows((r) => ({ ...r, [c]: Math.max(0, Math.min(cat.items.length - 1, n)) }));
+  const setItem = (n: number) => setRows((r) => xmbSelectRow(r, c, n, cat.items.length));
   const move = (dc: number) => {
-    const nc = Math.max(0, Math.min(cats.length - 1, c + dc));
-    setC(nc);
+    setC(xmbMoveCategory(c, dc, cats.length));
   };
 
   const openItem = (m: XmbItemModel, target: Element) => {
@@ -113,9 +120,9 @@ export const XMB = React.memo(function XMB({
       {/* control hint — bottom-right, clear of the left-aligned item column */}
       <div className="absolute bottom-[22px] right-11 z-[8] flex justify-end gap-[26px]">
         {[
-          ["◀ ▶", "Category"],
-          ["▲ ▼", "Browse"],
-          ["↵", "Open"],
+          ["◀ ▶", t("common.category")],
+          ["▲ ▼", t("common.browse")],
+          ["↵", t("common.open")],
         ].map(([k, l]) => (
           <span key={l} className="flex items-center gap-2">
             <span className="font-mono text-[12px] text-accent">{k}</span>

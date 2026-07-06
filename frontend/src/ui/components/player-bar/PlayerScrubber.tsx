@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Slider } from "@/components/controls/Slider";
-import { fmt } from "@/components/primitives";
-import { effectiveDuration, playbackPosition } from "@/model/player";
+import {
+  effectiveMediaDuration,
+  formatCompactMediaTime,
+  mediaPlaybackPosition,
+  mediaSeekPercent,
+  mediaTimelinePreview,
+} from "@/model/media-playback";
 
 type Props = {
   positionSec: number;
@@ -19,11 +25,12 @@ export function PlayerScrubber({
   accent,
   onSeek,
 }: Props) {
-  const dur = effectiveDuration(durationSec, fallbackDurationSec);
+  const { t } = useTranslation();
+  const dur = effectiveMediaDuration(durationSec, fallbackDurationSec);
   const [scrub, setScrub] = useState<number | null>(null);
-  const [scrubHover, setScrubHover] = useState<{ x: number; t: number } | null>(null);
+  const [scrubHover, setScrubHover] = useState<{ x: number; positionSec: number } | null>(null);
   const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const pos = playbackPosition(positionSec, dur, scrub);
+  const pos = mediaPlaybackPosition(positionSec, dur, scrub);
 
   useEffect(() => () => clearTimeout(scrubTimer.current), []);
 
@@ -32,7 +39,7 @@ export function PlayerScrubber({
 
   return (
     <div className="relative z-[1] flex min-w-0 flex-1 items-center gap-3 px-[14px]">
-      <span className={timeCls + " text-right"}>{fmt(Math.round(pos))}</span>
+      <span className={timeCls + " text-right"}>{formatCompactMediaTime(pos)}</span>
       <Slider
         min={0}
         max={dur}
@@ -40,15 +47,21 @@ export function PlayerScrubber({
         value={[pos]}
         onValueChange={([v]) => setScrub(v)}
         onValueCommit={([v]) => {
-          onSeek(dur > 0 ? (v / dur) * 100 : 0);
+          onSeek(mediaSeekPercent(v, dur));
           clearTimeout(scrubTimer.current);
           scrubTimer.current = setTimeout(() => setScrub(null), 400);
         }}
-        thumbLabel="Seek"
+        thumbLabel={t("common.seek")}
         onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
-          const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
-          setScrubHover({ x, t: r.width > 0 ? (x / r.width) * dur : 0 });
+          setScrubHover(
+            mediaTimelinePreview({
+              clientX: e.clientX,
+              durationSec: dur,
+              left: r.left,
+              width: r.width,
+            }),
+          );
         }}
         onPointerLeave={() => setScrubHover(null)}
         style={{
@@ -102,11 +115,11 @@ export function PlayerScrubber({
               whiteSpace: "nowrap",
             }}
           >
-            {fmt(Math.round(scrubHover.t))}
+            {formatCompactMediaTime(scrubHover.positionSec)}
           </div>
         )}
       </Slider>
-      <span className={timeCls + " text-left"}>{fmt(Math.round(dur))}</span>
+      <span className={timeCls + " text-left"}>{formatCompactMediaTime(dur)}</span>
     </div>
   );
 }

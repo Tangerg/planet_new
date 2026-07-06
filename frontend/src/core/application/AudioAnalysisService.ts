@@ -14,12 +14,10 @@ export type AudioAnalysisOptions = {
 const DEFAULT_FFT_SIZE = 128;
 
 /**
- * Read-only audio analysis use case. It exposes the shared analyser tap over the
- * audible playback element without letting UI components resolve kernel plugins
- * directly. There is no source to manage — the analyser passively follows the
- * player — so callers only sample. Sampling is pull-based so visualizers run in
- * their own RAF loop instead of pushing 60fps data through React state, Zustand,
- * or the event bus.
+ * Read-only audio analysis use case. It exposes the shared analyser probe
+ * without letting UI components resolve kernel plugins directly. Sampling is
+ * pull-based so visualizers run in their own RAF loop instead of pushing 60fps
+ * data through React state, Zustand, or the event bus.
  */
 export class AudioAnalysisService {
   constructor(private readonly planet: Planet) {}

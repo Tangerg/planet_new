@@ -1,15 +1,17 @@
 import * as Library from "@wailsjs/go/backend/Library";
+import type { MediaAnalysisSourceResolver } from "@core/plugin";
 import { wailsGoBridgeReady } from "./wails";
 
-/** Map a play URL to a loopback, CORS-clean URL for the shared <audio>.
+/** Desktop audio-analysis media-source gateway.
  *
- * In the desktop shell the Go loopback server returns our own /media unchanged
- * and wraps remote provider URLs in a CORS byte-proxy, so the audible element is
- * same-origin and Web Audio can sample it. In plain Vite/browser tests there is
- * no Wails bridge, so playback falls back to the original URL (analysis then
- * degrades to idle if the source is cross-origin).
+ * Audible playback intentionally keeps the provider URL in the playback plugin.
+ * Analysis uses the Go loopback /stream proxy when the desktop bridge exists,
+ * because Web Audio needs a CORS-clean media source to sample.
  */
-export async function loopbackMediaSource(playUrl: string): Promise<string> {
+export const resolveDesktopMediaAnalysisSource: MediaAnalysisSourceResolver =
+  loopbackAnalysisSource;
+
+async function loopbackAnalysisSource(playUrl: string): Promise<string> {
   if (!wailsGoBridgeReady()) return playUrl;
   try {
     return (await Library.StreamURL(playUrl)) || playUrl;

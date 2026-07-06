@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { VibeComment, VibeMusicVideo } from "@/model/vibe";
-import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
 import { Icon } from "@/infra/icons";
+import { formatMediaTime } from "@/model/media-playback";
+import { musicVideoTheaterModel } from "@/model/music-video-screen";
 
 type MusicVideoTheaterScreenProps = {
   video: VibeMusicVideo;
@@ -15,15 +18,6 @@ type MusicVideoTheaterScreenProps = {
   onClose: () => void;
 };
 
-function time(value: number): string {
-  const v = Math.max(0, Math.floor(value));
-  return `${Math.floor(v / 60)
-    .toString()
-    .padStart(2, "0")}:${Math.floor(v % 60)
-    .toString()
-    .padStart(2, "0")}`;
-}
-
 export function MusicVideoTheaterScreen({
   video,
   comments,
@@ -31,24 +25,35 @@ export function MusicVideoTheaterScreen({
   playbackPolicy,
   onClose,
 }: MusicVideoTheaterScreenProps) {
-  const availability = MusicVideo.playbackAvailability(video, playbackPolicy);
-  const hasStream = availability.status === "ready";
-  const fallbackText =
-    availability.status === "resolvable" ? "Resolving video stream..." : "Video URL unavailable";
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(hasStream);
+  const initialModel = musicVideoTheaterModel({
+    comments,
+    durationSec: video.durSec || 0,
+    playbackPolicy,
+    positionSec: 0,
+    video,
+  });
+  const [playing, setPlaying] = useState(initialModel.hasStream);
   const [timeSec, setTimeSec] = useState(0);
   const [duration, setDuration] = useState(video.durSec || 0);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const model = musicVideoTheaterModel({
+    comments,
+    durationSec: duration,
+    playbackPolicy,
+    positionSec: timeSec,
+    video,
+  });
 
   useEffect(() => {
     const node = videoRef.current;
     setTimeSec(0);
-    setPlaying(hasStream);
+    setPlaying(model.hasStream);
     if (!node || !video.playUrl) return;
     node.currentTime = 0;
     node.play().catch(() => setPlaying(false));
-  }, [hasStream, video.id, video.playUrl]);
+  }, [model.hasStream, video.id, video.playUrl]);
 
   const toggle = () => {
     const node = videoRef.current;
@@ -62,12 +67,9 @@ export function MusicVideoTheaterScreen({
     node.currentTime = value;
     setTimeSec(value);
   };
-  const total = duration || video.durSec || 1;
-  const progress = Math.max(0, Math.min(1, timeSec / total));
-
   return (
     <FadeIn className="relative h-full overflow-hidden bg-[#08080b]">
-      {hasStream ? (
+      {model.hasStream ? (
         /* oxlint-disable-next-line jsx-a11y/media-has-caption -- Provider MV streams do not expose caption tracks yet. */
         <video
           ref={videoRef}
@@ -93,7 +95,7 @@ export function MusicVideoTheaterScreen({
           style={{ position: "absolute", inset: 0, height: "100%" }}
         >
           <div className="grid h-full place-items-center bg-black/35 text-[16px] font-light text-white/48">
-            {fallbackText}
+            {model.fallbackText}
           </div>
         </Art>
       )}
@@ -106,7 +108,7 @@ export function MusicVideoTheaterScreen({
           position: "absolute",
           inset: "-4%",
           height: "108%",
-          opacity: hasStream ? 0.28 : 1,
+          opacity: model.hasStream ? 0.28 : 1,
           filter: "blur(26px) saturate(1.18)",
           transform: "scale(1.08)",
           zIndex: 0,
@@ -122,7 +124,7 @@ export function MusicVideoTheaterScreen({
 
       <Button
         onClick={onClose}
-        aria-label="Close MV"
+        aria-label={t("a11y.closeMv")}
         className="absolute right-14 top-[18px] z-40 p-1 text-white/70"
       >
         <Icon.close size={22} />
@@ -139,7 +141,7 @@ export function MusicVideoTheaterScreen({
             backdropFilter: "blur(12px)",
           }}
         >
-          MV
+          {t("musicVideos.mv")}
         </span>
         <Button
           onClick={() => setCommentsOpen((v) => !v)}
@@ -155,7 +157,7 @@ export function MusicVideoTheaterScreen({
             backdropFilter: "blur(12px)",
           }}
         >
-          Comments
+          {t("common.comments")}
         </Button>
       </div>
 
@@ -180,9 +182,9 @@ export function MusicVideoTheaterScreen({
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <Button
               onClick={toggle}
-              disabled={!hasStream}
+              disabled={!model.hasStream}
               className="grid h-10 w-10 flex-none place-items-center rounded-full"
-              aria-label="Play MV"
+              aria-label={t("a11y.playMv")}
               style={{
                 background: accent,
                 color: "#06060a",
@@ -192,36 +194,34 @@ export function MusicVideoTheaterScreen({
               {playing ? <Icon.pause size={18} /> : <Icon.play size={18} />}
             </Button>
             <span className="mlabel w-[46px] flex-none text-right text-[10px] text-white/52">
-              {time(timeSec)}
+              {formatMediaTime(timeSec)}
             </span>
             <div className="relative h-8 min-w-[180px] flex-1">
               <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-white/14" />
               <div
                 className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2"
-                style={{ width: `${progress * 100}%`, background: accent }}
+                style={{ width: `${model.progress * 100}%`, background: accent }}
               />
               <input
-                aria-label="Seek MV"
+                aria-label={t("a11y.seekMv")}
                 type="range"
                 min={0}
-                max={total}
+                max={model.totalSec}
                 step={0.1}
-                value={Math.min(timeSec, total)}
+                value={Math.min(timeSec, model.totalSec)}
                 onChange={(e) => seek(Number(e.currentTarget.value))}
-                disabled={!hasStream}
+                disabled={!model.hasStream}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </div>
             <span className="mlabel w-[46px] flex-none text-[10px] text-white/52">
-              {time(total)}
+              {formatMediaTime(model.totalSec)}
             </span>
-            <span className="mlabel flex-none text-[10px] text-white/36">
-              {video.quality ? `${video.quality}P` : "MV"}
-            </span>
+            <span className="mlabel flex-none text-[10px] text-white/36">{model.qualityLabel}</span>
             <Button
               onClick={() => setCommentsOpen((v) => !v)}
               className="grid h-10 w-10 flex-none place-items-center text-white/72"
-              aria-label="Comments"
+              aria-label={t("a11y.toggleComments")}
             >
               <Icon.comment size={18} />
             </Button>
@@ -262,14 +262,14 @@ export function MusicVideoTheaterScreen({
         >
           <div className="mb-8 flex items-center justify-between">
             <div className="mlabel text-[10px]" style={{ color: accent }}>
-              Comments
+              {t("common.comments")}
             </div>
-            <Button onClick={() => setCommentsOpen(false)} aria-label="Close comments">
+            <Button onClick={() => setCommentsOpen(false)} aria-label={t("a11y.closeComments")}>
               <Icon.close size={18} />
             </Button>
           </div>
-          {comments.length ? (
-            comments.slice(0, 14).map((comment) => (
+          {model.commentsPreview.length ? (
+            model.commentsPreview.map((comment) => (
               <div key={comment.id} className="mb-7">
                 <div className="text-[13px] text-white/74">{comment.name}</div>
                 <div className="mt-2 line-clamp-4 text-[13px] font-light leading-6 text-white/48">
@@ -279,7 +279,7 @@ export function MusicVideoTheaterScreen({
             ))
           ) : (
             <div className="pt-16 text-center text-[15px] font-light text-white/42">
-              No comments yet.
+              {t("musicVideos.noComments")}
             </div>
           )}
         </div>

@@ -1,29 +1,36 @@
 import { Plugin, defineCapability } from "../../kernel";
+import type { Track } from "@domain/model/track";
+import { directMediaAnalysisSource, type MediaAnalysisSourceResolver } from "../media-source";
+import { PlayState } from "../playback";
+import { AudioAnalysisProbe } from "./analysis-probe";
 
 export interface AnalyserPort {
-  /** The shared AnalyserNode tapping the audible playback element. */
+  /** The shared AnalyserNode reading the visualization-only audio probe. */
   analyser(): AnalyserNode;
 }
 
-/** Audio analyser tap over the shared playback element (visualizers, EQ, …). */
+/** Visualization-only audio analyser probe (visualizers, EQ, …). */
 export const AUDIO_ANALYSER = defineCapability<AnalyserPort>("audio-analyser");
 
 /**
- * Taps the shared, audible <audio> element into Web Audio for visualization.
- * Every play URL is routed through the loopback media gateway (local /media or
- * the /stream proxy), so the element is always same-origin — createMediaElement-
- * Source() can sample it without tainting or silencing playback.
+ * Owns a visualization-only Web Audio probe. It deliberately does NOT connect
+ * the audible playback element to Web Audio: `createMediaElementSource()` can
+ * reroute cross-origin provider playback and make the real player go silent.
  *
- * The graph is `source → analyser → destination`, so audio still reaches the
- * speakers (the element's own volume/mute apply upstream); the analyser is a
- * passive tap that follows whatever the player plays, so the spectrum is always
- * exactly in sync with what's heard. The source node is created lazily on first
- * use and lives for the element's lifetime (one per element is a hard rule).
+ * Instead, a hidden HTMLAudioElement loads the same track (or a loopback proxy
+ * URL) and feeds an analyser through a muted sink. If that probe cannot play,
+ * visualizers simply fall back to idle motion while native playback continues.
  */
 export class AudioEngine extends Plugin implements AnalyserPort {
   public static readonly id = "audio-engine";
-  private node: AnalyserNode | null = null;
-  private source: MediaElementAudioSourceNode | null = null;
+  private probe: AudioAnalysisProbe | null = null;
+  private playbackState = PlayState.STOPPED;
+
+  constructor(
+    private readonly resolveAnalysisSource: MediaAnalysisSourceResolver = directMediaAnalysisSource,
+  ) {
+    super();
+  }
 
   get id(): string {
     return AudioEngine.id;
@@ -31,24 +38,44 @@ export class AudioEngine extends Plugin implements AnalyserPort {
 
   protected onInit(): void {
     this.context.registry.provide(AUDIO_ANALYSER, this);
+    this.context.hooks.on("queue:current-changed", this.onCurrentChanged, this);
+    this.context.hooks.on("playback:state-changed", this.onPlaybackStateChanged, this);
   }
 
   protected onDispose(): void {
-    this.source?.disconnect();
-    this.node?.disconnect();
-    this.source = null;
-    this.node = null;
+    this.context.hooks.off("queue:current-changed", this.onCurrentChanged);
+    this.context.hooks.off("playback:state-changed", this.onPlaybackStateChanged);
+    this.probe?.dispose();
+    this.probe = null;
   }
 
   analyser(): AnalyserNode {
-    if (this.node) return this.node;
-    const ctx = this.context.audioContext;
-    const source = ctx.createMediaElementSource(this.context.audioElement);
-    const analyser = ctx.createAnalyser();
-    source.connect(analyser);
-    analyser.connect(ctx.destination);
-    this.source = source;
-    this.node = analyser;
-    return analyser;
+    return this.ensureProbe().analyser();
+  }
+
+  private onCurrentChanged = async (track: Track | undefined): Promise<void> => {
+    await this.ensureProbe().load(track?.playUrl, () => this.playbackState === PlayState.PLAYING);
+  };
+
+  private onPlaybackStateChanged = (state: PlayState): void => {
+    this.playbackState = state;
+    if (state === PlayState.PLAYING) {
+      void this.ensureProbe()
+        .play()
+        .catch(() => this.probe?.pause());
+      return;
+    }
+    this.probe?.pause();
+  };
+
+  private ensureProbe(): AudioAnalysisProbe {
+    if (this.probe) return this.probe;
+    const probe = new AudioAnalysisProbe({
+      audioContext: this.context.audioContext,
+      playbackElement: this.context.audioElement,
+      resolveAnalysisSource: this.resolveAnalysisSource,
+    });
+    this.probe = probe;
+    return probe;
   }
 }

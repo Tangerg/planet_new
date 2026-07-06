@@ -6,6 +6,7 @@
 // ============================================================
 import React from "react";
 import type { ArtistRef } from "@/model/vibe";
+import { artistCreditLine } from "@/model/artist-credit";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
 
@@ -78,12 +79,12 @@ export function ArtistLinks({
   color,
   onOpenArtist,
 }: ArtistLinksProps) {
-  const list = (artists ?? []).filter((a) => a.name);
-  if (list.length === 0) {
+  const creditLine = artistCreditLine({ artists, fallback, fallbackId });
+  if (creditLine.kind === "fallback-artist") {
     return (
       <ArtistLink
-        name={fallback}
-        artistId={fallbackId}
+        name={creditLine.name}
+        artistId={creditLine.artistId}
         accent={accent}
         color={color}
         onOpenArtist={onOpenArtist}
@@ -92,7 +93,7 @@ export function ArtistLinks({
   }
   return (
     <>
-      {list.map((a, i) => (
+      {creditLine.artists.map((a, i) => (
         <React.Fragment key={(a.id || a.name) + i}>
           {i > 0 && <span style={{ color }}>, </span>}
           <ArtistLink

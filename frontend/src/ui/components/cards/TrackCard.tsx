@@ -1,16 +1,18 @@
 // ============================================================
 // TrackCard — square track tile for grid views: cover + hover-rise play fab +
 // title + artist link. Activating plays the track (no morph — tracks don't open
-// a detail screen). Composed from CardShell + Art + PlayFab + ArtistLink.
+// a detail screen). The whole tile is a mouse hit-area, while cover/title keep
+// the keyboard-accessible targets and artist/fab stop propagation.
 // ============================================================
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
-import { RiseFab } from "@/components/lift";
-import { CardShell } from "@/components/cards/CardShell";
+import { LiftCard, RiseFab } from "@/components/lift";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
+import { activateOnKey } from "@/lib/keys";
 
 type TrackCardProps = {
   track: VibeTrack;
@@ -20,29 +22,44 @@ type TrackCardProps = {
 };
 
 export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProps) {
+  const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
+  const play = () => onPlay(track);
+  const playFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    play();
+  };
   return (
-    <CardShell
-      label={track.title}
-      className="gridcard cursor-pointer"
-      onActivate={() => onPlay(track)}
+    <LiftCard
+      className="gridcard cursor-pointer text-left text-white"
+      onClick={play}
       onContextMenu={(e) => trackMenu(e, track)}
     >
       <div className="relative">
-        <Art
-          className="art aspect-square w-full"
-          seed={track.coverSeed}
-          grad={track.gradient}
-          image={track.image}
-          images={track.images}
-        />
+        <div
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich art tile, not valid native button content
+          role="button"
+          tabIndex={0}
+          aria-label={t("a11y.playItem", { name: track.title })}
+          onClick={playFromTarget}
+          onKeyDown={activateOnKey(playFromTarget)}
+          className="cursor-pointer"
+        >
+          <Art
+            className="art aspect-square w-full"
+            seed={track.coverSeed}
+            grad={track.gradient}
+            image={track.image}
+            images={track.images}
+          />
+        </div>
         <RiseFab
           className="trackfab absolute bottom-3 right-3 grid h-[46px] w-[46px] place-items-center rounded-full border-0"
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
-            onPlay(track);
+            play();
           }}
-          aria-label="Play"
+          aria-label={t("a11y.playItem", { name: track.title })}
           style={{
             background: accent,
             color: "#06060a",
@@ -52,7 +69,17 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           <Icon.play size={18} />
         </RiseFab>
       </div>
-      <div className="truncate mt-[11px] text-[14.5px] font-normal">{track.title}</div>
+      <div
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- title is a lightweight secondary play target
+        role="button"
+        tabIndex={0}
+        aria-label={t("a11y.playItem", { name: track.title })}
+        onClick={playFromTarget}
+        onKeyDown={activateOnKey(playFromTarget)}
+        className="mt-[11px] cursor-pointer truncate text-[14.5px] font-normal"
+      >
+        {track.title}
+      </div>
       <div className="truncate text-[12.5px] font-light text-white/50">
         <ArtistLinks
           artists={track.artists}
@@ -63,6 +90,6 @@ export function TrackCard({ track, onPlay, accent, onOpenArtist }: TrackCardProp
           onOpenArtist={onOpenArtist}
         />
       </div>
-    </CardShell>
+    </LiftCard>
   );
 }

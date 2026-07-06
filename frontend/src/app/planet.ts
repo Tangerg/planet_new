@@ -11,7 +11,7 @@ import {
 import type { Provider } from "@providers";
 import { LocalCredentialStore, LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
 
-import { loopbackMediaSource } from "@/infra/mediaSource";
+import { resolveDesktopMediaAnalysisSource } from "@/infra/mediaSource";
 import { PlayQueueStoreBridge } from "@/store/bridge";
 
 const env = import.meta.env;
@@ -63,11 +63,11 @@ const { providers, active } = buildProviders();
 const planet = new Planet({
   plugins: [
     ...providers,
-    new Playback(loopbackMediaSource),
+    new Playback(),
     new PlayQueue(),
     new Volume(),
     new Progress(),
-    new AudioEngine(),
+    new AudioEngine(resolveDesktopMediaAnalysisSource),
     new ProviderRegistry(active),
     new Lyrics(),
     new PlayQueueStoreBridge(),

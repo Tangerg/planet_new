@@ -3,8 +3,14 @@
 // list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/vibe";
-import { collectionFlowItems } from "@/model/derive";
+import {
+  artistAlbumSubtitle,
+  artistAlbumTrackCount,
+  artistScreenModel,
+} from "@/model/artist-screen";
+import { clampFlowCenter } from "@/model/flow";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -21,6 +27,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
+import { firstPlayableCollectionTrack } from "@/model/track-actions";
 
 type ArtistScreenProps = {
   artist: ArtistTarget;
@@ -53,6 +60,7 @@ export function ArtistScreen({
   onOpenArtist,
   mono,
 }: ArtistScreenProps) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("top");
   const [view, setView] = useState("list");
@@ -62,6 +70,23 @@ export function ArtistScreen({
   }, [tab]);
   const b = artPair(artist.coverSeed, artist.gradient)[1];
   const [followed, setFollowed] = useState(true);
+  const model = artistScreenModel({ artist, tracks, albums, similar, tab, current, playing });
+  const tabLabels: Record<string, string> = {
+    albums: t("artist.allAlbums"),
+    similar: t("artist.similarArtist"),
+    top: t("artist.hot"),
+  };
+  const statLabels = [
+    t("counts.tracks", { count: model.tracks.length }),
+    model.albums.length > 0 ? t("counts.albums", { count: model.albums.length }) : undefined,
+    artist.listeners ? t("counts.listeners", { count: artist.listeners }) : undefined,
+    ...(artist.genres ?? []),
+  ].filter((label): label is string => Boolean(label));
+  const playAlbum = (album: VibeCollection) => {
+    const track = firstPlayableCollectionTrack(album);
+    if (track) onPlay(track);
+  };
+  const canPlayAlbum = (album: VibeCollection) => Boolean(firstPlayableCollectionTrack(album));
 
   return (
     <FadeIn className="relative h-full bg-[#0a0a0d]">
@@ -117,8 +142,9 @@ export function ArtistScreen({
                 </div>
                 <div className="mt-6 flex flex-wrap items-center gap-[14px]">
                   <Button
-                    onClick={() => onPlay(tracks[0])}
-                    aria-label="Play"
+                    onClick={() => model.firstTrack && onPlay(model.firstTrack)}
+                    disabled={!model.hasPlayableTracks}
+                    aria-label={t("common.play")}
                     className="mr-1 grid h-[54px] w-[54px] flex-none place-items-center rounded-full"
                     style={{
                       background: accent,
@@ -126,11 +152,7 @@ export function ArtistScreen({
                       boxShadow: `0 10px 30px -6px ${accent}`,
                     }}
                   >
-                    {playing && tracks.some((t) => t.id === current?.id) ? (
-                      <Icon.pause size={24} />
-                    ) : (
-                      <Icon.play size={24} />
-                    )}
+                    {model.playingArtistTrack ? <Icon.pause size={24} /> : <Icon.play size={24} />}
                   </Button>
                   <Button
                     onClick={() => setFollowed((f) => !f)}
@@ -142,20 +164,10 @@ export function ArtistScreen({
                       color: followed ? "#06060a" : "#fff",
                     }}
                   >
-                    {followed ? "Following" : "Follow"}
+                    {followed ? t("common.following") : t("common.follow")}
                   </Button>
-                  <StatPill>
-                    {tracks.length} {tracks.length === 1 ? "Track" : "Tracks"}
-                  </StatPill>
-                  {/* hide stat pills with no real data instead of showing "0 ALBUMS" */}
-                  {albums.length > 0 && (
-                    <StatPill>
-                      {albums.length} {albums.length === 1 ? "Album" : "Albums"}
-                    </StatPill>
-                  )}
-                  {artist.listeners ? <StatPill>{artist.listeners} Listeners</StatPill> : null}
-                  {(artist.genres || []).map((g) => (
-                    <StatPill key={g}>{g}</StatPill>
+                  {statLabels.map((label) => (
+                    <StatPill key={label}>{label}</StatPill>
                   ))}
                 </div>
                 {artist.bio && (
@@ -182,18 +194,14 @@ export function ArtistScreen({
           <PageColumn className="pb-10 pt-[26px]">
             <div className="tabs mb-6 items-start">
               <ToggleGroup
-                ariaLabel="Artist section"
+                ariaLabel={t("artist.section")}
                 className="tabgroup"
                 itemClassName="tab"
                 value={tab}
                 onValueChange={setTab}
-                items={[
-                  { value: "top", label: "Hot" },
-                  { value: "albums", label: "All Albums" },
-                  { value: "similar", label: "Similar Artist" },
-                ]}
+                items={model.tabs.map((it) => ({ ...it, label: tabLabels[it.value] ?? it.label }))}
               />
-              {tab !== "similar" && (
+              {model.showViewToggle && (
                 <ViewToggle
                   value={view}
                   onChange={setView}
@@ -225,15 +233,15 @@ export function ArtistScreen({
                   minColumnWidth={176}
                   gap={24}
                   estimateRowHeight={240}
-                  itemKey={(i) => albums[i].id}
+                  itemKey={(i) => model.albums[i].id}
                   renderItem={(i) => {
-                    const al = albums[i];
+                    const al = model.albums[i];
                     return (
                       <MediaCard
                         item={al}
-                        sub={String(al.year ?? "")}
+                        sub={artistAlbumSubtitle(al)}
                         onOpen={() => onOpenAlbum(al)}
-                        onPlay={() => onOpenAlbum(al)}
+                        onPlay={canPlayAlbum(al) ? () => playAlbum(al) : undefined}
                       />
                     );
                   }}
@@ -243,16 +251,18 @@ export function ArtistScreen({
                 <VList
                   count={albums.length}
                   estimateSize={66}
-                  itemKey={(i) => albums[i].id}
+                  itemKey={(i) => model.albums[i].id}
                   renderItem={(i) => {
-                    const al = albums[i];
+                    const al = model.albums[i];
                     return (
                       <CollectionRow
                         item={al}
-                        sub={al.artist || "Album"}
-                        meta={`${al.year} · ${al.tracks ? al.tracks.length : 0} tracks`}
+                        sub={al.artist || t("common.album")}
+                        meta={[al.year, t("counts.tracks", { count: artistAlbumTrackCount(al) })]
+                          .filter(Boolean)
+                          .join(" · ")}
                         onOpen={() => onOpenAlbum(al)}
-                        onPlay={() => onOpenAlbum(al)}
+                        onPlay={canPlayAlbum(al) ? () => playAlbum(al) : undefined}
                       />
                     );
                   }}
@@ -261,12 +271,13 @@ export function ArtistScreen({
               {tab === "albums" && view === "flow" && (
                 <div className="-mx-12 h-[480px]">
                   <CoverFlow
-                    items={collectionFlowItems(albums, (al) => String(al.year ?? ""))}
-                    center={Math.min(flowCenter, albums.length - 1)}
+                    items={model.albumFlowItems}
+                    center={clampFlowCenter(flowCenter, model.albums.length)}
                     setCenter={setFlowCenter}
                     accent={accent}
                     onOpen={onOpenAlbum}
-                    onPlay={onOpenAlbum}
+                    onPlay={playAlbum}
+                    canPlay={canPlayAlbum}
                     tracksFor={(al) => al.tracks}
                     onPlayTrack={onPlay}
                   />
@@ -279,14 +290,14 @@ export function ArtistScreen({
                   minColumnWidth={176}
                   gap={18}
                   estimateRowHeight={240}
-                  itemKey={(i) => similar[i].id}
+                  itemKey={(i) => model.similar[i].id}
                   renderItem={(i) => {
-                    const ar = similar[i];
+                    const ar = model.similar[i];
                     return (
                       <MediaCard
                         item={ar}
                         round
-                        sub="Artist"
+                        sub={t("common.artist")}
                         liftScale={1.12}
                         liftY={-6}
                         onOpen={() => onOpenArtist(ar)}
