@@ -3,69 +3,70 @@ import { describe, expect, it } from "vitest";
 import { spectrumColorSignature } from "./audio-color-signature";
 import { hsla, spectralLightColors } from "./audio-light-palette";
 
-const base = { accent: "#14ff82", tintA: "#2bd4ff", tintB: "#ff2d95" };
 const activeProfile = { low: 0.7, mid: 0.44, high: 0.58, peak: 0.84, active: true };
+const signature = spectrumColorSignature(
+  new Uint8Array([120, 130, 140, 150, 160, 150, 140, 130, 120, 110, 100, 90]),
+);
 
-// Position on the cool→warm ramp: 0 = cool (teal), 1 = warm (amber-gold).
-// Mirrors the model's COOL_HUE=190 + at*210 sweep (wraps past 360°).
-function rampPosition(hue: number): number {
-  return Math.min(1, Math.max(0, ((((hue - 190) % 360) + 360) % 360) / 210));
-}
-
-describe("audio light palette model (cyberpunk temperature)", () => {
-  it("maps low frequencies cool and high frequencies warm across the spectrum", () => {
+describe("audio light palette model (cover-toned ramp)", () => {
+  it("tones a tight monochromatic ramp from the cover colour", () => {
+    // Violet cover pair → the ramp should stay in the violet family.
     const colors = spectralLightColors({
-      ...base,
+      accent: "#18f58a",
+      tintA: "#4a2b7a",
+      tintB: "#a86bff",
       profile: activeProfile,
-      signature: spectrumColorSignature(
-        new Uint8Array([120, 130, 140, 150, 160, 150, 140, 130, 120, 110, 100, 90]),
-      ),
+      signature,
     });
 
+    const hues = colors.stops.map((stop) => stop.color.h);
+    const span = Math.max(...hues) - Math.min(...hues);
+    // One cohesive family, not a rainbow.
+    expect(span).toBeLessThan(45);
+    // Keyed off the cover's violet hue (~265°), not a fixed palette.
+    expect(hues.every((h) => h > 235 && h < 300)).toBe(true);
+  });
+
+  it("steps deep at the base to bright at the crest", () => {
+    const colors = spectralLightColors({
+      accent: "#18f58a",
+      tintA: "#4a2b7a",
+      tintB: "#a86bff",
+      profile: activeProfile,
+      signature,
+    });
     const stops = colors.stops;
     expect(stops).toHaveLength(9);
-    // Lowest band reads cool, highest band reads warm.
-    expect(rampPosition(stops[0].color.h)).toBeLessThan(0.3);
-    expect(rampPosition(stops[stops.length - 1].color.h)).toBeGreaterThan(0.7);
-    // The ramp is monotonic cool→warm across the bar.
-    for (let i = 1; i < stops.length; i++) {
-      expect(rampPosition(stops[i].color.h)).toBeGreaterThanOrEqual(
-        rampPosition(stops[i - 1].color.h),
-      );
-    }
-    expect(new Set(stops.map((stop) => Math.round(stop.color.h))).size).toBeGreaterThan(5);
+    expect(stops[0].color.l).toBeLessThan(stops[stops.length - 1].color.l);
   });
 
-  it("burns the dominant colour toward the music's pitch (bass cool, air hot)", () => {
-    const bassHeavy = spectralLightColors({
-      ...base,
+  it("re-tones when the cover colour changes", () => {
+    const violet = spectralLightColors({
+      accent: "#18f58a",
+      tintA: "#4a2b7a",
+      tintB: "#a86bff",
       profile: activeProfile,
-      signature: spectrumColorSignature(
-        new Uint8Array([245, 220, 184, 42, 28, 18, 12, 8, 6, 4, 2, 2]),
-      ),
+      signature,
     });
-    const airHeavy = spectralLightColors({
-      ...base,
+    const amber = spectralLightColors({
+      accent: "#18f58a",
+      tintA: "#5a3208",
+      tintB: "#ffb347",
       profile: activeProfile,
-      signature: spectrumColorSignature(
-        new Uint8Array([8, 12, 16, 32, 48, 90, 142, 190, 228, 252, 244, 232]),
-      ),
+      signature,
     });
-
-    // Bass-dominant → cooler dominant colour than a treble-dominant spectrum.
-    expect(rampPosition(bassHeavy.body.h)).toBeLessThan(rampPosition(airHeavy.body.h));
-    expect(rampPosition(bassHeavy.line.h)).toBeLessThan(rampPosition(airHeavy.line.h));
+    // Different cover → different hue family.
+    expect(Math.abs(violet.body.h - amber.body.h)).toBeGreaterThan(60);
   });
 
-  it("keeps colours in a restrained jewel range (not fluorescent)", () => {
+  it("keeps saturation rich but restrained", () => {
     const colors = spectralLightColors({
-      ...base,
+      accent: "#18f58a",
+      tintA: "#4a2b7a",
+      tintB: "#a86bff",
       profile: activeProfile,
-      signature: spectrumColorSignature(
-        new Uint8Array([12, 46, 82, 156, 212, 252, 238, 184, 124, 74, 32, 16]),
-      ),
+      signature,
     });
-
     const allColors = [
       colors.bass,
       colors.warmth,
@@ -75,10 +76,7 @@ describe("audio light palette model (cyberpunk temperature)", () => {
       colors.line,
       ...colors.stops.map((stop) => stop.color),
     ];
-
-    // Rich but restrained — never max-saturated candy, and deep rather than bright.
-    expect(allColors.every((color) => color.s >= 46 && color.s <= 82)).toBe(true);
-    expect(allColors.every((color) => color.l <= 58)).toBe(true);
+    expect(allColors.every((color) => color.s >= 42 && color.s <= 84)).toBe(true);
   });
 
   it("formats hsl colors with clamped alpha", () => {
