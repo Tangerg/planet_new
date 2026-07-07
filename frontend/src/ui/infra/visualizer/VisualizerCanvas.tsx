@@ -1,20 +1,10 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
-import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
-import {
-  initialAudioLightFrameState,
-  nextAudioLightFrame,
-  type AudioLightFrameState,
-} from "@/model/audio-visualization";
+import { createAudioEngine, resolveAudioEngineConfig } from "@shared/audio";
 
-import {
-  audioReactive,
-  initialReactiveState,
-  resolveEngineConfig,
-  type EngineConfig,
-  type ReactiveState,
-  type VisualEffect,
-} from "./engine";
+import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
+
+import type { VisualEffect } from "./effect";
 
 type Props = {
   effect: VisualEffect;
@@ -28,14 +18,14 @@ type Props = {
   style?: CSSProperties;
 };
 
-const BAND_COUNT = 18; // internal spectral resolution; effects regroup via config.bands
 const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling the field
 
 /**
- * The shared visualiser host — the audio engine's runtime. It samples the kernel
- * analyser (tuned per effect), derives the reactive audio once (audioReactive), and
- * drives the active effect, which owns its 2D/WebGL context AND fetches its own cover
- * art / other material (the engine stays audio-only). Both the player bar and the
+ * The shared visualiser host — the render-side runtime around the @shared/audio
+ * engine. It samples the kernel analyser (settings from the effect's tuning), feeds
+ * the bytes to a per-effect AudioEngine (which owns all frame/AGC/beat state), and
+ * drives the active effect — the effect owns its 2D/WebGL context AND fetches its own
+ * cover art / material (the engine stays audio-only). Both the player bar and the
  * fullscreen stage mount this; they differ only in the effect and animate-while-paused.
  * Volatile inputs are read through refs so image/accent/play changes don't restart the
  * loop; the effect id (via the canvas key) is the only thing that rebuilds the instance.
@@ -50,7 +40,7 @@ export function VisualizerCanvas({
   style,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const config = useMemo(() => resolveEngineConfig(effect.tuning), [effect]);
+  const config = useMemo(() => resolveAudioEngineConfig(effect.tuning), [effect]);
 
   const sampler = useAudioSpectrum({
     enabled: playing,
@@ -61,14 +51,12 @@ export function VisualizerCanvas({
   });
 
   const samplerRef = useRef(sampler);
-  const configRef = useRef<EngineConfig>(config);
   const imageRef = useRef(image);
   const accentRef = useRef(accent);
   const playingRef = useRef(playing);
   const animatePausedRef = useRef(animateWhilePaused);
   const kickRef = useRef<() => void>(() => {});
   samplerRef.current = sampler;
-  configRef.current = config;
   imageRef.current = image;
   accentRef.current = accent;
   playingRef.current = playing;
@@ -79,6 +67,7 @@ export function VisualizerCanvas({
     if (!canvas) return;
 
     const instance = effect.create(canvas);
+    const engine = createAudioEngine(effect.tuning);
     let raf = 0;
     let running = false;
     let width = 1;
@@ -86,8 +75,6 @@ export function VisualizerCanvas({
     let dpr = 1;
     let last = performance.now();
     let bytes = new Uint8Array(samplerRef.current.binCount);
-    let frameState: AudioLightFrameState = initialAudioLightFrameState(BAND_COUNT);
-    let reactive: ReactiveState = initialReactiveState;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -103,31 +90,15 @@ export function VisualizerCanvas({
     observer.observe(canvas);
 
     const draw = (time: number) => {
-      const cfg = configRef.current;
       const dtSec = Math.min(MAX_DT, Math.max(0, (time - last) / 1000));
       last = time;
       if (bytes.length !== samplerRef.current.binCount) {
         bytes = new Uint8Array(samplerRef.current.binCount);
       }
       const read = samplerRef.current.sample(bytes);
-      frameState = nextAudioLightFrame({
-        previous: frameState,
-        bytes,
-        read,
-        bandCount: BAND_COUNT,
-        attack: cfg.attack,
-        release: cfg.release,
-        gain: {
-          rise: cfg.levelRise,
-          fall: cfg.levelFall,
-          target: cfg.levelTarget,
-          contrast: cfg.levelContrast,
-        },
-      });
       const isPlaying = playingRef.current;
       const timeSec = time / 1000;
-      const derived = audioReactive(frameState, reactive, isPlaying, timeSec, cfg);
-      reactive = derived.state;
+      const audio = engine.analyze(bytes, { read, playing: isPlaying, timeSec });
 
       instance.draw({
         width,
@@ -136,7 +107,7 @@ export function VisualizerCanvas({
         timeSec,
         dtSec,
         playing: isPlaying,
-        audio: derived.audio,
+        audio,
         image: imageRef.current,
         accent: accentRef.current,
       });

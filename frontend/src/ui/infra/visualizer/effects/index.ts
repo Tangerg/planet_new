@@ -1,4 +1,4 @@
-import type { VisualEffect } from "../engine";
+import type { VisualEffect } from "../effect";
 import { cloudEffect } from "./cloud";
 import { wavesEffect } from "./waves";
 

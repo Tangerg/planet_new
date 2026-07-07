@@ -1,9 +1,9 @@
-import type { AudioLightFrame } from "./audio-light-frame";
+import type { AudioLightFrame } from "./frame";
 
 /**
- * One visualiser lane's per-frame DATA — pure audio logic, no colour and no
- * rendering. Consumers (the player-bar bar, a full page, particle effects, …) map
- * these energies to whatever visual they like, with their own palette.
+ * One lane's per-frame DATA — pure audio logic, no colour and no rendering.
+ * Consumers (a player-bar bar, a full page, particle effects, …) map these
+ * energies to whatever visual they like, with their own palette.
  */
 export type AudioLane = {
   /** 0 = the raw/overall track; 1..N = frequency bands, low → high. */
@@ -33,10 +33,9 @@ function overallEnergy(bands: readonly number[]): number {
 }
 
 /**
- * Build the visualiser lanes for a frame: lane 0 is the raw/overall track (the
- * whole mix), then `bandCount` frequency-band lanes low→high. Pure logic — the
- * generic core both the compact player-bar bar and a dedicated visualisation page
- * render from, each supplying its own colours/geometry.
+ * Build the lanes for a frame: lane 0 is the raw/overall track (the whole mix),
+ * then `bandCount` frequency-band lanes low→high. Pure logic — the generic core
+ * consumers render from, each supplying its own colours/geometry.
  */
 export function audioLanes(frame: AudioLightFrame, bandCount: number): AudioLane[] {
   const lanes: AudioLane[] = [{ index: 0, raw: true, energy: overallEnergy(frame.bands) }];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { beatEnvelope, sampleCoverParticles } from "./stage-particles";
+import { sampleCoverParticles } from "./stage-particles";
 
 // A 2×2 RGBA image: red, green / blue, transparent.
 const rgba = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 0, 0]);
@@ -33,10 +33,5 @@ describe("stage particle sampling", () => {
       maxY = Math.max(maxY, Math.abs(wide.ny[i]));
     }
     expect(maxX).toBeGreaterThan(maxY); // wider than tall
-  });
-
-  it("follows beats with a fast attack and slow release", () => {
-    expect(beatEnvelope(0, 1, 0.5, 0.06)).toBeCloseTo(0.5); // snaps up
-    expect(beatEnvelope(1, 0, 0.5, 0.06)).toBeCloseTo(0.94); // eases down
   });
 });

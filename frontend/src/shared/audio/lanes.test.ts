@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { audioLanes } from "./audio-lanes";
+import { audioLanes } from "./lanes";
 
-describe("audio lanes model", () => {
+describe("audio lanes", () => {
   it("prepends a raw/overall lane, then frequency-band lanes low → high", () => {
     const lanes = audioLanes({ bands: [0, 0, 0, 0.5, 0.5, 0.5, 1, 1, 1] }, 3);
 
