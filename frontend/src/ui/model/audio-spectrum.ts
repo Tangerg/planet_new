@@ -54,20 +54,6 @@ export function smoothSignalValue(
   return previous + (next - previous) * clamp(0, 1, amount);
 }
 
-export function ratioBandAverage(
-  bytes: ArrayLike<number>,
-  startRatio: number,
-  endRatio: number,
-): number {
-  if (bytes.length === 0) return 0;
-  const start = Math.floor(clamp(0, 1, startRatio) * bytes.length);
-  const end = Math.min(
-    bytes.length,
-    Math.max(start + 1, Math.ceil(clamp(0, 1, endRatio) * bytes.length)),
-  );
-  return bandAverage(bytes, start, end);
-}
-
 /**
  * Compress raw FFT bins into display bands. The logarithmic-ish mapping spends
  * more visual resolution on lows/mids where music usually feels most readable.

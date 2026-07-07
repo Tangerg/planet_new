@@ -33,6 +33,9 @@ export default defineConfig(({ mode }) => {
      * adopted. */
     optimizeDeps: {
       include: [
+        // Material color utilities ships extensionless internal ESM imports that
+        // Node's strict resolver chokes on; pre-bundling with esbuild resolves them.
+        "@material/material-color-utilities",
         "@base-ui/react/switch",
         "@base-ui/react/toggle",
         "@base-ui/react/toggle-group",
@@ -73,6 +76,9 @@ export default defineConfig(({ mode }) => {
       watch: false,
       environment: "jsdom",
       setupFiles: ["./test-setup.ts"],
+      // Transform material-color-utilities through Vite instead of loading it via
+      // Node ESM, which rejects the package's extensionless internal imports.
+      server: { deps: { inline: [/@material\/material-color-utilities/] } },
       coverage: {
         enabled: true,
         provider: "istanbul",
