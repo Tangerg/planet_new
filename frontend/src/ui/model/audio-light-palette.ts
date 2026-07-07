@@ -33,8 +33,8 @@ export type SpectralLightColors = {
 // unlike an HSL lightness ramp, which reads uneven and cheap. Chroma is clamped to
 // a jewel range so a muted cover still shows colour and a neon one stays tasteful.
 const RAMP_STEPS = 9;
-const TONE_BASE = 32; // deepest rung (bar floor)
-const TONE_RANGE = 40; // deep → bright span before the energy lift
+const TONE_BASE = 24; // deepest rung (bar floor) — deep for strong step contrast
+const TONE_RANGE = 58; // deep → bright span; wide so the tonal steps read distinctly
 const CHROMA_MIN = 22;
 const CHROMA_MAX = 56;
 const TONE_FALLBACK: HslColor = { h: 280, s: 40, l: 50 };
