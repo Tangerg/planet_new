@@ -20,13 +20,11 @@ export type BreathingLightPaintInput = {
 
 type SpectralPaintColors = ReturnType<typeof spectralLightColors>;
 
-// Flame/wave layers, back → front. Stacked with additive ("lighter") blending so
-// the shared base burns bright (all overlap) and the tips fade (one layer) — the
-// flame falloff comes for free. Each drifts at its own speed/phase for a churning,
-// psychedelic motion; `reactive` is how hard the band energy throws the tongues up.
-// More layers at lower per-layer alpha means their differing crest heights feather
-// into one another, so the aggregate top edge reads soft instead of a hard line.
-type FlameLayer = {
+// Translucent wave layers, back → front. Alpha-blended (NOT additive): additive
+// summed cool+warm into a muddy brown wash — plain alpha keeps the vertical heat
+// gradient clean. A few layers at low opacity build a soft, feathered crest where
+// their differing heights overlap.
+type WaveLayer = {
   waves: number;
   speed: number;
   amp: number;
@@ -35,39 +33,36 @@ type FlameLayer = {
   reactive: number;
 };
 
-const FLAME_LAYERS: readonly FlameLayer[] = [
-  { waves: 1.3, speed: 0.5, amp: 0.62, phase: 0, alpha: 0.13, reactive: 0.6 },
-  { waves: 1.8, speed: -0.8, amp: 0.5, phase: 1.1, alpha: 0.14, reactive: 0.72 },
-  { waves: 2.3, speed: 1.0, amp: 0.44, phase: 2.3, alpha: 0.14, reactive: 0.82 },
-  { waves: 2.9, speed: -1.3, amp: 0.36, phase: 3.4, alpha: 0.13, reactive: 0.9 },
-  { waves: 3.4, speed: 1.5, amp: 0.3, phase: 4.5, alpha: 0.12, reactive: 0.96 },
-  { waves: 4.1, speed: -1.9, amp: 0.24, phase: 5.6, alpha: 0.1, reactive: 1.0 },
+const WAVE_LAYERS: readonly WaveLayer[] = [
+  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.22, reactive: 0.62 },
+  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.24, reactive: 0.78 },
+  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.26, reactive: 0.9 },
+  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.26, reactive: 1.0 },
 ];
 
+/** Vertical heat ramp: cool at the base (y = height) → warm at the top (y = 0).
+ *  Colour depends only on height, so a tall wave reaches the warm stops at its
+ *  crest while a short one stays cool near the floor. Full-alpha stops — layer
+ *  translucency is applied by the caller via globalAlpha, keeping colours clean. */
 function temperatureGradient(
   ctx: CanvasRenderingContext2D,
   height: number,
   colors: SpectralPaintColors,
-  alpha: (intensity: number) => number,
 ): CanvasGradient {
-  // VERTICAL heat ramp (the industry spectrum/flame convention): cool at the base
-  // (y = height), warm at the top (y = 0). Colour is a function of height, uniform
-  // across x — so a tall flame reaches the warm stops at its tip while a short one
-  // stays cool near the floor.
   const gradient = ctx.createLinearGradient(0, height, 0, 0);
   for (const stop of colors.stops) {
-    gradient.addColorStop(clamp(0, 1, stop.at), hsla(stop.color, alpha(stop.intensity)));
+    gradient.addColorStop(clamp(0, 1, stop.at), hsla(stop.color, 1));
   }
   return gradient;
 }
 
-/** Flame-tongue height (0..~1.2) at horizontal position u∈[0,1]. */
-function flameHeight(
+/** Wave/flame crest height (0..~1.2) at horizontal position u∈[0,1]. */
+function waveHeight(
   u: number,
   timeSec: number,
   bands: readonly number[],
   pulse: number,
-  layer: FlameLayer,
+  layer: WaveLayer,
 ): number {
   const band = bands[Math.min(bands.length - 1, Math.floor(u * bands.length))] ?? 0;
   const w1 = Math.sin(u * layer.waves * Math.PI * 2 + timeSec * layer.speed + layer.phase);
@@ -75,12 +70,12 @@ function flameHeight(
     u * layer.waves * 1.9 * Math.PI * 2 - timeSec * layer.speed * 0.6 + layer.phase,
   );
   const flow = w1 * 0.62 + w2 * 0.38;
-  const base = 0.14 + pulse * 0.22;
+  const base = 0.12 + pulse * 0.2;
   const tongue = flow * layer.amp * (0.26 + band * 0.95);
-  return clamp(0, 1.25, base + band * layer.reactive + tongue);
+  return clamp(0, 1.2, base + band * layer.reactive + tongue);
 }
 
-function paintFlameLayer(
+function paintWaveLayer(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -88,35 +83,22 @@ function paintFlameLayer(
   bands: readonly number[],
   colors: SpectralPaintColors,
   pulse: number,
-  layer: FlameLayer,
+  layer: WaveLayer,
 ): void {
-  // Uniform alpha so the colour reads as an even bottom→top heat ramp; the music
-  // shows in the flame HEIGHT (how high the warm tips reach), not in opacity.
-  ctx.fillStyle = temperatureGradient(ctx, height, colors, () => layer.alpha);
+  ctx.globalAlpha = layer.alpha;
+  ctx.fillStyle = temperatureGradient(ctx, height, colors);
   ctx.beginPath();
   ctx.moveTo(0, height + 2);
-  const steps = 80;
+  const steps = 96;
   for (let s = 0; s <= steps; s++) {
     const u = s / steps;
-    const h = flameHeight(u, timeSec, bands, pulse, layer);
+    const h = waveHeight(u, timeSec, bands, pulse, layer);
     ctx.lineTo(u * width, height - h * height);
   }
   ctx.lineTo(width, height + 2);
   ctx.closePath();
   ctx.fill();
-}
-
-function paintAmbientWash(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  colors: SpectralPaintColors,
-  pulse: number,
-): void {
-  // A low, even base carrying the bottom→top heat ramp (uniform, not weighted by
-  // band energy) so the colour field stays evenly distributed.
-  ctx.fillStyle = temperatureGradient(ctx, height, colors, () => 0.06 + pulse * 0.05);
-  ctx.fillRect(0, 0, width, height);
+  ctx.globalAlpha = 1;
 }
 
 export function paintBreathingLight({
@@ -146,11 +128,9 @@ export function paintBreathingLight({
     hueDrift,
   });
 
-  paintAmbientWash(ctx, width, height, colors, pulse);
-
-  ctx.globalCompositeOperation = "lighter";
-  for (const layer of FLAME_LAYERS) {
-    paintFlameLayer(ctx, width, height, timeSec, frame.bands, colors, pulse, layer);
+  // Plain alpha compositing (no additive) so the vertical cool→warm gradient stays
+  // clean instead of summing into a muddy wash.
+  for (const layer of WAVE_LAYERS) {
+    paintWaveLayer(ctx, width, height, timeSec, frame.bands, colors, pulse, layer);
   }
-  ctx.globalCompositeOperation = "source-over";
 }
