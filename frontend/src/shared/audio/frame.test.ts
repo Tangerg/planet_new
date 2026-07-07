@@ -4,9 +4,9 @@ import {
   initialAudioLightFrameState,
   nextAudioLightFrame,
   type AudioLightFrameState,
-} from "./audio-light-frame";
+} from "./frame";
 
-describe("audio light frame model", () => {
+describe("audio light frame", () => {
   // Drive a constant spectrum until the running level settles.
   const run = (bytes: Uint8Array, bandCount = 5, frames = 300) => {
     let state: AudioLightFrameState = initialAudioLightFrameState(bandCount);
@@ -16,7 +16,7 @@ describe("audio light frame model", () => {
     return state;
   };
 
-  it("advances a breathing-light frame from sampled FFT bytes", () => {
+  it("advances a frame from sampled FFT bytes", () => {
     const frame = nextAudioLightFrame({
       previous: initialAudioLightFrameState(5),
       bytes: new Uint8Array([250, 220, 180, 120, 90, 40, 20, 10]),

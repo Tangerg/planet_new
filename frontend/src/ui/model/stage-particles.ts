@@ -92,18 +92,3 @@ export function sampleCoverParticles(
     seed: seed.subarray(0, count),
   };
 }
-
-/**
- * One-pole envelope follower with independent attack/release — used by the stage to
- * turn the raw overall energy into a smooth "beat" signal that pops on transients
- * and eases back. Pure; the renderer holds the previous value.
- */
-export function beatEnvelope(
-  previous: number,
-  energy: number,
-  attack = 0.5,
-  release = 0.06,
-): number {
-  const rate = energy > previous ? attack : release;
-  return previous + (energy - previous) * rate;
-}

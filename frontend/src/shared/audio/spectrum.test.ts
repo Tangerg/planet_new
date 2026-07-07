@@ -2,14 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   adaptiveGain,
+  beatEnvelope,
   initialAdaptiveGain,
   normalizeFftByte,
   smoothSignalValue,
   smoothSpectrum,
   spectrumFrame,
-} from "./audio-spectrum";
+} from "./spectrum";
 
-describe("audio spectrum model", () => {
+describe("audio spectrum", () => {
   it("compresses FFT bytes into log-frequency bands weighted toward where energy sits", () => {
     // Energy packed into the low bins → the low band should tower over the highs.
     const bytes = new Uint8Array(64);
@@ -47,6 +48,11 @@ describe("audio spectrum model", () => {
     expect(normalizeFftByte(510)).toBe(1);
   });
 
+  it("follows beats with a fast attack and slow release", () => {
+    expect(beatEnvelope(0, 1, 0.5, 0.06)).toBeCloseTo(0.5); // snaps up
+    expect(beatEnvelope(1, 0, 0.5, 0.06)).toBeCloseTo(0.94); // eases down
+  });
+
   it("rejects invalid band counts", () => {
     expect(() => spectrumFrame(new Uint8Array([1]), 0)).toThrow("bandCount");
   });
@@ -67,8 +73,8 @@ describe("adaptive gain", () => {
   it("centres quiet and loud steady spectra at the same level", () => {
     const quiet = converge([0.08, 0.05, 0.03]);
     const loud = converge([0.9, 0.6, 0.35]);
-    // A band sitting at its own running level renders at LEVEL_TARGET, whatever the
-    // absolute loudness — so both tracks centre at the same height.
+    // A band at its own running level renders at LEVEL_TARGET, whatever the absolute
+    // loudness — so both tracks centre at the same height.
     expect(quiet.bands[0]).toBeCloseTo(0.5, 1);
     expect(loud.bands[0]).toBeCloseTo(0.5, 1);
   });
@@ -77,8 +83,6 @@ describe("adaptive gain", () => {
     const steady = converge([0.5, 0.5]);
     const spike = adaptiveGain([0.85, 0.5], steady.level);
     const dip = adaptiveGain([0.28, 0.5], steady.level);
-    // The band that jumps rises above centre; the one that drops falls below it;
-    // the unchanged band stays put — i.e. the wave moves with the moment.
     expect(spike.bands[0]).toBeGreaterThan(0.6);
     expect(dip.bands[0]).toBeLessThan(0.4);
     expect(spike.bands[1]).toBeCloseTo(0.5, 1);

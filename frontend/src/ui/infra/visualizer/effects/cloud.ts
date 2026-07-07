@@ -1,8 +1,8 @@
-import { spectralLightColors } from "@/model/audio-visualization";
+import { spectralLightColors } from "@/model/audio-light-palette";
 import type { CoverParticles } from "@/model/stage-particles";
 
 import { coverColors, coverParticles } from "../cover";
-import type { VisualEffect, VisualEffectInstance, VisualFrame } from "../engine";
+import type { VisualEffect, VisualEffectInstance, VisualFrame } from "../effect";
 
 // A WebGL port of Mineradio's "SILK" preset: the album cover is a plane of points
 // rippling in Z. Simplex noise driven by bass/mid/treble (plus beat bursts and each

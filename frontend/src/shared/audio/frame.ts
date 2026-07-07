@@ -5,9 +5,9 @@ import {
   spectrumFrame,
   type AdaptiveGainOptions,
   type AdaptiveGainState,
-} from "./audio-spectrum";
+} from "./spectrum";
 
-/** The per-frame data visualizers render from — just the display bands. */
+/** The per-frame data consumers render from — just the display bands. */
 export type AudioLightFrame = {
   bands: readonly number[];
 };
@@ -19,9 +19,8 @@ export type AudioLightFrameState = AudioLightFrame & {
 };
 
 // Light display damping only — near-instant attack and a fast release so the AGC's
-// beat-to-beat jitter survives to the screen instead of being averaged flat. Heavy
-// smoothing here (plus the AnalyserNode's own) is what made loud tracks look pinned
-// and their motion sluggish.
+// beat-to-beat jitter survives instead of being averaged flat. Heavy smoothing here
+// (plus the AnalyserNode's own) is what made loud tracks look pinned and sluggish.
 const ATTACK = 0.82;
 const RELEASE = 0.46;
 

@@ -5,10 +5,10 @@ import {
   spectralLightColors,
   type HslColor,
   type SpectralLightColors,
-} from "@/model/audio-visualization";
+} from "@/model/audio-light-palette";
 
 import { coverColors } from "../cover";
-import type { VisualEffect, VisualFrame } from "../engine";
+import type { VisualEffect, VisualFrame } from "../effect";
 
 // Low-discrepancy scatter in [0,1): a golden-ratio additive recurrence gives an even
 // spread with no repetition for any lane count. Different seeds → independent lane

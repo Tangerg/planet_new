@@ -1,5 +1,10 @@
 import { clamp } from "@shared/math";
 
+// Pure spectral DSP: FFT bytes → log-frequency display bands, per-band adaptive
+// gain, smoothing, and a beat envelope. Framework-agnostic and zero-dependency
+// (only @shared/math), so it lives in @shared — the live AnalyserNode (Web Audio
+// I/O) stays in @core; these are just the algorithms operating on number arrays.
+
 export const FFT_BYTE_MAX = 255;
 
 // The lowest FFT bin is DC (0 Hz) — an offset, not music. Start the bass band at
@@ -165,4 +170,19 @@ export function smoothSpectrum(
     const prev = previous[index] ?? 0;
     return smoothSignalValue(prev, value, attack, release);
   });
+}
+
+/**
+ * One-pole envelope follower with independent attack/release — turns a raw energy
+ * signal into a smooth "beat" that pops on transients and eases back. Pure; the
+ * caller holds the previous value.
+ */
+export function beatEnvelope(
+  previous: number,
+  energy: number,
+  attack = 0.5,
+  release = 0.06,
+): number {
+  const rate = energy > previous ? attack : release;
+  return previous + (energy - previous) * rate;
 }
