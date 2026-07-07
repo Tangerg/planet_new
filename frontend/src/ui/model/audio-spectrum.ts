@@ -106,6 +106,17 @@ export function spectrumFrame(bytes: ArrayLike<number>, bandCount: number): Spec
 /** Per-band running level carried across frames — the AGC divisor's memory. */
 export type AdaptiveGainState = readonly number[];
 
+/** Per-call AGC tuning; each field defaults to the module constant above. Lets a
+ *  consumer shape the dynamics (a gentle effect vs an agitated one). */
+export type AdaptiveGainOptions = {
+  rise?: number;
+  fall?: number;
+  target?: number;
+  contrast?: number;
+  floorAbs?: number;
+  floorRel?: number;
+};
+
 export function initialAdaptiveGain(bandCount: number): number[] {
   return Array.from({ length: bandCount }, () => 0);
 }
@@ -113,23 +124,31 @@ export function initialAdaptiveGain(bandCount: number): number[] {
 /**
  * Normalise each raw band against its own slow running level (fast rise, slow
  * fall), rendering the moment's deviation from that level with contrast. Quiet and
- * loud tracks both centre at LEVEL_TARGET, while each keeps its beat-to-beat
- * motion. Returns the display bands and the updated level to carry forward. Pure.
+ * loud tracks both centre at `target`, while each keeps its beat-to-beat motion.
+ * Returns the display bands and the updated level to carry forward. Pure.
  */
 export function adaptiveGain(
   raw: readonly number[],
   previousLevel: AdaptiveGainState,
+  opts: AdaptiveGainOptions = {},
 ): { bands: number[]; level: number[] } {
+  const rise = opts.rise ?? LEVEL_RISE;
+  const fall = opts.fall ?? LEVEL_FALL;
+  const target = opts.target ?? LEVEL_TARGET;
+  const contrast = opts.contrast ?? LEVEL_CONTRAST;
+  const floorAbs = opts.floorAbs ?? GAIN_FLOOR_ABS;
+  const floorRel = opts.floorRel ?? GAIN_FLOOR_REL;
+
   const level = raw.map((value, i) => {
     const prev = previousLevel[i] ?? 0;
-    const rate = value >= prev ? LEVEL_RISE : LEVEL_FALL;
+    const rate = value >= prev ? rise : fall;
     return prev + (value - prev) * rate;
   });
   const peakLevel = level.reduce((max, value) => (value > max ? value : max), 0);
-  const floor = Math.max(GAIN_FLOOR_ABS, peakLevel * GAIN_FLOOR_REL);
+  const floor = Math.max(floorAbs, peakLevel * floorRel);
   const bands = raw.map((value, i) => {
     const divisor = Math.max(level[i] ?? 0, floor);
-    return clamp(0, 1, LEVEL_TARGET * Math.pow(value / divisor, LEVEL_CONTRAST));
+    return clamp(0, 1, target * Math.pow(value / divisor, contrast));
   });
   return { bands, level };
 }

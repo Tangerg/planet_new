@@ -84,6 +84,13 @@ describe("adaptive gain", () => {
     expect(spike.bands[1]).toBeCloseTo(0.5, 1);
   });
 
+  it("honors a higher contrast option with a bigger swing", () => {
+    const steady = converge([0.5, 0.5]);
+    const soft = adaptiveGain([0.85, 0.5], steady.level, { contrast: 1.2 });
+    const hard = adaptiveGain([0.85, 0.5], steady.level, { contrast: 2.4 });
+    expect(hard.bands[0]).toBeGreaterThan(soft.bands[0]);
+  });
+
   it("keeps a near-dead band from being amplified into noise", () => {
     const { bands } = converge([1.0, 0.01]);
     expect(bands[1]).toBeLessThan(0.1);

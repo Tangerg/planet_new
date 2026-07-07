@@ -3,6 +3,7 @@ import {
   initialAdaptiveGain,
   smoothSpectrum,
   spectrumFrame,
+  type AdaptiveGainOptions,
   type AdaptiveGainState,
 } from "./audio-spectrum";
 
@@ -37,11 +38,19 @@ export function nextAudioLightFrame({
   bytes,
   read,
   bandCount,
+  attack = ATTACK,
+  release = RELEASE,
+  gain,
 }: {
   previous: AudioLightFrameState;
   bytes: ArrayLike<number>;
   read: boolean;
   bandCount: number;
+  /** Display-damping attack/release (default to the module tuning). */
+  attack?: number;
+  release?: number;
+  /** Adaptive-gain dynamics (default to the AGC's own). */
+  gain?: AdaptiveGainOptions;
 }): AudioLightFrameState {
   const base =
     previous.bands.length === bandCount ? previous : initialAudioLightFrameState(bandCount);
@@ -50,7 +59,7 @@ export function nextAudioLightFrame({
   // envelope decays and the bands release toward the baseline, so playback resumes
   // lively instead of over-boosted from a stale envelope.
   const raw = frame?.active ? frame.bands : zeros(bandCount);
-  const gained = adaptiveGain(raw, base.level);
-  const bands = smoothSpectrum(base.bands, gained.bands, ATTACK, RELEASE);
+  const gained = adaptiveGain(raw, base.level, gain);
+  const bands = smoothSpectrum(base.bands, gained.bands, attack, release);
   return { bands, level: gained.level };
 }

@@ -1,7 +1,13 @@
 import { clamp } from "@shared/math";
 
-import { hsla, type HslColor, type SpectralLightColors } from "@/model/audio-visualization";
+import {
+  hsla,
+  spectralLightColors,
+  type HslColor,
+  type SpectralLightColors,
+} from "@/model/audio-visualization";
 
+import { coverColors } from "../cover";
 import type { VisualEffect, VisualFrame } from "../engine";
 
 // Low-discrepancy scatter in [0,1): a golden-ratio additive recurrence gives an even
@@ -101,10 +107,12 @@ export const wavesEffect: VisualEffect = {
         ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
       },
 
-      draw({ width, height, timeSec, playing, audio, colors }: VisualFrame) {
+      draw({ width, height, timeSec, playing, audio, image, accent }: VisualFrame) {
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
+        // The drawing side fetches its own cover palette (memoized in spectralLightColors).
+        const colors = spectralLightColors({ accent, tones: coverColors(image) ?? [accent] });
         const idleBreath = 0.5 + Math.sin(timeSec * 1.1) * 0.5;
         // Lane 0 is the raw/overall backbone; lanes 1..N are the frequency bands.
         const levels = [audio.overall, ...audio.bands];

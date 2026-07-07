@@ -1,5 +1,7 @@
+import { spectralLightColors } from "@/model/audio-visualization";
 import type { CoverParticles } from "@/model/stage-particles";
 
+import { coverColors, coverParticles } from "../cover";
 import type { VisualEffect, VisualEffectInstance, VisualFrame } from "../engine";
 
 // A WebGL port of Mineradio's "SILK" preset: the album cover is a plane of points
@@ -167,6 +169,9 @@ const POINT_SCALE = 2.4;
 export const cloudEffect: VisualEffect = {
   id: "particles",
   labelKey: "stage.effect.particles",
+  // Punchier than the default: the particle cloud reads best when it's agitated —
+  // snappier damping, more contrast, and a touch more beat sensitivity.
+  tuning: { levelContrast: 1.9, attack: 0.9, release: 0.55, levelFall: 0.045, burstGain: 3.8 },
   create(canvas: HTMLCanvasElement): VisualEffectInstance {
     const gl = canvas.getContext("webgl", {
       alpha: false,
@@ -220,11 +225,14 @@ export const cloudEffect: VisualEffect = {
         dprPixel = dpr;
       },
 
-      draw({ timeSec, audio, colors, particles }: VisualFrame) {
+      draw({ timeSec, audio, image, accent }: VisualFrame) {
         if (!gl || !prog || !loc || !buffers) return;
+        // The drawing side fetches its own cover cloud + palette.
+        const particles = coverParticles(image);
         if (particles && particles !== seeds) upload(particles);
 
-        const tint = colors.stops[0]?.color;
+        const tint = spectralLightColors({ accent, tones: coverColors(image) ?? [accent] }).stops[0]
+          ?.color;
         const [cr, cg, cb] = tint
           ? hslToRgb(tint.h, Math.min(tint.s, 45), Math.min(tint.l, 6))
           : [0.02, 0.02, 0.03];
