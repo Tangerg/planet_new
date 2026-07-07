@@ -1,11 +1,6 @@
 import { clamp } from "@shared/math";
 
-import {
-  hsla,
-  spectralLightColors,
-  type AudioLightFrame,
-  type HslColor,
-} from "@/model/audio-visualization";
+import { hsla, spectralLightColors, type AudioLightFrame } from "@/model/audio-visualization";
 
 export type BreathingLightSkin = {
   accent: string;
@@ -92,7 +87,10 @@ function paintFlameLayer(
   pulse: number,
   layer: FlameLayer,
 ): void {
-  ctx.fillStyle = stopsGradient(ctx, width, colors, (intensity) => layer.alpha * (0.4 + intensity));
+  // Uniform alpha across the sweep — every hue is equally present, so the colour
+  // reads as an even left→right spectrum. The MUSIC shows in the flame height, not
+  // by making loud bands' colours more opaque (that made the field lumpy).
+  ctx.fillStyle = stopsGradient(ctx, width, colors, () => layer.alpha);
   ctx.beginPath();
   ctx.moveTo(0, height + 2);
   const steps = 80;
@@ -113,32 +111,9 @@ function paintAmbientWash(
   colors: SpectralPaintColors,
   pulse: number,
 ): void {
-  // A low base so quiet passages still carry the cool→warm temperature field.
-  ctx.fillStyle = stopsGradient(
-    ctx,
-    width,
-    colors,
-    (intensity) => 0.05 + pulse * 0.06 + intensity * 0.05,
-  );
-  ctx.fillRect(0, 0, width, height);
-}
-
-function paintBloom(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  dominant: HslColor,
-  pulse: number,
-  centerX: number,
-  radius: number,
-): void {
-  // A travelling bloom in the dominant pitch colour — the soft core. Kept modest
-  // so overlapping additive layers don't blow the centre out to a cheap white.
-  const bloom = ctx.createRadialGradient(centerX, height * 0.72, 0, centerX, height * 0.72, radius);
-  bloom.addColorStop(0, hsla(dominant, 0.08 + pulse * 0.26));
-  bloom.addColorStop(0.42, hsla(dominant, 0.04 + pulse * 0.12));
-  bloom.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = bloom;
+  // A low, even base carrying the full left→right spectrum (uniform, not weighted
+  // by band energy) so the colour field stays evenly distributed.
+  ctx.fillStyle = stopsGradient(ctx, width, colors, () => 0.06 + pulse * 0.05);
   ctx.fillRect(0, 0, width, height);
 }
 
@@ -169,14 +144,9 @@ export function paintBreathingLight({
     hueDrift,
   });
 
-  const drift = Math.sin(timeSec * 0.19) * 0.16;
-  const centerX = width * (0.5 + drift);
-  const radius = Math.max(width * (0.5 + pulse * 0.22), height * 4);
-
   paintAmbientWash(ctx, width, height, colors, pulse);
 
   ctx.globalCompositeOperation = "lighter";
-  paintBloom(ctx, width, height, colors.line, pulse, centerX, radius);
   for (const layer of FLAME_LAYERS) {
     paintFlameLayer(ctx, width, height, timeSec, frame.bands, colors, pulse, layer);
   }

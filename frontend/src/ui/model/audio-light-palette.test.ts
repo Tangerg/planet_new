@@ -6,10 +6,10 @@ import { hsla, spectralLightColors } from "./audio-light-palette";
 const base = { accent: "#14ff82", tintA: "#2bd4ff", tintB: "#ff2d95" };
 const activeProfile = { low: 0.7, mid: 0.44, high: 0.58, peak: 0.84, active: true };
 
-// Position on the cool→warm ramp: 0 = cool (indigo-blue), 1 = warm (dusty rose).
-// Mirrors the model's COOL_HUE=228 + at*120 sweep.
+// Position on the cool→warm ramp: 0 = cool (teal), 1 = warm (amber-gold).
+// Mirrors the model's COOL_HUE=190 + at*210 sweep (wraps past 360°).
 function rampPosition(hue: number): number {
-  return Math.min(1, Math.max(0, ((((hue - 228) % 360) + 360) % 360) / 120));
+  return Math.min(1, Math.max(0, ((((hue - 190) % 360) + 360) % 360) / 210));
 }
 
 describe("audio light palette model (cyberpunk temperature)", () => {
