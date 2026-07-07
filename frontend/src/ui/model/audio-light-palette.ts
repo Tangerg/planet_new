@@ -25,15 +25,14 @@ export type SpectralLightColors = {
   stops: readonly SpectralColorStop[];
 };
 
-// ── Understated-neon temperature ramp (轻奢) ─────────────────────────────────
-// Pitch → colour TEMPERATURE: LOW frequencies read COOL, HIGH read WARM. The ramp
-// is deliberately NARROW and cohesive — indigo-blue → violet → purple → magenta →
-// dusty rose — rather than a full-spectrum rainbow. A tight, adjacent-hue sweep at
-// jewel-tone (not fluorescent) saturation reads as an intentional, premium
-// gradient; the old cyan→red rainbow at max saturation read cheap. No green/cyan
-// or pure red at the ends.
-const COOL_HUE = 228;
-const WARM_HUE = 348;
+// ── Left-to-right generated temperature spectrum ─────────────────────────────
+// The hue is generated purely from horizontal position and sweeps EVENLY across a
+// wide arc — teal → blue → violet → magenta → rose → red → amber-gold — so no
+// single family (the cheap blue/purple) dominates; every colour gets equal width.
+// Pitch → temperature still holds spatially (LOW/left = cool teal, HIGH/right =
+// warm gold). A gold warm end + jewel (not fluorescent) saturation keep it premium.
+const COOL_HUE = 190;
+const WARM_HUE = 400; // wraps past 360 → 40° (amber-gold); span is even across x
 const HUE_SPAN = WARM_HUE - COOL_HUE;
 // Jewel-tone base saturation — rich but restrained; music energy lifts it a little,
 // never to fluorescent.
