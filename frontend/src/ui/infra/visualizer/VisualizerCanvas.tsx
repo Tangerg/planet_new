@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
 import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
-import { useCoverColors } from "@/hooks/useCoverColors";
-import { useCoverParticles } from "@/hooks/useCoverParticles";
 import {
   initialAudioLightFrameState,
   nextAudioLightFrame,
-  spectralLightColors,
   type AudioLightFrameState,
-  type SpectralLightColors,
 } from "@/model/audio-visualization";
-import type { CoverParticles } from "@/model/stage-particles";
 
 import {
   audioReactive,
   initialReactiveState,
+  resolveEngineConfig,
+  type EngineConfig,
   type ReactiveState,
   type VisualEffect,
 } from "./engine";
@@ -23,8 +20,6 @@ type Props = {
   effect: VisualEffect;
   image?: string;
   accent: string;
-  /** Tones to use when the cover can't be sampled (e.g. the bar's seed tints). */
-  fallbackTones?: readonly string[];
   playing: boolean;
   /** Keep animating while paused (immersive stage). The player bar passes false so
    *  it settles to a static frame and stops the rAF loop when nothing is playing. */
@@ -33,52 +28,49 @@ type Props = {
   style?: CSSProperties;
 };
 
-const BAND_COUNT = 18;
-const FFT_SIZE = 2048;
+const BAND_COUNT = 18; // internal spectral resolution; effects regroup via config.bands
 const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling the field
 
 /**
- * The shared visualiser host — the engine's runtime. It samples the kernel analyser,
- * runs the cover → palette + particles pipelines, derives the reactive audio once
- * (audioReactive), and drives the active effect, which owns its own 2D/WebGL context.
- * Both the player bar and the fullscreen stage mount this; they differ only in which
- * effect they pass and whether it animates while paused. Volatile inputs are read
- * through refs so cover/palette/play changes don't restart the loop; the effect id
- * (via the canvas key) is the only thing that rebuilds the instance.
+ * The shared visualiser host — the audio engine's runtime. It samples the kernel
+ * analyser (tuned per effect), derives the reactive audio once (audioReactive), and
+ * drives the active effect, which owns its 2D/WebGL context AND fetches its own cover
+ * art / other material (the engine stays audio-only). Both the player bar and the
+ * fullscreen stage mount this; they differ only in the effect and animate-while-paused.
+ * Volatile inputs are read through refs so image/accent/play changes don't restart the
+ * loop; the effect id (via the canvas key) is the only thing that rebuilds the instance.
  */
 export function VisualizerCanvas({
   effect,
   image,
   accent,
-  fallbackTones,
   playing,
   animateWhilePaused = true,
   className,
   style,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cover = useCoverColors(image);
-  const particles = useCoverParticles(image);
-  const tones = useMemo(() => cover ?? fallbackTones ?? [accent], [cover, fallbackTones, accent]);
-  const colors = useMemo(() => spectralLightColors({ accent, tones }), [accent, tones]);
+  const config = useMemo(() => resolveEngineConfig(effect.tuning), [effect]);
 
   const sampler = useAudioSpectrum({
     enabled: playing,
-    fftSize: FFT_SIZE,
-    smoothingTimeConstant: 0.5,
-    minDecibels: -100,
-    maxDecibels: -12,
+    fftSize: config.fftSize,
+    smoothingTimeConstant: config.smoothingTimeConstant,
+    minDecibels: config.minDecibels,
+    maxDecibels: config.maxDecibels,
   });
 
   const samplerRef = useRef(sampler);
-  const colorsRef = useRef<SpectralLightColors>(colors);
-  const particlesRef = useRef<CoverParticles | null>(particles ?? null);
+  const configRef = useRef<EngineConfig>(config);
+  const imageRef = useRef(image);
+  const accentRef = useRef(accent);
   const playingRef = useRef(playing);
   const animatePausedRef = useRef(animateWhilePaused);
   const kickRef = useRef<() => void>(() => {});
   samplerRef.current = sampler;
-  colorsRef.current = colors;
-  particlesRef.current = particles ?? null;
+  configRef.current = config;
+  imageRef.current = image;
+  accentRef.current = accent;
   playingRef.current = playing;
   animatePausedRef.current = animateWhilePaused;
 
@@ -111,6 +103,7 @@ export function VisualizerCanvas({
     observer.observe(canvas);
 
     const draw = (time: number) => {
+      const cfg = configRef.current;
       const dtSec = Math.min(MAX_DT, Math.max(0, (time - last) / 1000));
       last = time;
       if (bytes.length !== samplerRef.current.binCount) {
@@ -122,10 +115,18 @@ export function VisualizerCanvas({
         bytes,
         read,
         bandCount: BAND_COUNT,
+        attack: cfg.attack,
+        release: cfg.release,
+        gain: {
+          rise: cfg.levelRise,
+          fall: cfg.levelFall,
+          target: cfg.levelTarget,
+          contrast: cfg.levelContrast,
+        },
       });
       const isPlaying = playingRef.current;
       const timeSec = time / 1000;
-      const derived = audioReactive(frameState, reactive, isPlaying, timeSec);
+      const derived = audioReactive(frameState, reactive, isPlaying, timeSec, cfg);
       reactive = derived.state;
 
       instance.draw({
@@ -136,8 +137,8 @@ export function VisualizerCanvas({
         dtSec,
         playing: isPlaying,
         audio: derived.audio,
-        colors: colorsRef.current,
-        particles: particlesRef.current,
+        image: imageRef.current,
+        accent: accentRef.current,
       });
 
       // Keep spinning while playing (or when the surface wants idle motion); otherwise

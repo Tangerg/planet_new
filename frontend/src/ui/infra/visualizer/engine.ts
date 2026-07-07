@@ -1,10 +1,11 @@
-import type { AudioLightFrame, SpectralLightColors } from "@/model/audio-visualization";
+import type { AudioLightFrame } from "@/model/audio-visualization";
 import { audioLanes } from "@/model/audio-visualization";
-import { beatEnvelope, type CoverParticles } from "@/model/stage-particles";
+import { beatEnvelope } from "@/model/stage-particles";
 
-// One canonical band resolution the whole engine produces; effects regroup as
-// needed (waves draws a ribbon per band, the cloud sums them into bass/mid/treble).
-const BANDS = 8;
+// The engine is AUDIO ONLY. Cover art, lyrics, and any other non-audio material are
+// the drawing side's concern — an effect fetches them itself (see cover.ts) so the
+// engine never grows a dependency on them. Everything below is audio processing +
+// the per-effect tuning of that processing.
 
 /** The audio, reduced to the reactive values effects actually draw from — computed
  *  once by the engine so no effect re-derives them. All 0..1 (AGC-centred ≈ 0.5). */
@@ -23,9 +24,53 @@ export type AudioReactive = {
 };
 
 /**
- * Everything an effect consumes for one frame: the reactive audio, the cover-derived
- * palette + particle cloud (optional), sizing, and timing. This is the engine's
- * output; an effect is just a consumer of it (drawing with 2D or WebGL, its choice).
+ * Per-effect tuning of the audio pipeline. Defaults (DEFAULT_ENGINE_CONFIG) are the
+ * values the player-bar waves use; an effect overrides only what fits its character
+ * — a gentle effect softens the smoothing/contrast, an agitated one snaps it up.
+ */
+export type EngineConfig = {
+  // Sampling (AnalyserNode).
+  fftSize: number;
+  smoothingTimeConstant: number;
+  minDecibels: number;
+  maxDecibels: number;
+  // Adaptive gain (per-band dynamics).
+  levelRise: number;
+  levelFall: number;
+  levelTarget: number;
+  levelContrast: number;
+  // Display damping (how fast bands rise/fall on screen).
+  attack: number;
+  release: number;
+  // Reactive shaping.
+  bands: number; // how many bands effects receive
+  burstGain: number; // beat/transient sensitivity
+};
+
+export const DEFAULT_ENGINE_CONFIG: EngineConfig = {
+  fftSize: 2048,
+  smoothingTimeConstant: 0.5,
+  minDecibels: -100,
+  maxDecibels: -12,
+  levelRise: 0.12,
+  levelFall: 0.035,
+  levelTarget: 0.5,
+  levelContrast: 1.6,
+  attack: 0.82,
+  release: 0.46,
+  bands: 8,
+  burstGain: 3.2,
+};
+
+export function resolveEngineConfig(tuning?: Partial<EngineConfig>): EngineConfig {
+  return tuning ? { ...DEFAULT_ENGINE_CONFIG, ...tuning } : DEFAULT_ENGINE_CONFIG;
+}
+
+/**
+ * Everything an effect consumes for one frame: the reactive audio (the engine's
+ * output), sizing/timing, and the render context it may fetch its own material from
+ * (the cover URL + theme accent). Cover pixels / palette / lyrics are NOT here — an
+ * effect loads what it wants from `image`.
  */
 export type VisualFrame = {
   width: number;
@@ -36,9 +81,10 @@ export type VisualFrame = {
   dtSec: number;
   playing: boolean;
   audio: AudioReactive;
-  colors: SpectralLightColors;
-  /** The current cover as a particle cloud, or null while it loads / can't be read. */
-  particles: CoverParticles | null;
+  /** Current cover URL — an effect may load/sample it (via cover.ts) if it wants. */
+  image?: string;
+  /** Theme accent — a palette fallback when there's no cover. */
+  accent: string;
 };
 
 /** Persisted reactive state (running mean + beat) the engine threads across frames. */
@@ -65,8 +111,9 @@ export function audioReactive(
   previous: ReactiveState,
   playing: boolean,
   timeSec: number,
+  config: EngineConfig,
 ): { audio: AudioReactive; state: ReactiveState } {
-  const lanes = audioLanes(frame, BANDS);
+  const lanes = audioLanes(frame, config.bands);
   const bands = lanes.slice(1).map((lane) => lane.energy);
   const overall = playing ? lanes[0].energy : 0.14 + 0.05 * Math.sin(timeSec * 0.8);
   const last = bands.length - 1;
@@ -75,7 +122,7 @@ export function audioReactive(
   const treble = group(bands, 6, last);
 
   const mean = previous.mean + (overall - previous.mean) * 0.03;
-  const burst = Math.max(0, overall - mean) * 3.2;
+  const burst = Math.max(0, overall - mean) * config.burstGain;
   const beat = beatEnvelope(previous.beat, Math.min(1.4, burst));
 
   return {
@@ -87,7 +134,8 @@ export function audioReactive(
 // ── Effect contract ──────────────────────────────────────────────────────────
 // An effect receives a fresh canvas (so 2D and WebGL contexts never collide) and
 // returns an instance that draws one VisualFrame at a time. Adding a visual is: a
-// create() consuming the frame + one registry entry — nothing else in the pipeline.
+// create() consuming the frame + one registry entry. An effect may declare `tuning`
+// to shape the audio the engine feeds it.
 export type VisualEffectInstance = {
   /** Backing store was resized; re-set the viewport / transform. */
   resize?(width: number, height: number, dpr: number): void;
@@ -99,5 +147,7 @@ export type VisualEffect = {
   id: string;
   /** i18n key for the switcher label. */
   labelKey: string;
+  /** Optional per-effect audio-pipeline tuning (merged over DEFAULT_ENGINE_CONFIG). */
+  tuning?: Partial<EngineConfig>;
   create(canvas: HTMLCanvasElement): VisualEffectInstance;
 };
