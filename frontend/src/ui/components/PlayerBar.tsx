@@ -90,7 +90,13 @@ export const PlayerBar = React.memo(function PlayerBar({
         }}
       />
 
-      <BreathingLight playing={playing && !!track?.playUrl} accent={accent} tintA={a} tintB={b} />
+      <BreathingLight
+        playing={playing && !!track?.playUrl}
+        accent={accent}
+        tintA={a}
+        tintB={b}
+        image={track?.image}
+      />
 
       <PlayerTrackIdentity
         track={track}
