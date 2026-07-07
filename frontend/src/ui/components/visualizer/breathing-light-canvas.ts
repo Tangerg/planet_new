@@ -50,23 +50,36 @@ type LaneStyle = {
   amp: number;
   phase: number;
   alpha: number;
-  reactive: number;
-  base: number;
+  react: number;
+  rest: number;
 };
 
-// Per-lane flow/render params, derived from the lane's position so it scales to any
-// lane count. Back (raw/low) sits a touch taller & more opaque; front (high) is
-// thinner & more reactive. Each flows at its own speed/phase for a churning stack.
-function laneStyle(index: number, total: number): LaneStyle {
-  const t = total > 1 ? index / (total - 1) : 0;
+// The AGC centres every band at this level (its LEVEL_TARGET), so a lane sitting at
+// its running level renders here; the beat swings it above/below.
+const LANE_CENTER = 0.5;
+
+// Deterministic, non-monotonic 0..1 per lane. Two out-of-phase sines (different
+// frequency + phase) give each lane independent height and reactivity character, so
+// the stack reads as uneven, layered waves ("错落有致") instead of one uniform blob —
+// and it scales to any lane count.
+function laneWave(index: number, freq: number, phase: number): number {
+  return 0.5 + 0.5 * Math.sin(index * freq + phase);
+}
+
+// Per-lane render params. `rest` = resting height and `react` = how hard the beat
+// swings this lane — staggered independently, so some lanes are tall & calm and
+// others low & jumpy. speed/waves/phase give each its own horizontal flow.
+function laneStyle(index: number): LaneStyle {
+  const vh = laneWave(index, 1.7, 1.0); // resting-height character
+  const vr = laneWave(index, 1.1, 4.3); // reactivity character
   return {
     speed: (0.7 + index * 0.32) * (index % 2 === 0 ? 1 : -1),
     waves: 1.2 + index * 0.38,
-    amp: 0.15 - t * 0.04,
+    amp: 0.05 + vh * 0.05,
     phase: index * 1.1,
-    alpha: 0.36 - t * 0.07,
-    reactive: 0.56 + t * 0.16,
-    base: 0.15 - t * 0.05,
+    alpha: 0.22 + vr * 0.13,
+    react: 0.35 + vr * 0.7,
+    rest: 0.16 + vh * 0.5,
   };
 }
 
@@ -75,13 +88,10 @@ function paintLane(
   width: number,
   height: number,
   timeSec: number,
-  energy: number,
+  centerHeight: number,
   color: HslColor,
   style: LaneStyle,
 ): void {
-  // Soft-knee limiter: linear (punchy dynamics) below the knee, gently compressed
-  // above so only the biggest transients graze the ceiling.
-  const level = energy <= 0.72 ? energy : 0.72 + (energy - 0.72) * 0.45;
   ctx.globalAlpha = style.alpha;
   ctx.fillStyle = hsla(color, 1);
   ctx.beginPath();
@@ -94,13 +104,8 @@ function paintLane(
       u * style.waves * 1.9 * Math.PI * 2 - timeSec * style.speed * 0.6 + style.phase,
     );
     const flow = w1 * 0.62 + w2 * 0.38;
-    // A steady baseline so the lane keeps a consistent height; its band pushes the
-    // peak up from it (level·reactive), and the flow gives an organic ripple.
-    const h = clamp(
-      0,
-      1.05,
-      style.base + level * style.reactive + flow * style.amp * (0.3 + level),
-    );
+    // The lane's center height (rest ± beat swing) with an organic horizontal ripple.
+    const h = clamp(0, 1.1, centerHeight + flow * style.amp);
     ctx.lineTo(u * width, height - h * height);
   }
   ctx.lineTo(width, height + 2);
@@ -121,15 +126,21 @@ export function paintBreathingLight({
   ctx.clearRect(0, 0, width, height);
 
   const idleBreath = 0.5 + Math.sin(timeSec * 1.1) * 0.5;
-  const idle = 0.06 + idleBreath * 0.05;
   const colors = spectralLightColors({ accent: skin.accent, tones: skin.tones });
   const lanes = audioLanes(frame, BAND_LANES);
   const denom = Math.max(1, lanes.length - 1);
 
   lanes.forEach((lane, k) => {
-    // Each lane reacts to its own band; idle keeps a gentle breath when paused.
-    const energy = playing ? lane.energy : idle;
+    const style = laneStyle(k);
+    // Soft-knee so only the biggest transients graze the ceiling.
+    const level = lane.energy <= 0.72 ? lane.energy : 0.72 + (lane.energy - 0.72) * 0.45;
+    // Playing: swing above/below this lane's resting height by how far its energy
+    // sits from the AGC centre, scaled by the lane's own amplitude → uneven, layered
+    // motion. Paused: settle to a gentle low breath at a fraction of the rest height.
+    const centerHeight = playing
+      ? style.rest + (level - LANE_CENTER) * style.react
+      : style.rest * (0.4 + idleBreath * 0.12);
     const color = laneColor(colors, k / denom);
-    paintLane(ctx, width, height, timeSec, energy, color, laneStyle(k, lanes.length));
+    paintLane(ctx, width, height, timeSec, centerHeight, color, style);
   });
 }
