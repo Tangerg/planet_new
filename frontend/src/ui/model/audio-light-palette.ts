@@ -32,8 +32,8 @@ export type SpectralLightColors = {
 // within HUE_SPREAD of the primary (so no jarring value jumps), and chroma to a
 // jewel range so muted covers still show colour and neon ones stay tasteful.
 const RAMP_STEPS = 12;
-const TONE_BASE = 28; // deepest rung (bar floor)
-const TONE_RANGE = 52; // deep → bright span
+const TONE_BASE = 40; // deepest rung (bar floor) — lifted so the base isn't murky
+const TONE_RANGE = 44; // deep → bright span
 const CHROMA_MIN = 22;
 const CHROMA_MAX = 56;
 const MIN_ENDPOINTS = 3; // always gradient through ≥3 colours

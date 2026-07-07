@@ -5,9 +5,14 @@ export const FFT_BYTE_MAX = 255;
 // Spectral tilt: musical energy falls off steeply toward high frequencies, so the
 // treble (right) side of the visualizer barely moves while the bass (left) side
 // thrashes. Lift each band by a gain that rises with frequency so the field reacts
-// more evenly across its width. Top band gets ×(1 + SPECTRAL_TILT). Kept moderate;
-// the painter's soft saturation handles the remaining bass dominance.
-const SPECTRAL_TILT = 2.2;
+// more evenly across its width. Top band gets ×(1 + SPECTRAL_TILT); the painter's
+// soft-knee limiter keeps the lifted bass from clipping, so this can run high.
+const SPECTRAL_TILT = 3.0;
+
+// Only the lower fraction of FFT bins carries musical energy — the top (~15kHz+) is
+// near-silent in most tracks, so mapping the bar width all the way to Nyquist leaves
+// the right edge permanently dead. Spread the width across the musical range only.
+const USABLE_BIN_RATIO = 0.72;
 
 export type SpectrumFrame = {
   bands: readonly number[];
@@ -66,9 +71,10 @@ export function spectrumFrame(bytes: ArrayLike<number>, bandCount: number): Spec
     return { bands, low: 0, mid: 0, high: 0, peak: 0, active: false };
   }
 
+  const usable = bytes.length * USABLE_BIN_RATIO;
   const bands = Array.from({ length: bandCount }, (_, index) => {
-    const start = Math.floor(Math.pow(index / bandCount, 1.35) * bytes.length);
-    const rawEnd = Math.floor(Math.pow((index + 1) / bandCount, 1.35) * bytes.length);
+    const start = Math.floor(Math.pow(index / bandCount, 1.35) * usable);
+    const rawEnd = Math.floor(Math.pow((index + 1) / bandCount, 1.35) * usable);
     const end = Math.min(bytes.length, Math.max(start + 1, rawEnd));
     const normalized = normalizeFftByte(bandAverage(bytes, start, end));
     // Lift high frequencies (see SPECTRAL_TILT) so the treble side stays lively.

@@ -32,7 +32,9 @@ export function nextAudioLightFrame({
       ? previous.bands
       : initialAudioLightFrameState(bandCount).bands;
   const frame = read ? spectrumFrame(bytes, bandCount) : undefined;
-  const bands = smoothSpectrum(seed, frame?.active ? frame.bands : seed, 0.28, 0.08);
+  // Snappy attack + a quick release so the bars punch up on transients and drop back
+  // between beats — the pumping that reads as "reacting to the music".
+  const bands = smoothSpectrum(seed, frame?.active ? frame.bands : seed, 0.5, 0.18);
   const profile = spectrumProfile(bands);
   const idle = 0.12 + (0.5 + Math.sin(timeMs / 1000 + 0.4) * 0.5) * 0.18;
   const energy = profile.active

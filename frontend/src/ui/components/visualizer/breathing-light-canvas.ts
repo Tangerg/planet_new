@@ -34,10 +34,10 @@ type WaveLayer = {
 };
 
 const WAVE_LAYERS: readonly WaveLayer[] = [
-  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.16, reactive: 0.42 },
-  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.22, reactive: 0.5 },
-  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.3, reactive: 0.58 },
-  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.42, reactive: 0.64 },
+  { waves: 1.4, speed: 0.9, amp: 0.3, phase: 0, alpha: 0.16, reactive: 0.44 },
+  { waves: 2.0, speed: -1.4, amp: 0.26, phase: 1.6, alpha: 0.22, reactive: 0.52 },
+  { waves: 2.7, speed: 1.9, amp: 0.22, phase: 3.2, alpha: 0.3, reactive: 0.6 },
+  { waves: 3.5, speed: -2.4, amp: 0.18, phase: 4.8, alpha: 0.42, reactive: 0.68 },
 ];
 
 /** Vertical tonal gradient: deep tone at the base (y = height) → bright at the top
@@ -66,17 +66,20 @@ function waveHeight(
   layer: WaveLayer,
 ): number {
   const band = bands[Math.min(bands.length - 1, Math.floor(u * bands.length))] ?? 0;
-  // Soft saturation: loud bands approach — but never slam — the ceiling, so the
-  // bass side stops clipping flat at the top and its dominance over the treble is
-  // compressed (a limiter, not just a lower gain).
-  const level = 1 - Math.exp(-band * 2.4);
+  // Soft-KNEE limiter: linear (full dynamics → punchy) below the knee, gently
+  // compressed above so only the very biggest transients graze the ceiling. Keeps
+  // the beat's dynamics instead of flattening everything like the old exp curve did.
+  const knee = 0.72;
+  const level = band <= knee ? band : knee + (band - knee) * 0.45;
   const w1 = Math.sin(u * layer.waves * Math.PI * 2 + timeSec * layer.speed + layer.phase);
   const w2 = Math.sin(
     u * layer.waves * 1.9 * Math.PI * 2 - timeSec * layer.speed * 0.6 + layer.phase,
   );
   const flow = w1 * 0.62 + w2 * 0.38;
-  const base = 0.1 + pulse * 0.13;
-  const tongue = flow * layer.amp * (0.22 + level * 0.5);
+  // A steady baseline so the wave keeps a consistent overall height; the beat pushes
+  // per-band peaks up from it (level·reactive) rather than the whole mass pumping.
+  const base = 0.34 + pulse * 0.06;
+  const tongue = flow * layer.amp * (0.25 + level * 0.4);
   return clamp(0, 1.05, base + level * layer.reactive + tongue);
 }
 
