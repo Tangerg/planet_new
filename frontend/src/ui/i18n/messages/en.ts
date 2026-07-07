@@ -66,7 +66,7 @@ export const en = {
   stage: {
     effect: {
       particles: "Particles",
-      aurora: "Aurora",
+      waves: "Waves",
     },
   },
   counts: {

@@ -4,9 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
 import { ModeTag } from "@/components/now-playing/ModeTag";
-import { StageCanvas } from "@/components/stage/StageCanvas";
-import { DEFAULT_STAGE_EFFECT, STAGE_EFFECTS } from "@/components/stage/stage-effects";
 import { Icon } from "@/infra/icons";
+import {
+  DEFAULT_EFFECT_ID,
+  effectById,
+  VISUAL_EFFECTS,
+  VisualizerCanvas,
+} from "@/infra/visualizer";
 import type { VibeTrack } from "@/model/vibe";
 
 type Props = {
@@ -24,15 +28,16 @@ type Props = {
  */
 export function Stage({ track, accent, playing, onClose }: Props) {
   const { t } = useTranslation();
-  const [effectId, setEffectId] = useState(DEFAULT_STAGE_EFFECT);
+  const [effectId, setEffectId] = useState(DEFAULT_EFFECT_ID);
 
   return (
     <FadeIn className="relative h-full overflow-hidden bg-black">
-      <StageCanvas
-        effectId={effectId}
+      <VisualizerCanvas
+        effect={effectById(effectId)}
         image={track?.image}
         accent={accent}
         playing={playing && !!track?.playUrl}
+        className="absolute inset-0 h-full w-full"
       />
 
       <Button
@@ -53,7 +58,7 @@ export function Stage({ track, accent, playing, onClose }: Props) {
       )}
 
       <div className="absolute bottom-[32px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
-        {STAGE_EFFECTS.map((effect) => (
+        {VISUAL_EFFECTS.map((effect) => (
           <ModeTag
             key={effect.id}
             active={effect.id === effectId}

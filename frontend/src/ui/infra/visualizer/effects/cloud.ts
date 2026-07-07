@@ -1,13 +1,13 @@
-import { audioLanes } from "@/model/audio-visualization";
-import { beatEnvelope, type CoverParticles } from "@/model/stage-particles";
+import type { CoverParticles } from "@/model/stage-particles";
 
-import type { StageEffectInstance, StageFrameInput } from "./stage-effect";
+import type { VisualEffect, VisualEffectInstance, VisualFrame } from "../engine";
 
 // A WebGL port of Mineradio's "SILK" preset: the album cover is a plane of points
 // rippling in Z. Simplex noise driven by bass/mid/treble (plus beat bursts and each
 // particle's luma as depth) displaces them; perspective grows the near points; a
 // soft additive sprite makes the overlaps bloom. Raw WebGL (no three.js) — one
-// gl.POINTS draw over the cover cloud built by sampleCoverParticles.
+// gl.POINTS draw over the cover cloud built by sampleCoverParticles. Consumes the
+// engine's reactive audio (frame.audio) rather than deriving it.
 
 const VERT = `
 precision highp float;
@@ -159,137 +159,121 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   return [r + m, g + m, b + m];
 }
 
-function bandGroup(lanes: ReturnType<typeof audioLanes>, from: number, to: number): number {
-  let sum = 0;
-  for (let i = from; i <= to; i++) sum += lanes[i]?.energy ?? 0;
-  return sum / (to - from + 1);
-}
-
-const BANDS = 9;
 const SPREAD = 1.7;
 const DEPTH = 1.15;
 const FOCAL = 6;
 const POINT_SCALE = 2.4;
 
-export function createWebglCloud(canvas: HTMLCanvasElement): StageEffectInstance {
-  const gl = canvas.getContext("webgl", {
-    alpha: false,
-    antialias: true,
-    premultipliedAlpha: false,
-  });
-  const prog = gl ? program(gl) : null;
+export const cloudEffect: VisualEffect = {
+  id: "particles",
+  labelKey: "stage.effect.particles",
+  create(canvas: HTMLCanvasElement): VisualEffectInstance {
+    const gl = canvas.getContext("webgl", {
+      alpha: false,
+      antialias: true,
+      premultipliedAlpha: false,
+    });
+    const prog = gl ? program(gl) : null;
+    const loc = gl && prog ? resolveLocations(gl, prog) : null;
+    const buffers = gl
+      ? {
+          pos: gl.createBuffer(),
+          color: gl.createBuffer(),
+          luma: gl.createBuffer(),
+          rand: gl.createBuffer(),
+        }
+      : null;
 
-  // Attribute / uniform locations (resolved once the program links).
-  const loc = gl && prog ? resolveLocations(gl, prog) : null;
-  const buffers = gl
-    ? {
-        pos: gl.createBuffer(),
-        color: gl.createBuffer(),
-        luma: gl.createBuffer(),
-        rand: gl.createBuffer(),
+    let seeds: CoverParticles | null = null;
+    let count = 0;
+    let aspect = 1;
+    let dprPixel = 1;
+
+    function upload(p: CoverParticles): void {
+      if (!gl || !buffers) return;
+      seeds = p;
+      count = p.count;
+      const pos = new Float32Array(count * 2);
+      const color = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        pos[i * 2] = p.nx[i];
+        pos[i * 2 + 1] = p.ny[i];
+        color[i * 3] = p.r[i];
+        color[i * 3 + 1] = p.g[i];
+        color[i * 3 + 2] = p.b[i];
       }
-    : null;
-
-  let seeds: CoverParticles | null = null;
-  let count = 0;
-  let aspect = 1;
-  let dprPixel = 1;
-  let energyMean = 0.5;
-  let beat = 0;
-
-  function upload(p: CoverParticles): void {
-    if (!gl || !buffers) return;
-    seeds = p;
-    count = p.count;
-    const pos = new Float32Array(count * 2);
-    const color = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      pos[i * 2] = p.nx[i];
-      pos[i * 2 + 1] = p.ny[i];
-      color[i * 3] = p.r[i];
-      color[i * 3 + 1] = p.g[i];
-      color[i * 3 + 2] = p.b[i];
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.pos);
+      gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+      gl.bufferData(gl.ARRAY_BUFFER, color, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.luma);
+      gl.bufferData(gl.ARRAY_BUFFER, p.luma, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.rand);
+      gl.bufferData(gl.ARRAY_BUFFER, p.seed, gl.STATIC_DRAW);
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.pos);
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-    gl.bufferData(gl.ARRAY_BUFFER, color, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.luma);
-    gl.bufferData(gl.ARRAY_BUFFER, p.luma, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.rand);
-    gl.bufferData(gl.ARRAY_BUFFER, p.seed, gl.STATIC_DRAW);
-  }
 
-  return {
-    resize(width: number, height: number, dpr: number) {
-      if (!gl) return;
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      aspect = height / Math.max(1, width); // compress x so the cover stays square
-      dprPixel = dpr;
-    },
+    return {
+      resize(width: number, height: number, dpr: number) {
+        if (!gl) return;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        aspect = height / Math.max(1, width); // compress x so the cover stays square
+        dprPixel = dpr;
+      },
 
-    draw({ timeSec, playing, frame, colors, particles }: StageFrameInput) {
-      if (!gl || !prog || !loc || !buffers) return;
-      if (particles && particles !== seeds) upload(particles);
+      draw({ timeSec, audio, colors, particles }: VisualFrame) {
+        if (!gl || !prog || !loc || !buffers) return;
+        if (particles && particles !== seeds) upload(particles);
 
-      const tint = colors.stops[0]?.color;
-      const [cr, cg, cb] = tint
-        ? hslToRgb(tint.h, Math.min(tint.s, 45), Math.min(tint.l, 6))
-        : [0.02, 0.02, 0.03];
-      gl.clearColor(cr, cg, cb, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+        const tint = colors.stops[0]?.color;
+        const [cr, cg, cb] = tint
+          ? hslToRgb(tint.h, Math.min(tint.s, 45), Math.min(tint.l, 6))
+          : [0.02, 0.02, 0.03];
+        gl.clearColor(cr, cg, cb, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-      if (!seeds || count === 0) return;
+        if (!seeds || count === 0) return;
 
-      const lanes = audioLanes(frame, BANDS);
-      const overall = playing ? lanes[0].energy : 0.14 + 0.05 * Math.sin(timeSec * 0.8);
-      energyMean += (overall - energyMean) * 0.03;
-      const burst = Math.max(0, overall - energyMean) * 3.2;
-      beat = beatEnvelope(beat, Math.min(1.4, burst));
-      const bass = bandGroup(lanes, 1, 3);
-      const mid = bandGroup(lanes, 4, 6);
-      const treble = bandGroup(lanes, 7, BANDS);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE); // additive → overlaps bloom
+        gl.useProgram(prog);
 
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE); // additive → overlaps bloom
-      gl.useProgram(prog);
+        bindAttrib(gl, buffers.pos, loc.aPos, 2);
+        bindAttrib(gl, buffers.color, loc.aColor, 3);
+        bindAttrib(gl, buffers.luma, loc.aLuma, 1);
+        bindAttrib(gl, buffers.rand, loc.aRand, 1);
 
-      bindAttrib(gl, buffers.pos, loc.aPos, 2);
-      bindAttrib(gl, buffers.color, loc.aColor, 3);
-      bindAttrib(gl, buffers.luma, loc.aLuma, 1);
-      bindAttrib(gl, buffers.rand, loc.aRand, 1);
+        gl.uniform1f(loc.uTime, timeSec);
+        gl.uniform1f(loc.uBass, audio.bass);
+        gl.uniform1f(loc.uMid, audio.mid);
+        gl.uniform1f(loc.uTreble, audio.treble);
+        gl.uniform1f(loc.uBeat, audio.beat);
+        gl.uniform1f(loc.uEnergy, audio.overall);
+        gl.uniform1f(loc.uBurst, audio.burst);
+        gl.uniform1f(loc.uTwist, 0.12);
+        gl.uniform1f(loc.uSpread, SPREAD);
+        gl.uniform1f(loc.uDepth, DEPTH);
+        gl.uniform1f(loc.uFocal, FOCAL);
+        gl.uniform1f(loc.uPointScale, POINT_SCALE);
+        gl.uniform1f(loc.uPixel, dprPixel);
+        gl.uniform1f(loc.uAspect, aspect);
 
-      gl.uniform1f(loc.uTime, timeSec);
-      gl.uniform1f(loc.uBass, bass);
-      gl.uniform1f(loc.uMid, mid);
-      gl.uniform1f(loc.uTreble, treble);
-      gl.uniform1f(loc.uBeat, beat);
-      gl.uniform1f(loc.uEnergy, overall);
-      gl.uniform1f(loc.uBurst, burst);
-      gl.uniform1f(loc.uTwist, 0.12);
-      gl.uniform1f(loc.uSpread, SPREAD);
-      gl.uniform1f(loc.uDepth, DEPTH);
-      gl.uniform1f(loc.uFocal, FOCAL);
-      gl.uniform1f(loc.uPointScale, POINT_SCALE);
-      gl.uniform1f(loc.uPixel, dprPixel);
-      gl.uniform1f(loc.uAspect, aspect);
+        gl.drawArrays(gl.POINTS, 0, count);
+      },
 
-      gl.drawArrays(gl.POINTS, 0, count);
-    },
-
-    dispose() {
-      if (!gl) return;
-      if (prog) gl.deleteProgram(prog);
-      if (buffers) {
-        gl.deleteBuffer(buffers.pos);
-        gl.deleteBuffer(buffers.color);
-        gl.deleteBuffer(buffers.luma);
-        gl.deleteBuffer(buffers.rand);
-      }
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
-    },
-  };
-}
+      dispose() {
+        if (!gl) return;
+        if (prog) gl.deleteProgram(prog);
+        if (buffers) {
+          gl.deleteBuffer(buffers.pos);
+          gl.deleteBuffer(buffers.color);
+          gl.deleteBuffer(buffers.luma);
+          gl.deleteBuffer(buffers.rand);
+        }
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
+      },
+    };
+  },
+};
 
 type Locations = {
   aPos: number;

@@ -65,7 +65,7 @@ export const zh = {
   stage: {
     effect: {
       particles: "粒子",
-      aurora: "极光",
+      waves: "波形",
     },
   },
   counts: {
