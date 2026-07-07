@@ -4,15 +4,18 @@ import { QuantizerCelebi, Score, hexFromArgb } from "@material/material-color-ut
 
 import { loopbackProxyUrl } from "@/infra/mediaSource";
 
-// Resolved source colours per URL (null = couldn't sample — CORS-tainted or load
-// error; don't retry). Module-level so it survives re-mounts and track revisits.
-const cache = new Map<string, string | null>();
+/** Cover's [primary, secondary] theme colours (hex). */
+export type CoverColors = readonly [string, string];
 
-/** Material 3 content-based source colour of a downscaled image copy (hex), or
- *  null if it can't be read (CORS-tainted). Celebi quantization → Score picks the
- *  best theme colour (favouring chroma + population, avoiding disliked/near-grey
- *  hues) — the same pipeline Material You uses for wallpaper theming. */
-function extractSource(img: HTMLImageElement): string | null {
+// Resolved colours per URL (null = couldn't sample — CORS-tainted or load error;
+// don't retry). Module-level so it survives re-mounts and track revisits.
+const cache = new Map<string, CoverColors | null>();
+
+/** Material 3 content-based theme colours of a downscaled image copy — the top two
+ *  ranked source colours (primary + secondary), or null if it can't be read
+ *  (CORS-tainted). Celebi quantization → Score ranks by chroma + population,
+ *  avoiding disliked/near-grey hues (the Material You wallpaper-theming pipeline). */
+function extractColors(img: HTMLImageElement): CoverColors | null {
   const size = 52;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -30,29 +33,30 @@ function extractSource(img: HTMLImageElement): string | null {
   if (pixels.length === 0) return null;
 
   const ranked = Score.score(QuantizerCelebi.quantize(pixels, 64));
-  return ranked.length ? hexFromArgb(ranked[0]) : null;
+  if (!ranked.length) return null;
+  return [hexFromArgb(ranked[0]), hexFromArgb(ranked[1] ?? ranked[0])];
 }
 
 /**
- * The Material 3 content-based source colour of an image (hex) for toning UI from
- * artwork. Loads a CORS-anonymous copy through the loopback proxy and runs the M3
+ * The Material 3 content-based theme colours of an image (primary + secondary hex)
+ * for toning UI from artwork — the same two-colour idea the page backdrop uses.
+ * Loads a CORS-anonymous copy through the loopback proxy and runs the M3
  * quantize→score pipeline; returns undefined until it resolves and whenever the
- * image can't be sampled (CORS-tainted / load error), so callers fall back to
- * another tone. Cached per URL.
+ * image can't be sampled, so callers fall back to another tone. Cached per URL.
  */
-export function useDominantColor(url: string | undefined): string | undefined {
-  const [color, setColor] = useState<string | undefined>(() =>
+export function useCoverColors(url: string | undefined): CoverColors | undefined {
+  const [colors, setColors] = useState<CoverColors | undefined>(() =>
     url ? (cache.get(url) ?? undefined) : undefined,
   );
 
   useEffect(() => {
     if (!url) {
-      setColor(undefined);
+      setColors(undefined);
       return;
     }
     const cached = cache.get(url);
     if (cached !== undefined) {
-      setColor(cached ?? undefined);
+      setColors(cached ?? undefined);
       return;
     }
     let cancelled = false;
@@ -64,18 +68,18 @@ export function useDominantColor(url: string | undefined): string | undefined {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        let hex: string | null = null;
+        let result: CoverColors | null = null;
         try {
-          hex = extractSource(img);
+          result = extractColors(img);
         } catch {
-          hex = null;
+          result = null;
         }
-        cache.set(url, hex);
-        if (!cancelled) setColor(hex ?? undefined);
+        cache.set(url, result);
+        if (!cancelled) setColors(result ?? undefined);
       };
       img.onerror = () => {
         cache.set(url, null);
-        if (!cancelled) setColor(undefined);
+        if (!cancelled) setColors(undefined);
       };
       img.src = proxied;
     });
@@ -84,5 +88,5 @@ export function useDominantColor(url: string | undefined): string | undefined {
     };
   }, [url]);
 
-  return color;
+  return colors;
 }

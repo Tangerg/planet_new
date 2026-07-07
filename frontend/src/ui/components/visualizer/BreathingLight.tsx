@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
-import { useDominantColor } from "@/hooks/useDominantColor";
+import { useCoverColors } from "@/hooks/useCoverColors";
 import {
   initialAudioLightFrameState,
   nextAudioLightFrame,
@@ -25,12 +25,11 @@ const FFT_SIZE = 256;
 
 export function BreathingLight({ playing, accent, tintA, tintB, image }: BreathingLightProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Tone from the artwork's real dominant colour when it can be sampled; otherwise
-  // the seed tints. Both cover pair slots get the same colour so the ramp is a
-  // monochromatic scale of it.
-  const dominant = useDominantColor(image);
-  const toneA = dominant ?? tintA;
-  const toneB = dominant ?? tintB;
+  // Tone from the artwork's real primary + secondary colours when they can be
+  // sampled; otherwise the seed tints. The ramp gradients between the two.
+  const cover = useCoverColors(image);
+  const toneA = cover?.[0] ?? tintA;
+  const toneB = cover?.[1] ?? tintB;
   const sampler = useAudioSpectrum({
     enabled: playing,
     fftSize: FFT_SIZE,
