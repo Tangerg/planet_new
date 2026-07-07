@@ -23,14 +23,15 @@ type Props = {
 
 const BAND_COUNT = 18;
 const FFT_SIZE = 2048;
-const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling particles
+const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling the field
 
 /**
  * Fullscreen visualiser host: owns the rAF loop, the shared audio sampler (kernel
- * analyser), the cover→particles + cover→palette pipelines, and the active effect's
- * lifecycle. Volatile inputs are read through refs so the loop keeps running (idle
- * motion while paused) without restarting on every cover/palette/play change; only
- * the effect id recreates the instance.
+ * analyser), and the cover→particles / cover→palette pipelines; each effect owns its
+ * own drawing context (2D or WebGL). The canvas is keyed by effect id so switching
+ * remounts a fresh canvas — a canvas can only ever hold one context type. Volatile
+ * inputs are read through refs so the loop keeps running (idle motion while paused)
+ * without restarting on every cover/palette/play change.
  */
 export function StageCanvas({ effectId, image, accent, playing }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,7 +48,6 @@ export function StageCanvas({ effectId, image, accent, playing }: Props) {
     maxDecibels: -12,
   });
 
-  // Volatile inputs the loop reads without restarting.
   const samplerRef = useRef(sampler);
   const colorsRef = useRef<SpectralLightColors>(colors);
   const particlesRef = useRef<CoverParticles | null>(particles ?? null);
@@ -59,25 +59,25 @@ export function StageCanvas({ effectId, image, accent, playing }: Props) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!canvas) return;
 
-    const effect = stageEffectById(effectId).create();
+    const effect = stageEffectById(effectId).create(canvas);
     let raf = 0;
     let width = 1;
     let height = 1;
+    let dpr = 1;
     let last = performance.now();
     let bytes = new Uint8Array(samplerRef.current.binCount);
     let frameState: AudioLightFrameState = initialAudioLightFrameState(BAND_COUNT);
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = Math.max(1, rect.width);
       height = Math.max(1, rect.height);
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      effect.resize?.(width, height, dpr);
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -86,7 +86,6 @@ export function StageCanvas({ effectId, image, accent, playing }: Props) {
     const draw = (time: number) => {
       const dtSec = Math.min(MAX_DT, Math.max(0, (time - last) / 1000));
       last = time;
-      const isPlaying = playingRef.current;
       if (bytes.length !== samplerRef.current.binCount) {
         bytes = new Uint8Array(samplerRef.current.binCount);
       }
@@ -99,12 +98,12 @@ export function StageCanvas({ effectId, image, accent, playing }: Props) {
       });
 
       effect.draw({
-        ctx,
         width,
         height,
+        dpr,
         timeSec: time / 1000,
         dtSec,
-        playing: isPlaying,
+        playing: playingRef.current,
         frame: frameState,
         colors: colorsRef.current,
         particles: particlesRef.current,
@@ -120,5 +119,7 @@ export function StageCanvas({ effectId, image, accent, playing }: Props) {
     };
   }, [effectId]);
 
-  return <canvas ref={canvasRef} aria-hidden className="absolute inset-0 h-full w-full" />;
+  return (
+    <canvas key={effectId} ref={canvasRef} aria-hidden className="absolute inset-0 h-full w-full" />
+  );
 }

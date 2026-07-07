@@ -33,11 +33,18 @@ function laneColor(colors: SpectralLightColors, t: number): HslColor {
 /**
  * Aurora stage: layered flowing ribbons filling the screen, each band swinging
  * around its own resting height with the beat (the same audio-lanes core and
- * scatter-based layering as the player-bar visualiser, scaled up).
+ * scatter-based layering as the player-bar visualiser, scaled up). 2D canvas.
  */
-export function createAuroraField(): StageEffectInstance {
+export function createAuroraField(canvas: HTMLCanvasElement): StageEffectInstance {
+  const ctx = canvas.getContext("2d");
+
   return {
-    draw({ ctx, width, height, timeSec, playing, frame, colors }: StageFrameInput) {
+    resize(_width: number, _height: number, dpr: number) {
+      ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+    },
+
+    draw({ width, height, timeSec, playing, frame, colors }: StageFrameInput) {
+      if (!ctx) return;
       const base = colors.stops[0]?.color;
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;

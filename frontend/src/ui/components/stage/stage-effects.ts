@@ -1,12 +1,12 @@
 import { createAuroraField } from "./aurora-field";
-import { createParticleField } from "./particle-field";
 import type { StageEffect } from "./stage-effect";
+import { createWebglCloud } from "./webgl-cloud";
 
 // The selectable fullscreen effects, in switcher order. Adding a new visual is one
-// entry here (id + label + a create() returning a per-frame draw) — the stage host,
-// switcher, and persistence all read from this list.
+// entry here (id + label + a create() returning a per-frame draw) — the stage host
+// and switcher read from this list.
 export const STAGE_EFFECTS: readonly StageEffect[] = [
-  { id: "particles", labelKey: "stage.effect.particles", create: createParticleField },
+  { id: "particles", labelKey: "stage.effect.particles", create: createWebglCloud },
   { id: "aurora", labelKey: "stage.effect.aurora", create: createAuroraField },
 ];
 
