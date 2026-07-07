@@ -12,21 +12,22 @@ export type AudioLightFrame = {
 };
 
 /** The state carried between frames: the display bands (smoothing seed) plus the
- *  per-band adaptive-gain envelope. */
+ *  per-band adaptive-gain running level. */
 export type AudioLightFrameState = AudioLightFrame & {
-  env: AdaptiveGainState;
+  level: AdaptiveGainState;
 };
 
-// Fast attack / slower release so the bands punch up on transients and ease back
-// between beats — the pumping that reads as "reacting to the music". Applied on
-// top of the per-band AGC, so this is purely visual damping.
-const ATTACK = 0.6;
-const RELEASE = 0.2;
+// Light display damping only — near-instant attack and a fast release so the AGC's
+// beat-to-beat jitter survives to the screen instead of being averaged flat. Heavy
+// smoothing here (plus the AnalyserNode's own) is what made loud tracks look pinned
+// and their motion sluggish.
+const ATTACK = 0.8;
+const RELEASE = 0.5;
 
 export function initialAudioLightFrameState(bandCount: number): AudioLightFrameState {
   return {
     bands: Array.from({ length: bandCount }, () => 0),
-    env: initialAdaptiveGain(bandCount),
+    level: initialAdaptiveGain(bandCount),
   };
 }
 
@@ -48,7 +49,7 @@ export function nextAudioLightFrame({
   // envelope decays and the bands release toward the baseline, so playback resumes
   // lively instead of over-boosted from a stale envelope.
   const raw = frame?.active ? frame.bands : initialAudioLightFrameState(bandCount).bands;
-  const gained = adaptiveGain(raw, base.env);
+  const gained = adaptiveGain(raw, base.level);
   const bands = smoothSpectrum(base.bands, gained.bands, ATTACK, RELEASE);
-  return { bands, env: gained.env };
+  return { bands, level: gained.level };
 }

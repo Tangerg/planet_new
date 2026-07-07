@@ -69,26 +69,47 @@ describe("audio spectrum model", () => {
 });
 
 describe("adaptive gain", () => {
-  const env0 = initialAdaptiveGain(3);
+  // Drive a constant spectrum until the running level settles.
+  const converge = (raw: number[], frames = 300) => {
+    let level = initialAdaptiveGain(raw.length);
+    let out = adaptiveGain(raw, level);
+    for (let i = 0; i < frames; i++) {
+      out = adaptiveGain(raw, level);
+      level = out.level;
+    }
+    return out;
+  };
 
-  it("lifts quiet and loud spectra to the same visual range", () => {
-    const quiet = adaptiveGain([0.08, 0.05, 0.03], env0);
-    const loud = adaptiveGain([0.9, 0.6, 0.35], env0);
-    // The loudest band of each fills the range regardless of absolute level.
-    expect(Math.max(...quiet.bands)).toBeCloseTo(Math.max(...loud.bands), 5);
-    expect(Math.max(...quiet.bands)).toBeGreaterThan(0.9);
+  it("centres quiet and loud steady spectra at the same level", () => {
+    const quiet = converge([0.08, 0.05, 0.03]);
+    const loud = converge([0.9, 0.6, 0.35]);
+    // A band sitting at its own running level renders at LEVEL_TARGET, whatever the
+    // absolute loudness — so both tracks centre at the same height.
+    expect(quiet.bands[0]).toBeCloseTo(0.5, 1);
+    expect(loud.bands[0]).toBeCloseTo(0.5, 1);
+  });
+
+  it("renders instantaneous swings above/below the running level as jitter", () => {
+    const steady = converge([0.5, 0.5]);
+    const spike = adaptiveGain([0.85, 0.5], steady.level);
+    const dip = adaptiveGain([0.28, 0.5], steady.level);
+    // The band that jumps rises above centre; the one that drops falls below it;
+    // the unchanged band stays put — i.e. the wave moves with the moment.
+    expect(spike.bands[0]).toBeGreaterThan(0.6);
+    expect(dip.bands[0]).toBeLessThan(0.4);
+    expect(spike.bands[1]).toBeCloseTo(0.5, 1);
   });
 
   it("keeps a near-dead band from being amplified into noise", () => {
-    const { bands } = adaptiveGain([1.0, 0.01], env0.slice(0, 2));
-    expect(bands[0]).toBeGreaterThan(0.9);
-    expect(bands[1]).toBeLessThan(0.3);
+    const { bands } = converge([1.0, 0.01]);
+    expect(bands[1]).toBeLessThan(0.1);
+    expect(bands[0]).toBeGreaterThan(bands[1]);
   });
 
-  it("releases the envelope over silent frames and outputs no bands", () => {
-    const { bands, env } = adaptiveGain([0, 0], [1, 1]);
-    expect(env[0]).toBeLessThan(1);
-    expect(env[0]).toBeGreaterThan(0);
+  it("lets the running level fall over silent frames and outputs no bands", () => {
+    const { bands, level } = adaptiveGain([0, 0], [1, 1]);
+    expect(level[0]).toBeLessThan(1);
+    expect(level[0]).toBeGreaterThan(0);
     expect(Math.max(...bands)).toBe(0);
   });
 });

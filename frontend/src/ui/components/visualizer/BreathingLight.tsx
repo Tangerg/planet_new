@@ -36,9 +36,10 @@ export function BreathingLight({ playing, accent, tintA, tintB, image }: Breathi
   const sampler = useAudioSpectrum({
     enabled: playing,
     fftSize: FFT_SIZE,
-    // Light node smoothing only — the AnalyserNode's own averaging is kept low so
-    // transients survive to our per-band AGC + attack/release, which do the shaping.
-    smoothingTimeConstant: 0.7,
+    // Low node smoothing — the AnalyserNode's own averaging is the first thing that
+    // flattens beat-to-beat motion, so keep it light and let our per-band AGC +
+    // attack/release do the shaping (this is what restores the "jitter").
+    smoothingTimeConstant: 0.5,
     // A wide dB window feeds honest dynamics to the AGC (it, not this window, sets
     // the visible level), so quiet masters aren't clamped to the floor.
     minDecibels: -100,
