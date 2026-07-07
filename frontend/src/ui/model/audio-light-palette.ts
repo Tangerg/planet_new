@@ -25,18 +25,19 @@ export type SpectralLightColors = {
   stops: readonly SpectralColorStop[];
 };
 
-// ── Cyberpunk / vaporwave temperature ramp ──────────────────────────────────
-// Pitch → colour TEMPERATURE: LOW frequencies read COOL, HIGH read WARM (the
-// requested mapping). The ramp runs a neon sweep — electric cyan → blue → violet
-// → magenta → hot pink → red — so a bass moment glows cold and an airy/bright one
-// burns hot, with the whole thing living in the vaporwave zone (no muddy
-// green/yellow, deliberately embracing the blue/purple the old palette banned).
-// WARM_HUE = 366 wraps to 6° (red), keeping the sweep monotonic across the seam.
-const COOL_HUE = 186;
-const WARM_HUE = 366;
+// ── Understated-neon temperature ramp (轻奢) ─────────────────────────────────
+// Pitch → colour TEMPERATURE: LOW frequencies read COOL, HIGH read WARM. The ramp
+// is deliberately NARROW and cohesive — indigo-blue → violet → purple → magenta →
+// dusty rose — rather than a full-spectrum rainbow. A tight, adjacent-hue sweep at
+// jewel-tone (not fluorescent) saturation reads as an intentional, premium
+// gradient; the old cyan→red rainbow at max saturation read cheap. No green/cyan
+// or pure red at the ends.
+const COOL_HUE = 228;
+const WARM_HUE = 348;
 const HUE_SPAN = WARM_HUE - COOL_HUE;
-// Neon base saturation — high on purpose; music energy pushes it toward 100.
-const NEON_SAT = 90;
+// Jewel-tone base saturation — rich but restrained; music energy lifts it a little,
+// never to fluorescent.
+const NEON_SAT = 66;
 
 function parseHexColor(hex: string, fallback: HslColor): HslColor {
   const value = hex.trim().replace("#", "");
@@ -111,8 +112,10 @@ function neonColor({
   const hue = blendHue(temperatureHue(at, drift), accentHue, accentPull);
   return {
     h: hue,
-    s: clamp(60, 100, NEON_SAT + norm * 10 + flux * 12),
-    l: clamp(40, 72, 44 + norm * 20 + energy * 10 + flux * 8),
+    // Restrained jewel saturation (never fluorescent) + deeper lightness so the
+    // additive layers stack into rich colour instead of blowing out to candy/white.
+    s: clamp(46, 82, NEON_SAT + norm * 9 + flux * 10),
+    l: clamp(32, 58, 37 + norm * 15 + energy * 8 + flux * 6),
   };
 }
 
