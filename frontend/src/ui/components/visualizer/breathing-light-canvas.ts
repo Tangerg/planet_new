@@ -4,8 +4,8 @@ import { hsla, spectralLightColors, type AudioLightFrame } from "@/model/audio-v
 
 export type BreathingLightSkin = {
   accent: string;
-  tintA: string;
-  tintB: string;
+  /** The cover's ranked theme colours (hex) — the ramp is toned from these. */
+  tones: readonly string[];
 };
 
 export type BreathingLightPaintInput = {
@@ -124,8 +124,7 @@ export function paintBreathingLight({
 
   const colors = spectralLightColors({
     accent: skin.accent,
-    tintA: skin.tintA,
-    tintB: skin.tintB,
+    tones: skin.tones,
   });
 
   // Plain alpha compositing (no additive) so the vertical cool→warm gradient stays

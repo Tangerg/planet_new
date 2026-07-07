@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
 import { useCoverColors } from "@/hooks/useCoverColors";
@@ -25,11 +25,11 @@ const FFT_SIZE = 256;
 
 export function BreathingLight({ playing, accent, tintA, tintB, image }: BreathingLightProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Tone from the artwork's real primary + secondary colours when they can be
-  // sampled; otherwise the seed tints. The ramp gradients between the two.
+  // Tone from the artwork's real theme colours when they can be sampled; otherwise
+  // the seed tints. The ramp gradients through them. Memoized so the draw effect
+  // isn't re-armed by a fresh array reference each render.
   const cover = useCoverColors(image);
-  const toneA = cover?.[0] ?? tintA;
-  const toneB = cover?.[1] ?? tintB;
+  const tones = useMemo(() => cover ?? [tintA, tintB], [cover, tintA, tintB]);
   const sampler = useAudioSpectrum({
     enabled: playing,
     fftSize: FFT_SIZE,
@@ -81,7 +81,7 @@ export function BreathingLight({ playing, accent, tintA, tintB, image }: Breathi
         height,
         timeSec: time / 1000,
         playing,
-        skin: { accent, tintA: toneA, tintB: toneB },
+        skin: { accent, tones },
         frame,
       });
 
@@ -94,7 +94,7 @@ export function BreathingLight({ playing, accent, tintA, tintB, image }: Breathi
       cancelAnimationFrame(raf);
       observer.disconnect();
     };
-  }, [accent, playing, sampler, toneA, toneB]);
+  }, [accent, playing, sampler, tones]);
 
   return (
     <canvas
