@@ -21,7 +21,10 @@ type BreathingLightProps = {
 };
 
 const BAND_COUNT = 18;
-const FFT_SIZE = 256;
+// A large FFT so the log-frequency split has real low-end resolution (each bin is
+// ~21 Hz at 44.1 kHz, vs ~172 Hz at 256). Downstream per-band AGC needs honest
+// spectral detail to normalise, so this is where responsiveness is won.
+const FFT_SIZE = 2048;
 
 export function BreathingLight({ playing, accent, tintA, tintB, image }: BreathingLightProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,9 +36,13 @@ export function BreathingLight({ playing, accent, tintA, tintB, image }: Breathi
   const sampler = useAudioSpectrum({
     enabled: playing,
     fftSize: FFT_SIZE,
-    smoothingTimeConstant: 0.88,
-    minDecibels: -92,
-    maxDecibels: -18,
+    // Light node smoothing only — the AnalyserNode's own averaging is kept low so
+    // transients survive to our per-band AGC + attack/release, which do the shaping.
+    smoothingTimeConstant: 0.7,
+    // A wide dB window feeds honest dynamics to the AGC (it, not this window, sets
+    // the visible level), so quiet masters aren't clamped to the floor.
+    minDecibels: -100,
+    maxDecibels: -12,
   });
 
   useEffect(() => {
@@ -70,7 +77,6 @@ export function BreathingLight({ playing, accent, tintA, tintB, image }: Breathi
         previous: frameState,
         bytes,
         read,
-        timeMs: time,
         bandCount: BAND_COUNT,
       });
       frameState = frame;
