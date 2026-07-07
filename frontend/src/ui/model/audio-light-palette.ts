@@ -8,19 +8,12 @@ export type HslColor = {
   l: number;
 };
 
-export type SpectralColorStop = {
-  at: number;
+type SpectralColorStop = {
   color: HslColor;
-  intensity: number;
 };
 
 export type SpectralLightColors = {
-  bass: HslColor;
-  warmth: HslColor;
-  body: HslColor;
-  spark: HslColor;
-  air: HslColor;
-  line: HslColor;
+  /** The tonal ramp, deep base → bright crest; consumers sample it by position. */
   stops: readonly SpectralColorStop[];
 };
 
@@ -151,20 +144,14 @@ export function spectralLightColors({
     return parseHexColor(hexFromArgb(Hct.from(hue, chroma, tone).toInt()), TONE_FALLBACK);
   };
 
-  const stops = Array.from({ length: RAMP_STEPS }, (_, index): SpectralColorStop => {
-    const at = index / (RAMP_STEPS - 1);
-    return { at, color: step(at), intensity: 1 };
-  });
+  const stops = Array.from(
+    { length: RAMP_STEPS },
+    (_, index): SpectralColorStop => ({
+      color: step(index / (RAMP_STEPS - 1)),
+    }),
+  );
 
-  const result: SpectralLightColors = {
-    bass: step(0),
-    warmth: step(0.28),
-    body: step(0.5),
-    spark: step(0.72),
-    air: step(1),
-    line: step(0.6),
-    stops,
-  };
+  const result: SpectralLightColors = { stops };
   colorsCache.set(key, result);
   return result;
 }

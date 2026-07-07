@@ -29,26 +29,19 @@ const LEVEL_CONTRAST = 1.6; // >1 exaggerates deviations from the level into vis
 const GAIN_FLOOR_ABS = 0.02; // never divide by less than this (silence guard)
 const GAIN_FLOOR_REL = 0.12; // a band below this fraction of the loudest isn't boosted
 
+// A frame whose loudest band stays below this reads as silence (paused / between
+// tracks) — the visualizer settles instead of amplifying noise.
+const ACTIVE_PEAK = 0.025;
+
 export type SpectrumFrame = {
   bands: readonly number[];
-  low: number;
-  mid: number;
-  high: number;
-  peak: number;
   active: boolean;
 };
-
-export type SpectrumProfile = Omit<SpectrumFrame, "bands">;
 
 export function assertBandCount(bandCount: number): void {
   if (!Number.isInteger(bandCount) || bandCount <= 0) {
     throw new Error("bandCount must be a positive integer");
   }
-}
-
-function average(values: readonly number[]): number {
-  if (!values.length) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function bandAverage(bytes: ArrayLike<number>, start: number, end: number): number {
@@ -93,33 +86,21 @@ function bandBinEdge(k: number, count: number, top: number): number {
 export function spectrumFrame(bytes: ArrayLike<number>, bandCount: number): SpectrumFrame {
   assertBandCount(bandCount);
   if (bytes.length === 0) {
-    const bands = Array.from({ length: bandCount }, () => 0);
-    return { bands, low: 0, mid: 0, high: 0, peak: 0, active: false };
+    return { bands: Array.from({ length: bandCount }, () => 0), active: false };
   }
 
   const top = Math.max(START_BIN + bandCount, Math.floor(bytes.length * USABLE_BIN_RATIO));
+  let peak = 0;
   const bands = Array.from({ length: bandCount }, (_, index) => {
     const start = Math.floor(bandBinEdge(index, bandCount, top));
     const rawEnd = Math.floor(bandBinEdge(index + 1, bandCount, top));
     const end = Math.min(bytes.length, Math.max(start + 1, rawEnd));
-    return normalizeFftByte(bandAverage(bytes, start, end));
+    const value = normalizeFftByte(bandAverage(bytes, start, end));
+    if (value > peak) peak = value;
+    return value;
   });
 
-  const profile = spectrumProfile(bands);
-  return { bands, ...profile };
-}
-
-export function spectrumProfile(bands: readonly number[]): SpectrumProfile {
-  if (bands.length === 0) return { low: 0, mid: 0, high: 0, peak: 0, active: false };
-
-  const lowEnd = Math.max(1, Math.floor(bands.length * 0.32));
-  const midEnd = Math.max(lowEnd + 1, Math.floor(bands.length * 0.68));
-  const low = average(bands.slice(0, lowEnd));
-  const mid = average(bands.slice(lowEnd, midEnd));
-  const high = average(bands.slice(midEnd));
-  const peak = Math.max(...bands);
-
-  return { low, mid, high, peak, active: peak > 0.025 };
+  return { bands, active: peak > ACTIVE_PEAK };
 }
 
 /** Per-band running level carried across frames — the AGC divisor's memory. */

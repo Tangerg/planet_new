@@ -7,19 +7,18 @@ import {
   smoothSignalValue,
   smoothSpectrum,
   spectrumFrame,
-  spectrumProfile,
 } from "./audio-spectrum";
 
 describe("audio spectrum model", () => {
   it("compresses FFT bytes into log-frequency bands weighted toward where energy sits", () => {
-    // Energy packed into the low bins → the low group should tower over the highs.
+    // Energy packed into the low bins → the low band should tower over the highs.
     const bytes = new Uint8Array(64);
     bytes.fill(255, 0, 8);
     const frame = spectrumFrame(bytes, 6);
 
     expect(frame.bands).toHaveLength(6);
-    expect(frame.peak).toBeGreaterThan(0.9);
-    expect(frame.low).toBeGreaterThan(frame.high);
+    expect(Math.max(...frame.bands)).toBeGreaterThan(0.9);
+    expect(frame.bands[0]).toBeGreaterThan(frame.bands[frame.bands.length - 1]);
     expect(frame.active).toBe(true);
   });
 
@@ -32,14 +31,7 @@ describe("audio spectrum model", () => {
   });
 
   it("returns an inactive zero frame for empty input", () => {
-    expect(spectrumFrame(new Uint8Array(), 3)).toEqual({
-      bands: [0, 0, 0],
-      low: 0,
-      mid: 0,
-      high: 0,
-      peak: 0,
-      active: false,
-    });
+    expect(spectrumFrame(new Uint8Array(), 3)).toEqual({ bands: [0, 0, 0], active: false });
   });
 
   it("smooths attacks faster than releases", () => {
@@ -53,14 +45,6 @@ describe("audio spectrum model", () => {
     expect(normalizeFftByte(0)).toBe(0);
     expect(normalizeFftByte(255)).toBe(1);
     expect(normalizeFftByte(510)).toBe(1);
-  });
-
-  it("derives a profile from already smoothed display bands", () => {
-    const profile = spectrumProfile([0.8, 0.6, 0.1, 0.1, 0.05, 0.02]);
-
-    expect(profile.low).toBeGreaterThan(profile.high);
-    expect(profile.peak).toBeCloseTo(0.8);
-    expect(profile.active).toBe(true);
   });
 
   it("rejects invalid band counts", () => {
