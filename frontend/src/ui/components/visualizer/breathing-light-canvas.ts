@@ -44,14 +44,17 @@ const FLAME_LAYERS: readonly FlameLayer[] = [
   { waves: 4.1, speed: -1.9, amp: 0.24, phase: 5.6, alpha: 0.1, reactive: 1.0 },
 ];
 
-function stopsGradient(
+function temperatureGradient(
   ctx: CanvasRenderingContext2D,
-  width: number,
+  height: number,
   colors: SpectralPaintColors,
   alpha: (intensity: number) => number,
 ): CanvasGradient {
-  // Cool (bass) on the left → warm (treble) on the right.
-  const gradient = ctx.createLinearGradient(0, 0, width, 0);
+  // VERTICAL heat ramp (the industry spectrum/flame convention): cool at the base
+  // (y = height), warm at the top (y = 0). Colour is a function of height, uniform
+  // across x — so a tall flame reaches the warm stops at its tip while a short one
+  // stays cool near the floor.
+  const gradient = ctx.createLinearGradient(0, height, 0, 0);
   for (const stop of colors.stops) {
     gradient.addColorStop(clamp(0, 1, stop.at), hsla(stop.color, alpha(stop.intensity)));
   }
@@ -87,10 +90,9 @@ function paintFlameLayer(
   pulse: number,
   layer: FlameLayer,
 ): void {
-  // Uniform alpha across the sweep — every hue is equally present, so the colour
-  // reads as an even left→right spectrum. The MUSIC shows in the flame height, not
-  // by making loud bands' colours more opaque (that made the field lumpy).
-  ctx.fillStyle = stopsGradient(ctx, width, colors, () => layer.alpha);
+  // Uniform alpha so the colour reads as an even bottom→top heat ramp; the music
+  // shows in the flame HEIGHT (how high the warm tips reach), not in opacity.
+  ctx.fillStyle = temperatureGradient(ctx, height, colors, () => layer.alpha);
   ctx.beginPath();
   ctx.moveTo(0, height + 2);
   const steps = 80;
@@ -111,9 +113,9 @@ function paintAmbientWash(
   colors: SpectralPaintColors,
   pulse: number,
 ): void {
-  // A low, even base carrying the full left→right spectrum (uniform, not weighted
-  // by band energy) so the colour field stays evenly distributed.
-  ctx.fillStyle = stopsGradient(ctx, width, colors, () => 0.06 + pulse * 0.05);
+  // A low, even base carrying the bottom→top heat ramp (uniform, not weighted by
+  // band energy) so the colour field stays evenly distributed.
+  ctx.fillStyle = temperatureGradient(ctx, height, colors, () => 0.06 + pulse * 0.05);
   ctx.fillRect(0, 0, width, height);
 }
 
