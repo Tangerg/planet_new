@@ -126,7 +126,6 @@ export function paintBreathingLight({
     accent: skin.accent,
     tintA: skin.tintA,
     tintB: skin.tintB,
-    profile: frame.profile,
   });
 
   // Plain alpha compositing (no additive) so the vertical cool→warm gradient stays
