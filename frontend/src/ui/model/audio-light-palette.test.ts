@@ -6,10 +6,10 @@ import { hsla, spectralLightColors } from "./audio-light-palette";
 const base = { accent: "#14ff82", tintA: "#2bd4ff", tintB: "#ff2d95" };
 const activeProfile = { low: 0.7, mid: 0.44, high: 0.58, peak: 0.84, active: true };
 
-// Position on the cool→warm neon ramp: 0 = cool (cyan/blue), 1 = warm (magenta/red).
-// Mirrors the model's COOL_HUE=186 + at*180 sweep.
+// Position on the cool→warm ramp: 0 = cool (indigo-blue), 1 = warm (dusty rose).
+// Mirrors the model's COOL_HUE=228 + at*120 sweep.
 function rampPosition(hue: number): number {
-  return Math.min(1, Math.max(0, ((((hue - 186) % 360) + 360) % 360) / 180));
+  return Math.min(1, Math.max(0, ((((hue - 228) % 360) + 360) % 360) / 120));
 }
 
 describe("audio light palette model (cyberpunk temperature)", () => {
@@ -57,7 +57,7 @@ describe("audio light palette model (cyberpunk temperature)", () => {
     expect(rampPosition(bassHeavy.line.h)).toBeLessThan(rampPosition(airHeavy.line.h));
   });
 
-  it("generates saturated neon colours (the vaporwave/cyberpunk register)", () => {
+  it("keeps colours in a restrained jewel range (not fluorescent)", () => {
     const colors = spectralLightColors({
       ...base,
       profile: activeProfile,
@@ -76,7 +76,9 @@ describe("audio light palette model (cyberpunk temperature)", () => {
       ...colors.stops.map((stop) => stop.color),
     ];
 
-    expect(allColors.every((color) => color.s >= 80 && color.s <= 100)).toBe(true);
+    // Rich but restrained — never max-saturated candy, and deep rather than bright.
+    expect(allColors.every((color) => color.s >= 46 && color.s <= 82)).toBe(true);
+    expect(allColors.every((color) => color.l <= 58)).toBe(true);
   });
 
   it("formats hsl colors with clamped alpha", () => {

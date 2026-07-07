@@ -132,10 +132,11 @@ function paintBloom(
   centerX: number,
   radius: number,
 ): void {
-  // A travelling neon bloom in the dominant pitch colour — the psychedelic core.
+  // A travelling bloom in the dominant pitch colour — the soft core. Kept modest
+  // so overlapping additive layers don't blow the centre out to a cheap white.
   const bloom = ctx.createRadialGradient(centerX, height * 0.72, 0, centerX, height * 0.72, radius);
-  bloom.addColorStop(0, hsla(dominant, 0.12 + pulse * 0.4));
-  bloom.addColorStop(0.42, hsla(dominant, 0.05 + pulse * 0.16));
+  bloom.addColorStop(0, hsla(dominant, 0.08 + pulse * 0.26));
+  bloom.addColorStop(0.42, hsla(dominant, 0.04 + pulse * 0.12));
   bloom.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = bloom;
   ctx.fillRect(0, 0, width, height);
@@ -156,8 +157,8 @@ export function paintBreathingLight({
   const pulse = playing
     ? Math.max(frame.energy, 0.14 + idleBreath * 0.18)
     : 0.06 + idleBreath * 0.05;
-  // Slow ±16° hue shimmer keeps the sweep alive without leaving the neon zone.
-  const hueDrift = Math.sin(timeSec * 0.06) * 16;
+  // Slow ±8° hue shimmer — a subtle living drift, restrained to keep it tasteful.
+  const hueDrift = Math.sin(timeSec * 0.06) * 8;
 
   const colors = spectralLightColors({
     accent: skin.accent,
