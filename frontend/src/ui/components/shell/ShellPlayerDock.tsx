@@ -23,6 +23,7 @@ type Props = {
   onVolume: (volume: number) => void;
   onToggleMute: () => void;
   onOpenNowPlaying: () => void;
+  onOpenStage: () => void;
   onOpenQueue: () => void;
   onOpenComments: () => void;
   onOpenLyrics: () => void;
@@ -49,6 +50,7 @@ export function ShellPlayerDock({
   onVolume,
   onToggleMute,
   onOpenNowPlaying,
+  onOpenStage,
   onOpenQueue,
   onOpenComments,
   onOpenLyrics,
@@ -92,6 +94,7 @@ export function ShellPlayerDock({
               onVolume={onVolume}
               onToggleMute={onToggleMute}
               onOpenNowPlaying={onOpenNowPlaying}
+              onOpenStage={onOpenStage}
               onOpenQueue={onOpenQueue}
               onOpenComments={onOpenComments}
               onOpenLyrics={onOpenLyrics}

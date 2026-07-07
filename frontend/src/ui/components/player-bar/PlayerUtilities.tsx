@@ -24,6 +24,7 @@ type Props = {
   accent: string;
   tintA: string;
   tintB: string;
+  onOpenStage: () => void;
   onOpenLyrics: () => void;
   onOpenQueue: () => void;
   onOpenComments: () => void;
@@ -43,6 +44,7 @@ export function PlayerUtilities({
   accent,
   tintA,
   tintB,
+  onOpenStage,
   onOpenLyrics,
   onOpenQueue,
   onOpenComments,
@@ -98,6 +100,16 @@ export function PlayerUtilities({
         onVolume={onVolume}
         onToggleMute={onToggleMute}
       />
+      <Tooltip label={t("common.visualizer")}>
+        <Button
+          className={ctlCls}
+          style={ctlColor(false)}
+          onClick={onOpenStage}
+          aria-label={t("common.visualizer")}
+        >
+          <Icon.bars size={18} />
+        </Button>
+      </Tooltip>
       <Tooltip label={t("common.lyrics")}>
         <Button
           className={ctlCls}

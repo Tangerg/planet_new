@@ -22,6 +22,7 @@ type Props = {
   toggleLike: () => void;
   accent: string;
   onOpenNowPlaying: () => void;
+  onOpenStage: () => void;
   onOpenLyrics: () => void;
   onOpenQueue: () => void;
   onOpenComments: () => void;
@@ -50,6 +51,7 @@ export const PlayerBar = React.memo(function PlayerBar({
   toggleLike,
   accent,
   onOpenNowPlaying,
+  onOpenStage,
   onOpenLyrics,
   onOpenQueue,
   onOpenComments,
@@ -129,6 +131,7 @@ export const PlayerBar = React.memo(function PlayerBar({
         accent={accent}
         tintA={a}
         tintB={b}
+        onOpenStage={onOpenStage}
         onOpenLyrics={onOpenLyrics}
         onOpenQueue={onOpenQueue}
         onOpenComments={onOpenComments}
