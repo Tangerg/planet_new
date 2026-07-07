@@ -61,17 +61,17 @@ function parseHexColor(hex: string, fallback: HslColor): HslColor {
 
 type CoverTone = { hue: number; sat: number };
 
-/** Pick the tone-setting hue/saturation from the cover's colour pair (falling back
- *  to the accent if the artwork is basically greyscale). The most saturated of the
- *  candidates wins, so the ramp keys off the artwork's most characterful colour. */
+/** Tone-setting hue/saturation from the cover's colour pair — the more saturated of
+ *  the two. The accent is a LAST resort, used only when the cover is near-greyscale,
+ *  so a vivid brand accent (e.g. the green) can never hijack the tone away from the
+ *  artwork. */
 function coverTone(tintA: string, tintB: string, accent: string): CoverTone {
-  const candidates = [
-    parseHexColor(tintB, { h: 300, s: 70, l: 58 }),
-    parseHexColor(tintA, { h: 300, s: 62, l: 40 }),
-    parseHexColor(accent, { h: 300, s: 70, l: 55 }),
-  ];
-  const pick = candidates.reduce((best, c) => (c.s > best.s ? c : best), candidates[0]);
-  return { hue: pick.h, sat: clamp(46, 80, pick.s) };
+  const a = parseHexColor(tintA, { h: 300, s: 62, l: 40 });
+  const b = parseHexColor(tintB, { h: 300, s: 70, l: 58 });
+  const cover = b.s >= a.s ? b : a;
+  if (cover.s >= 12) return { hue: cover.h, sat: clamp(46, 80, cover.s) };
+  const ac = parseHexColor(accent, { h: 300, s: 70, l: 55 });
+  return { hue: ac.h, sat: clamp(46, 80, ac.s) };
 }
 
 /** One rung of the cover ramp at position `at` (0 = deep base, 1 = bright crest).

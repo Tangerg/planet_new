@@ -8,14 +8,16 @@ import { wailsGoBridgeReady } from "./wails";
  * Analysis uses the Go loopback /stream proxy when the desktop bridge exists,
  * because Web Audio needs a CORS-clean media source to sample.
  */
-export const resolveDesktopMediaAnalysisSource: MediaAnalysisSourceResolver =
-  loopbackAnalysisSource;
+export const resolveDesktopMediaAnalysisSource: MediaAnalysisSourceResolver = loopbackProxyUrl;
 
-async function loopbackAnalysisSource(playUrl: string): Promise<string> {
-  if (!wailsGoBridgeReady()) return playUrl;
+/** Wrap a remote URL in the Go loopback /stream byte-proxy so the frontend gets a
+ *  CORS-clean source (Web Audio sampling and canvas pixel reads both need one).
+ *  No-op (returns the input) without the desktop bridge or on failure. */
+export async function loopbackProxyUrl(url: string): Promise<string> {
+  if (!wailsGoBridgeReady()) return url;
   try {
-    return (await Library.StreamURL(playUrl)) || playUrl;
+    return (await Library.StreamURL(url)) || url;
   } catch {
-    return playUrl;
+    return url;
   }
 }
