@@ -60,7 +60,14 @@ export const en = {
     unknownArtist: "Unknown Artist",
     upNext: "Up Next",
     viewMode: "View mode",
+    visualizer: "Visualizer",
     volume: "Volume",
+  },
+  stage: {
+    effect: {
+      particles: "Particles",
+      aurora: "Aurora",
+    },
   },
   counts: {
     albums: "{{count}} albums",

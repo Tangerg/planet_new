@@ -142,8 +142,10 @@ export default function Shell() {
     if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
     setView(target);
   };
+  const openStage = () => navigate("stage");
   const npView = view === "np";
   const mvTheaterView = view === "mv-theater";
+  const stageView = view === "stage";
   const homeView = view === "xmb";
   const { lyrics, comments, musicVideoRail, musicVideoComments } = useShellScreenContent({
     view,
@@ -203,7 +205,7 @@ export default function Shell() {
   // Player bar visibility: shown when a track exists and we're not in the
   // full-screen now-playing view. Motion's AnimatePresence keeps it mounted
   // through the slide-out so it glides instead of popping.
-  const showBar = !npView && !mvTheaterView && !!playback.current;
+  const showBar = !npView && !mvTheaterView && !stageView && !!playback.current;
 
   /* ==========================================================================
      XMB model — the navigation IA tree, projected from catalog + provider
@@ -248,6 +250,7 @@ export default function Shell() {
         openLibrary: openLib,
         openMusicVideo,
         openMusicVideoTheater,
+        openStage,
         cats,
         xmbCategory,
         setXmbCategory,
@@ -307,7 +310,7 @@ export default function Shell() {
           <div className="win-stage">
             <div className="win">
               <ShellWindowChrome
-                showTools={!npView && !mvTheaterView}
+                showTools={!npView && !mvTheaterView && !stageView}
                 showBack={!homeView}
                 playing={playing}
                 canOpenNowPlaying={!!playback.current}
@@ -344,6 +347,7 @@ export default function Shell() {
                 onVolume={playback.setVolume}
                 onToggleMute={playback.toggleMute}
                 onOpenNowPlaying={() => openNowPlaying("cover")}
+                onOpenStage={openStage}
                 onOpenQueue={() => navigate("queue")}
                 onOpenComments={() => navigate("comments")}
                 onOpenLyrics={() => openNowPlaying("lyrics")}

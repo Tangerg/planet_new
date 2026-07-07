@@ -27,6 +27,7 @@ import { ArtistScreen } from "@/screens/Artist";
 import { ProfileScreen } from "@/screens/Profile";
 import { CommentsScreen } from "@/screens/Comments";
 import { NowPlaying } from "@/screens/NowPlaying";
+import { Stage } from "@/screens/Stage";
 import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
 import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
 import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
@@ -58,6 +59,7 @@ type NavigationBundle = {
   openLibrary: (tab: string, view?: string) => void;
   openMusicVideo: (video: VibeMusicVideo) => void;
   openMusicVideoTheater: (video: VibeMusicVideo) => void;
+  openStage: () => void;
   // XMB launcher cursor — transient highlight state Shell holds across mounts.
   cats: XmbCat[];
   xmbCategory: number;
@@ -139,6 +141,7 @@ export function ShellScreenRouter(props: Props) {
     openLibrary,
     openMusicVideo,
     openMusicVideoTheater,
+    openStage,
     cats,
     xmbCategory,
     setXmbCategory,
@@ -410,9 +413,14 @@ export function ShellScreenRouter(props: Props) {
         onPrev={onPrev}
         initialMode={props.settings.nowPlayingInitialMode}
         onClose={goBack}
+        onOpenStage={openStage}
         onOpenArtist={openArtist}
       />
     );
+  }
+
+  if (view === "stage") {
+    return <Stage track={current} accent={accent} playing={playing} onClose={goBack} />;
   }
 
   return null;

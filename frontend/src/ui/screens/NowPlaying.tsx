@@ -26,6 +26,7 @@ type Props = {
   lyrics: readonly Lyric[];
   comments?: VibeComment[];
   onClose: () => void;
+  onOpenStage?: () => void;
   mono?: boolean;
   initialMode?: string;
   queue?: VibeTrack[];
@@ -44,6 +45,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   lyrics,
   comments = [],
   onClose,
+  onOpenStage,
   mono = true,
   initialMode = "cover",
   queue = [],
@@ -79,6 +81,17 @@ export const NowPlaying = React.memo(function NowPlaying({
       className="relative h-full overflow-hidden bg-[#08080b]"
       {...touchHandlers}
     >
+      {/* enter the fullscreen visualiser stage */}
+      {onOpenStage && (
+        <Button
+          onClick={onOpenStage}
+          aria-label={t("common.visualizer")}
+          className="absolute right-[92px] top-[18px] z-30 p-1 text-white/70"
+        >
+          <Icon.bars size={20} />
+        </Button>
+      )}
+
       {/* close */}
       <Button
         onClick={onClose}

@@ -59,7 +59,14 @@ export const zh = {
     unknownArtist: "未知艺人",
     upNext: "待播队列",
     viewMode: "视图模式",
+    visualizer: "可视化",
     volume: "音量",
+  },
+  stage: {
+    effect: {
+      particles: "粒子",
+      aurora: "极光",
+    },
   },
   counts: {
     albums: "{{count}} 张专辑",
