@@ -29,6 +29,8 @@ type SpectralPaintColors = ReturnType<typeof spectralLightColors>;
 // the shared base burns bright (all overlap) and the tips fade (one layer) — the
 // flame falloff comes for free. Each drifts at its own speed/phase for a churning,
 // psychedelic motion; `reactive` is how hard the band energy throws the tongues up.
+// More layers at lower per-layer alpha means their differing crest heights feather
+// into one another, so the aggregate top edge reads soft instead of a hard line.
 type FlameLayer = {
   waves: number;
   speed: number;
@@ -39,9 +41,12 @@ type FlameLayer = {
 };
 
 const FLAME_LAYERS: readonly FlameLayer[] = [
-  { waves: 1.5, speed: 0.7, amp: 0.55, phase: 0, alpha: 0.2, reactive: 0.72 },
-  { waves: 2.4, speed: -1.0, amp: 0.42, phase: 2.1, alpha: 0.18, reactive: 0.86 },
-  { waves: 3.3, speed: 1.6, amp: 0.3, phase: 4.2, alpha: 0.15, reactive: 1.0 },
+  { waves: 1.3, speed: 0.5, amp: 0.62, phase: 0, alpha: 0.13, reactive: 0.6 },
+  { waves: 1.8, speed: -0.8, amp: 0.5, phase: 1.1, alpha: 0.14, reactive: 0.72 },
+  { waves: 2.3, speed: 1.0, amp: 0.44, phase: 2.3, alpha: 0.14, reactive: 0.82 },
+  { waves: 2.9, speed: -1.3, amp: 0.36, phase: 3.4, alpha: 0.13, reactive: 0.9 },
+  { waves: 3.4, speed: 1.5, amp: 0.3, phase: 4.5, alpha: 0.12, reactive: 0.96 },
+  { waves: 4.1, speed: -1.9, amp: 0.24, phase: 5.6, alpha: 0.1, reactive: 1.0 },
 ];
 
 function stopsGradient(
