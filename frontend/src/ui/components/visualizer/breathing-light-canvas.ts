@@ -34,25 +34,31 @@ type WaveLayer = {
 };
 
 const WAVE_LAYERS: readonly WaveLayer[] = [
-  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.22, reactive: 0.42 },
-  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.24, reactive: 0.5 },
-  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.26, reactive: 0.58 },
-  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.26, reactive: 0.64 },
+  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.16, reactive: 0.42 },
+  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.22, reactive: 0.5 },
+  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.3, reactive: 0.58 },
+  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.42, reactive: 0.64 },
 ];
 
-/** Vertical heat ramp: cool at the base (y = height) → warm at the top (y = 0).
- *  Colour depends only on height, so a tall wave reaches the warm stops at its
- *  crest while a short one stays cool near the floor. Full-alpha stops — layer
- *  translucency is applied by the caller via globalAlpha, keeping colours clean. */
+/** Vertical STEPPED heat ramp (阶梯): deep tone at the base (y = height) → bright at
+ *  the top (y = 0), rendered as discrete flat bands with hard edges (each tonal step
+ *  gets its own slab) instead of a smooth blend — so the tonal staircase reads with
+ *  clear contrast. Full-alpha stops; layer translucency is applied by the caller via
+ *  globalAlpha, keeping the steps clean. */
 function temperatureGradient(
   ctx: CanvasRenderingContext2D,
   height: number,
   colors: SpectralPaintColors,
 ): CanvasGradient {
   const gradient = ctx.createLinearGradient(0, height, 0, 0);
-  for (const stop of colors.stops) {
-    gradient.addColorStop(clamp(0, 1, stop.at), hsla(stop.color, 1));
-  }
+  const n = colors.stops.length;
+  colors.stops.forEach((stop, i) => {
+    const band = hsla(stop.color, 1);
+    // A flat slab over [i/n, (i+1)/n]; the duplicate boundary stops make each
+    // transition a hard step rather than a gradient.
+    gradient.addColorStop(i / n, band);
+    gradient.addColorStop(clamp(0, 1, (i + 1) / n), band);
+  });
   return gradient;
 }
 
