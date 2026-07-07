@@ -4,15 +4,17 @@ import { QuantizerCelebi, Score, hexFromArgb } from "@material/material-color-ut
 
 import { loopbackProxyUrl } from "@/infra/mediaSource";
 
-/** Cover's [primary, secondary] theme colours (hex). */
-export type CoverColors = readonly [string, string];
+/** Cover's ranked theme colours (hex), most prominent first (1–4). */
+export type CoverColors = readonly string[];
+
+const MAX_COLORS = 4;
 
 // Resolved colours per URL (null = couldn't sample — CORS-tainted or load error;
 // don't retry). Module-level so it survives re-mounts and track revisits.
 const cache = new Map<string, CoverColors | null>();
 
-/** Material 3 content-based theme colours of a downscaled image copy — the top two
- *  ranked source colours (primary + secondary), or null if it can't be read
+/** Material 3 content-based theme colours of a downscaled image copy — the top
+ *  ranked source colours (up to MAX_COLORS), or null if it can't be read
  *  (CORS-tainted). Celebi quantization → Score ranks by chroma + population,
  *  avoiding disliked/near-grey hues (the Material You wallpaper-theming pipeline). */
 function extractColors(img: HTMLImageElement): CoverColors | null {
@@ -34,12 +36,12 @@ function extractColors(img: HTMLImageElement): CoverColors | null {
 
   const ranked = Score.score(QuantizerCelebi.quantize(pixels, 64));
   if (!ranked.length) return null;
-  return [hexFromArgb(ranked[0]), hexFromArgb(ranked[1] ?? ranked[0])];
+  return ranked.slice(0, MAX_COLORS).map((argb) => hexFromArgb(argb));
 }
 
 /**
- * The Material 3 content-based theme colours of an image (primary + secondary hex)
- * for toning UI from artwork — the same two-colour idea the page backdrop uses.
+ * The Material 3 content-based theme colours of an image (ranked hex, up to
+ * MAX_COLORS) for toning UI from artwork — same source as the page backdrop.
  * Loads a CORS-anonymous copy through the loopback proxy and runs the M3
  * quantize→score pipeline; returns undefined until it resolves and whenever the
  * image can't be sampled, so callers fall back to another tone. Cached per URL.

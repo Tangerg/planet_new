@@ -4,23 +4,29 @@ import { hsla, spectralLightColors } from "./audio-light-palette";
 
 const accent = "#18f58a";
 
-describe("audio light palette model (cover two-colour tonal gradient)", () => {
-  it("gradients deep to bright across the cover's two colours", () => {
-    const colors = spectralLightColors({ accent, tintA: "#b0402a", tintB: "#f2c14e" });
+describe("audio light palette model (cover multi-colour tonal gradient)", () => {
+  it("gradients deep to bright across the cover's colours", () => {
+    const colors = spectralLightColors({ accent, tones: ["#b0402a", "#f2c14e", "#d95f3c"] });
 
     expect(colors.stops.length).toBeGreaterThan(6);
     // Tone rises across the ramp → deeper base, brighter crest.
     expect(colors.stops[0].color.l).toBeLessThan(colors.stops[colors.stops.length - 1].color.l);
   });
 
-  it("re-tones per cover, and uses the accent only for a greyscale cover", () => {
-    const warm = spectralLightColors({ accent, tintA: "#b0402a", tintB: "#f2c14e" });
-    const violet = spectralLightColors({ accent, tintA: "#4a2b7a", tintB: "#a86bff" });
-    const grey = spectralLightColors({ accent, tintA: "#2a2a2c", tintB: "#3a3a3d" });
+  it("keeps every colour within the primary's family (no far jumps)", () => {
+    // A jarring off-hue extra (cyan) alongside a warm cover must be pulled in.
+    const colors = spectralLightColors({ accent, tones: ["#e0662f", "#f2c14e", "#22d3d3"] });
+    const hues = colors.stops.map((stop) => stop.color.h);
+    // All ramp hues stay within a cohesive band (primary ± spread + tone drift).
+    expect(Math.max(...hues) - Math.min(...hues)).toBeLessThan(80);
+  });
 
-    // Different cover colours → different tonal family.
+  it("re-tones per cover, and uses the accent only for a greyscale cover", () => {
+    const warm = spectralLightColors({ accent, tones: ["#b0402a", "#f2c14e"] });
+    const violet = spectralLightColors({ accent, tones: ["#4a2b7a", "#a86bff"] });
+    const grey = spectralLightColors({ accent, tones: ["#2a2a2c", "#3a3a3d"] });
+
     expect(Math.abs(warm.body.h - violet.body.h)).toBeGreaterThan(60);
-    // A near-greyscale cover falls back to the accent, distinct from the violet cover.
     expect(Math.abs(grey.body.h - violet.body.h)).toBeGreaterThan(40);
   });
 
