@@ -1,45 +1,54 @@
-import type { SpectrumProfile } from "./audio-spectrum";
-import { smoothSpectrum, spectrumFrame, spectrumProfile } from "./audio-spectrum";
+import {
+  adaptiveGain,
+  initialAdaptiveGain,
+  smoothSpectrum,
+  spectrumFrame,
+  type AdaptiveGainState,
+} from "./audio-spectrum";
 
-export type AudioLightFrameState = {
+/** The per-frame data visualizers render from — just the display bands. */
+export type AudioLightFrame = {
   bands: readonly number[];
 };
 
-export type AudioLightFrame = AudioLightFrameState & {
-  profile: SpectrumProfile;
-  energy: number;
+/** The state carried between frames: the display bands (smoothing seed) plus the
+ *  per-band adaptive-gain envelope. */
+export type AudioLightFrameState = AudioLightFrame & {
+  env: AdaptiveGainState;
 };
 
+// Fast attack / slower release so the bands punch up on transients and ease back
+// between beats — the pumping that reads as "reacting to the music". Applied on
+// top of the per-band AGC, so this is purely visual damping.
+const ATTACK = 0.6;
+const RELEASE = 0.2;
+
 export function initialAudioLightFrameState(bandCount: number): AudioLightFrameState {
-  return { bands: Array.from({ length: bandCount }, () => 0) };
+  return {
+    bands: Array.from({ length: bandCount }, () => 0),
+    env: initialAdaptiveGain(bandCount),
+  };
 }
 
 export function nextAudioLightFrame({
   previous,
   bytes,
   read,
-  timeMs,
   bandCount,
 }: {
   previous: AudioLightFrameState;
   bytes: ArrayLike<number>;
   read: boolean;
-  timeMs: number;
   bandCount: number;
-}): AudioLightFrame {
-  const seed =
-    previous.bands.length === bandCount
-      ? previous.bands
-      : initialAudioLightFrameState(bandCount).bands;
+}): AudioLightFrameState {
+  const base =
+    previous.bands.length === bandCount ? previous : initialAudioLightFrameState(bandCount);
   const frame = read ? spectrumFrame(bytes, bandCount) : undefined;
-  // Snappy attack + a quick release so the bars punch up on transients and drop back
-  // between beats — the pumping that reads as "reacting to the music".
-  const bands = smoothSpectrum(seed, frame?.active ? frame.bands : seed, 0.5, 0.18);
-  const profile = spectrumProfile(bands);
-  const idle = 0.12 + (0.5 + Math.sin(timeMs / 1000 + 0.4) * 0.5) * 0.18;
-  const energy = profile.active
-    ? profile.low * 0.62 + profile.mid * 0.24 + profile.peak * 0.14
-    : idle;
-
-  return { bands, profile, energy };
+  // When there's no signal (paused / silence between tracks) feed zeros: the gain
+  // envelope decays and the bands release toward the baseline, so playback resumes
+  // lively instead of over-boosted from a stale envelope.
+  const raw = frame?.active ? frame.bands : initialAudioLightFrameState(bandCount).bands;
+  const gained = adaptiveGain(raw, base.env);
+  const bands = smoothSpectrum(base.bands, gained.bands, ATTACK, RELEASE);
+  return { bands, env: gained.env };
 }
