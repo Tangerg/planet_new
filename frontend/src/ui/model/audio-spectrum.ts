@@ -11,20 +11,23 @@ const START_BIN = 1;
 // bands into that dead zone would just amplify noise, so cap the band range below it.
 const USABLE_BIN_RATIO = 0.72;
 
-// Perceptual contrast curve applied to the gained bands. Bytes are already
-// dB-scaled, so this stays gentle — just a touch of lift for readability.
-const DISPLAY_GAMMA = 0.9;
-
-// --- Per-band automatic gain (AGC) -----------------------------------------
+// --- Per-band auto-level (AGC) ---------------------------------------------
 // Absolute loudness varies wildly between tracks (mastering level) and between
 // bands (music is bass-heavy, pink-ish), so a fixed mapping makes some songs
-// thrash and others barely move. Normalise each band by its own slow-release peak
-// envelope: every band, and every track loud or quiet, fills the visual range —
-// the standard fix for "some songs don't react". A relative floor keeps genuinely
-// dead bands (and silence between tracks) from being amplified into noise.
-const GAIN_RELEASE = 0.975; // per-frame envelope decay; attack is instant
+// thrash and others barely move. Normalise each band against its own slow-moving
+// RUNNING LEVEL — a stable reference the instantaneous band swings around. Loud
+// and quiet tracks both centre at the same height, yet each keeps its beat-to-beat
+// jitter (how far the moment sits above/below its running level). This is the
+// crucial difference from an instant-attack peak follower, which keeps raw ≈ its
+// own envelope and so pins loud steady tracks to the ceiling with no motion. A
+// relative floor keeps dead bands and the silence between tracks from being
+// amplified into noise.
+const LEVEL_RISE = 0.1; // running level tracks louder frames this fast…
+const LEVEL_FALL = 0.04; // …and quieter frames slower, keeping the reference steady
+const LEVEL_TARGET = 0.5; // where a band sitting exactly at its running level renders
+const LEVEL_CONTRAST = 1.5; // >1 exaggerates deviations from the level into visible jitter
 const GAIN_FLOOR_ABS = 0.02; // never divide by less than this (silence guard)
-const GAIN_FLOOR_REL = 0.1; // a band below 10% of the loudest is not boosted
+const GAIN_FLOOR_REL = 0.12; // a band below this fraction of the loudest isn't boosted
 
 export type SpectrumFrame = {
   bands: readonly number[];
@@ -119,7 +122,7 @@ export function spectrumProfile(bands: readonly number[]): SpectrumProfile {
   return { low, mid, high, peak, active: peak > 0.025 };
 }
 
-/** Per-band envelope carried across frames — the AGC divisor's memory. */
+/** Per-band running level carried across frames — the AGC divisor's memory. */
 export type AdaptiveGainState = readonly number[];
 
 export function initialAdaptiveGain(bandCount: number): number[] {
@@ -127,22 +130,27 @@ export function initialAdaptiveGain(bandCount: number): number[] {
 }
 
 /**
- * Normalise each raw band by its own peak envelope (instant attack, slow
- * release), so quiet and loud bands/tracks both fill the range. Returns the
- * gained display bands and the updated envelope to carry to the next frame. Pure.
+ * Normalise each raw band against its own slow running level (fast rise, slow
+ * fall), rendering the moment's deviation from that level with contrast. Quiet and
+ * loud tracks both centre at LEVEL_TARGET, while each keeps its beat-to-beat
+ * motion. Returns the display bands and the updated level to carry forward. Pure.
  */
 export function adaptiveGain(
   raw: readonly number[],
-  previousEnv: AdaptiveGainState,
-): { bands: number[]; env: number[] } {
-  const env = raw.map((value, i) => Math.max(value, (previousEnv[i] ?? 0) * GAIN_RELEASE));
-  const peakEnv = env.reduce((max, value) => (value > max ? value : max), 0);
-  const floor = Math.max(GAIN_FLOOR_ABS, peakEnv * GAIN_FLOOR_REL);
-  const bands = raw.map((value, i) => {
-    const divisor = Math.max(env[i] ?? 0, floor);
-    return clamp(0, 1, Math.pow(value / divisor, DISPLAY_GAMMA));
+  previousLevel: AdaptiveGainState,
+): { bands: number[]; level: number[] } {
+  const level = raw.map((value, i) => {
+    const prev = previousLevel[i] ?? 0;
+    const rate = value >= prev ? LEVEL_RISE : LEVEL_FALL;
+    return prev + (value - prev) * rate;
   });
-  return { bands, env };
+  const peakLevel = level.reduce((max, value) => (value > max ? value : max), 0);
+  const floor = Math.max(GAIN_FLOOR_ABS, peakLevel * GAIN_FLOOR_REL);
+  const bands = raw.map((value, i) => {
+    const divisor = Math.max(level[i] ?? 0, floor);
+    return clamp(0, 1, LEVEL_TARGET * Math.pow(value / divisor, LEVEL_CONTRAST));
+  });
+  return { bands, level };
 }
 
 /** Attack is intentionally faster than release so peaks feel responsive while
