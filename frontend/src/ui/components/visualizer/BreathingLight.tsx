@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
+import { useDominantColor } from "@/hooks/useDominantColor";
 import {
   initialAudioLightFrameState,
   nextAudioLightFrame,
@@ -14,13 +15,22 @@ type BreathingLightProps = {
   accent: string;
   tintA: string;
   tintB: string;
+  /** Current cover URL — its extracted dominant colour tones the visualizer so it
+   *  matches the artwork (falls back to the seed tints when it can't be sampled). */
+  image?: string;
 };
 
 const BAND_COUNT = 18;
 const FFT_SIZE = 256;
 
-export function BreathingLight({ playing, accent, tintA, tintB }: BreathingLightProps) {
+export function BreathingLight({ playing, accent, tintA, tintB, image }: BreathingLightProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Tone from the artwork's real dominant colour when it can be sampled; otherwise
+  // the seed tints. Both cover pair slots get the same colour so the ramp is a
+  // monochromatic scale of it.
+  const dominant = useDominantColor(image);
+  const toneA = dominant ?? tintA;
+  const toneB = dominant ?? tintB;
   const sampler = useAudioSpectrum({
     enabled: playing,
     fftSize: FFT_SIZE,
@@ -72,7 +82,7 @@ export function BreathingLight({ playing, accent, tintA, tintB }: BreathingLight
         height,
         timeSec: time / 1000,
         playing,
-        skin: { accent, tintA, tintB },
+        skin: { accent, tintA: toneA, tintB: toneB },
         frame,
       });
 
@@ -85,7 +95,7 @@ export function BreathingLight({ playing, accent, tintA, tintB }: BreathingLight
       cancelAnimationFrame(raf);
       observer.disconnect();
     };
-  }, [accent, playing, sampler, tintA, tintB]);
+  }, [accent, playing, sampler, toneA, toneB]);
 
   return (
     <canvas
