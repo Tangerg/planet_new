@@ -5,8 +5,9 @@ export const FFT_BYTE_MAX = 255;
 // Spectral tilt: musical energy falls off steeply toward high frequencies, so the
 // treble (right) side of the visualizer barely moves while the bass (left) side
 // thrashes. Lift each band by a gain that rises with frequency so the field reacts
-// more evenly across its width. Top band gets ×(1 + SPECTRAL_TILT).
-const SPECTRAL_TILT = 2.8;
+// more evenly across its width. Top band gets ×(1 + SPECTRAL_TILT). Kept moderate;
+// the painter's soft saturation handles the remaining bass dominance.
+const SPECTRAL_TILT = 2.2;
 
 export type SpectrumFrame = {
   bands: readonly number[];

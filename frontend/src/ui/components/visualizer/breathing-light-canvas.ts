@@ -34,10 +34,10 @@ type WaveLayer = {
 };
 
 const WAVE_LAYERS: readonly WaveLayer[] = [
-  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.22, reactive: 0.62 },
-  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.24, reactive: 0.78 },
-  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.26, reactive: 0.9 },
-  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.26, reactive: 1.0 },
+  { waves: 1.4, speed: 0.55, amp: 0.5, phase: 0, alpha: 0.22, reactive: 0.42 },
+  { waves: 2.0, speed: -0.85, amp: 0.42, phase: 1.6, alpha: 0.24, reactive: 0.5 },
+  { waves: 2.7, speed: 1.15, amp: 0.34, phase: 3.2, alpha: 0.26, reactive: 0.58 },
+  { waves: 3.5, speed: -1.5, amp: 0.26, phase: 4.8, alpha: 0.26, reactive: 0.64 },
 ];
 
 /** Vertical heat ramp: cool at the base (y = height) → warm at the top (y = 0).
@@ -65,14 +65,18 @@ function waveHeight(
   layer: WaveLayer,
 ): number {
   const band = bands[Math.min(bands.length - 1, Math.floor(u * bands.length))] ?? 0;
+  // Soft saturation: loud bands approach — but never slam — the ceiling, so the
+  // bass side stops clipping flat at the top and its dominance over the treble is
+  // compressed (a limiter, not just a lower gain).
+  const level = 1 - Math.exp(-band * 2.4);
   const w1 = Math.sin(u * layer.waves * Math.PI * 2 + timeSec * layer.speed + layer.phase);
   const w2 = Math.sin(
     u * layer.waves * 1.9 * Math.PI * 2 - timeSec * layer.speed * 0.6 + layer.phase,
   );
   const flow = w1 * 0.62 + w2 * 0.38;
-  const base = 0.12 + pulse * 0.2;
-  const tongue = flow * layer.amp * (0.26 + band * 0.95);
-  return clamp(0, 1.2, base + band * layer.reactive + tongue);
+  const base = 0.1 + pulse * 0.13;
+  const tongue = flow * layer.amp * (0.22 + level * 0.5);
+  return clamp(0, 1.05, base + level * layer.reactive + tongue);
 }
 
 function paintWaveLayer(
