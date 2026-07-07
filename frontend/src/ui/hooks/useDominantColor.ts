@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { clamp } from "@shared/math";
 
+import { loopbackProxyUrl } from "@/infra/mediaSource";
+
 // Resolved dominant colours per URL (null = couldn't sample — CORS-tainted or load
 // error; don't retry). Module-level so it survives re-mounts and track revisits.
 const cache = new Map<string, string | null>();
@@ -109,23 +111,29 @@ export function useDominantColor(url: string | undefined): string | undefined {
       return;
     }
     let cancelled = false;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      let hex: string | null = null;
-      try {
-        hex = extractDominant(img);
-      } catch {
-        hex = null;
-      }
-      cache.set(url, hex);
-      if (!cancelled) setColor(hex ?? undefined);
-    };
-    img.onerror = () => {
-      cache.set(url, null);
-      if (!cancelled) setColor(undefined);
-    };
-    img.src = url;
+    // Load through the loopback /stream proxy: remote covers (e.g. NCM) don't send
+    // CORS headers, so reading their pixels off a canvas would taint it. The proxy
+    // re-serves the bytes with Access-Control-Allow-Origin, keeping the canvas clean.
+    void loopbackProxyUrl(url).then((proxied) => {
+      if (cancelled) return;
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        let hex: string | null = null;
+        try {
+          hex = extractDominant(img);
+        } catch {
+          hex = null;
+        }
+        cache.set(url, hex);
+        if (!cancelled) setColor(hex ?? undefined);
+      };
+      img.onerror = () => {
+        cache.set(url, null);
+        if (!cancelled) setColor(undefined);
+      };
+      img.src = proxied;
+    });
     return () => {
       cancelled = true;
     };
