@@ -116,16 +116,12 @@ export function paintBreathingLight({
   const pulse = playing
     ? Math.max(frame.energy, 0.14 + idleBreath * 0.18)
     : 0.06 + idleBreath * 0.05;
-  // Slow ±8° hue shimmer — a subtle living drift, restrained to keep it tasteful.
-  const hueDrift = Math.sin(timeSec * 0.06) * 8;
 
   const colors = spectralLightColors({
     accent: skin.accent,
     tintA: skin.tintA,
     tintB: skin.tintB,
     profile: frame.profile,
-    signature: frame.signature,
-    hueDrift,
   });
 
   // Plain alpha compositing (no additive) so the vertical cool→warm gradient stays
