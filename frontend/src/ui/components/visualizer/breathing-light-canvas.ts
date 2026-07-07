@@ -6,13 +6,12 @@ import {
   spectralLightColors,
   type AudioLightFrame,
   type HslColor,
+  type SpectralLightColors,
 } from "@/model/audio-visualization";
-
-type SpectralPaintColors = ReturnType<typeof spectralLightColors>;
 
 /** Colour for a lane — sampled from the cover tonal ramp at t∈[0,1] (deep→bright).
  *  A rendering concern: the lane data itself carries no colour. */
-function laneColor(colors: SpectralPaintColors, t: number): HslColor {
+function laneColor(colors: SpectralLightColors, t: number): HslColor {
   const stops = colors.stops;
   if (stops.length === 0) return { h: 280, s: 40, l: 50 };
   const x = clamp(0, 1, t) * (stops.length - 1);

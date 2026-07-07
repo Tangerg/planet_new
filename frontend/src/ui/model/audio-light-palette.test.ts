@@ -25,9 +25,10 @@ describe("audio light palette model (cover multi-colour tonal gradient)", () => 
     const warm = spectralLightColors({ accent, tones: ["#b0402a", "#f2c14e"] });
     const violet = spectralLightColors({ accent, tones: ["#4a2b7a", "#a86bff"] });
     const grey = spectralLightColors({ accent, tones: ["#2a2a2c", "#3a3a3d"] });
+    const midHue = (c: typeof warm) => c.stops[Math.floor(c.stops.length / 2)].color.h;
 
-    expect(Math.abs(warm.body.h - violet.body.h)).toBeGreaterThan(60);
-    expect(Math.abs(grey.body.h - violet.body.h)).toBeGreaterThan(40);
+    expect(Math.abs(midHue(warm) - midHue(violet))).toBeGreaterThan(60);
+    expect(Math.abs(midHue(grey) - midHue(violet))).toBeGreaterThan(40);
   });
 
   it("formats hsl colors with clamped alpha", () => {

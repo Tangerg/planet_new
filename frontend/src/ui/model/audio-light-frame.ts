@@ -24,11 +24,12 @@ export type AudioLightFrameState = AudioLightFrame & {
 const ATTACK = 0.82;
 const RELEASE = 0.46;
 
+function zeros(bandCount: number): number[] {
+  return Array.from({ length: bandCount }, () => 0);
+}
+
 export function initialAudioLightFrameState(bandCount: number): AudioLightFrameState {
-  return {
-    bands: Array.from({ length: bandCount }, () => 0),
-    level: initialAdaptiveGain(bandCount),
-  };
+  return { bands: zeros(bandCount), level: initialAdaptiveGain(bandCount) };
 }
 
 export function nextAudioLightFrame({
@@ -48,7 +49,7 @@ export function nextAudioLightFrame({
   // When there's no signal (paused / silence between tracks) feed zeros: the gain
   // envelope decays and the bands release toward the baseline, so playback resumes
   // lively instead of over-boosted from a stale envelope.
-  const raw = frame?.active ? frame.bands : initialAudioLightFrameState(bandCount).bands;
+  const raw = frame?.active ? frame.bands : zeros(bandCount);
   const gained = adaptiveGain(raw, base.level);
   const bands = smoothSpectrum(base.bands, gained.bands, ATTACK, RELEASE);
   return { bands, level: gained.level };
