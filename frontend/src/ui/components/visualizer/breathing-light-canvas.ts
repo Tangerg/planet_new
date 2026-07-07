@@ -41,8 +41,9 @@ export type BreathingLightPaintInput = {
 
 // Frequency-band lanes; audioLanes() prepends one raw/overall track, so the bar
 // shows BAND_LANES + 1 waves. Band lanes are the standard real-time proxy for
-// "per-instrument" (true stems aren't in the mix we get).
-const BAND_LANES = 6;
+// "per-instrument" (true stems aren't in the mix we get). More lanes = richer,
+// layered translucent depth without muddying, once heights/opacity are scattered.
+const BAND_LANES = 7;
 
 type LaneStyle = {
   speed: number;
@@ -58,28 +59,31 @@ type LaneStyle = {
 // its running level renders here; the beat swings it above/below.
 const LANE_CENTER = 0.5;
 
-// Deterministic, non-monotonic 0..1 per lane. Two out-of-phase sines (different
-// frequency + phase) give each lane independent height and reactivity character, so
-// the stack reads as uneven, layered waves ("错落有致") instead of one uniform blob —
-// and it scales to any lane count.
-function laneWave(index: number, freq: number, phase: number): number {
-  return 0.5 + 0.5 * Math.sin(index * freq + phase);
+// Low-discrepancy scatter in [0,1): a golden-ratio additive recurrence gives an even
+// spread with no repetition for any lane count — better than a sine, which can settle
+// into a short period. Different seeds give each lane independent characters.
+const GOLDEN = 0.618033988749895;
+function laneScatter(index: number, seed: number): number {
+  const x = index * GOLDEN + seed;
+  return x - Math.floor(x);
 }
 
 // Per-lane render params. `rest` = resting height and `react` = how hard the beat
-// swings this lane — staggered independently, so some lanes are tall & calm and
-// others low & jumpy. speed/waves/phase give each its own horizontal flow.
+// swings this lane — scattered independently, so some lanes are tall & calm and
+// others low & jumpy (the "错落有致" layering). speed/waves/phase give each its own
+// horizontal flow; alpha varies so the translucent layers build visible depth.
 function laneStyle(index: number): LaneStyle {
-  const vh = laneWave(index, 1.7, 1.0); // resting-height character
-  const vr = laneWave(index, 1.1, 4.3); // reactivity character
+  const vh = laneScatter(index, 0.35); // resting-height character
+  const vr = laneScatter(index, 0.72); // reactivity character
+  const va = laneScatter(index, 0.5); // opacity character
   return {
-    speed: (0.7 + index * 0.32) * (index % 2 === 0 ? 1 : -1),
-    waves: 1.2 + index * 0.38,
-    amp: 0.05 + vh * 0.05,
-    phase: index * 1.1,
-    alpha: 0.22 + vr * 0.13,
-    react: 0.35 + vr * 0.7,
-    rest: 0.16 + vh * 0.5,
+    speed: (0.5 + index * 0.2) * (index % 2 === 0 ? 1 : -1),
+    waves: 1.1 + index * 0.42,
+    amp: 0.05 + vh * 0.055,
+    phase: index * 1.3,
+    alpha: 0.19 + va * 0.16,
+    react: 0.32 + vr * 0.78,
+    rest: 0.14 + vh * 0.56,
   };
 }
 
@@ -130,7 +134,7 @@ export function paintBreathingLight({
   const lanes = audioLanes(frame, BAND_LANES);
   const denom = Math.max(1, lanes.length - 1);
 
-  lanes.forEach((lane, k) => {
+  const rendered = lanes.map((lane, k) => {
     const style = laneStyle(k);
     // Soft-knee so only the biggest transients graze the ceiling.
     const level = lane.energy <= 0.72 ? lane.energy : 0.72 + (lane.energy - 0.72) * 0.45;
@@ -140,7 +144,14 @@ export function paintBreathingLight({
     const centerHeight = playing
       ? style.rest + (level - LANE_CENTER) * style.react
       : style.rest * (0.4 + idleBreath * 0.12);
-    const color = laneColor(colors, k / denom);
-    paintLane(ctx, width, height, timeSec, centerHeight, color, style);
+    return { style, centerHeight, color: laneColor(colors, k / denom) };
   });
+
+  // Paint the tallest-resting lanes first (behind), shorter ones in front, so the
+  // translucent layers read with depth. Sorting by the static rest height (not the
+  // live one) keeps a stable draw order — no per-frame z-fighting flicker.
+  rendered.sort((a, b) => b.style.rest - a.style.rest);
+  for (const r of rendered) {
+    paintLane(ctx, width, height, timeSec, r.centerHeight, r.color, r.style);
+  }
 }

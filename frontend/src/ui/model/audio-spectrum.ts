@@ -22,10 +22,10 @@ const USABLE_BIN_RATIO = 0.72;
 // own envelope and so pins loud steady tracks to the ceiling with no motion. A
 // relative floor keeps dead bands and the silence between tracks from being
 // amplified into noise.
-const LEVEL_RISE = 0.1; // running level tracks louder frames this fast…
-const LEVEL_FALL = 0.04; // …and quieter frames slower, keeping the reference steady
+const LEVEL_RISE = 0.12; // running level tracks louder frames this fast…
+const LEVEL_FALL = 0.035; // …and quieter frames slower, keeping the reference steady
 const LEVEL_TARGET = 0.5; // where a band sitting exactly at its running level renders
-const LEVEL_CONTRAST = 1.5; // >1 exaggerates deviations from the level into visible jitter
+const LEVEL_CONTRAST = 1.6; // >1 exaggerates deviations from the level into visible jitter
 const GAIN_FLOOR_ABS = 0.02; // never divide by less than this (silence guard)
 const GAIN_FLOOR_REL = 0.12; // a band below this fraction of the loudest isn't boosted
 
