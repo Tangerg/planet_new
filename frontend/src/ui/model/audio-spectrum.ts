@@ -2,6 +2,12 @@ import { clamp } from "@shared/math";
 
 export const FFT_BYTE_MAX = 255;
 
+// Spectral tilt: musical energy falls off steeply toward high frequencies, so the
+// treble (right) side of the visualizer barely moves while the bass (left) side
+// thrashes. Lift each band by a gain that rises with frequency so the field reacts
+// more evenly across its width. Top band gets ×(1 + SPECTRAL_TILT).
+const SPECTRAL_TILT = 2.8;
+
 export type SpectrumFrame = {
   bands: readonly number[];
   low: number;
@@ -78,7 +84,9 @@ export function spectrumFrame(bytes: ArrayLike<number>, bandCount: number): Spec
     const rawEnd = Math.floor(Math.pow((index + 1) / bandCount, 1.35) * bytes.length);
     const end = Math.min(bytes.length, Math.max(start + 1, rawEnd));
     const normalized = normalizeFftByte(bandAverage(bytes, start, end));
-    return clamp(0, 1, Math.pow(normalized, 0.72));
+    // Lift high frequencies (see SPECTRAL_TILT) so the treble side stays lively.
+    const tilt = 1 + (index / Math.max(1, bandCount - 1)) * SPECTRAL_TILT;
+    return clamp(0, 1, Math.pow(clamp(0, 1, normalized * tilt), 0.72));
   });
 
   const profile = spectrumProfile(bands);
