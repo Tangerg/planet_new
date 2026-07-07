@@ -21,8 +21,8 @@ export type AudioLightFrameState = AudioLightFrame & {
 // beat-to-beat jitter survives to the screen instead of being averaged flat. Heavy
 // smoothing here (plus the AnalyserNode's own) is what made loud tracks look pinned
 // and their motion sluggish.
-const ATTACK = 0.8;
-const RELEASE = 0.5;
+const ATTACK = 0.82;
+const RELEASE = 0.46;
 
 export function initialAudioLightFrameState(bandCount: number): AudioLightFrameState {
   return {
