@@ -4,7 +4,6 @@ import type { ProviderCapability } from "@domain";
 
 import {
   buildWorlds,
-  clampNavigationIndex,
   nounCount,
   xmbKeyboardIntent,
   xmbMoveCategory,
@@ -151,12 +150,7 @@ describe("navigation model", () => {
     expect(navActions.openLibrary).toHaveBeenNthCalledWith(3, "artists");
   });
 
-  it("clamps XMB category and row cursor movement", () => {
-    expect(clampNavigationIndex(-1, 4)).toBe(0);
-    expect(clampNavigationIndex(2, 4)).toBe(2);
-    expect(clampNavigationIndex(99, 4)).toBe(3);
-    expect(clampNavigationIndex(1, 0)).toBe(0);
-
+  it("clamps XMB category cursor movement to the available range", () => {
     expect(xmbMoveCategory(1, -3, 5)).toBe(0);
     expect(xmbMoveCategory(1, 2, 5)).toBe(3);
     expect(xmbMoveCategory(4, 2, 5)).toBe(4);

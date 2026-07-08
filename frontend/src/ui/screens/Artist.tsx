@@ -10,7 +10,7 @@ import {
   artistAlbumTrackCount,
   artistScreenModel,
 } from "@/model/artist-screen";
-import { clampFlowCenter } from "@/model/flow";
+import { clampIndex } from "@shared/number";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -270,7 +270,7 @@ export function ArtistScreen({
                 <div className="-mx-12 h-[480px]">
                   <CoverFlow
                     items={model.albumFlowItems}
-                    center={clampFlowCenter(flowCenter, model.albums.length)}
+                    center={clampIndex(flowCenter, model.albums.length)}
                     setCenter={setFlowCenter}
                     accent={accent}
                     onOpen={onOpenAlbum}

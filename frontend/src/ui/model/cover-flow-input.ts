@@ -1,3 +1,5 @@
+import { clampIndex } from "@shared/number";
+
 export const COVER_FLOW_WHEEL_THRESHOLD = 60;
 export const COVER_FLOW_DRAG_STEP_PX = 120;
 /** Horizontal travel (px) that promotes a pointer press from a click to a drag. */
@@ -7,17 +9,12 @@ export type CoverFlowMove = "previous" | "next";
 
 export type CoverFlowKeyAction = "previous" | "next" | "expand" | "collapse" | "open" | "none";
 
-export function clampCoverFlowCenter(center: number, itemCount: number): number {
-  if (itemCount <= 0) return 0;
-  return Math.max(0, Math.min(itemCount - 1, center));
-}
-
 export function nextCoverFlowCenter(
   center: number,
   itemCount: number,
   move: CoverFlowMove,
 ): number {
-  return clampCoverFlowCenter(center + (move === "next" ? 1 : -1), itemCount);
+  return clampIndex(center + (move === "next" ? 1 : -1), itemCount);
 }
 
 export function coverFlowWheelMotion(
@@ -60,7 +57,7 @@ export function coverFlowDragCenter({
   stepPx?: number;
 }): number {
   const deltaX = currentX - startX;
-  return clampCoverFlowCenter(startCenter - Math.round(deltaX / stepPx), itemCount);
+  return clampIndex(startCenter - Math.round(deltaX / stepPx), itemCount);
 }
 
 export function coverFlowKeyAction({

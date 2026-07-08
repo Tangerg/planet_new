@@ -11,7 +11,7 @@ import {
   libraryScreenModel,
   libraryTracksForCollection,
 } from "@/model/library";
-import { clampFlowCenter } from "@/model/flow";
+import { clampIndex } from "@shared/number";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -155,7 +155,7 @@ export function LibraryScreen({
                 <CoverFlow
                   items={localizedFlowItems}
                   round={round}
-                  center={clampFlowCenter(flowCenter, flowItems.length)}
+                  center={clampIndex(flowCenter, flowItems.length)}
                   setCenter={setFlowCenter}
                   accent={accent}
                   onOpen={openOf}

@@ -1,5 +1,12 @@
 import { expect, test } from "vitest";
-import { compactCount } from "./number";
+import { clampIndex, compactCount } from "./number";
+
+test("clampIndex clamps into [0, count-1], 0 when empty", () => {
+  expect(clampIndex(-1, 3)).toBe(0);
+  expect(clampIndex(1, 3)).toBe(1);
+  expect(clampIndex(9, 3)).toBe(2);
+  expect(clampIndex(2, 0)).toBe(0);
+});
 
 test("compactCount", () => {
   expect(compactCount(undefined)).toBe("0");
