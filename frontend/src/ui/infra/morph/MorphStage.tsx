@@ -3,7 +3,13 @@ import type { RefObject } from "react";
 
 import "./morph.css";
 import { MorphFrozen } from "./context";
-import { EASE, layerStyle, type Transition } from "./useMorphTransition";
+import {
+  EASE,
+  MORPH_LAYER_FADE_SEC,
+  MORPH_SEC,
+  layerStyle,
+  type Transition,
+} from "./useMorphTransition";
 
 type MorphStageProps = {
   /** The resident container ref the engine measures against. */
@@ -71,7 +77,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
           const cp = `circle(${started ? trans.clipR : 0}px at ${trans.point.x}px ${trans.point.y}px)`;
           st.clipPath = cp;
           st.WebkitClipPath = cp;
-          st.transition = started ? `clip-path .6s ${EASE}` : "none";
+          st.transition = started ? `clip-path ${MORPH_SEC}s ${EASE}` : "none";
           st.position = "relative";
           st.zIndex = 25;
         }
@@ -96,7 +102,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
               fromStyle.clipPath = cp;
               fromStyle.WebkitClipPath = cp;
               fromStyle.opacity = 1;
-              fromStyle.transition = collapsed ? `clip-path .55s ${EASE}` : "none";
+              fromStyle.transition = collapsed ? `clip-path ${MORPH_SEC}s ${EASE}` : "none";
             }
             return (
               <div
@@ -152,7 +158,7 @@ export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: Morph
                     background: tileBg(t.seed, t.grad),
                     boxShadow: "0 30px 70px -26px rgba(0,0,0,.5)",
                     transition: anim
-                      ? `transform .58s ${EASE}, border-radius .58s ${EASE}, opacity .34s ease`
+                      ? `transform ${MORPH_SEC}s ${EASE}, border-radius ${MORPH_SEC}s ${EASE}, opacity ${MORPH_LAYER_FADE_SEC}s ease`
                       : "none",
                   }}
                 >

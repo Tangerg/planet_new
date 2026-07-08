@@ -22,6 +22,7 @@ import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg } from "@/components/primitives";
 import { useLikes } from "@/hooks/useLikes";
+import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { MorphStage, MorphProvider } from "@/infra/morph";
 import { useSpatialNavigation } from "@/hooks/useSpatialNavigation";
 import { useAppMenu } from "@/hooks/useAppMenu";
@@ -97,8 +98,9 @@ export default function Shell() {
     daily,
   } = useShellLibraryData();
 
-  /* ---- likes / settings / history (extracted hook) ---- */
-  const { liked, toggleLike, isLiked, history, settings, setSettings } = useLikes(playback.current);
+  /* ---- likes / settings / history ---- */
+  const { liked, toggleLike, isLiked, settings, setSettings } = useLikes(playback.current?.id);
+  const history = usePlayHistory(playback.current);
   const settingsNowPlayingMode: NowPlayingMode = settings.npMode === "LYRICS" ? "lyrics" : "cover";
   /* ---- navigation + shared-element transition machine (extracted hook) ----
      Owns the view string, every nav-significant screen slice, the morph engine,
@@ -158,6 +160,7 @@ export default function Shell() {
   const { onPlay, likedDetail, menu, setMenu, actions } = useShellTrackActions({
     play: playFn,
     addToQueue: playback.addToQueue,
+    addNextToQueue: playback.addNextToQueue,
     catalog,
     playbackTracks: playback.tracks,
     queue,
@@ -238,6 +241,9 @@ export default function Shell() {
         onPause: playback.pause,
         onNext: playNext,
         onPrev: playPrev,
+        selectTrack: playback.selectTrack,
+        removeFromQueue: playback.removeFromQueue,
+        clearQueue: playback.clearQueue,
         shufflePlay: playback.shufflePlay,
       }}
       navigation={{

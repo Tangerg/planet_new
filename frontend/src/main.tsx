@@ -13,6 +13,7 @@ import "@/i18n"; // initialize i18next once (resources + active locale) before r
 import { engine } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
 import Shell from "@/Shell";
+import { installUiPerfProbe } from "@/infra/perf/uiPerfProbe";
 
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
@@ -24,6 +25,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+installUiPerfProbe();
 
 root.render(
   <React.StrictMode>

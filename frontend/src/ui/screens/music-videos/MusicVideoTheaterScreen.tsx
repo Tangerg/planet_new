@@ -193,7 +193,7 @@ export function MusicVideoTheaterScreen({
             >
               {playing ? <Icon.pause size={18} /> : <Icon.play size={18} />}
             </Button>
-            <span className="mlabel w-[46px] flex-none text-right text-[10px] text-white/52">
+            <span className="mlabel w-[46px] flex-none text-right text-[10px] text-white/52 tabular-nums">
               {formatMediaTime(timeSec)}
             </span>
             <div className="relative h-8 min-w-[180px] flex-1">
@@ -214,7 +214,7 @@ export function MusicVideoTheaterScreen({
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </div>
-            <span className="mlabel w-[46px] flex-none text-[10px] text-white/52">
+            <span className="mlabel w-[46px] flex-none text-[10px] text-white/52 tabular-nums">
               {formatMediaTime(model.totalSec)}
             </span>
             <span className="mlabel flex-none text-[10px] text-white/36">{model.qualityLabel}</span>
@@ -230,12 +230,12 @@ export function MusicVideoTheaterScreen({
       </div>
 
       <div
-        className="absolute right-0 top-0 z-20 h-full w-[56%] overflow-hidden transition-opacity duration-500"
+        className="absolute right-0 top-0 z-20 h-full w-[56%] overflow-hidden"
         style={{
           transform: commentsOpen ? "translateX(0)" : "translateX(100%)",
           opacity: commentsOpen ? 1 : 0,
           pointerEvents: commentsOpen ? "auto" : "none",
-          transition: "transform .58s cubic-bezier(.16,1,.3,1), opacity .36s ease",
+          transition: "transform .42s cubic-bezier(.16,1,.3,1), opacity .26s ease",
         }}
       >
         <div

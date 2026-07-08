@@ -13,7 +13,7 @@
 .mcard {
   @apply w-44 cursor-pointer border-0 bg-transparent p-0 text-left text-white;
   /* base lift transition (non-Motion fallback); .gridcard cards drop it so
-     Motion fully owns the root transform/filter. */
+     Motion fully owns the root transform. */
   transition:
     opacity 0.3s ease,
     filter 0.3s ease,
@@ -70,8 +70,8 @@
   );
   transform: translateX(-30%);
   transition:
-    opacity 0.4s ease,
-    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    opacity 0.22s ease,
+    transform 0.38s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .mcard:hover .art::after {
   opacity: 1;
@@ -82,7 +82,7 @@
    Drives both .mcard.gridcard tiles and the bare .gridcard track tiles. Declared
    after `.mcard .art` so its box-shadow transition wins at equal specificity. */
 .gridcard .art {
-  transition: box-shadow 0.45s ease;
+  transition: box-shadow 0.26s ease;
 }
 .gridcard:hover .art {
   box-shadow:
@@ -120,5 +120,5 @@
   @apply opacity-100;
 }
 .tile .tfab:active {
-  transform: scale(0.9);
+  transform: translateY(0.5px) scale(0.96);
 }

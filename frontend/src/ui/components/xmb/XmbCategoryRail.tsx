@@ -31,7 +31,7 @@ export function XmbCategoryRail({
       <div
         style={{
           transform: `translateX(${-c * XMB_CAT_GAP}px)`,
-          transition: `transform .62s ${XMB_EASE}`,
+          transition: `transform .42s ${XMB_EASE}`,
         }}
       >
         {cats.map((cc, i) => {
@@ -42,7 +42,7 @@ export function XmbCategoryRail({
               style={{ position: "absolute", left: i * XMB_CAT_GAP, top: 0 }}
               initial={false}
               animate={{ y, rotate }}
-              transition={{ duration: 0.62, ease: XMB_EASE_ARR }}
+              transition={{ duration: 0.42, ease: XMB_EASE_ARR }}
             >
               <XmbCategory cat={cc} active={i === c} dim={0.3} onClick={() => onSelect(i)} />
             </motion.div>

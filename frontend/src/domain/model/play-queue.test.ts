@@ -35,14 +35,43 @@ describe("PlayQueue.upNext", () => {
     expect(PlayQueue.upNext([t1, t2], undefined).map((t) => t.id)).toEqual(["1", "2"]);
     expect(PlayQueue.upNext([t1, t2], track("missing")).map((t) => t.id)).toEqual(["1", "2"]);
   });
+
+  test("uses the actual playback order when read from an instance", () => {
+    const q = new PlayQueue();
+    q.setTracks([t1, t2, t3], t2);
+    expect(q.upNext.map((t) => t.id)).toEqual(["3"]);
+  });
 });
 
-describe("PlayQueue user skip (cyclic)", () => {
-  test("next/previous wrap around the ends", () => {
+describe("PlayQueue user skip", () => {
+  test("does not wrap in sequence mode", () => {
     const q = new PlayQueue();
     q.setTracks([t1, t2, t3], t3);
-    expect(q.next()?.id).toBe("1"); // wrap forward
-    expect(q.previous()?.id).toBe("3"); // wrap backward
+    expect(q.next(RepeatMode.OFF)).toBe("unchanged");
+    expect(q.current?.id).toBe("3");
+
+    q.setTracks([t1, t2, t3], t1);
+    expect(q.previous(RepeatMode.OFF)).toBe("unchanged");
+    expect(q.current?.id).toBe("1");
+  });
+
+  test("wraps at the ends only in list-repeat mode", () => {
+    const q = new PlayQueue();
+    q.setTracks([t1, t2, t3], t3);
+    expect(q.next(RepeatMode.ALL)).toBe("changed");
+    expect(q.current?.id).toBe("1");
+    expect(q.previous(RepeatMode.ALL)).toBe("changed");
+    expect(q.current?.id).toBe("3");
+  });
+
+  test("can start from a queued item when there is no current track", () => {
+    const q = new PlayQueue();
+    q.add(t1);
+    q.add(t2);
+
+    expect(q.current).toBeUndefined();
+    expect(q.next(RepeatMode.OFF)).toBe("changed");
+    expect(q.current?.id).toBe("1");
   });
 });
 
@@ -90,24 +119,43 @@ describe("PlayQueue.add / remove", () => {
   test("add appends once; duplicates are ignored", () => {
     const q = new PlayQueue();
     q.setTracks([t1]);
-    q.add(t2);
-    q.add(t2);
+    expect(q.add(t2)).toBe(true);
+    expect(q.add(t2)).toBe(false);
     expect(ids(q)).toEqual(["1", "2"]);
+  });
+
+  test("addNext inserts a new track directly after current", () => {
+    const q = new PlayQueue();
+    q.setTracks([t1, t3], t1);
+    expect(q.addNext(t2)).toBe(true);
+    expect(q.playbackOrder.map((t) => t.id)).toEqual(["1", "2", "3"]);
+    expect(q.upNext.map((t) => t.id)).toEqual(["2", "3"]);
+  });
+
+  test("addNext moves an existing queued track after current", () => {
+    const q = new PlayQueue();
+    q.setTracks([t1, t2, t3], t2);
+    expect(q.addNext(t1)).toBe(true);
+    expect(q.playbackOrder.map((t) => t.id)).toEqual(["2", "1", "3"]);
+    expect(q.current?.id).toBe("2");
+    expect(q.addNext(t2)).toBe(false);
   });
 
   test("removing the current track lands the cursor on the next", () => {
     const q = new PlayQueue();
     q.setTracks([t1, t2, t3], t2);
-    q.remove(t2);
+    expect(q.remove(t2)).toBe(true);
     expect(ids(q)).toEqual(["1", "3"]);
     expect(q.current?.id).toBe("3");
   });
 
-  test("removing the last while current wraps to the start", () => {
+  test("removing the current tail leaves the queue but stops the current track", () => {
     const q = new PlayQueue();
     q.setTracks([t1, t2], t2);
     q.remove(t2);
-    expect(q.current?.id).toBe("1");
+    expect(ids(q)).toEqual(["1"]);
+    expect(q.current).toBeUndefined();
+    expect(q.upNext.map((t) => t.id)).toEqual(["1"]);
   });
 
   test("removing everything empties the queue", () => {
@@ -131,6 +179,8 @@ describe("PlayQueue.toggleShuffle", () => {
     expect(ids(q)).toEqual(many.map((t) => t.id)); // display order untouched
     expect(q.current).toBe(before); // cursor still on the same track
     expect(q.size).toBe(8);
+    expect(q.playbackOrder[0]).toBe(before);
+    expect(q.upNext).toHaveLength(7);
 
     expect(q.toggleShuffle()).toBe(false);
     expect(q.current).toBe(before);

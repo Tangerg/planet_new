@@ -63,17 +63,18 @@ export function ShellPlayerDock({
     <>
       <div aria-hidden style={{ flex: `0 0 ${show ? 84 : 0}px` }} />
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {show && (
           <motion.div
             initial={{ y: "108%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "108%", opacity: 0 }}
             transition={{
-              y: { duration: 0.44, ease: [0.16, 1, 0.3, 1] },
-              opacity: { duration: 0.3 },
+              y: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+              opacity: { duration: 0.22 },
             }}
             className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
+            style={{ willChange: "transform, opacity" }}
           >
             <PlayerBar
               track={track}

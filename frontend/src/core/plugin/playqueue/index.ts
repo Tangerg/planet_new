@@ -12,7 +12,7 @@ declare module "../../kernel/event" {
   }
 }
 
-/** Queue commands: set/select/add/remove/clear/next/previous/shuffle/repeat. */
+/** Queue commands: set/select/add/add-next/remove/clear/next/previous/shuffle/repeat. */
 export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
 
 /**
@@ -51,13 +51,11 @@ export class PlayQueue extends Plugin {
   }
 
   next(): void {
-    this.queue.next();
-    this.emitCurrent();
+    if (this.queue.next(this.repeat) === "changed") this.emitCurrent();
   }
 
   previous(): void {
-    this.queue.previous();
-    this.emitCurrent();
+    if (this.queue.previous(this.repeat) === "changed") this.emitCurrent();
   }
 
   select(track: Track): void {
@@ -65,13 +63,19 @@ export class PlayQueue extends Plugin {
   }
 
   add(track: Track): void {
-    this.queue.add(track);
+    if (this.queue.add(track)) this.emitQueue();
+  }
+
+  addNext(track: Track): void {
+    const before = this.queue.current;
+    if (!this.queue.addNext(track)) return;
     this.emitQueue();
+    if (this.queue.current !== before) this.emitCurrent();
   }
 
   remove(track: Track): void {
     const before = this.queue.current;
-    this.queue.remove(track);
+    if (!this.queue.remove(track)) return;
     this.emitQueue();
     if (this.queue.current !== before) this.emitCurrent();
   }
@@ -84,10 +88,12 @@ export class PlayQueue extends Plugin {
 
   toggleShuffle(): void {
     this.context.hooks.emit("queue:shuffle-changed", this.queue.toggleShuffle());
+    this.emitQueue();
   }
 
   setShuffle(enabled: boolean): void {
     this.context.hooks.emit("queue:shuffle-changed", this.queue.setShuffle(enabled));
+    this.emitQueue();
   }
 
   cycleRepeat(): void {
@@ -104,7 +110,7 @@ export class PlayQueue extends Plugin {
   };
 
   private emitQueue(): void {
-    this.context.hooks.emit("queue:changed", this.queue.tracks);
+    this.context.hooks.emit("queue:changed", this.queue.playbackOrder);
   }
 
   private emitCurrent(): void {

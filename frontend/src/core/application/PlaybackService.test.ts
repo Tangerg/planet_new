@@ -29,7 +29,9 @@ const track = (id: string): Track => ({
 function makeService(provider: Partial<MusicProvider>) {
   const playNow = vi.fn<(tracks: readonly Track[], start?: Track) => void>();
   const setShuffle = vi.fn<(enabled: boolean) => void>();
-  const queue = { playNow, setShuffle } as unknown;
+  const addNext = vi.fn<(track: Track) => void>();
+  const clear = vi.fn<() => void>();
+  const queue = { playNow, setShuffle, addNext, clear } as unknown;
   const planet = {
     resolve: (cap: unknown) => (cap === PLAY_QUEUE ? queue : null),
   } as unknown as Planet;
@@ -44,7 +46,7 @@ function makeService(provider: Partial<MusicProvider>) {
     ...provider,
   } as unknown as MusicProvider;
 
-  return { service: new PlaybackService(planet, () => full), playNow, setShuffle };
+  return { service: new PlaybackService(planet, () => full), playNow, setShuffle, addNext, clear };
 }
 
 describe("PlaybackService.play", () => {
@@ -98,6 +100,23 @@ describe("PlaybackService.play", () => {
     expect(playNow).toHaveBeenCalledTimes(1);
   });
 
+  it("does not revive a cleared queue when an older play() resolves late", async () => {
+    const pending = defer<TrackPlayUrl[]>();
+    const { service, playNow, clear } = makeService({
+      playUrls: () => pending.promise,
+    });
+
+    const playing = service.play([track("a")], track("a"));
+    service.clearQueue();
+
+    expect(clear).toHaveBeenCalledTimes(1);
+
+    pending.resolve([]);
+    await playing;
+
+    expect(playNow).not.toHaveBeenCalled();
+  });
+
   it("shufflePlay turns shuffle on before starting; an empty list is a no-op", async () => {
     const { service, playNow, setShuffle } = makeService({});
 
@@ -108,5 +127,14 @@ describe("PlaybackService.play", () => {
     await service.shufflePlay([track("a"), track("b")]);
     expect(setShuffle).toHaveBeenCalledWith(true);
     expect(playNow).toHaveBeenCalledTimes(1);
+  });
+
+  it("routes play-next queue edits through the queue capability", () => {
+    const { service, addNext } = makeService({});
+    const queued = track("next");
+
+    service.addNextToQueue(queued);
+
+    expect(addNext).toHaveBeenCalledWith(queued);
   });
 });

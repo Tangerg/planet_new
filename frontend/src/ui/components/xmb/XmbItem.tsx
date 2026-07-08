@@ -13,8 +13,13 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
   const ad = Math.abs(o),
     above = o < 0;
   const op = active ? 1 : Math.max(0.14, (above ? 0.4 : 0.54) - 0.13 * ad);
-  const blur = active ? 0 : Math.min(2.6, 0.55 * ad);
   const iconSz = active ? 52 : 30;
+  // Rack-focus depth, but only on the immediate ±1 neighbours (further rows are
+  // already faded near-invisible by `op`, so blurring them buys nothing). A FIXED
+  // radius with NO filter transition — on its own compositing layer — is the whole
+  // point: tweening blur re-runs the convolution every frame (the XMB-scroll jank),
+  // whereas snapping it once per move and caching the layer keeps the look cheap.
+  const nearBlur = !active && ad === 1;
   // Breathing glow on the active art — same accent-var box-shadow trick as
   // XmbCategory (template a 0→1→0 value so only the numbers tween).
   const glow = useMotionValue(0);
@@ -37,9 +42,9 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
       className="relative flex items-center"
       style={{
         gap: active ? 22 : 18,
-        filter: `blur(${blur}px)`,
         opacity: op,
-        transition: `opacity .55s ${XMB_EASE}, filter .55s ease`,
+        ...(nearBlur ? { filter: "blur(1.1px)", willChange: "filter" } : null),
+        transition: `opacity .38s ${XMB_EASE}`,
       }}
     >
       <div className="relative z-[1] grid w-[60px] flex-none place-items-center">
@@ -57,7 +62,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             color: "#fff",
             // box-shadow is Motion-driven (artShadow); transition the morphing
             // box props only so the CSS transition doesn't fight per-frame writes.
-            transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, border-radius .55s ${XMB_EASE}`,
+            transition: `width .38s ${XMB_EASE}, height .38s ${XMB_EASE}, border-radius .38s ${XMB_EASE}`,
             overflow: "hidden",
             position: "relative",
           }}
@@ -87,7 +92,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             color: active ? "#fff" : "rgba(255,255,255,.8)",
             // Only these four differ between active/inactive; enumerated (not
             // `all`) so the browser doesn't diff every property each frame.
-            transition: `font-size .55s ${XMB_EASE}, letter-spacing .55s ${XMB_EASE}, color .55s ${XMB_EASE}, max-width .55s ${XMB_EASE}`,
+            transition: `font-size .38s ${XMB_EASE}, letter-spacing .38s ${XMB_EASE}, color .38s ${XMB_EASE}, max-width .38s ${XMB_EASE}`,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",

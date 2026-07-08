@@ -79,6 +79,19 @@ export function useVibePlayback() {
     (track: VibeTrack) => playbackService.addToQueue(queueCommandTrack(track)),
     [playbackService],
   );
+  const addNextToQueue = useCallback(
+    (track: VibeTrack) => playbackService.addNextToQueue(queueCommandTrack(track)),
+    [playbackService],
+  );
+  const removeFromQueue = useCallback(
+    (track: VibeTrack) => playbackService.removeFromQueue(queueCommandTrack(track)),
+    [playbackService],
+  );
+  const clearQueue = useCallback(() => playbackService.clearQueue(), [playbackService]);
+  const selectTrack = useCallback(
+    (track: VibeTrack) => playbackService.selectTrack(queueCommandTrack(track)),
+    [playbackService],
+  );
   const toggleShuffle = useCallback(() => playbackService.toggleShuffle(), [playbackService]);
   const toggleRepeat = useCallback(() => playbackService.cycleRepeat(), [playbackService]);
   const seek = useCallback((pct: number) => playbackService.seek(pct), [playbackService]);
@@ -100,6 +113,10 @@ export function useVibePlayback() {
     next,
     prev,
     addToQueue,
+    addNextToQueue,
+    removeFromQueue,
+    clearQueue,
+    selectTrack,
     toggleShuffle,
     toggleRepeat,
     seek,

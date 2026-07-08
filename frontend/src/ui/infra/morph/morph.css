@@ -32,7 +32,7 @@
 /* content settle paired with the container-transform overlay */
 .view-emerge {
   height: 100%;
-  animation: viewEmerge 0.42s ease 0.04s both;
+  animation: viewEmerge 0.3s ease 0.03s both;
 }
 @keyframes viewEmerge {
   from {

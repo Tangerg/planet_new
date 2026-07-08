@@ -12,7 +12,7 @@ import { Rail } from "@/components/layout/Rail";
 import { HeroBanner } from "@/components/layout/HeroBanner";
 import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { PageColumn } from "@/components/layout/PageColumn";
-import { FadeIn } from "@/components/motion";
+import { Empty } from "@/components/layout/Empty";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
@@ -67,7 +67,38 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     [openAlbum, openPlaylist],
   );
 
-  if (!featured) return <FadeIn className="h-full" />;
+  if (!featured) {
+    return (
+      <ScreenScaffold background="#08080b">
+        <PageColumn className="flex h-full flex-col pb-[50px] pt-[60px]">
+          <div className="mb-[30px] flex items-end justify-between">
+            <div>
+              <div className="mlabel mb-2" style={{ color: accent }}>
+                {greetingLabels[greeting] ?? greeting}
+              </div>
+              <div className="text-[36px] font-extralight tracking-[0.01em]">
+                {t("forYou.title")}
+              </div>
+            </div>
+            <div className="flex gap-2.5">
+              {filters.map((c) => (
+                <Button
+                  key={c}
+                  className={"chip" + (chip === c ? " on" : "")}
+                  onClick={() => setChip(c)}
+                >
+                  {filterLabels[c] ?? c}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <Empty className="flex min-h-[360px] items-center justify-center rounded-[22px] bg-white/[0.03] p-[50px] text-center text-[22px]">
+            {t("forYou.empty")}
+          </Empty>
+        </PageColumn>
+      </ScreenScaffold>
+    );
+  }
 
   return (
     <ScreenScaffold

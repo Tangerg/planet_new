@@ -66,4 +66,22 @@ describe("Playback plugin", () => {
     expect(audioElement.src).toBe("");
     expect(states.at(-1)).toBe(PlayState.STOPPED);
   });
+
+  it("marks playback stopped before broadcasting that the track ended", () => {
+    const { hooks, audioElement } = mount();
+    const states: PlayState[] = [];
+    let ended = 0;
+    hooks.on("playback:state-changed", (state) => states.push(state));
+    hooks.on("playback:track-ended", () => {
+      ended += 1;
+    });
+
+    const onEnded = (
+      audioElement.addEventListener as unknown as { mock: { calls: [string, () => void][] } }
+    ).mock.calls.find(([event]) => event === "ended")?.[1];
+    onEnded?.();
+
+    expect(states.at(-1)).toBe(PlayState.STOPPED);
+    expect(ended).toBe(1);
+  });
 });

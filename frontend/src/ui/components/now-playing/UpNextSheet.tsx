@@ -7,7 +7,9 @@ import { Sheet } from "@/components/Sheet";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Empty } from "@/components/layout/Empty";
 import { VirtualList } from "@/components/layout/VirtualList";
+import { Button } from "@/components/controls/Button";
 import { useScreenActions } from "@/hooks/screenActions";
+import { Icon } from "@/infra/icons";
 import { activateOnKey } from "@/lib/keys";
 
 type Props = {
@@ -21,6 +23,8 @@ type Props = {
   tintA: string;
   grad?: string[];
   onPlay?: (track: VibeTrack) => void;
+  onRemoveFromQueue?: (track: VibeTrack) => void;
+  onClearQueue?: () => void;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -35,6 +39,8 @@ export function UpNextSheet({
   tintA,
   grad,
   onPlay,
+  onRemoveFromQueue,
+  onClearQueue,
   onOpenArtist,
 }: Props) {
   const { t } = useTranslation();
@@ -49,7 +55,7 @@ export function UpNextSheet({
       contentRef={contentRef}
       className="z-[22] h-[70%]"
       overlayClassName="z-[21]"
-      durationSec={0.58}
+      durationSec={0.4}
       style={{
         background: `linear-gradient(180deg, ${tintA}26, rgba(8,8,11,.97) 20%)`,
         backdropFilter: "blur(34px)",
@@ -67,13 +73,25 @@ export function UpNextSheet({
         <div className="h-1 w-11 rounded-sm bg-white/[0.28]"></div>
       </button>
       <div className="px-11 pb-11 pt-2">
-        <div className="mb-4 flex items-baseline gap-[13px]">
-          <span className="text-[24px] font-extralight tracking-[0.05em]">
-            {t("common.upNext")}
-          </span>
-          <span className="mlabel text-white/40">
-            {t("counts.tracks", { count: queue.length })}
-          </span>
+        <div className="mb-4 flex items-baseline justify-between gap-[13px]">
+          <div className="flex items-baseline gap-[13px]">
+            <span className="text-[24px] font-extralight tracking-[0.05em]">
+              {t("common.upNext")}
+            </span>
+            <span className="mlabel text-white/40">
+              {t("counts.tracks", { count: queue.length })}
+            </span>
+          </div>
+          {queue.length > 0 && onClearQueue && (
+            <Button
+              className="mlabel flex items-center gap-1 px-2 py-1 text-[10px] text-white/45 hover:text-white"
+              onClick={onClearQueue}
+              aria-label={t("queue.clear")}
+            >
+              <Icon.close size={13} />
+              {t("common.clear")}
+            </Button>
+          )}
         </div>
         <div className="mb-2 flex items-center gap-[14px] border-b border-white/10 pb-[14px] pt-2.5">
           <span className="grid w-[18px] place-items-center">
@@ -120,7 +138,7 @@ export function UpNextSheet({
                   aria-label={t("a11y.playItem", { name: queued.title })}
                   onClick={() => onPlay?.(queued)}
                   onKeyDown={activateOnKey(() => onPlay?.(queued))}
-                  onContextMenu={(e) => trackMenu(e, queued)}
+                  onContextMenu={(e) => trackMenu(e, queued, onPlay ? { onPlay } : undefined)}
                   className="flex cursor-pointer items-center gap-[14px] py-[9px]"
                 >
                   <span className="mlabel w-[18px] flex-none text-center text-[11px] text-white/[0.32]">
@@ -143,6 +161,18 @@ export function UpNextSheet({
                   <span className="mlabel flex-none text-[10px] text-white/[0.32]">
                     {queued.duration}
                   </span>
+                  {onRemoveFromQueue && (
+                    <Button
+                      className="p-1 text-white/35 hover:text-[#ff6b6b]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveFromQueue(queued);
+                      }}
+                      aria-label={t("queue.remove")}
+                    >
+                      <Icon.close size={15} />
+                    </Button>
+                  )}
                 </div>
               );
             }}

@@ -101,8 +101,10 @@ export const en = {
     library: "Library",
     open: "Open",
     play: "Play",
+    playNext: "Play Next",
     profile: "Profile",
     queue: "Queue",
+    removeFromQueue: "Remove from Queue",
     removeFromLiked: "Remove from Liked",
     search: "Search",
     settings: "Settings",
@@ -146,6 +148,7 @@ export const en = {
     madeForYou: "Made for you",
     recentlyPlayed: "Recently played",
     yourArtists: "Your artists",
+    empty: "No recommendations yet. Play a few tracks and this space will warm up.",
   },
   library: {
     title: "Your Library",
@@ -212,7 +215,9 @@ export const en = {
     expired: "QR expired — reopen to retry",
   },
   queue: {
+    clear: "Clear queue",
     empty: "Queue is empty.",
+    remove: "Remove from queue",
   },
   musicVideos: {
     artistVideos: "Artist Videos",

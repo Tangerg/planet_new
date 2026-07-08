@@ -6,24 +6,28 @@ import { findQueueTrack } from "@/model/track-actions";
 
 export function useQueueActions(opts: {
   addToQueue: (track: VibeTrack) => void;
+  addNextToQueue: (track: VibeTrack) => void;
   catalogTracks: readonly VibeTrack[];
   playbackTracks: readonly VibeTrack[];
   queueTracks: readonly VibeTrack[];
   playContext: RefObject<VibeTrack[]>;
 }) {
-  const { addToQueue, catalogTracks, playbackTracks, queueTracks, playContext } = opts;
+  const { addToQueue, addNextToQueue, catalogTracks, playbackTracks, queueTracks, playContext } =
+    opts;
 
   const enqueueById = useCallback(
-    (trackId: string) => {
+    (trackId: string, next = false) => {
       const track = findQueueTrack(trackId, {
         catalogTracks,
         playContext: playContext.current ?? [],
         playbackTracks,
         queueTracks,
       });
-      if (track) addToQueue(track);
+      if (!track) return;
+      if (next) addNextToQueue(track);
+      else addToQueue(track);
     },
-    [addToQueue, catalogTracks, playContext, playbackTracks, queueTracks],
+    [addNextToQueue, addToQueue, catalogTracks, playContext, playbackTracks, queueTracks],
   );
 
   return { enqueueById };

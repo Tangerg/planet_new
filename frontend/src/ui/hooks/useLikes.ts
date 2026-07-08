@@ -1,21 +1,19 @@
 /**
- * Likes, play history, and settings state. Likes are account-backed when the
- * user is logged in to a provider that exposes a user library (the like set
- * loads from the account and toggles sync back, optimistically); otherwise they
- * stay local UI state. On first login the anonymous session's local likes are
- * merged into the account. History and settings remain local.
+ * Likes and settings state. Likes are account-backed when the user is logged in
+ * to a provider that exposes a user library (the like set loads from the
+ * account and toggles sync back, optimistically); otherwise they stay local UI
+ * state. On first login the anonymous session's local likes are merged into the
+ * account. Settings remain local.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { VibeTrack } from "@/model/vibe";
 import { DEFAULT_SETTINGS, type Settings } from "@/model/defaults";
 import { useAuth } from "@/hooks/useAuth";
 import { useLibraryService } from "@/hooks/useLibraryService";
 import { useMediaService } from "@/hooks/useMediaService";
 import { queryKeys } from "@/model/queryKeys";
 import {
-  appendHistoryTrack,
   likesAreAccountBacked,
   likeSyncMergePlan,
   likedSetForSource,
@@ -24,8 +22,7 @@ import {
 } from "@/model/likes";
 import { warnWriteFailure } from "@shared/debug";
 
-export function useLikes(currentTrack: VibeTrack | undefined) {
-  const currentTrackId = currentTrack?.id;
+export function useLikes(currentTrackId: string | undefined) {
   const library = useLibraryService();
   const media = useMediaService();
   const { loggedIn } = useAuth();
@@ -34,7 +31,6 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   const synced = likesAreAccountBacked(loggedIn, library.supported);
 
   const [localLiked, setLocalLiked] = useState<Set<string>>(new Set());
-  const [history, setHistory] = useState<VibeTrack[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   const { data: accountIds } = useQuery({
@@ -93,11 +89,5 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
 
   const isLiked = !!(currentTrackId && liked.has(currentTrackId));
 
-  // Record play history (dropping consecutive duplicates).
-  useEffect(() => {
-    if (!currentTrackId || !currentTrack) return;
-    setHistory((h) => appendHistoryTrack(h, currentTrack));
-  }, [currentTrackId, currentTrack]);
-
-  return { liked, toggleLike, isLiked, history, settings, setSettings };
+  return { liked, toggleLike, isLiked, settings, setSettings };
 }

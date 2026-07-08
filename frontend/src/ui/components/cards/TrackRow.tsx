@@ -31,6 +31,8 @@ type TrackRowProps = {
   selected?: boolean;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
   onOpenArtist?: (artist: ArtistRef) => void;
+  onRemoveFromQueue?: (track: VibeTrack) => void;
+  onMenuPlay?: (track: VibeTrack) => void;
 };
 
 // React.memo: this row is the leaf of every virtualized track list, so on each
@@ -55,6 +57,8 @@ export const TrackRow = React.memo(function TrackRow({
   selected,
   onSelect,
   onOpenArtist,
+  onRemoveFromQueue,
+  onMenuPlay,
 }: TrackRowProps) {
   const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
@@ -117,7 +121,9 @@ export const TrackRow = React.memo(function TrackRow({
         writeTrackDragData(e.dataTransfer, track.id);
         e.dataTransfer.effectAllowed = "copy";
       }}
-      onContextMenu={(e: React.MouseEvent) => trackMenu(e, track)}
+      onContextMenu={(e: React.MouseEvent) =>
+        trackMenu(e, track, onMenuPlay ? { onPlay: onMenuPlay } : undefined)
+      }
       className="flex items-center gap-4 px-[14px] py-[11px] transition-[background] duration-150"
       style={{
         cursor: model.unavailable ? "default" : "pointer",
@@ -241,6 +247,19 @@ export const TrackRow = React.memo(function TrackRow({
       <span className="mlabel w-[42px] flex-none text-right text-[11px]" style={{ color: sub }}>
         {track.duration}
       </span>
+      {onRemoveFromQueue && (
+        <Button
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onRemoveFromQueue(track);
+          }}
+          aria-label={t("queue.remove")}
+          className="p-1"
+          style={{ color: hover ? "#ff6b6b" : "transparent" }}
+        >
+          <Icon.close size={16} />
+        </Button>
+      )}
     </div>
   );
 });

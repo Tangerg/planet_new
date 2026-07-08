@@ -23,7 +23,7 @@ const card = (overrides: Partial<CardItem> = {}): CardItem => ({
 
 const voidMock = () => vi.fn<() => void>();
 const playMock = () => vi.fn<(track: VibeTrack) => void>();
-const trackIdMock = () => vi.fn<(trackId: string) => void>();
+const trackIdMock = () => vi.fn<(trackId: string, next?: boolean) => void>();
 const artistMock = () => vi.fn<(artist: ArtistTarget) => void>();
 const cardMock = () => vi.fn<(item: CardItem) => void>();
 
@@ -50,6 +50,7 @@ describe("menu model", () => {
 
     expect(items.map((item) => item.label ?? "sep")).toEqual([
       "Play",
+      "Play Next",
       "Add to Queue",
       "sep",
       "Remove from Liked",
@@ -57,9 +58,11 @@ describe("menu model", () => {
     ]);
     items[0].onClick?.();
     items[1].onClick?.();
-    items[3].onClick?.();
+    items[2].onClick?.();
     items[4].onClick?.();
+    items[5].onClick?.();
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: "track" }));
+    expect(enqueue).toHaveBeenCalledWith("track", true);
     expect(enqueue).toHaveBeenCalledWith("track");
     expect(toggleLike).toHaveBeenCalledWith("track");
     expect(openArtist).toHaveBeenCalledWith({ id: "artist", name: "Artist" });

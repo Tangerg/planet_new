@@ -216,6 +216,8 @@ export function HeroBackdrop({
         src={image}
         alt=""
         aria-hidden
+        decoding="async"
+        draggable={false}
         className={cls}
         animate={animate}
         transition={transition}

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { VibeTrack } from "./vibe";
 import {
-  appendHistoryTrack,
   likesAreAccountBacked,
   likeSyncMergePlan,
   likedSetForSource,
@@ -11,16 +9,6 @@ import {
   toggleLocalLiked,
   willLikeId,
 } from "./likes";
-
-const track = (id: string): VibeTrack => ({
-  id,
-  title: id,
-  name: id,
-  artist: "Artist",
-  coverSeed: 1,
-  durSec: 10,
-  duration: "0:10",
-});
 
 describe("likes model", () => {
   it("enters account-backed mode only when logged in and the provider supports a library", () => {
@@ -56,15 +44,6 @@ describe("likes model", () => {
     expect([...previous]).toEqual(["a"]);
     expect([...next]).toEqual([]);
     expect([...added]).toEqual(["a", "b"]);
-  });
-
-  it("records play history while dropping consecutive duplicates", () => {
-    const first = track("first");
-    const second = track("second");
-
-    expect(appendHistoryTrack([], undefined)).toEqual([]);
-    expect(appendHistoryTrack([first], first)).toEqual([first]);
-    expect(appendHistoryTrack([first], second)).toEqual([first, second]);
   });
 
   it("plans one anonymous-like merge per synced login session", () => {

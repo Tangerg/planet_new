@@ -7,7 +7,6 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoginFlow, LoginStatus } from "@domain";
 import { Sheet } from "@/components/Sheet";
-import { useAuth } from "@/hooks/useAuth";
 
 const STATUS_LABEL_KEY: Record<LoginStatus["state"], string> = {
   pending: "login.pending",
@@ -20,13 +19,16 @@ export function LoginSheet({
   open,
   onClose,
   accent,
+  beginLogin,
+  markLoggedIn,
 }: {
   open: boolean;
   onClose: () => void;
   accent: string;
+  beginLogin: () => Promise<LoginFlow>;
+  markLoggedIn: () => void;
 }) {
   const { t } = useTranslation();
-  const { beginLogin, markLoggedIn } = useAuth();
   const [flow, setFlow] = useState<LoginFlow | null>(null);
   const [status, setStatus] = useState<LoginStatus["state"]>("pending");
 

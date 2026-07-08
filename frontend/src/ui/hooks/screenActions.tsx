@@ -3,6 +3,9 @@ import { createContext, useContext } from "react";
 import type { CardItem, VibeTrack } from "@/model/vibe";
 
 type MenuEvent = React.MouseEvent | MouseEvent;
+type TrackMenuOptions = {
+  onPlay?: (track: VibeTrack) => void;
+};
 
 /**
  * Imperative screen-level actions that deeply-nested cards/rows trigger without
@@ -12,7 +15,7 @@ type MenuEvent = React.MouseEvent | MouseEvent;
  */
 export type ScreenActions = {
   /** Track row/card → its menu also offers Play (so it needs the full VibeTrack). */
-  trackMenu: (e: MenuEvent, track: VibeTrack) => void;
+  trackMenu: (e: MenuEvent, track: VibeTrack, options?: TrackMenuOptions) => void;
   /** Collection/artist card → only needs the shared cover-bearing CardItem shape. */
   collMenu: (e: MenuEvent, item: CardItem) => void;
   /** Add a track to the play queue by id; Shell resolves the id in the active context. */

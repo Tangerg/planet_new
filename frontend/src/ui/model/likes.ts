@@ -1,5 +1,3 @@
-import type { VibeTrack } from "./vibe";
-
 export type OptimisticLikeUpdate = {
   ids: string[];
   willLike: boolean;
@@ -63,12 +61,4 @@ export function likeSyncMergePlan({
     idsToSync: [...localLiked],
     mergedThisSession: true,
   };
-}
-
-export function appendHistoryTrack(
-  history: readonly VibeTrack[],
-  track: VibeTrack | undefined,
-): VibeTrack[] {
-  if (!track?.id) return [...history];
-  return history[history.length - 1]?.id === track.id ? [...history] : [...history, track];
 }

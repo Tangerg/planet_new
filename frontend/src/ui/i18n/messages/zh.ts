@@ -100,8 +100,10 @@ export const zh = {
     library: "音乐库",
     open: "打开",
     play: "播放",
+    playNext: "下一首播放",
     profile: "个人主页",
     queue: "队列",
+    removeFromQueue: "从队列移除",
     removeFromLiked: "取消喜欢",
     search: "搜索",
     settings: "设置",
@@ -145,6 +147,7 @@ export const zh = {
     madeForYou: "为你打造",
     recentlyPlayed: "最近播放",
     yourArtists: "你的艺人",
+    empty: "暂时还没有推荐内容。先播放几首歌，这里会慢慢热起来。",
   },
   library: {
     title: "你的音乐库",
@@ -211,7 +214,9 @@ export const zh = {
     expired: "二维码已过期，请重新打开",
   },
   queue: {
+    clear: "清空队列",
     empty: "队列为空。",
+    remove: "从队列移除",
   },
   musicVideos: {
     artistVideos: "艺人视频",

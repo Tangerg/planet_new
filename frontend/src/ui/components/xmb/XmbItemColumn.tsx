@@ -49,7 +49,7 @@ export function XmbItemColumn({
               top: 0,
               cursor: "pointer",
               transform: `translate(${x}px, ${y}px)`,
-              transition: `transform .6s ${XMB_EASE}`,
+              transition: `transform .38s ${XMB_EASE}`,
             }}
           >
             <XmbItem item={m} active={o === 0} o={o} />

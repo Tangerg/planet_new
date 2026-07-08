@@ -54,6 +54,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: Number(env.VITE_DEV_PORT) || 5173,
       strictPort: !!env.VITE_DEV_PORT,
+      watch: {
+        ignored: ["**/coverage/**"],
+      },
     },
 
     build: {

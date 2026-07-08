@@ -46,6 +46,9 @@ type PlaybackBundle = {
   onPause: () => void;
   onNext: () => void;
   onPrev: () => void;
+  selectTrack: (track: VibeTrack) => void;
+  removeFromQueue: (track: VibeTrack) => void;
+  clearQueue: () => void;
   shufflePlay: (tracks: VibeTrack[]) => void;
 };
 
@@ -129,8 +132,20 @@ type Props = {
 
 export function ShellScreenRouter(props: Props) {
   const { view } = props;
-  const { playing, current, hasCurrentTrack, queue, onPlay, onPause, onNext, onPrev, shufflePlay } =
-    props.playback;
+  const {
+    playing,
+    current,
+    hasCurrentTrack,
+    queue,
+    onPlay,
+    onPause,
+    onNext,
+    onPrev,
+    selectTrack,
+    removeFromQueue,
+    clearQueue,
+    shufflePlay,
+  } = props.playback;
   const {
     goBack,
     startForward,
@@ -313,12 +328,14 @@ export function ShellScreenRouter(props: Props) {
       <QueueScreen
         current={current}
         queue={queue}
-        onPlay={onPlay}
+        onPlay={selectTrack}
         playing={playing}
         liked={liked}
         toggleLike={toggleLike}
         accent={accent}
         onOpenArtist={openArtist}
+        onRemoveFromQueue={removeFromQueue}
+        onClearQueue={clearQueue}
       />
     );
   }
@@ -407,10 +424,12 @@ export function ShellScreenRouter(props: Props) {
         comments={comments}
         mono={mono}
         queue={queue}
-        onPlay={onPlay}
+        onPlay={selectTrack}
         current={current}
         onNext={onNext}
         onPrev={onPrev}
+        onRemoveFromQueue={removeFromQueue}
+        onClearQueue={clearQueue}
         initialMode={props.settings.nowPlayingInitialMode}
         onClose={goBack}
         onOpenStage={openStage}

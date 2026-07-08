@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useMorphTransition, type MorphSource } from "./useMorphTransition";
+import { MORPH_FAILSAFE_MS, useMorphTransition, type MorphSource } from "./useMorphTransition";
 
 type HarnessApi = ReturnType<typeof useMorphTransition>;
 
@@ -87,7 +87,7 @@ describe("useMorphTransition", () => {
     expect(screen.getByTestId("phase")).not.toHaveTextContent("none");
 
     act(() => {
-      vi.advanceTimersByTime(1400);
+      vi.advanceTimersByTime(MORPH_FAILSAFE_MS);
     });
 
     expect(screen.getByTestId("phase")).toHaveTextContent("none");
@@ -100,7 +100,7 @@ describe("useMorphTransition", () => {
 
     act(() => {
       api.startForward(item, origin);
-      vi.advanceTimersByTime(1400);
+      vi.advanceTimersByTime(MORPH_FAILSAFE_MS);
     });
     expect(screen.getByTestId("phase")).toHaveTextContent("none");
 
@@ -110,7 +110,7 @@ describe("useMorphTransition", () => {
     expect(screen.getByTestId("phase")).not.toHaveTextContent("none");
 
     act(() => {
-      vi.advanceTimersByTime(1400);
+      vi.advanceTimersByTime(MORPH_FAILSAFE_MS);
     });
 
     expect(screen.getByTestId("phase")).toHaveTextContent("none");

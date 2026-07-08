@@ -45,7 +45,7 @@ export function HoverCard({
   return (
     <PreviewCard.Root open={open} onOpenChange={onOpenChange}>
       <PreviewCard.Trigger render={trigger} delay={openDelay} closeDelay={closeDelay} />
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {open && (
           <PreviewCard.Portal keepMounted>
             <PreviewCard.Positioner

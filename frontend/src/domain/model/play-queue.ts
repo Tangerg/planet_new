@@ -8,6 +8,10 @@ export type AdvanceOutcome =
   | "replay" // repeat-one: play the current track again
   | "stopped"; // end of queue with repeat off, or empty queue
 
+export type QueueMoveOutcome =
+  | "changed" // current moved to another track
+  | "unchanged"; // no next/previous track in the active repeat mode
+
 /**
  * The play-queue aggregate — the whole ruleset of "what plays next", pure (no
  * audio, no events; the runtime plugin drives it and broadcasts changes).
@@ -17,9 +21,10 @@ export type AdvanceOutcome =
  *   - PLAY order: display order, or a shuffle of it; the cursor walks this one.
  * So shuffling changes only playback sequence, not the list the user sees.
  *
- * Two advance semantics, intentionally distinct:
- *   - next()/previous(): user skip — always moves, wraps at the ends.
+ * Three movement semantics, intentionally distinct:
+ *   - next()/previous(): user skip — wraps only in list-repeat mode.
  *   - advance(repeat): track-ended — repeat-aware (one→replay, end+off→stop).
+ *   - addNext(): queue edit — inserts/moves a track directly after current.
  */
 export class PlayQueue {
   private displayOrder: Track[] = [];
@@ -30,6 +35,11 @@ export class PlayQueue {
   /** Tracks in display order (what the queue UI renders). */
   get tracks(): readonly Track[] {
     return this.displayOrder;
+  }
+
+  /** Tracks in actual playback order (what "Up Next" should follow). */
+  get playbackOrder(): readonly Track[] {
+    return this.playOrder;
   }
 
   /** The current track, or undefined when the queue is empty. */
@@ -52,16 +62,20 @@ export class PlayQueue {
     return at >= 0 ? tracks.slice(at + 1) : tracks;
   }
 
+  get upNext(): readonly Track[] {
+    return this.cursor >= 0 ? this.playOrder.slice(this.cursor + 1) : this.playOrder;
+  }
+
   /** Replace the queue and place the cursor at `start` (or the first track). */
   setTracks(tracks: readonly Track[], start?: Track): void {
     this.displayOrder = [...tracks];
-    this.rebuildPlayOrder();
-    if (this.playOrder.length === 0) {
+    if (this.displayOrder.length === 0) {
+      this.playOrder = [];
       this.cursor = -1;
       return;
     }
-    const at = start ? this.indexOf(start) : -1;
-    this.cursor = at >= 0 ? at : 0;
+    const anchor = start && this.displayIndexOf(start) >= 0 ? start : this.displayOrder[0];
+    this.rebuildPlayOrder(anchor);
   }
 
   clear(): void {
@@ -71,29 +85,46 @@ export class PlayQueue {
   }
 
   /** Append a track to the back of the queue (no-op if already present). */
-  add(track: Track): void {
-    if (this.indexOf(track) !== -1) return;
+  add(track: Track): boolean {
+    if (this.indexOf(track) !== -1) return false;
     this.displayOrder.push(track);
     this.playOrder.push(track);
+    return true;
   }
 
-  /** Remove a track; if it was current the cursor falls onto the next track. */
-  remove(track: Track): void {
+  /** Insert or move a track so it becomes the next track after the current one. */
+  addNext(track: Track): boolean {
+    const current = this.current;
+    if (current?.id === track.id) return false;
+
+    this.removeFromOrders(track);
+
+    const displayAt = current ? this.displayIndexOf(current) + 1 : this.displayOrder.length;
+    this.displayOrder.splice(displayAt, 0, track);
+
+    const playAt = this.cursor >= 0 ? this.cursor + 1 : 0;
+    this.playOrder.splice(playAt, 0, track);
+    return true;
+  }
+
+  /** Remove a track; if it was current the cursor falls onto the next track if one exists. */
+  remove(track: Track): boolean {
     const at = this.indexOf(track);
-    if (at === -1) return;
+    if (at === -1) return false;
     this.playOrder.splice(at, 1);
     this.displayOrder = this.displayOrder.filter((t) => t.id !== track.id);
     if (this.playOrder.length === 0) {
       this.cursor = -1;
-      return;
+      return true;
     }
     if (at < this.cursor) {
       this.cursor -= 1;
     } else if (at === this.cursor && this.cursor >= this.playOrder.length) {
-      // removed the last track while it was current → wrap to the start
-      this.cursor = 0;
+      // Removed the current tail; there is no natural "next" track, so stop.
+      this.cursor = -1;
     }
     // at === cursor (not last): the next track slid into this slot — cursor stays.
+    return true;
   }
 
   /** Move the cursor to a track. Returns whether it actually moved. */
@@ -104,26 +135,48 @@ export class PlayQueue {
     return true;
   }
 
-  /** User skip forward — always advances, wrapping past the end. */
-  next(): Track | undefined {
-    if (this.playOrder.length === 0) return undefined;
-    this.cursor = (this.cursor + 1) % this.playOrder.length;
-    return this.current;
+  /** User skip forward — wraps only when list-repeat is enabled. */
+  next(repeat: RepeatMode): QueueMoveOutcome {
+    if (this.playOrder.length === 0) return "unchanged";
+    if (this.cursor === -1) {
+      this.cursor = 0;
+      return "changed";
+    }
+    if (this.cursor < this.playOrder.length - 1) {
+      this.cursor += 1;
+      return "changed";
+    }
+    if (repeat === RepeatMode.ALL) {
+      this.cursor = 0;
+      return "changed";
+    }
+    return "unchanged";
   }
 
-  /** User skip backward — always retreats, wrapping past the start. */
-  previous(): Track | undefined {
-    if (this.playOrder.length === 0) return undefined;
-    this.cursor = (this.cursor - 1 + this.playOrder.length) % this.playOrder.length;
-    return this.current;
+  /** User skip backward — wraps only when list-repeat is enabled. */
+  previous(repeat: RepeatMode): QueueMoveOutcome {
+    if (this.playOrder.length === 0) return "unchanged";
+    if (this.cursor === -1) {
+      this.cursor = this.playOrder.length - 1;
+      return "changed";
+    }
+    if (this.cursor > 0) {
+      this.cursor -= 1;
+      return "changed";
+    }
+    if (repeat === RepeatMode.ALL) {
+      this.cursor = this.playOrder.length - 1;
+      return "changed";
+    }
+    return "unchanged";
   }
 
   /** Auto-advance on track end, honouring the repeat mode (see AdvanceOutcome). */
   advance(repeat: RepeatMode): AdvanceOutcome {
     if (this.playOrder.length === 0) return "stopped";
+    if (this.cursor === -1) return "stopped";
     if (repeat === RepeatMode.ONE) return "replay";
-    const isLast = this.cursor === this.playOrder.length - 1;
-    if (isLast && repeat === RepeatMode.OFF) return "stopped";
+    if (this.cursor === this.playOrder.length - 1 && repeat === RepeatMode.OFF) return "stopped";
     this.cursor = (this.cursor + 1) % this.playOrder.length;
     return "advanced";
   }
@@ -138,18 +191,45 @@ export class PlayQueue {
     if (this.shuffled === enabled) return this.shuffled;
     this.shuffled = enabled;
     if (this.playOrder.length === 0) return this.shuffled;
-    const keep = this.current!;
-    this.rebuildPlayOrder();
-    this.cursor = this.indexOf(keep);
+    const keep = this.current;
+    this.rebuildPlayOrder(keep);
+    if (!keep) this.cursor = -1;
     return this.shuffled;
   }
 
   /** Derive playOrder from displayOrder: a shuffle of it when shuffled, else a copy. */
-  private rebuildPlayOrder(): void {
-    this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
+  private rebuildPlayOrder(anchor?: Track): void {
+    if (!anchor || this.displayIndexOf(anchor) === -1) {
+      this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
+      this.cursor = this.playOrder.length > 0 ? 0 : -1;
+      return;
+    }
+
+    if (this.shuffled) {
+      const rest = this.displayOrder.filter((track) => track.id !== anchor.id);
+      this.playOrder = [anchor, ...shuffleArray(rest)];
+      this.cursor = 0;
+      return;
+    }
+
+    this.playOrder = [...this.displayOrder];
+    this.cursor = this.indexOf(anchor);
   }
 
   private indexOf(track: Track): number {
     return this.playOrder.findIndex((t) => t.id === track.id);
+  }
+
+  private displayIndexOf(track: Track): number {
+    return this.displayOrder.findIndex((t) => t.id === track.id);
+  }
+
+  private removeFromOrders(track: Track): void {
+    const at = this.indexOf(track);
+    if (at !== -1) {
+      this.playOrder.splice(at, 1);
+      if (at < this.cursor) this.cursor -= 1;
+    }
+    this.displayOrder = this.displayOrder.filter((t) => t.id !== track.id);
   }
 }
