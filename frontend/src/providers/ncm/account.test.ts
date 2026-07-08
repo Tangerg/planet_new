@@ -64,7 +64,7 @@ describe("fetchNcmAccount", () => {
     expect(account).toMatchObject({
       id: "42",
       name: "Tan",
-      vip: true,
+      premium: true,
       followers: 100,
       following: 200,
     });
@@ -79,7 +79,7 @@ describe("fetchNcmAccount", () => {
       "user/detail": {},
     });
     const account = await fetchNcmAccount(http);
-    expect(account).toMatchObject({ vip: false, followers: 1, following: 2 });
+    expect(account).toMatchObject({ premium: false, followers: 1, following: 2 });
   });
 
   test("skips the detail request when there is no user id", async () => {

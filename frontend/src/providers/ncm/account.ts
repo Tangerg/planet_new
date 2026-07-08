@@ -60,7 +60,8 @@ export async function fetchNcmAccount(http: KyInstance): Promise<Account> {
     id,
     name: profile.nickname ?? "",
     avatar: coverSet(profile.avatarUrl),
-    vip: (res.account?.vipType ?? 0) > 0,
+    // Map NCM's raw "vipType" noun to the neutral domain field.
+    premium: (res.account?.vipType ?? 0) > 0,
     followers: detailProfile.followeds ?? profile.followeds,
     following: detailProfile.follows ?? profile.follows,
   };
