@@ -19,7 +19,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 
 type HistoryScreenProps = {
   /** This session's plays (newest last) → the "Today" group. */
-  session: VibeTrack[];
+  session: readonly VibeTrack[];
   /** Account play record — most played last week. */
   week: VibeTrack[];
   /** Account play record — most played all time. */

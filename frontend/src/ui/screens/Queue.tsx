@@ -12,8 +12,7 @@ import { TrackRow } from "@/components/cards/TrackRow";
 import { VList } from "@/components/layout/VList";
 import { Empty } from "@/components/layout/Empty";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
-import { Button } from "@/components/controls/Button";
-import { Icon } from "@/infra/icons";
+import { QueueClearButton } from "@/components/QueueClearButton";
 
 type QueueScreenProps = {
   current?: VibeTrack;
@@ -77,16 +76,7 @@ export function QueueScreen({
           <div className="mlabel text-white/50">
             {t("common.upNext")} · {model.count}
           </div>
-          {!model.isEmpty && (
-            <Button
-              className="mlabel flex items-center gap-1 px-2 py-1 text-[10px] text-white/50 hover:text-white"
-              onClick={onClearQueue}
-              aria-label={t("queue.clear")}
-            >
-              <Icon.close size={13} />
-              {t("common.clear")}
-            </Button>
-          )}
+          {!model.isEmpty && <QueueClearButton onClear={onClearQueue} />}
         </div>
         {!model.isEmpty ? (
           <ScrollProvider value={scrollRef}>
