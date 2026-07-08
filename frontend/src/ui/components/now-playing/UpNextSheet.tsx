@@ -8,6 +8,7 @@ import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Empty } from "@/components/layout/Empty";
 import { VirtualList } from "@/components/layout/VirtualList";
 import { Button } from "@/components/controls/Button";
+import { QueueClearButton } from "@/components/QueueClearButton";
 import { useScreenActions } from "@/hooks/screenActions";
 import { Icon } from "@/infra/icons";
 import { activateOnKey } from "@/lib/keys";
@@ -82,16 +83,7 @@ export function UpNextSheet({
               {t("counts.tracks", { count: queue.length })}
             </span>
           </div>
-          {queue.length > 0 && onClearQueue && (
-            <Button
-              className="mlabel flex items-center gap-1 px-2 py-1 text-[10px] text-white/45 hover:text-white"
-              onClick={onClearQueue}
-              aria-label={t("queue.clear")}
-            >
-              <Icon.close size={13} />
-              {t("common.clear")}
-            </Button>
-          )}
+          {queue.length > 0 && onClearQueue && <QueueClearButton onClear={onClearQueue} />}
         </div>
         <div className="mb-2 flex items-center gap-[14px] border-b border-white/10 pb-[14px] pt-2.5">
           <span className="grid w-[18px] place-items-center">

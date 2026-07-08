@@ -11,9 +11,11 @@ export type HistoryGroups = {
 export function appendPlayHistoryTrack(
   history: readonly VibeTrack[],
   track: VibeTrack | undefined,
-): VibeTrack[] {
-  if (!track?.id) return [...history];
-  return history[history.length - 1]?.id === track.id ? [...history] : [...history, track];
+): readonly VibeTrack[] {
+  // Return the same reference on a no-op so a setState updater bails the re-render.
+  if (!track?.id) return history;
+  if (history[history.length - 1]?.id === track.id) return history;
+  return [...history, track];
 }
 
 /**
@@ -23,9 +25,9 @@ export function appendPlayHistoryTrack(
  * only the earliest bucket it qualifies for.
  */
 export function groupPlayHistory(
-  session: VibeTrack[],
-  week: VibeTrack[],
-  all: VibeTrack[],
+  session: readonly VibeTrack[],
+  week: readonly VibeTrack[],
+  all: readonly VibeTrack[],
 ): HistoryGroups {
   const today: VibeTrack[] = [];
   for (let i = session.length - 1; i >= 0; i--) {
@@ -36,7 +38,7 @@ export function groupPlayHistory(
   }
 
   const seen = new Set(today.map((track) => track.id));
-  const dedupe = (tracks: VibeTrack[]): VibeTrack[] => {
+  const dedupe = (tracks: readonly VibeTrack[]): VibeTrack[] => {
     const out: VibeTrack[] = [];
     for (const track of tracks) {
       if (seen.has(track.id)) continue;

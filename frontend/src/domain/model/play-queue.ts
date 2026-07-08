@@ -62,8 +62,9 @@ export class PlayQueue {
     return at >= 0 ? tracks.slice(at + 1) : tracks;
   }
 
+  /** This queue's own up-next projection, in playback order (same rule as the static). */
   get upNext(): readonly Track[] {
-    return this.cursor >= 0 ? this.playOrder.slice(this.cursor + 1) : this.playOrder;
+    return PlayQueue.upNext(this.playOrder, this.current);
   }
 
   /** Replace the queue and place the cursor at `start` (or the first track). */
@@ -97,7 +98,9 @@ export class PlayQueue {
     const current = this.current;
     if (current?.id === track.id) return false;
 
-    this.removeFromOrders(track);
+    // If it's already queued, pull it out first, keeping the cursor on `current`.
+    const at = this.detach(track);
+    if (at !== -1 && at < this.cursor) this.cursor -= 1;
 
     const displayAt = current ? this.displayIndexOf(current) + 1 : this.displayOrder.length;
     this.displayOrder.splice(displayAt, 0, track);
@@ -109,15 +112,11 @@ export class PlayQueue {
 
   /** Remove a track; if it was current the cursor falls onto the next track if one exists. */
   remove(track: Track): boolean {
-    const at = this.indexOf(track);
+    const at = this.detach(track);
     if (at === -1) return false;
-    this.playOrder.splice(at, 1);
-    this.displayOrder = this.displayOrder.filter((t) => t.id !== track.id);
     if (this.playOrder.length === 0) {
       this.cursor = -1;
-      return true;
-    }
-    if (at < this.cursor) {
+    } else if (at < this.cursor) {
       this.cursor -= 1;
     } else if (at === this.cursor && this.cursor >= this.playOrder.length) {
       // Removed the current tail; there is no natural "next" track, so stop.
@@ -137,35 +136,34 @@ export class PlayQueue {
 
   /** User skip forward — wraps only when list-repeat is enabled. */
   next(repeat: RepeatMode): QueueMoveOutcome {
-    if (this.playOrder.length === 0) return "unchanged";
-    if (this.cursor === -1) {
-      this.cursor = 0;
-      return "changed";
-    }
-    if (this.cursor < this.playOrder.length - 1) {
-      this.cursor += 1;
-      return "changed";
-    }
-    if (repeat === RepeatMode.ALL) {
-      this.cursor = 0;
-      return "changed";
-    }
-    return "unchanged";
+    return this.step(1, repeat);
   }
 
   /** User skip backward — wraps only when list-repeat is enabled. */
   previous(repeat: RepeatMode): QueueMoveOutcome {
-    if (this.playOrder.length === 0) return "unchanged";
+    return this.step(-1, repeat);
+  }
+
+  /**
+   * One user-skip step in `delta` direction. From "no current" a skip enters at
+   * the near end for that direction; stepping past an end wraps only in
+   * list-repeat, otherwise the cursor stays put.
+   */
+  private step(delta: 1 | -1, repeat: RepeatMode): QueueMoveOutcome {
+    const size = this.playOrder.length;
+    if (size === 0) return "unchanged";
+    const wrapEnd = delta > 0 ? 0 : size - 1;
     if (this.cursor === -1) {
-      this.cursor = this.playOrder.length - 1;
+      this.cursor = wrapEnd;
       return "changed";
     }
-    if (this.cursor > 0) {
-      this.cursor -= 1;
+    const target = this.cursor + delta;
+    if (target >= 0 && target < size) {
+      this.cursor = target;
       return "changed";
     }
     if (repeat === RepeatMode.ALL) {
-      this.cursor = this.playOrder.length - 1;
+      this.cursor = wrapEnd;
       return "changed";
     }
     return "unchanged";
@@ -224,12 +222,15 @@ export class PlayQueue {
     return this.displayOrder.findIndex((t) => t.id === track.id);
   }
 
-  private removeFromOrders(track: Track): void {
+  /**
+   * Remove a track from both orders and return its former play-order index (-1
+   * if absent). Leaves the cursor untouched — callers own the cursor semantics
+   * (remove() may stop; addNext() shifts to keep the current track).
+   */
+  private detach(track: Track): number {
     const at = this.indexOf(track);
-    if (at !== -1) {
-      this.playOrder.splice(at, 1);
-      if (at < this.cursor) this.cursor -= 1;
-    }
+    if (at !== -1) this.playOrder.splice(at, 1);
     this.displayOrder = this.displayOrder.filter((t) => t.id !== track.id);
+    return at;
   }
 }

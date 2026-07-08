@@ -20,7 +20,7 @@ export function historyScreenModel(
   week: readonly VibeTrack[],
   all: readonly VibeTrack[],
 ): HistoryScreenModel {
-  const groups = groupPlayHistory([...session], [...week], [...all]);
+  const groups = groupPlayHistory(session, week, all);
   const allSections: HistorySection[] = [
     { label: "Today", items: groups.today },
     { label: "This week", items: groups.week },

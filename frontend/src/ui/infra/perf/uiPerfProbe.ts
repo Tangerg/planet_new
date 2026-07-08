@@ -49,19 +49,24 @@ function round(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function expose(summary: UiPerfSummary): void {
-  const state =
-    window.__PLANET_UI_PERF__ ??
-    (window.__PLANET_UI_PERF__ = {
-      samples: [],
-      clear() {
-        this.samples = [];
-        this.latest = undefined;
-        window.localStorage.removeItem(LATEST_STORAGE_KEY);
-        document.documentElement.removeAttribute("data-planet-perf-latest");
-      },
-    });
+function createPerfState(): UiPerfState {
+  return {
+    samples: [],
+    clear() {
+      this.samples = [];
+      this.latest = undefined;
+      window.localStorage.removeItem(LATEST_STORAGE_KEY);
+      document.documentElement.removeAttribute("data-planet-perf-latest");
+    },
+  };
+}
 
+function ensureState(): UiPerfState {
+  return (window.__PLANET_UI_PERF__ ??= createPerfState());
+}
+
+function expose(summary: UiPerfSummary): void {
+  const state = ensureState();
   state.latest = summary;
   state.samples = [...state.samples.slice(-(MAX_SAMPLES - 1)), summary];
   const json = JSON.stringify(summary);
@@ -127,15 +132,7 @@ export function installUiPerfProbe(): void {
   if (installed || !isEnabled()) return;
   installed = true;
 
-  window.__PLANET_UI_PERF__ = window.__PLANET_UI_PERF__ ?? {
-    samples: [],
-    clear() {
-      this.samples = [];
-      this.latest = undefined;
-      window.localStorage.removeItem(LATEST_STORAGE_KEY);
-      document.documentElement.removeAttribute("data-planet-perf-latest");
-    },
-  };
+  ensureState();
 
   window.addEventListener("keydown", (event) => startSample(labelForEvent(event), "keydown"), {
     capture: true,

@@ -89,7 +89,7 @@ type LibraryBundle = {
   liked: Set<string>;
   isLiked: boolean;
   toggleLike: (id: string) => void;
-  history: VibeTrack[];
+  history: readonly VibeTrack[];
   playRecord: { week: VibeTrack[]; all: VibeTrack[] };
 };
 
