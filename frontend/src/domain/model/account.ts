@@ -6,8 +6,9 @@ export type Account = {
   name: string;
   /** Avatar variants (largest-first), or empty when none. */
   avatar?: Image[];
-  /** Whether the account has an active membership (e.g. NCM VIP). */
-  vip?: boolean;
+  /** Whether the account has an active paid membership (provider-neutral; a mapper
+   *  translates each provider's own noun — e.g. NCM's "VIP" — into this). */
+  premium?: boolean;
   /** Follower count (people following this user), when the provider exposes it. */
   followers?: number;
   /** Following count (people this user follows), when the provider exposes it. */
@@ -28,6 +29,6 @@ export const Account = {
   },
 
   hasMembership(account: Partial<Account> | null | undefined): boolean {
-    return account?.vip === true;
+    return account?.premium === true;
   },
 };
