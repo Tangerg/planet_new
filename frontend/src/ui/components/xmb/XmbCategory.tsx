@@ -55,7 +55,7 @@ export function XmbCategory({
         placeItems: "center",
         width: sz,
         height: sz,
-        transition: `opacity .55s ${XMB_EASE}, width .55s ${XMB_EASE}, height .55s ${XMB_EASE}`,
+        transition: `opacity .38s ${XMB_EASE}, width .38s ${XMB_EASE}, height .38s ${XMB_EASE}`,
         opacity: active ? 1 : dim,
       }}
     >
@@ -76,7 +76,7 @@ export function XmbCategory({
           // backdrop-filter is deliberately NOT animated: tweening blur re-samples
           // and re-blurs the area behind every icon each frame (no GPU path) — the
           // frost just toggles, masked by the animated background/colour swap.
-          transition: `width .55s ${XMB_EASE}, height .55s ${XMB_EASE}, color .55s ${XMB_EASE}, background .55s ${XMB_EASE}, border .55s ${XMB_EASE}`,
+          transition: `width .38s ${XMB_EASE}, height .38s ${XMB_EASE}, color .38s ${XMB_EASE}, background .38s ${XMB_EASE}, border .38s ${XMB_EASE}`,
         }}
       >
         <I size={active ? 40 : 26} />

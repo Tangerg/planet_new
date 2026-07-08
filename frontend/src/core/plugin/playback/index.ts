@@ -68,6 +68,7 @@ export class Playback extends Plugin {
   }
 
   private onEnded = (): void => {
+    this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
     this.context.hooks.emit("playback:track-ended");
   };
 

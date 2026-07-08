@@ -49,7 +49,7 @@ export function CoverCard({
       onContextMenu={onContextMenu}
       initial={false}
       animate={{ x: o.x, z: o.tz, rotateY: o.ry, scale: o.sc, opacity: o.op }}
-      transition={{ duration: 0.45, ease: CARD_EASE }}
+      transition={{ duration: 0.32, ease: CARD_EASE }}
       style={{
         position: "absolute",
         left: -cover / 2,
@@ -136,7 +136,7 @@ export function CoverCard({
           maskImage:
             "linear-gradient(to top, rgba(0,0,0,.62) 0%, rgba(0,0,0,.14) 30%, transparent 55%)",
           opacity: isCenter ? 0.5 : 0.32,
-          transition: "opacity .45s",
+          transition: "opacity .32s",
         }}
       >
         {item.image && (

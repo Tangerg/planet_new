@@ -34,6 +34,8 @@ type Props = {
   current?: VibeTrack;
   onNext?: () => void;
   onPrev?: () => void;
+  onRemoveFromQueue?: (track: VibeTrack) => void;
+  onClearQueue?: () => void;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -52,6 +54,8 @@ export const NowPlaying = React.memo(function NowPlaying({
   onPlay,
   onNext,
   onPrev,
+  onRemoveFromQueue,
+  onClearQueue,
   onOpenArtist,
 }: Props) {
   const { t } = useTranslation();
@@ -74,6 +78,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   });
   const [a, b] = artPair(trackModel.coverSeed, trackModel.gradient);
   const NP_EASE = "cubic-bezier(.16,1,.3,1)";
+  const NP_PANEL_TRANSITION = `transform .42s ${NP_EASE}, opacity .28s ease`;
 
   return (
     <FadeIn
@@ -174,7 +179,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           zIndex: 4,
           transform: `scale(${panelOpen ? 0.86 : 1})`,
           transformOrigin: "center",
-          transition: `left .62s ${NP_EASE}, transform .62s ${NP_EASE}`,
+          transition: `left .42s ${NP_EASE}, transform .42s ${NP_EASE}`,
         }}
       >
         <motion.div
@@ -225,7 +230,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           transform: panelOpen ? "translateX(0)" : "translateX(100%)",
           opacity: panelOpen ? 1 : 0,
           pointerEvents: panelOpen ? "auto" : "none",
-          transition: `transform .62s ${NP_EASE}, opacity .42s ease`,
+          transition: NP_PANEL_TRANSITION,
         }}
       >
         <div
@@ -271,6 +276,8 @@ export const NowPlaying = React.memo(function NowPlaying({
         tintA={a}
         grad={trackModel.gradient}
         onPlay={onPlay}
+        onRemoveFromQueue={onRemoveFromQueue}
+        onClearQueue={onClearQueue}
         onOpenArtist={onOpenArtist}
       />
     </FadeIn>

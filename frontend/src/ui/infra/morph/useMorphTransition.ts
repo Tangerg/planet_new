@@ -25,6 +25,12 @@ import type { RefObject } from "react";
 import type { MorphFn } from "./context";
 
 export const EASE = "cubic-bezier(.16,1,.3,1)";
+export const MORPH_SEC = 0.48;
+export const MORPH_MS = MORPH_SEC * 1000;
+export const MORPH_REVEAL_MS = MORPH_MS + 20;
+export const MORPH_CLEAR_MS = 760;
+export const MORPH_FAILSAFE_MS = 1200;
+export const MORPH_LAYER_FADE_SEC = 0.24;
 
 type Rect = {
   left: number;
@@ -86,7 +92,7 @@ export function layerStyle(t: Transition): React.CSSProperties {
     // stalls the tile's non-composited border-radius tween → square→circle snaps
     // at the hand-off. A plain opacity fade just composites the cached layer.
     willChange: "opacity",
-    transition: begin ? "none" : `opacity .34s ease`,
+    transition: begin ? "none" : `opacity ${MORPH_LAYER_FADE_SEC}s ease`,
   };
 }
 
@@ -201,13 +207,13 @@ export function useMorphTransition(
           if (transitionRun.current !== runId) return;
           transRef.current = null;
           setTrans(null);
-        }, 1400),
+        }, MORPH_FAILSAFE_MS),
       );
       // reveal/clear are scheduled when the morph phase actually begins (see the
       // phase-flip effect), NOT here: a heavy outgoing screen can jank the main
       // thread before the morph starts, and a trans-set-relative reveal would cut
-      // the .58s square→circle radius tween short (transform flies on the GPU but
-      // the non-composited border-radius never finishes → snaps at the handoff).
+      // the shape tween short (transform flies on the GPU but the non-composited
+      // border-radius never finishes → snaps at the handoff).
     },
     [view],
   );
@@ -269,7 +275,7 @@ export function useMorphTransition(
             if (transitionRun.current !== runId) return;
             transRef.current = null;
             setTrans(null);
-          }, 740),
+          }, MORPH_CLEAR_MS),
         );
       });
       rafIds.current.push(revId2);
@@ -306,21 +312,21 @@ export function useMorphTransition(
         if (transitionRun.current !== runId) return;
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
         // Anchor reveal/clear to the real morph start (after any pre-morph jank),
-        // so the .58s shape tween always gets its full window and the square→circle
+        // so the shape tween always gets its full window and the square→circle
         // radius finishes before the hero hand-off — fixes the snap when entering
         // from a heavy screen (e.g. the control bar → disc from ForYou).
         timers.current.push(
           setTimeout(() => {
             if (transitionRun.current !== runId) return;
             setTrans((t) => t && { ...t, phase: "reveal" });
-          }, 600),
+          }, MORPH_REVEAL_MS),
         );
         timers.current.push(
           setTimeout(() => {
             if (transitionRun.current !== runId) return;
             transRef.current = null;
             setTrans(null);
-          }, 980),
+          }, MORPH_CLEAR_MS),
         );
       });
       rafIds.current.push(inner);

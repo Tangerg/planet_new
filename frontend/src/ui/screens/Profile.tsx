@@ -23,7 +23,7 @@ type ProfileScreenProps = {
 export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: ProfileScreenProps) {
   const { t } = useTranslation();
   const open = useMorphOpen();
-  const { supported, loggedIn, account, logout } = useAuth();
+  const { supported, loggedIn, account, beginLogin, markLoggedIn, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [active, setActive] = useState(0);
   const model = profileScreenModel({
@@ -88,14 +88,18 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
               </div>
               <div className="mt-[30px] flex items-center gap-10">
                 <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em]">{model.followers}</div>
+                  <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
+                    {model.followers}
+                  </div>
                   <div className="mlabel mt-2 text-[10px] text-white/38">
                     {t("profile.followers")}
                   </div>
                 </div>
                 <div className="h-[42px] w-px bg-white/16" />
                 <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em]">{model.following}</div>
+                  <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
+                    {model.following}
+                  </div>
                   <div className="mlabel mt-2 text-[10px] text-white/38">
                     {t("profile.following")}
                   </div>
@@ -174,7 +178,13 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
           </div>
         </div>
       </div>
-      <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} accent={accent} />
+      <LoginSheet
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        accent={accent}
+        beginLogin={beginLogin}
+        markLoggedIn={markLoggedIn}
+      />
     </FadeIn>
   );
 }

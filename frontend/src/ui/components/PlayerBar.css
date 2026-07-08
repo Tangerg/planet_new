@@ -15,5 +15,5 @@
   overflow: hidden;
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  transition: background 0.45s ease;
+  transition: background 0.24s ease;
 }

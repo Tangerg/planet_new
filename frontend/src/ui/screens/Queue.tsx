@@ -12,6 +12,8 @@ import { TrackRow } from "@/components/cards/TrackRow";
 import { VList } from "@/components/layout/VList";
 import { Empty } from "@/components/layout/Empty";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
+import { Button } from "@/components/controls/Button";
+import { Icon } from "@/infra/icons";
 
 type QueueScreenProps = {
   current?: VibeTrack;
@@ -22,6 +24,8 @@ type QueueScreenProps = {
   liked: Set<string>;
   toggleLike: (id: string) => void;
   onOpenArtist?: (artist: ArtistRef) => void;
+  onRemoveFromQueue: (track: VibeTrack) => void;
+  onClearQueue: () => void;
 };
 
 export function QueueScreen({
@@ -33,6 +37,8 @@ export function QueueScreen({
   liked,
   toggleLike,
   onOpenArtist,
+  onRemoveFromQueue,
+  onClearQueue,
 }: QueueScreenProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -67,8 +73,20 @@ export function QueueScreen({
         </div>
       </div>
       <div className="scroll relative z-[2] px-6 pb-[30px] pt-16" ref={scrollRef}>
-        <div className="mlabel px-[14px] pb-[14px] text-white/50">
-          {t("common.upNext")} · {model.count}
+        <div className="flex items-center justify-between px-[14px] pb-[14px]">
+          <div className="mlabel text-white/50">
+            {t("common.upNext")} · {model.count}
+          </div>
+          {!model.isEmpty && (
+            <Button
+              className="mlabel flex items-center gap-1 px-2 py-1 text-[10px] text-white/50 hover:text-white"
+              onClick={onClearQueue}
+              aria-label={t("queue.clear")}
+            >
+              <Icon.close size={13} />
+              {t("common.clear")}
+            </Button>
+          )}
         </div>
         {!model.isEmpty ? (
           <ScrollProvider value={scrollRef}>
@@ -87,6 +105,8 @@ export function QueueScreen({
                   toggleLike={toggleLike}
                   accent={accent}
                   onOpenArtist={onOpenArtist}
+                  onRemoveFromQueue={onRemoveFromQueue}
+                  onMenuPlay={onPlay}
                 />
               )}
             />

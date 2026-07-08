@@ -26,24 +26,22 @@ const liftVariants = (scale: number, liftY: number): Variants => ({
   rest: {
     y: 0,
     scale: 1,
-    filter: "brightness(1)",
-    transition: { duration: 0.5, ease: EASE },
+    transition: { duration: 0.26, ease: EASE },
     transitionEnd: { zIndex: 0 },
   },
   hover: {
     y: liftY,
     scale,
-    filter: "brightness(1.08)",
     zIndex: 5,
-    transition: { duration: 0.5, ease: EASE },
+    transition: { duration: 0.24, ease: EASE },
   },
 });
 
 // fab rises from below as the card lifts (slight delay so it trails). Inherits
 // the rest/hover label from the LiftCard parent via Motion variant propagation.
 const fabVariants: Variants = {
-  rest: { y: 16, opacity: 0, scale: 0.92, transition: { duration: 0.4, ease: EASE } },
-  hover: { y: 0, opacity: 1, scale: 1, transition: { duration: 0.46, ease: EASE, delay: 0.05 } },
+  rest: { y: 16, opacity: 0, scale: 0.92, transition: { duration: 0.22, ease: EASE } },
+  hover: { y: 0, opacity: 1, scale: 1, transition: { duration: 0.24, ease: EASE, delay: 0.02 } },
 };
 
 type LiftTuning = { scale?: number; liftY?: number };
@@ -76,7 +74,7 @@ export const RiseFab = React.forwardRef<HTMLButtonElement, MotionButtonProps>(fu
     <MotionButton
       ref={ref}
       variants={fabVariants}
-      whileTap={{ scale: 0.9 }}
+      whileTap={{ scale: 0.96 }}
       {...props}
       // Motion owns the rise (transform) + opacity + the tap press, so kill the
       // `.btn` `transition: transform 0.08s` — otherwise that CSS transition

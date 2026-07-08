@@ -46,6 +46,35 @@ describe("PlayQueue plugin event flow", () => {
     expect(queues.at(-1)).toEqual([a, b, c]);
   });
 
+  it("supports play-next insertion and emits playback-order changes", () => {
+    const { plugin, hooks } = mount();
+    const queues: (readonly Track[])[] = [];
+    hooks.on("queue:changed", (q) => queues.push(q));
+
+    const [a, b, c] = [track("a"), track("b"), track("c")];
+    plugin.playNow([a, c], a);
+    plugin.addNext(b);
+
+    expect(queues.at(-1)?.map((t) => t.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("does not wrap manual next in sequence mode, but does in list-repeat mode", () => {
+    const { plugin, hooks } = mount();
+    const currents: (Track | undefined)[] = [];
+    hooks.on("queue:current-changed", (t) => currents.push(t));
+
+    const [a, b] = [track("a"), track("b")];
+    plugin.playNow([a, b], b);
+    const afterPlayNow = currents.length;
+
+    plugin.next();
+    expect(currents).toHaveLength(afterPlayNow);
+
+    plugin.cycleRepeat(); // off -> all
+    plugin.next();
+    expect(currents.at(-1)).toBe(a);
+  });
+
   it("auto-advances on playback:track-ended, then stops at the tail (repeat off)", () => {
     const { plugin, hooks } = mount();
     const currents: (Track | undefined)[] = [];

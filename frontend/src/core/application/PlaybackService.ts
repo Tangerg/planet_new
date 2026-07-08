@@ -88,6 +88,7 @@ export class PlaybackService {
   }
 
   selectTrack(track: Track): void {
+    this.cancelPendingPlay();
     this.queue.select(track);
   }
 
@@ -95,11 +96,17 @@ export class PlaybackService {
     this.queue.add(track);
   }
 
+  addNextToQueue(track: Track): void {
+    this.queue.addNext(track);
+  }
+
   removeFromQueue(track: Track): void {
+    this.cancelPendingPlay();
     this.queue.remove(track);
   }
 
   clearQueue(): void {
+    this.cancelPendingPlay();
     this.queue.clear();
   }
 
@@ -120,10 +127,12 @@ export class PlaybackService {
   }
 
   next(): void {
+    this.cancelPendingPlay();
     this.queue.next();
   }
 
   previous(): void {
+    this.cancelPendingPlay();
     this.queue.previous();
   }
 
@@ -162,6 +171,10 @@ export class PlaybackService {
       throw new Error(`Playback requires the "${cap.key}" capability, which is not provided.`);
     }
     return impl;
+  }
+
+  private cancelPendingPlay(): void {
+    this.playGeneration += 1;
   }
 
   private get queue() {

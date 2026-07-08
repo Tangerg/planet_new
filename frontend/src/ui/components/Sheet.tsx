@@ -34,7 +34,7 @@ type SheetProps = {
   overlayClassName?: string;
   /** Forwarded to the scrolling content box (for a windowed list inside). */
   contentRef?: React.Ref<HTMLDivElement>;
-  /** Slide duration in seconds (defaults to 0.56). */
+  /** Slide duration in seconds (defaults to 0.38). */
   durationSec?: number;
   children: React.ReactNode;
 };
@@ -48,12 +48,18 @@ export function Sheet({
   style,
   overlayClassName,
   contentRef,
-  durationSec = 0.56,
+  durationSec = 0.38,
   children,
 }: SheetProps) {
+  const popupStyle: React.CSSProperties = {
+    ...style,
+    contain: "layout paint style",
+    willChange: "transform",
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {open && (
           <Dialog.Portal keepMounted container={container ?? undefined}>
             <Dialog.Backdrop
@@ -64,13 +70,14 @@ export function Sheet({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ willChange: "opacity" }}
                 />
               }
             />
             <Dialog.Popup
               className={cn("scroll absolute inset-x-0 bottom-0", className)}
-              style={style}
+              style={popupStyle}
               initialFocus={false}
               finalFocus={false}
               render={

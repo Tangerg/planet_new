@@ -35,7 +35,7 @@ export function artistMenuItem(
 export function trackMenuItems(opts: {
   track: VibeTrack;
   onPlay: (track: VibeTrack) => void;
-  enqueue: (trackId: string) => void;
+  enqueue: (trackId: string, next?: boolean) => void;
   toggleLike: (id: string) => void;
   liked: ReadonlySet<string>;
   openArtist: (ar: ArtistTarget) => void;
@@ -43,6 +43,7 @@ export function trackMenuItems(opts: {
   const { track, onPlay, enqueue, toggleLike, liked, openArtist } = opts;
   const items: OptionalMenuItem[] = [
     { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
+    { label: "Play Next", icon: "next", onClick: () => enqueue(track.id, true) },
     { label: "Add to Queue", icon: "list", onClick: () => enqueue(track.id) },
     { sep: true },
     {

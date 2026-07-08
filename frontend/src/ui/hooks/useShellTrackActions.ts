@@ -8,6 +8,7 @@ import { likedSongsOpenTarget, playbackContextForTrack } from "@/model/track-act
 type Deps = {
   play: (tracks: VibeTrack[], track: VibeTrack) => void;
   addToQueue: (track: VibeTrack) => void;
+  addNextToQueue: (track: VibeTrack) => void;
   catalog: ScreenData;
   playbackTracks: readonly VibeTrack[];
   queue: readonly VibeTrack[];
@@ -23,6 +24,7 @@ type Deps = {
 export function useShellTrackActions({
   play,
   addToQueue,
+  addNextToQueue,
   catalog,
   playbackTracks,
   queue,
@@ -49,6 +51,7 @@ export function useShellTrackActions({
 
   const { enqueueById } = useQueueActions({
     addToQueue,
+    addNextToQueue,
     catalogTracks: catalog.allTracks,
     playbackTracks,
     queueTracks: queue,

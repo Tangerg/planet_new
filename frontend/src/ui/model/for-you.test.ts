@@ -109,4 +109,23 @@ describe("for you screen model", () => {
     expect(model.filters).toEqual(["All", "Music", "Mixes", "Charts"]);
     expect(model.tiles.map((item) => item.id)).toEqual(["p1", "p2", "a1"]);
   });
+
+  it("keeps filters and an empty model when no recommendations exist", () => {
+    const model = forYouScreenModel(
+      screenData({ albums: [], artists: [], playlists: [] }),
+      [],
+      new Date("2026-01-01T08:00:00"),
+    );
+
+    expect(model).toMatchObject({
+      greeting: "Good morning",
+      albums: [],
+      artists: [],
+      dailyMix: undefined,
+      featured: undefined,
+      playlists: [],
+      tiles: [],
+    });
+    expect(model.filters).toEqual(["All", "Music", "Mixes", "Charts"]);
+  });
 });

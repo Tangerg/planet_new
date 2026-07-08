@@ -37,7 +37,11 @@ export function useNowPlayingModel({ initialMode, onNext, onPrev }: Options) {
   useEffect(() => {
     // capture phase wins over the global spatial-nav handler
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
+      if (e.key === "Escape" && queueOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        setQueueOpen(false);
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         e.stopPropagation();
         setQueueOpen(true);

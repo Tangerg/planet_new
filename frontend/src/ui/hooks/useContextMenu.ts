@@ -12,7 +12,7 @@ import { collectionMenuItems, trackMenuItems, type MenuState } from "@/model/men
 
 export function useContextMenu(opts: {
   onPlay: (track: VibeTrack | undefined) => void;
-  enqueue: (trackId: string) => void;
+  enqueue: (trackId: string, next?: boolean) => void;
   openDetail: (item: CardItem) => void;
   openArtist: (ar: ArtistTarget) => void;
   toggleLike: (id: string) => void;
@@ -24,14 +24,21 @@ export function useContextMenu(opts: {
   optsRef.current = opts;
 
   // Stable handlers (read latest opts via ref) so the provider value never churns.
-  const trackMenu = useCallback<ScreenActions["trackMenu"]>((e, track) => {
+  const trackMenu = useCallback<ScreenActions["trackMenu"]>((e, track, options) => {
     const { onPlay, enqueue, toggleLike, liked, openArtist } = optsRef.current;
     e.preventDefault();
     e.stopPropagation();
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: trackMenuItems({ track, onPlay, enqueue, toggleLike, liked, openArtist }),
+      items: trackMenuItems({
+        track,
+        onPlay: options?.onPlay ?? onPlay,
+        enqueue,
+        toggleLike,
+        liked,
+        openArtist,
+      }),
     });
   }, []);
 
@@ -46,8 +53,8 @@ export function useContextMenu(opts: {
     });
   }, []);
 
-  const enqueue = useCallback<ScreenActions["enqueue"]>((trackId) => {
-    optsRef.current.enqueue(trackId);
+  const enqueue = useCallback<ScreenActions["enqueue"]>((trackId, next) => {
+    optsRef.current.enqueue(trackId, next);
   }, []);
 
   const actions = useMemo<ScreenActions>(

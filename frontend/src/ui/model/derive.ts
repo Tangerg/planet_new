@@ -1,8 +1,8 @@
 // ============================================================
 // Presentation-derivation: pure view-model transforms that several screens
-// repeated inline (CoverFlow item shaping, History grouping, track sorting,
-// Library sub/meta labels). Keeping them here makes the screens declarative and
-// the logic unit-testable, separate from rendering.
+// repeated inline (CoverFlow item shaping, track sorting, Library sub/meta
+// labels). Keeping them here makes the screens declarative and the logic
+// unit-testable, separate from rendering.
 // ============================================================
 import type { Image } from "@domain/model/image";
 import type { VibeTrack, VibeCollection } from "./vibe";
@@ -96,54 +96,4 @@ export function sortTracks(tracks: VibeTrack[], sort: SortMode): SortedTrack[] {
   if (sort === "title") xs.sort((a, b) => a.t.title.localeCompare(b.t.title));
   else if (sort === "duration") xs.sort((a, b) => (a.t.durSec || 0) - (b.t.durSec || 0));
   return xs;
-}
-
-// ── Listening history grouping ───────────────────────────────────────
-
-export type HistoryGroups = {
-  today: VibeTrack[];
-  week: VibeTrack[];
-  earlier: VibeTrack[];
-  total: number;
-  hero?: VibeTrack;
-};
-
-/**
- * Group play history into Today / This week / All-time. "Today" is this
- * session's plays (newest first, consecutive dupes dropped); "week" and
- * "earlier" come from the account's real play record (NCM /user/record — most
- * played last week / all time). Each track appears in only the earliest bucket
- * it qualifies for. Anonymous → only "today" (the account record is empty).
- */
-export function groupHistory(
-  session: VibeTrack[],
-  week: VibeTrack[],
-  all: VibeTrack[],
-): HistoryGroups {
-  const today: VibeTrack[] = [];
-  for (let i = session.length - 1; i >= 0; i--) {
-    const t = session[i];
-    if (!t) continue;
-    if (today.length && today[today.length - 1].id === t.id) continue;
-    today.push(t);
-  }
-  const seen = new Set(today.map((t) => t.id));
-  const dedupe = (xs: VibeTrack[]): VibeTrack[] => {
-    const out: VibeTrack[] = [];
-    for (const t of xs) {
-      if (seen.has(t.id)) continue;
-      seen.add(t.id);
-      out.push(t);
-    }
-    return out;
-  };
-  const weekOut = dedupe(week);
-  const earlier = dedupe(all);
-  return {
-    today,
-    week: weekOut,
-    earlier,
-    total: today.length + weekOut.length + earlier.length,
-    hero: today[0] || weekOut[0] || earlier[0],
-  };
 }

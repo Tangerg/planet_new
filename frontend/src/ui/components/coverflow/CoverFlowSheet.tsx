@@ -41,7 +41,7 @@ export function CoverFlowSheet({
       label={t("common.tracks")}
       className="z-[500] h-[56%]"
       overlayClassName="z-[499]"
-      durationSec={0.52}
+      durationSec={0.38}
       style={{
         background: `linear-gradient(180deg, ${artPair(item?.seed, item?.grad)[1]}22, rgba(8,8,11,.97) 22%)`,
         backdropFilter: "blur(34px)",
