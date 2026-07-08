@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  clampCoverFlowCenter,
   coverFlowDragCenter,
   coverFlowDragStarted,
   coverFlowKeyAction,
@@ -10,13 +9,6 @@ import {
 } from "./cover-flow-input";
 
 describe("cover flow input model", () => {
-  it("clamps the center to the available item range", () => {
-    expect(clampCoverFlowCenter(-2, 5)).toBe(0);
-    expect(clampCoverFlowCenter(2, 5)).toBe(2);
-    expect(clampCoverFlowCenter(8, 5)).toBe(4);
-    expect(clampCoverFlowCenter(8, 0)).toBe(0);
-  });
-
   it("moves one item at a time for keyboard navigation", () => {
     expect(nextCoverFlowCenter(2, 5, "previous")).toBe(1);
     expect(nextCoverFlowCenter(2, 5, "next")).toBe(3);

@@ -1,10 +1,11 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
 
+import { clampIndex } from "@shared/number";
+
 import type { VibeCollection, VibeTrack } from "@/model/vibe";
 import type { FlowItem } from "@/model/derive";
 import {
-  clampCoverFlowCenter,
   coverFlowDragCenter,
   coverFlowDragStarted,
   coverFlowKeyAction,
@@ -68,7 +69,7 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
       e.stopPropagation();
       setExpanded(false);
     } else if (action === "open") {
-      const item = items[clampCoverFlowCenter(center, items.length)];
+      const item = items[clampIndex(center, items.length)];
       if (item) {
         e.preventDefault();
         e.stopPropagation();
@@ -88,7 +89,7 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
       const motion = coverFlowWheelMotion(wheelDelta, e.deltaX);
       drag.current = motion.accumulatedDelta;
       if (motion.centerDelta !== 0) {
-        setCenter((c) => clampCoverFlowCenter(c + motion.centerDelta, items.length));
+        setCenter((c) => clampIndex(c + motion.centerDelta, items.length));
       }
     }
   };

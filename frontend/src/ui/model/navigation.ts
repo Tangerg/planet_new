@@ -11,6 +11,7 @@
  * provider capabilities + session state into menu structure, independently
  * testable and free of React. The XMB screen consumes these types.
  */
+import { clampIndex } from "@shared/number";
 import type { ProviderCapability } from "@domain";
 
 import type { ScreenData, VibeTrack } from "@/model/vibe";
@@ -61,11 +62,6 @@ export function nounCount(count: number, noun: string, plural = `${noun}s`): str
 
 export type XmbRowMemory = Record<string, number>;
 
-export function clampNavigationIndex(index: number, count: number): number {
-  if (count <= 0) return 0;
-  return Math.max(0, Math.min(count - 1, index));
-}
-
 export function xmbSelectedRow(rows: XmbRowMemory, categoryIndex: number): number {
   return rows[categoryIndex] || 0;
 }
@@ -75,7 +71,7 @@ export function xmbMoveCategory(
   delta: number,
   categoryCount: number,
 ): number {
-  return clampNavigationIndex(currentIndex + delta, categoryCount);
+  return clampIndex(currentIndex + delta, categoryCount);
 }
 
 export function xmbSelectRow(
@@ -86,7 +82,7 @@ export function xmbSelectRow(
 ): XmbRowMemory {
   return {
     ...rows,
-    [categoryIndex]: clampNavigationIndex(rowIndex, itemCount),
+    [categoryIndex]: clampIndex(rowIndex, itemCount),
   };
 }
 
