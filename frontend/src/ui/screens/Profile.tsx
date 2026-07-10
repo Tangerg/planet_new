@@ -83,8 +83,22 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
               <div className="mlabel mb-[20px] inline-block pb-[8px]" style={{ color: accent }}>
                 {connectionLabel}
               </div>
-              <div className="max-w-[560px] truncate text-[42px] font-extralight leading-tight">
-                {model.name}
+              <div className="flex max-w-[560px] items-center gap-3">
+                <div className="min-w-0 truncate text-[42px] font-extralight leading-tight">
+                  {model.name}
+                </div>
+                {model.membership && (
+                  <span
+                    className="mlabel flex-none rounded-full px-2.5 py-[5px] text-[10px]"
+                    style={{
+                      color: accent,
+                      background: "color-mix(in srgb, var(--accent) 16%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--accent) 40%, transparent)",
+                    }}
+                  >
+                    {t("profile.premium")}
+                  </span>
+                )}
               </div>
               <div className="mt-[30px] flex items-center gap-10">
                 <div>

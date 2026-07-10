@@ -6,6 +6,7 @@ import {
   profileConnectionLabel,
   profileFollowerLabel,
   profileFollowingLabel,
+  profileMembership,
   profilePlaylistItems,
   profileScreenModel,
 } from "./profile";
@@ -46,6 +47,13 @@ describe("profile screen model", () => {
     expect(profileFollowingLabel({ following: 88 }, true)).toBe("88");
   });
 
+  it("marks membership only for a connected premium account", () => {
+    expect(profileMembership({ premium: true }, true)).toBe(true);
+    expect(profileMembership({ premium: true }, false)).toBe(false); // anonymous demo
+    expect(profileMembership({ premium: false }, true)).toBe(false);
+    expect(profileMembership(null, true)).toBe(false);
+  });
+
   it("limits playlist rows and carries active/track-count state", () => {
     const items = profilePlaylistItems(
       [
@@ -66,7 +74,7 @@ describe("profile screen model", () => {
   it("collects the profile view model", () => {
     expect(
       profileScreenModel({
-        account: { name: "  Monster  ", followers: 17, following: 30 },
+        account: { name: "  Monster  ", followers: 17, following: 30, premium: true },
         activePlaylistIndex: 0,
         loggedIn: true,
         playlists: [playlist("liked")],
@@ -78,6 +86,7 @@ describe("profile screen model", () => {
       followers: "17",
       following: "30",
       name: "Monster",
+      membership: true,
       playlists: [{ active: true, playlist: { id: "liked" } }],
     });
   });
