@@ -178,6 +178,7 @@ export const en = {
     login: "Log in with NetEase",
     logout: "Log out",
     notConnected: "Not connected",
+    premium: "Premium",
     title: "Profile",
   },
   history: {

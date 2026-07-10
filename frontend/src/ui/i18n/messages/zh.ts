@@ -177,6 +177,7 @@ export const zh = {
     login: "登录网易云",
     logout: "退出登录",
     notConnected: "未连接",
+    premium: "会员",
     title: "个人主页",
   },
   history: {

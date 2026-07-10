@@ -17,6 +17,8 @@ export type ProfileScreenModel = {
   followers: string;
   following: string;
   name: string;
+  /** Whether to show the account-level membership mark (a real connected premium account). */
+  membership: boolean;
   playlists: ProfilePlaylistItem[];
 };
 
@@ -43,6 +45,15 @@ export function profileFollowingLabel(
   loggedIn: boolean,
 ): string {
   return loggedIn && account ? compactCount(Account.followingCount(account)) : "6";
+}
+
+/** Account-level membership mark: only for a real connected account with a paid tier
+ *  (never on the anonymous demo profile). Distinct from a track's per-song VIP badge. */
+export function profileMembership(
+  account: Partial<DomainAccount> | null | undefined,
+  loggedIn: boolean,
+): boolean {
+  return loggedIn && Account.hasMembership(account);
 }
 
 export function profilePlaylistItems(
@@ -77,6 +88,7 @@ export function profileScreenModel({
     followers: profileFollowerLabel(account, loggedIn),
     following: profileFollowingLabel(account, loggedIn),
     name: Account.displayName(account, "Lily Tran"),
+    membership: profileMembership(account, loggedIn),
     playlists: profilePlaylistItems(playlists, activePlaylistIndex),
   };
 }
