@@ -1,36 +1,14 @@
 // Pure, framework-agnostic audio-reactive engine (zero deps beyond @shared/math).
 // The live AnalyserNode (Web Audio I/O) lives in @core; this is the DSP + reactive
-// reduction that turns its FFT bytes into values any visual can consume. Primary
-// surface: createAudioEngine(). Primitives are exported too for tests / advanced use.
+// reduction that turns its FFT bytes into values any visual can consume.
+//
+// The engine IS the public surface: createAudioEngine() owns the DSP primitives
+// (spectrum / light-frame / lanes), so consumers reach the reactive frame through it
+// and never past it. Those primitives stay module-private — imported directly by
+// their own unit tests, not re-exported here.
 export {
   createAudioEngine,
   resolveAudioEngineConfig,
-  audioReactive,
-  initialReactiveState,
-  DEFAULT_AUDIO_ENGINE_CONFIG,
-  type AudioEngine,
   type AudioEngineConfig,
   type AudioReactive,
-  type ReactiveState,
 } from "./engine";
-export {
-  spectrumFrame,
-  adaptiveGain,
-  smoothSpectrum,
-  smoothSignalValue,
-  normalizeFftByte,
-  beatEnvelope,
-  initialAdaptiveGain,
-  assertBandCount,
-  FFT_BYTE_MAX,
-  type SpectrumFrame,
-  type AdaptiveGainOptions,
-  type AdaptiveGainState,
-} from "./spectrum";
-export {
-  nextAudioLightFrame,
-  initialAudioLightFrameState,
-  type AudioLightFrame,
-  type AudioLightFrameState,
-} from "./frame";
-export { audioLanes, type AudioLane } from "./lanes";

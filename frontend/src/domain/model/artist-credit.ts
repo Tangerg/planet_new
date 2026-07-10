@@ -34,10 +34,6 @@ export const ArtistCredit = {
     return (fallback ?? []).map(toCredit).filter((x): x is ArtistCredit => Boolean(x));
   },
 
-  primary(credits: readonly ArtistCredit[]): ArtistCredit | undefined {
-    return credits[0];
-  },
-
   names(credits: readonly ArtistCredit[]): string {
     return credits.map((credit) => credit.name).join(", ");
   },
