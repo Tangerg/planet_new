@@ -8,8 +8,7 @@ import type { NcmCommentsResponse } from "./types";
 async function fetchComments(http: KyInstance, endpoint: string, id: string): Promise<Comment[]> {
   const res = await http
     .get(endpoint, { searchParams: { id, limit: 30 } })
-    .json<NcmCommentsResponse>()
-    .catch((): NcmCommentsResponse => ({}));
+    .json<NcmCommentsResponse>();
   return Comment.mergeThreads(
     (res.hotComments ?? []).map(mapNcmComment),
     (res.comments ?? []).map(mapNcmComment),

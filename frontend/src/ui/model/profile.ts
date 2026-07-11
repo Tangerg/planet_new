@@ -1,5 +1,4 @@
-import type { Account as DomainAccount } from "@domain/model/account";
-import { Account } from "@domain/model/account";
+import { Account, type AccountSnapshot } from "@contexts/identity";
 import { compactCount } from "@shared/number";
 
 import { collectionTrackCount } from "./derive";
@@ -34,14 +33,14 @@ export function profileAuthActionLabel(loggedIn: boolean, supported: boolean): s
 }
 
 export function profileFollowerLabel(
-  account: Partial<DomainAccount> | null | undefined,
+  account: AccountSnapshot | null | undefined,
   loggedIn: boolean,
 ): string {
   return loggedIn && account ? compactCount(Account.followerCount(account)) : "598";
 }
 
 export function profileFollowingLabel(
-  account: Partial<DomainAccount> | null | undefined,
+  account: AccountSnapshot | null | undefined,
   loggedIn: boolean,
 ): string {
   return loggedIn && account ? compactCount(Account.followingCount(account)) : "6";
@@ -50,7 +49,7 @@ export function profileFollowingLabel(
 /** Account-level membership mark: only for a real connected account with a paid tier
  *  (never on the anonymous demo profile). Distinct from a track's per-song VIP badge. */
 export function profileMembership(
-  account: Partial<DomainAccount> | null | undefined,
+  account: AccountSnapshot | null | undefined,
   loggedIn: boolean,
 ): boolean {
   return loggedIn && Account.hasMembership(account);
@@ -68,7 +67,7 @@ export function profilePlaylistItems(
 }
 
 type ProfileModelInput = {
-  account: Partial<DomainAccount> | null | undefined;
+  account: AccountSnapshot | null | undefined;
   activePlaylistIndex: number;
   loggedIn: boolean;
   playlists: readonly VibeCollection[];

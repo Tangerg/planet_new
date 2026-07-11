@@ -13,8 +13,14 @@ import {
   TRACK_DRAG_MIME,
   writeTrackDragData,
 } from "./track-actions";
+import { ProviderId } from "@domain/model/provider-id";
+import { TrackKey } from "@domain/model/entity-key";
 
-const track = (id: string): VibeTrack => ({
+const TEST_PROVIDER_ID = ProviderId.of("test");
+const OTHER_PROVIDER_ID = ProviderId.of("other");
+
+const track = (id: string, providerId = TEST_PROVIDER_ID): VibeTrack => ({
+  providerId,
   id,
   title: id,
   name: id,
@@ -48,6 +54,11 @@ describe("track action model", () => {
     expect(playbackContextForTrack(track("outside"), context).map((item) => item.id)).toEqual([
       "outside",
     ]);
+    expect(
+      playbackContextForTrack(track("selected", OTHER_PROVIDER_ID), context).map(
+        (item) => item.providerId,
+      ),
+    ).toEqual([OTHER_PROVIDER_ID]);
   });
 
   it("selects a real playable track for collection play buttons", () => {
@@ -77,8 +88,8 @@ describe("track action model", () => {
       "queue",
       "catalog",
     ]);
-    expect(findQueueTrack("queue", context)?.id).toBe("queue");
-    expect(findQueueTrack("missing", context)).toBeUndefined();
+    expect(findQueueTrack(TrackKey.of(TEST_PROVIDER_ID, "queue"), context)?.id).toBe("queue");
+    expect(findQueueTrack(TrackKey.of(TEST_PROVIDER_ID, "missing"), context)).toBeUndefined();
   });
 
   it("keeps the drag payload contract for queue drops in one place", () => {
@@ -88,19 +99,22 @@ describe("track action model", () => {
       getData: (type: string) => store.get(type) ?? "",
     };
 
-    writeTrackDragData(dataTransfer, "track-1");
+    writeTrackDragData(dataTransfer, track("track-1"));
 
-    expect(store.get(TRACK_DRAG_MIME)).toBe("track-1");
+    expect(store.get(TRACK_DRAG_MIME)).toBe(TrackKey.of(TEST_PROVIDER_ID, "track-1"));
     expect(canAcceptTrackDrag([TRACK_DRAG_MIME])).toBe(true);
     expect(canAcceptTrackDrag(["text/plain"])).toBe(false);
-    expect(readTrackDragData(dataTransfer)).toBe("track-1");
+    expect(readTrackDragData(dataTransfer)).toBe(TrackKey.of(TEST_PROVIDER_ID, "track-1"));
 
     store.set(TRACK_DRAG_MIME, "   ");
     expect(readTrackDragData(dataTransfer)).toBeNull();
   });
 
   it("builds the anonymous liked songs collection from catalog tracks", () => {
-    const liked = syntheticLikedSongsCollection(catalog([track("a"), track("b")]), new Set(["b"]));
+    const liked = syntheticLikedSongsCollection(
+      catalog([track("a"), track("b")]),
+      new Set([TrackKey.of(TEST_PROVIDER_ID, "b")]),
+    );
 
     expect(liked).toMatchObject({
       id: "liked",
@@ -116,7 +130,7 @@ describe("track action model", () => {
     expect(
       likedSongsOpenTarget({
         catalog: catalog([track("local")]),
-        liked: new Set(["local"]),
+        liked: new Set([TrackKey.of(TEST_PROVIDER_ID, "local")]),
         loggedIn: true,
         userPlaylists: [playlist("real")],
       }),
@@ -125,7 +139,7 @@ describe("track action model", () => {
     expect(
       likedSongsOpenTarget({
         catalog: catalog([track("local")]),
-        liked: new Set(["local"]),
+        liked: new Set([TrackKey.of(TEST_PROVIDER_ID, "local")]),
         loggedIn: false,
         userPlaylists: [playlist("real")],
       }),

@@ -5,8 +5,8 @@
    utilities layers. The design system (formerly the monolithic vibe.css) is now
    split into co-located stylesheets: the global base + shared editorial
    vocabulary live in `ui/styles/` (JS-imported from main.tsx) and component
-   rules sit next to their component (imported there). Those files `@reference`
-   this entry so their `@apply` resolves against the same theme. The `@theme`
+   rules sit next to their component (imported there). Files using `@apply`
+   `@reference` this entry so they resolve against the same theme. The `@theme`
    below mirrors base.css's `:root` tokens so Tailwind classes (bg-surf-1,
    text-tx-2, rounded-lg, …) map to the exact same values. */
 @layer theme, base, components, utilities;

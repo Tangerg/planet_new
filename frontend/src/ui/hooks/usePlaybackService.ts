@@ -1,4 +1,4 @@
-import type { PlaybackService } from "@core";
+import type { PlaybackService } from "@contexts/playback";
 import { useEngine } from "./useEngine";
 
 /**

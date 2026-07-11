@@ -1,22 +1,53 @@
 import { describe, expect, it } from "vitest";
 
 import { toVibeSearchResults } from "./search";
+import { ProviderId } from "@domain/model/provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 describe("search projection boundary", () => {
   it("projects provider search results into vibe result groups", () => {
     const result = toVibeSearchResults({
       tracks: [
         {
+          providerId: TEST_PROVIDER_ID,
           id: "t1",
           name: "Song",
-          artists: [{ id: "ar1", name: "Singer" }],
-          album: { id: "al1", name: "Album", images: [{ url: "track.jpg" }] },
+          artists: [{ providerId: TEST_PROVIDER_ID, id: "ar1", name: "Singer" }],
+          album: {
+            providerId: TEST_PROVIDER_ID,
+            id: "al1",
+            name: "Album",
+            images: [{ url: "track.jpg" }],
+          },
           durationMs: 123_000,
         },
       ],
-      artists: [{ id: "ar1", name: "Singer", images: [{ url: "artist.jpg" }] }],
-      albums: [{ id: "al1", name: "Album", images: [{ url: "album.jpg" }] }],
-      playlists: [{ id: "p1", name: "Playlist", images: [{ url: "playlist.jpg" }] }],
+      artists: [
+        {
+          providerId: TEST_PROVIDER_ID,
+          id: "ar1",
+          name: "Singer",
+          images: [{ url: "artist.jpg" }],
+        },
+      ],
+      albums: [
+        {
+          providerId: TEST_PROVIDER_ID,
+          id: "al1",
+          name: "Album",
+          images: [{ url: "album.jpg" }],
+          artists: [],
+        },
+      ],
+      playlists: [
+        {
+          providerId: TEST_PROVIDER_ID,
+          id: "p1",
+          name: "Playlist",
+          images: [{ url: "playlist.jpg" }],
+        },
+      ],
     });
 
     expect(result.tracks[0]).toEqual(
@@ -45,7 +76,7 @@ describe("search projection boundary", () => {
   });
 
   it("uses empty groups for missing provider dimensions", () => {
-    expect(toVibeSearchResults({ tracks: [] })).toEqual({
+    expect(toVibeSearchResults({ tracks: [], artists: [], albums: [], playlists: [] })).toEqual({
       tracks: [],
       artists: [],
       albums: [],

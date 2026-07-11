@@ -1,4 +1,4 @@
-import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@contexts/catalog";
 import { compactCount } from "@shared/number";
 
 import { effectiveMediaDuration, mediaProgress } from "./media-playback";

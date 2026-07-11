@@ -1,5 +1,5 @@
 import type { ArtistRef, VibeMusicVideo } from "@/model/vibe";
-import { type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { type MusicVideoAvailabilityPolicy } from "@contexts/catalog";
 import { useTranslation } from "react-i18next";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";

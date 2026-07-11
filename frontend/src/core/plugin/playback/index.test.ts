@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { Track } from "@domain/model/track";
+import { ProviderId } from "@domain/model/provider-id";
 
 import { EventEmitter } from "../../event";
 import { CapabilityRegistry } from "../../kernel/capability";
@@ -9,6 +10,7 @@ import type { PlanetEventMap } from "../../kernel/event";
 import { Playback, PlayState, TRANSPORT } from "./index";
 
 const track = (id: string, playUrl?: string): Track => ({
+  providerId: ProviderId.of("test"),
   id,
   name: id,
   durationMs: 1000,
@@ -83,5 +85,24 @@ describe("Playback plugin", () => {
 
     expect(states.at(-1)).toBe(PlayState.STOPPED);
     expect(ended).toBe(1);
+  });
+
+  it("ignores a pending play continuation after disposal", async () => {
+    const { plugin, hooks, audioElement } = mount();
+    const states: PlayState[] = [];
+    let finishPlay!: () => void;
+    const pendingPlay = new Promise<void>((resolve) => {
+      finishPlay = resolve;
+    });
+    vi.mocked(audioElement.play).mockReturnValueOnce(pendingPlay);
+    audioElement.src = "provider:url";
+    hooks.on("playback:state-changed", (state) => states.push(state));
+
+    const resume = plugin.resume();
+    plugin.dispose();
+    finishPlay();
+
+    await expect(resume).resolves.toBeUndefined();
+    expect(states).toEqual([PlayState.STOPPED]);
   });
 });

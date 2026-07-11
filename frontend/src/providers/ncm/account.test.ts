@@ -1,9 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
 
-import type { CredentialStore } from "@domain";
+import { ProviderId, type CredentialStore } from "@domain";
 
 import { fakeKy } from "./fake-ky";
 import { beginNcmLogin, fetchNcmAccount, fetchNcmUid, logoutNcm } from "./account";
+
+const NETEASE_ID = ProviderId.of("netease");
 
 const credentialStore = (): CredentialStore => ({
   get: vi.fn<CredentialStore["get"]>(() => null),
@@ -25,7 +27,7 @@ describe("beginNcmLogin", () => {
       },
     });
 
-    const flow = await beginNcmLogin(http, creds, "netease");
+    const flow = await beginNcmLogin(http, creds, NETEASE_ID);
     expect(flow.kind).toBe("qr");
     if (flow.kind !== "qr") throw new Error("expected a qr flow");
     expect(flow.image).toBe("data:image/png;base64,zzz");
@@ -33,7 +35,7 @@ describe("beginNcmLogin", () => {
     expect(await flow.poll()).toEqual({ state: "scanned" });
     expect(await flow.poll()).toEqual({ state: "expired" });
     expect(await flow.poll()).toEqual({ state: "authorized" });
-    // The cookie from the authorized poll is persisted under the provider name.
+    // The cookie from the authorized poll is persisted under the stable provider id.
     expect(creds.set).toHaveBeenCalledWith("netease", { token: "SESSION=1" });
   });
 
@@ -45,7 +47,7 @@ describe("beginNcmLogin", () => {
         throw new Error("network");
       },
     });
-    const flow = await beginNcmLogin(http, credentialStore(), "netease");
+    const flow = await beginNcmLogin(http, credentialStore(), NETEASE_ID);
     if (flow.kind !== "qr") throw new Error("expected a qr flow");
     expect(await flow.poll()).toEqual({ state: "pending" });
   });
@@ -85,7 +87,7 @@ describe("fetchNcmAccount", () => {
   test("skips the detail request when there is no user id", async () => {
     const { http, calls } = fakeKy({ "user/account": { profile: {} } });
     const account = await fetchNcmAccount(http);
-    expect(account.id).toBe("");
+    expect(account).toBeUndefined();
     expect(calls.some((c) => c.path === "user/detail")).toBe(false);
   });
 });
@@ -103,11 +105,18 @@ describe("fetchNcmUid", () => {
 });
 
 describe("logoutNcm", () => {
-  test("hits the logout endpoint and clears stored credentials", async () => {
-    const creds = credentialStore();
+  test("hits the remote logout endpoint", async () => {
     const { http, calls } = fakeKy({ logout: {} });
-    await logoutNcm(http, creds, "netease");
+    await logoutNcm(http);
     expect(calls.some((c) => c.path === "logout")).toBe(true);
-    expect(creds.clear).toHaveBeenCalledWith("netease");
+  });
+
+  test("propagates remote failure so the identity use case can report it after local cleanup", async () => {
+    const { http } = fakeKy({
+      logout: () => {
+        throw new Error("logout unavailable");
+      },
+    });
+    await expect(logoutNcm(http)).rejects.toThrow("logout unavailable");
   });
 });

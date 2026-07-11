@@ -1,4 +1,4 @@
-import type { LibraryService } from "@core";
+import type { LibraryService } from "@contexts/account-library";
 import { useEngine } from "./useEngine";
 
 /** The logged-in user's library use-case service (liked songs, …). */

@@ -1,90 +1,76 @@
 import { Plugin } from "@core";
-import { MUSIC_PROVIDER } from "@core/plugin";
-import type { MusicProvider, ProviderCapability } from "@domain";
-import { Playlist } from "@domain/model/playlist";
-import type { Lyric } from "@domain/model/lyric";
-import type { Album } from "@domain/model/album";
-import type { Artist } from "@domain/model/artist";
-import type { Track, TrackPlayUrl } from "@domain/model/track";
-import type { MusicVideo } from "@domain/model/music-video";
-import type { Personalized } from "@domain/model/personalized";
-import { SearchResult } from "@domain/model/search";
-import type { Chart } from "@domain/model/chart";
-import type { Comment } from "@domain/model/comment";
+import { MUSIC_SOURCE } from "@core/plugin";
+import type {
+  CatalogPorts,
+  EngagementPorts,
+  IdentityGateway,
+  LyricProvider,
+  MusicSource,
+  PlaybackAvailabilityPolicy,
+  ProviderId,
+  UserLibrary,
+} from "@domain";
+import type { TrackPlayUrl } from "@domain/model/track";
 
 /**
- * Base class for data-source plugins. Every concrete music source
- * (NeteaseCloudMusic, Spotify, QQMusic, ...) extends Provider and publishes the
- * MUSIC_PROVIDER capability; several can be mounted at once (the ProviderRegistry
- * picks the active one). The plugin id is derived per source from `name`, so
- * their lifecycle entries stay distinct.
+ * Base lifecycle adapter for a music source. Concrete providers expose their
+ * real context ports through catalogPorts/lyricsPort/identityPort/libraryPort.
+ * A missing port is null; there is no parallel string capability declaration
+ * and no empty optional method pretending that a port exists.
  */
-export abstract class Provider extends Plugin implements MusicProvider {
+export abstract class Provider extends Plugin {
   get id(): string {
-    return `provider:${this.name}`;
+    return `provider:${this.providerId}`;
   }
 
   protected onInit(): void {
-    this.context.registry.provide(MUSIC_PROVIDER, this);
+    const source: MusicSource = {
+      providerId: this.providerId,
+      name: this.name,
+      catalog: this.catalogPorts,
+      playback: {
+        providerId: this.providerId,
+        diagnosticName: this.name,
+        policy: this.playbackPolicy,
+        resolve: (playbackIds) => this.playUrls(playbackIds),
+      },
+      lyrics: this.lyricsPort,
+      identity: this.identityPort,
+      userLibrary: this.libraryPort,
+      engagement: this.engagementPorts,
+    };
+    this.context.registry.provide(MUSIC_SOURCE, source);
   }
 
   abstract get name(): string;
 
-  abstract get capabilities(): ReadonlySet<ProviderCapability>;
+  abstract get providerId(): ProviderId;
 
-  supports(cap: ProviderCapability): boolean {
-    return this.capabilities.has(cap);
+  protected abstract get catalogPorts(): CatalogPorts;
+
+  protected abstract get playbackPolicy(): PlaybackAvailabilityPolicy;
+
+  protected get lyricsPort(): LyricProvider | null {
+    return null;
   }
 
-  abstract playlistDetail(id: string): Promise<Playlist>;
-
-  abstract lyric(id: string): Promise<Lyric[]>;
-
-  abstract albumDetail(id: string): Promise<Album>;
-
-  abstract artistDetail(id: string): Promise<Artist>;
-
-  async trackDetail(id: string): Promise<Partial<Track> | undefined> {
-    const tracks = await this.trackDetails([id]);
-    return tracks[0];
+  protected get identityPort(): IdentityGateway | null {
+    return null;
   }
 
-  async trackDetails(_ids: string[]): Promise<Partial<Track>[]> {
-    return [];
+  protected get libraryPort(): UserLibrary | null {
+    return null;
   }
 
-  async musicVideoDetail(_id: string): Promise<MusicVideo | undefined> {
-    return undefined;
+  protected get engagementPorts(): EngagementPorts {
+    return {
+      likes: null,
+      playHistory: null,
+      trackComments: null,
+      musicVideoComments: null,
+    };
   }
 
-  async artistMusicVideos(_artistId: string): Promise<Partial<MusicVideo>[]> {
-    return [];
-  }
-
-  async musicVideoComments(_musicVideoId: string): Promise<Comment[]> {
-    return [];
-  }
-
+  /** Resolve provider-specific playback ids, which need not equal Track.id. */
   abstract playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]>;
-
-  abstract personalized(): Promise<Personalized>;
-
-  /* Optional capabilities: the base returns empty defaults; supporting
-       providers override these and declare them in `capabilities`. */
-
-  async search(_query: string): Promise<SearchResult> {
-    return SearchResult.empty();
-  }
-
-  async toplists(): Promise<Chart[]> {
-    return [];
-  }
-
-  async toplistDetail(_id: string): Promise<Playlist> {
-    return Playlist.empty(_id);
-  }
-
-  async comments(_trackId: string): Promise<Comment[]> {
-    return [];
-  }
 }

@@ -5,10 +5,12 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 
 	_ "modernc.org/sqlite" // registers the pure-Go "sqlite" driver
 )
@@ -22,13 +24,13 @@ type Catalog struct {
 var _ domain.Catalog = (*Catalog)(nil)
 
 // Open connects to (creating + migrating) the library database at path.
-func Open(path string) (*Catalog, error) {
+func Open(ctx context.Context, path string) (*Catalog, error) {
 	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(0)")
 	if err != nil {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1) // one writer; WAL still allows concurrent reads
-	if _, err := db.Exec(schema); err != nil {
+	if err := migrateSchema(ctx, db); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
@@ -42,33 +44,32 @@ func (c *Catalog) Close() error {
 	return c.db.Close()
 }
 
-// Save writes one folder's scanned files in a single transaction, prunes files
-// that vanished from that folder, then drops orphaned albums/artists.
-func (c *Catalog) Save(folder string, metas []domain.TrackMetadata, at int64) (added, total int, err error) {
-	tx, err := c.db.Begin()
+// Save writes one folder's observed files in a single transaction. Missing
+// files and orphaned groups are pruned only for an authoritative complete scan.
+func (c *Catalog) Save(ctx context.Context, folder string, scan domain.ScanSnapshot, at int64) (added, total int, err error) {
+	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, 0, err
 	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
+	defer rollbackOnError(tx, &err)
 
-	if _, err = tx.Exec(`INSERT INTO folders(path, added_at) VALUES(?, ?) ON CONFLICT(path) DO NOTHING`, folder, at); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO folders(path, added_at) VALUES(?, ?) ON CONFLICT(path) DO NOTHING`, folder, at); err != nil {
 		return 0, 0, err
 	}
 
-	for _, m := range metas {
-		artist, album, track := m.ToArtist(), m.ToAlbum(), m.ToTrack()
-		if err = upsertArtist(tx, artist); err != nil {
+	for _, m := range scan.Metadata {
+		if err = ctx.Err(); err != nil {
 			return 0, 0, err
 		}
-		if err = upsertAlbum(tx, album, m.CoverExt, at); err != nil {
+		artist, album, track := m.ToArtist(), m.ToAlbum(), m.ToTrack()
+		if err = upsertArtist(ctx, tx, artist); err != nil {
+			return 0, 0, err
+		}
+		if err = upsertAlbum(ctx, tx, album, m.CoverExt, at); err != nil {
 			return 0, 0, err
 		}
 		var inserted bool
-		if inserted, err = upsertTrack(tx, track, m.Path, at); err != nil {
+		if inserted, err = upsertTrack(ctx, tx, track, m.Path, at); err != nil {
 			return 0, 0, err
 		}
 		if inserted {
@@ -76,26 +77,28 @@ func (c *Catalog) Save(folder string, metas []domain.TrackMetadata, at int64) (a
 		}
 	}
 
-	if err = pruneFolder(tx, folder, at); err != nil {
-		return 0, 0, err
+	if scan.AllowsPrune() {
+		if err = pruneFolder(ctx, tx, folder, at); err != nil {
+			return 0, 0, err
+		}
 	}
-	if err = tx.QueryRow(`SELECT COUNT(*) FROM tracks`).Scan(&total); err != nil {
+	if err = tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM tracks`).Scan(&total); err != nil {
 		return 0, 0, err
 	}
 	err = tx.Commit()
 	return added, total, err
 }
 
-func upsertArtist(tx *sql.Tx, a domain.Artist) error {
-	_, err := tx.Exec(
+func upsertArtist(ctx context.Context, tx *sql.Tx, a domain.Artist) error {
+	_, err := tx.ExecContext(ctx,
 		`INSERT INTO artists(id, name) VALUES(?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name`,
 		a.ID.String(), a.Name,
 	)
 	return err
 }
 
-func upsertAlbum(tx *sql.Tx, a domain.Album, coverExt string, at int64) error {
-	_, err := tx.Exec(
+func upsertAlbum(ctx context.Context, tx *sql.Tx, a domain.Album, coverExt string, at int64) error {
+	_, err := tx.ExecContext(ctx,
 		`INSERT INTO albums(id, name, artist_id, artist, year, cover_ext, added_at)
 		 VALUES(?, ?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(id) DO UPDATE SET
@@ -107,8 +110,8 @@ func upsertAlbum(tx *sql.Tx, a domain.Album, coverExt string, at int64) error {
 	return err
 }
 
-func upsertTrack(tx *sql.Tx, t domain.Track, path string, at int64) (inserted bool, err error) {
-	if _, err = tx.Exec(
+func upsertTrack(ctx context.Context, tx *sql.Tx, t domain.Track, path string, at int64) (inserted bool, err error) {
+	if _, err = tx.ExecContext(ctx,
 		`INSERT INTO tracks(id, path, title, album_id, artist_id, artist, track_no, disc_no, duration_ms, year, genre, added_at, seen_at)
 		 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(id) DO UPDATE SET
@@ -124,39 +127,51 @@ func upsertTrack(tx *sql.Tx, t domain.Track, path string, at int64) (inserted bo
 	// A fresh insert stamps added_at=at; an update preserves the original
 	// (first-seen) added_at. Distinguish by re-reading it.
 	var addedAt int64
-	if err = tx.QueryRow(`SELECT added_at FROM tracks WHERE id=?`, t.ID.String()).Scan(&addedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, `SELECT added_at FROM tracks WHERE id=?`, t.ID.String()).Scan(&addedAt); err != nil {
 		return false, err
 	}
 	return addedAt == at, nil
 }
 
-func pruneFolder(tx *sql.Tx, folder string, at int64) error {
-	if _, err := tx.Exec(`DELETE FROM tracks WHERE path LIKE ? ESCAPE '\' AND seen_at < ?`, likePrefix(folder), at); err != nil {
+func pruneFolder(ctx context.Context, tx *sql.Tx, folder string, at int64) error {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM tracks WHERE path LIKE ? ESCAPE '\' AND seen_at < ?`, likePrefix(folder), at); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(`DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)`); err != nil {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)`); err != nil {
 		return err
 	}
-	_, err := tx.Exec(`DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM tracks)`)
+	_, err := tx.ExecContext(ctx, `DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM tracks)`)
 	return err
 }
 
-func (c *Catalog) Count() (int, error) {
+func (c *Catalog) Count(ctx context.Context) (int, error) {
 	var n int
-	err := c.db.QueryRow(`SELECT COUNT(*) FROM tracks`).Scan(&n)
+	err := c.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM tracks`).Scan(&n)
 	return n, err
 }
 
 // TrackPath / AlbumCoverExt back the media package's HTTP endpoints (the media
 // Source interface).
-func (c *Catalog) TrackPath(id domain.TrackID) (string, error) {
+func (c *Catalog) TrackPath(ctx context.Context, id domain.TrackID) (string, error) {
 	var path string
-	err := c.db.QueryRow(`SELECT path FROM tracks WHERE id = ?`, id.String()).Scan(&path)
+	err := c.db.QueryRowContext(ctx, `SELECT path FROM tracks WHERE id = ?`, id.String()).Scan(&path)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
 	return path, err
 }
 
-func (c *Catalog) AlbumCoverExt(id domain.AlbumID) (string, error) {
+func (c *Catalog) AlbumCoverExt(ctx context.Context, id domain.AlbumID) (string, error) {
 	var ext string
-	err := c.db.QueryRow(`SELECT cover_ext FROM albums WHERE id = ?`, id.String()).Scan(&ext)
+	err := c.db.QueryRowContext(ctx, `SELECT cover_ext FROM albums WHERE id = ?`, id.String()).Scan(&ext)
 	return ext, err
+}
+
+func rollbackOnError(tx *sql.Tx, operationErr *error) {
+	if *operationErr == nil {
+		return
+	}
+	if rollbackErr := tx.Rollback(); rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+		*operationErr = errors.Join(*operationErr, fmt.Errorf("rollback transaction: %w", rollbackErr))
+	}
 }

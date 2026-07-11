@@ -1,12 +1,12 @@
-import type { Lyric } from "@domain/model/lyric";
+import type { Lyric } from "@contexts/playback";
 
-import { useMediaService } from "@/hooks/useMediaService";
+import { useEngagementService } from "@/hooks/useEngagementService";
 import { usePlayQueueStore } from "@/store/playqueue";
 import { toVibeComments } from "@/model/adapters/comment";
 import { trackCommentsQueryEnabled } from "@/model/content-query";
 import type { VibeComment } from "@/model/vibe";
 import { queryKeys } from "@/model/queryKeys";
-import { useProjectedQuery } from "@/hooks/useProjectedQuery";
+import { useProjectedResultQuery } from "@/hooks/useProjectedQuery";
 
 /**
  * Current-track lyrics ([] when none). The Lyrics plugin follows
@@ -22,11 +22,12 @@ export function useLyric(): readonly Lyric[] {
  * we never fetch comments for every played track.
  */
 export function useComments(trackId: string | undefined, enabled: boolean): VibeComment[] {
-  const media = useMediaService();
-  const { data } = useProjectedQuery({
-    queryKey: queryKeys.comments(media.providerName, trackId),
-    queryFn: () => media.comments(trackId ?? ""),
-    enabled: trackCommentsQueryEnabled(trackId, enabled, (cap) => media.supports(cap)),
+  const engagement = useEngagementService();
+  const { data } = useProjectedResultQuery({
+    queryKey: queryKeys.comments(engagement.providerId, trackId),
+    queryFn: () => engagement.comments(trackId ?? ""),
+    fallback: [],
+    enabled: trackCommentsQueryEnabled(trackId, enabled, engagement.availability.trackComments),
     project: toVibeComments,
   });
   return data;

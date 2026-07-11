@@ -18,7 +18,7 @@ type Deps = {
   liked: Set<string>;
   openDetail: (item: OpenTarget) => void;
   openArtist: (artist: ArtistTarget) => void;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
 };
 
 export function useShellTrackActions({
@@ -49,7 +49,7 @@ export function useShellTrackActions({
     openDetail(likedSongsOpenTarget({ catalog, liked, loggedIn, userPlaylists }));
   }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
 
-  const { enqueueById } = useQueueActions({
+  const { enqueueByKey } = useQueueActions({
     addToQueue,
     addNextToQueue,
     catalogTracks: catalog.allTracks,
@@ -60,7 +60,7 @@ export function useShellTrackActions({
 
   const { menu, setMenu, actions } = useContextMenu({
     onPlay,
-    enqueue: enqueueById,
+    enqueue: enqueueByKey,
     openDetail,
     openArtist,
     toggleLike,

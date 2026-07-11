@@ -2,13 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   albumImage,
+  mapQQAlbumDetail,
+  mapQQArtistFromList,
   mapQQChart,
+  mapQQNewAlbum,
   mapQQPlaylistDetail,
+  mapQQPlaylistStub,
   mapQQRankSong,
   mapQQSmartboxSong,
+  mapQQTrackFromAlbumList,
   mapQQTrackFromSong,
   singerImage,
 } from "./mapper";
+import { QQMUSIC_PROVIDER_ID } from "./identity";
 
 describe("QQ Music mapper", () => {
   it("normalizes mixed Tencent ids and upgrades playlist artwork to https", () => {
@@ -67,6 +73,7 @@ describe("QQ Music mapper", () => {
         updateTime: "2026-07-01",
       }),
     ).toEqual({
+      providerId: "qqmusic",
       id: "26",
       title: "热歌榜",
       image: "https://y.qq.com/chart.jpg",
@@ -114,5 +121,41 @@ describe("QQ Music mapper", () => {
     });
     // No cover fields → singleImage("") collapses to an empty image list, not [{url:""}].
     expect(mapQQRankSong({}).album?.images).toEqual([]);
+  });
+
+  it("never creates empty image records at optional artwork boundaries", () => {
+    expect(mapQQPlaylistDetail({}).images).toEqual([]);
+    expect(mapQQPlaylistStub({}).images).toEqual([]);
+  });
+
+  it("preserves epoch release dates and rejects malformed dates", () => {
+    expect(mapQQAlbumDetail({ mid: "epoch", aDate: "1970-01-01" }).releaseDate).toBe("1970-01-01");
+    expect(mapQQAlbumDetail({ mid: "invalid", aDate: "not-a-date" }).releaseDate).toBeUndefined();
+  });
+
+  it("normalizes alternate singer fields through one artist mapper", () => {
+    expect(mapQQArtistFromList({ mid: 0, name: "Zero" })).toMatchObject({
+      id: "0",
+      name: "Zero",
+    });
+    expect(singerImage(0)).toContain("M0000.jpg");
+    expect(albumImage(0)).toContain("M0000.jpg");
+
+    const track = mapQQTrackFromAlbumList(
+      {
+        title: "Alternate title",
+        songmid: "song-mid",
+        singer: [{ singer_mid: 17, singer_name: "Singer" }],
+      },
+      { providerId: QQMUSIC_PROVIDER_ID, id: "album", name: "Album" },
+    );
+    expect(track).toMatchObject({
+      name: "Alternate title",
+      artists: [{ providerId: "qqmusic", id: "17", name: "Singer" }],
+    });
+
+    expect(
+      mapQQNewAlbum({ mid: "album", singers: [{ singer_mid: 8, singer_name: "A" }] }),
+    ).toMatchObject({ artists: [{ id: "8", name: "A" }] });
   });
 });

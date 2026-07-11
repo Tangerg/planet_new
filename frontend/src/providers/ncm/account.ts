@@ -1,6 +1,13 @@
 import type { KyInstance } from "ky";
 
-import type { Account, CredentialStore, LoginFlow, LoginStatus } from "@domain";
+import {
+  AuthSession,
+  type Account,
+  type CredentialStore,
+  type LoginFlow,
+  type LoginStatus,
+  type ProviderId,
+} from "@domain";
 
 import { coverSet } from "./mapper";
 import type {
@@ -14,7 +21,7 @@ import type {
 export async function beginNcmLogin(
   http: KyInstance,
   credentials: CredentialStore | undefined,
-  providerName: string,
+  providerId: ProviderId,
 ): Promise<LoginFlow> {
   const keyRes = await http
     .get("login/qr/key", { searchParams: { timestamp: Date.now() } })
@@ -33,7 +40,7 @@ export async function beginNcmLogin(
         .json<NcmQrCheckResponse>()
         .catch((): NcmQrCheckResponse => ({}));
       if (res.code === 803) {
-        if (res.cookie) credentials?.set(providerName, { token: res.cookie });
+        if (res.cookie) credentials?.set(providerId, AuthSession.of(res.cookie));
         return { state: "authorized" };
       }
       if (res.code === 802) return { state: "scanned" };
@@ -43,12 +50,13 @@ export async function beginNcmLogin(
   };
 }
 
-export async function fetchNcmAccount(http: KyInstance): Promise<Account> {
+export async function fetchNcmAccount(http: KyInstance): Promise<Account | undefined> {
   const res = await http
     .get("user/account", { searchParams: { timestamp: Date.now() } })
     .json<NcmAccountResponse>();
   const profile = res.profile ?? {};
   const id = (profile.userId ?? "").toString();
+  if (!id) return undefined;
   const detail = id
     ? await http
         .get("user/detail", { searchParams: { uid: id, timestamp: Date.now() } })
@@ -74,11 +82,6 @@ export async function fetchNcmUid(http: KyInstance): Promise<string> {
   return (res.profile?.userId ?? "").toString();
 }
 
-export async function logoutNcm(
-  http: KyInstance,
-  credentials: CredentialStore | undefined,
-  providerName: string,
-): Promise<void> {
-  await http.get("logout", { searchParams: { timestamp: Date.now() } }).catch(() => {});
-  credentials?.clear(providerName);
+export async function logoutNcm(http: KyInstance): Promise<void> {
+  await http.get("logout", { searchParams: { timestamp: Date.now() } });
 }

@@ -214,6 +214,7 @@ export const en = {
     scanned: "Scanned — confirm on your phone",
     authorized: "Logged in",
     expired: "QR expired — reopen to retry",
+    failed: "Login failed — reopen to retry",
   },
   queue: {
     clear: "Clear queue",
@@ -250,6 +251,7 @@ export const en = {
     addFolderSub: "Scan a folder to import local music",
     scanning: "Scanning…",
     scanDone: "Imported {{added}} new · {{total}} total",
+    scanPartial: "Partial scan · {{added}} new · {{total}} total; unread paths were preserved",
     scanError: "Scan failed",
   },
 };

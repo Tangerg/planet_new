@@ -213,6 +213,7 @@ export const zh = {
     scanned: "已扫码，请在手机上确认",
     authorized: "已登录",
     expired: "二维码已过期，请重新打开",
+    failed: "登录失败，请重新打开后重试",
   },
   queue: {
     clear: "清空队列",
@@ -249,6 +250,7 @@ export const zh = {
     addFolderSub: "扫描文件夹导入本地音乐",
     scanning: "扫描中…",
     scanDone: "新增 {{added}} 首 · 共 {{total}} 首",
+    scanPartial: "部分扫描完成 · 新增 {{added}} 首 · 共 {{total}} 首，未清理未读取文件",
     scanError: "扫描失败",
   },
 };

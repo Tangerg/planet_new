@@ -1,71 +1,63 @@
 import { describe, expect, test, vi } from "vitest";
 import { MediaService } from "./MediaService";
-import type { MusicProvider } from "@domain";
+import { ProviderId, type CatalogPorts, type CatalogSource } from "@domain";
 import { SearchResult } from "@domain/model/search";
-import type { MusicVideo } from "@domain/model/music-video";
+import type { MusicVideoSummary } from "@domain/model/music-video";
+import type { TrackSnapshot } from "@domain/model/track";
 
-function makeProvider(overrides: Partial<MusicProvider> = {}): MusicProvider {
-  const capabilities = overrides.capabilities ?? new Set();
-  const provider = {
+const FAKE_PROVIDER_ID = ProviderId.of("fake");
+
+const EMPTY_PORTS: CatalogPorts = {
+  home: null,
+  playlists: null,
+  albums: null,
+  artists: null,
+  tracks: null,
+  search: null,
+  charts: null,
+  musicVideos: null,
+  artistMusicVideos: null,
+};
+
+function makeSource(ports: Partial<CatalogPorts> = {}): CatalogSource {
+  return {
+    providerId: FAKE_PROVIDER_ID,
     name: "fake",
-    capabilities,
-    supports(cap) {
-      return this.capabilities.has(cap);
-    },
-    playlistDetail: async () => ({ id: "", name: "", images: [], tracks: [] }),
-    lyric: async () => [],
-    albumDetail: async () => ({ id: "", name: "", images: [], artists: [] }),
-    artistDetail: async () => ({ id: "", name: "", images: [] }),
-    trackDetail: async () => undefined,
-    trackDetails: async () => [],
-    musicVideoDetail: async () => undefined,
-    artistMusicVideos: async () => [],
-    musicVideoComments: async () => [],
-    playUrls: async () => [],
-    personalized: async () => ({ playlists: [] }),
-    search: async () => SearchResult.empty(),
-    toplists: async () => [],
-    toplistDetail: async () => ({ id: "", name: "", images: [], tracks: [] }),
-    comments: async () => [],
-    ...overrides,
-  } satisfies MusicProvider;
-  return provider;
+    catalog: { ...EMPTY_PORTS, ...ports },
+  };
 }
 
 describe("MediaService.discoverArtistMusicVideos", () => {
-  test("returns empty when the active provider has no artist MV capability", async () => {
-    let calls = 0;
-    const service = new MediaService(() =>
-      makeProvider({
-        artistMusicVideos: async () => {
-          calls += 1;
-          return [];
-        },
-      }),
-    );
-
-    await expect(service.discoverArtistMusicVideos([{ id: "artist-1" }])).resolves.toEqual([]);
-    expect(calls).toBe(0);
+  test("returns unsupported when the active source registered no artist-MV port", async () => {
+    const service = new MediaService(() => makeSource());
+    await expect(service.discoverArtistMusicVideos([{ id: "artist-1" }])).resolves.toEqual({
+      status: "unsupported",
+    });
   });
 
   test("queries bounded artist seeds, tolerates failures, and de-duplicates videos", async () => {
     const calls: string[] = [];
-    const videosByArtist: Record<string, Partial<MusicVideo>[]> = {
-      a: [{ id: "mv-1", name: "One" }],
-      b: [
-        { id: "mv-1", name: "One duplicate" },
-        { id: "mv-2", name: "Two" },
-      ],
-      c: [{ id: "", name: "Nameless id" }],
-      d: [{ id: "mv-3", name: "Three" }],
+    const video = (id: string, name: string): MusicVideoSummary => ({
+      providerId: FAKE_PROVIDER_ID,
+      id,
+      name,
+      images: [],
+      artists: [],
+    });
+    const videosByArtist: Record<string, MusicVideoSummary[]> = {
+      a: [video("mv-1", "One")],
+      b: [video("mv-1", "One duplicate"), video("mv-2", "Two")],
+      c: [video("", "Nameless id")],
+      d: [video("mv-3", "Three")],
     };
     const service = new MediaService(() =>
-      makeProvider({
-        capabilities: new Set(["artistMusicVideos"]),
-        artistMusicVideos: async (artistId: string) => {
-          calls.push(artistId);
-          if (artistId === "fail") throw new Error("provider failed");
-          return videosByArtist[artistId] ?? [];
+      makeSource({
+        artistMusicVideos: {
+          artistMusicVideos: async (artistId) => {
+            calls.push(artistId);
+            if (artistId === "fail") throw new Error("provider failed");
+            return videosByArtist[artistId] ?? [];
+          },
         },
       }),
     );
@@ -76,150 +68,115 @@ describe("MediaService.discoverArtistMusicVideos", () => {
     );
 
     expect(calls).toEqual(["a", "b", "fail", "c", "d"]);
-    expect(result).toEqual([
-      { id: "mv-1", name: "One" },
-      { id: "mv-2", name: "Two" },
-    ]);
+    expect(result).toMatchObject({
+      status: "partial",
+      data: [
+        { id: "mv-1", name: "One" },
+        { id: "mv-2", name: "Two" },
+      ],
+    });
+    expect(result.status === "partial" ? result.errors : []).toHaveLength(1);
   });
 });
 
-describe("MediaService optional provider reads", () => {
-  test("exposes the active provider's MV playback policy from capabilities", () => {
-    const service = new MediaService(() =>
-      makeProvider({ capabilities: new Set(["musicVideoDetail"]) }),
+describe("MediaService optional catalog ports", () => {
+  test("derives MV playback policy from the registered port", () => {
+    const supported = new MediaService(() =>
+      makeSource({ musicVideos: { musicVideoDetail: async () => undefined } }),
     );
-
-    expect(service.musicVideoPlaybackPolicy()).toEqual({ canResolvePlayback: true });
-
-    const unsupported = new MediaService(() => makeProvider({}));
-    expect(unsupported.musicVideoPlaybackPolicy()).toEqual({ canResolvePlayback: false });
-  });
-
-  test("does not call providers for unsupported optional capabilities", async () => {
-    let calls = 0;
-    const service = new MediaService(() =>
-      makeProvider({
-        search: async () => {
-          calls += 1;
-          return {
-            tracks: [{ id: "track", name: "Track", durationMs: 1, artists: [] }],
-            artists: [],
-            albums: [],
-            playlists: [],
-          };
-        },
-        toplists: async () => {
-          calls += 1;
-          return [{ id: "chart", title: "Chart", image: "" }];
-        },
-        comments: async () => {
-          calls += 1;
-          return [];
-        },
-      }),
-    );
-
-    await expect(service.search("song")).resolves.toEqual(SearchResult.empty());
-    await expect(service.toplists()).resolves.toEqual([]);
-    await expect(service.comments("track")).resolves.toEqual([]);
-    await expect(service.musicVideoDetail("mv")).resolves.toBeUndefined();
-    await expect(service.toplistDetail("chart")).resolves.toEqual({
-      id: "chart",
-      name: "",
-      images: [],
-      tracks: [],
-      totalTracks: 0,
+    expect(supported.musicVideoPlaybackPolicy()).toEqual({ canResolvePlayback: true });
+    expect(new MediaService(() => makeSource()).musicVideoPlaybackPolicy()).toEqual({
+      canResolvePlayback: false,
     });
-    expect(calls).toBe(0);
   });
 
-  test("normalizes optional provider failures to empty domain values", async () => {
+  test("distinguishes absent optional ports from successful empty data", async () => {
+    const service = new MediaService(() => makeSource());
+
+    await expect(service.search("song")).resolves.toEqual({ status: "unsupported" });
+    await expect(service.toplists()).resolves.toEqual({ status: "unsupported" });
+    await expect(service.musicVideoDetail("mv")).resolves.toEqual({ status: "unsupported" });
+    await expect(service.toplistDetail("chart")).resolves.toEqual({ status: "unsupported" });
+  });
+
+  test("returns failed for registered port faults instead of empty domain values", async () => {
+    const fail = async (): Promise<never> => {
+      throw new Error("failed");
+    };
     const service = new MediaService(() =>
-      makeProvider({
-        capabilities: new Set([
-          "search",
-          "toplist",
-          "comments",
-          "trackDetail",
-          "musicVideoDetail",
-          "artistMusicVideos",
-          "musicVideoComments",
-        ]),
-        search: async () => {
-          throw new Error("search failed");
-        },
-        toplists: async () => {
-          throw new Error("toplists failed");
-        },
-        comments: async () => {
-          throw new Error("comments failed");
-        },
-        trackDetails: async () => {
-          throw new Error("track detail failed");
-        },
-        musicVideoDetail: async () => {
-          throw new Error("mv detail failed");
-        },
-        artistMusicVideos: async () => {
-          throw new Error("artist mv failed");
-        },
-        musicVideoComments: async () => {
-          throw new Error("mv comments failed");
-        },
+      makeSource({
+        search: { search: fail },
+        charts: { toplists: fail, toplistDetail: fail },
+        tracks: { trackDetail: fail, trackDetails: fail },
+        musicVideos: { musicVideoDetail: fail },
+        artistMusicVideos: { artistMusicVideos: fail },
       }),
     );
 
-    await expect(service.search("song")).resolves.toEqual(SearchResult.empty());
-    await expect(service.toplists()).resolves.toEqual([]);
-    await expect(service.comments("track")).resolves.toEqual([]);
-    await expect(service.trackDetail("track")).resolves.toBeUndefined();
-    await expect(service.trackDetails(["track"])).resolves.toEqual([]);
-    await expect(service.musicVideoDetail("mv")).resolves.toBeUndefined();
-    await expect(service.artistMusicVideos("artist")).resolves.toEqual([]);
-    await expect(service.musicVideoComments("mv")).resolves.toEqual([]);
+    for (const result of await Promise.all([
+      service.search("song"),
+      service.toplists(),
+      service.trackDetail("track"),
+      service.trackDetails(["track"]),
+      service.musicVideoDetail("mv"),
+      service.artistMusicVideos("artist"),
+    ])) {
+      expect(result.status).toBe("failed");
+    }
   });
 
-  test("surfaces a supported read that faulted (observable), but stays silent when unsupported", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  test("preserves failure diagnostics and keeps them distinct from unsupported", async () => {
+    const cause = new Error("boom");
     const failing = new MediaService(() =>
-      makeProvider({
-        capabilities: new Set(["search"]),
-        search: async () => {
-          throw new Error("boom");
+      makeSource({
+        search: {
+          search: async () => {
+            throw cause;
+          },
         },
       }),
     );
-    await expect(failing.search("song")).resolves.toEqual(SearchResult.empty());
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0][0])).toContain("fake.search read failed");
 
-    warn.mockClear();
-    const unsupported = new MediaService(() => makeProvider({}));
-    await expect(unsupported.search("song")).resolves.toEqual(SearchResult.empty());
-    expect(warn).not.toHaveBeenCalled();
-
-    warn.mockRestore();
+    const failed = await failing.search("song");
+    expect(failed).toMatchObject({
+      status: "failed",
+      error: { source: "fake", operation: "search", cause },
+    });
+    await expect(new MediaService(() => makeSource()).search("song")).resolves.toEqual({
+      status: "unsupported",
+    });
   });
 
-  test("skips empty searches and empty track batches before provider calls", async () => {
-    let calls = 0;
+  test("maps an addressable missing entity to notFound", async () => {
     const service = new MediaService(() =>
-      makeProvider({
-        capabilities: new Set(["search", "trackDetail"]),
-        search: async () => {
-          calls += 1;
-          return SearchResult.empty();
-        },
-        trackDetails: async () => {
-          calls += 1;
-          return [];
-        },
+      makeSource({
+        tracks: { trackDetail: async () => undefined, trackDetails: async () => [] },
+        musicVideos: { musicVideoDetail: async () => undefined },
       }),
     );
 
-    await expect(service.search("   ")).resolves.toEqual(SearchResult.empty());
-    await expect(service.trackDetails([])).resolves.toEqual([]);
-    expect(calls).toBe(0);
+    await expect(service.trackDetail("missing")).resolves.toEqual({ status: "notFound" });
+    await expect(service.musicVideoDetail("missing")).resolves.toEqual({ status: "notFound" });
+  });
+
+  test("skips empty searches and track batches before port calls", async () => {
+    const search = vi.fn<(query: string) => Promise<SearchResult>>(async () =>
+      SearchResult.empty(),
+    );
+    const trackDetails = vi.fn<(ids: string[]) => Promise<TrackSnapshot[]>>(async () => []);
+    const service = new MediaService(() =>
+      makeSource({
+        search: { search },
+        tracks: { trackDetail: async () => undefined, trackDetails },
+      }),
+    );
+
+    await expect(service.search("   ")).resolves.toEqual({
+      status: "success",
+      data: SearchResult.empty(),
+    });
+    await expect(service.trackDetails([])).resolves.toEqual({ status: "success", data: [] });
+    expect(search).not.toHaveBeenCalled();
+    expect(trackDetails).not.toHaveBeenCalled();
   });
 });

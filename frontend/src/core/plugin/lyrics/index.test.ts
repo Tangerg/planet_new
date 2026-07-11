@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { Lyric } from "@domain/model/lyric";
-import type { MusicProvider } from "@domain";
+import { ProviderId, type LyricProvider, type MusicSource } from "@domain";
 import type { Track } from "@domain/model/track";
 
 import { EventEmitter } from "../../event";
@@ -13,12 +13,34 @@ import "../playqueue"; // pulls the "queue:current-changed" event-type augmentat
 import { Lyrics } from "./index";
 
 const LINES: Lyric[] = [{ content: "hello", duration: 0 }];
-const track = (id: string): Track => ({ id, name: id, durationMs: 1000, artists: [] });
+const TEST_PROVIDER_ID = ProviderId.of("test");
+const OTHER_PROVIDER_ID = ProviderId.of("other");
+const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
+  providerId,
+  id,
+  name: id,
+  durationMs: 1000,
+  artists: [],
+});
 
-function mount(lyric: MusicProvider["lyric"]) {
+function musicProvider(
+  providerId: MusicSource["providerId"],
+  lyric: LyricProvider["lyric"],
+): MusicSource {
+  return { providerId, name: providerId, lyrics: { lyric } } as unknown as MusicSource;
+}
+
+function mount(lyric: LyricProvider["lyric"], additionalProviders: MusicSource[] = []) {
   const hooks = new EventEmitter<PlanetEventMap>();
   const registry = new CapabilityRegistry();
-  const port = { active: { lyric } as unknown as MusicProvider } as unknown as ProviderRegistryPort;
+  const active = musicProvider(TEST_PROVIDER_ID, lyric);
+  const providers = [active, ...additionalProviders];
+  const port = {
+    active,
+    providers,
+    get: (providerId: MusicSource["providerId"]) =>
+      providers.find((provider) => provider.providerId === providerId) ?? null,
+  } as unknown as ProviderRegistryPort;
   registry.provide(PROVIDER_REGISTRY, port);
   new Lyrics().init({ hooks, registry } as unknown as PluginContext);
   const nextLyrics = () => new Promise<Lyric[]>((res) => hooks.once("lyrics:changed", res));
@@ -27,7 +49,7 @@ function mount(lyric: MusicProvider["lyric"]) {
 
 describe("Lyrics plugin follows the current track", () => {
   it("fetches the active provider's lyrics when the track changes", async () => {
-    const lyric = vi.fn<MusicProvider["lyric"]>(async () => LINES);
+    const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
     const { hooks, nextLyrics } = mount(lyric);
 
     const changed = nextLyrics();
@@ -37,7 +59,7 @@ describe("Lyrics plugin follows the current track", () => {
   });
 
   it("does not refetch when the same track re-emits", async () => {
-    const lyric = vi.fn<MusicProvider["lyric"]>(async () => LINES);
+    const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
     const { hooks, nextLyrics } = mount(lyric);
 
     const first = nextLyrics();
@@ -47,8 +69,30 @@ describe("Lyrics plugin follows the current track", () => {
     expect(lyric).toHaveBeenCalledTimes(1);
   });
 
+  it("does refetch an identical local id when its provider changes", async () => {
+    const activeLyric = vi.fn<LyricProvider["lyric"]>(async () => [
+      { content: "active", duration: 0 },
+    ]);
+    const otherLyric = vi.fn<LyricProvider["lyric"]>(async () => [
+      { content: "other", duration: 0 },
+    ]);
+    const { hooks, nextLyrics } = mount(activeLyric, [
+      musicProvider(OTHER_PROVIDER_ID, otherLyric),
+    ]);
+
+    const first = nextLyrics();
+    hooks.emit("queue:current-changed", track("same"));
+    await first;
+    const second = nextLyrics();
+    hooks.emit("queue:current-changed", track("same", OTHER_PROVIDER_ID));
+
+    expect(await second).toEqual([{ content: "other", duration: 0 }]);
+    expect(activeLyric).toHaveBeenCalledTimes(1);
+    expect(otherLyric).toHaveBeenCalledWith("same");
+  });
+
   it("clears lyrics when there is no current track", async () => {
-    const lyric = vi.fn<MusicProvider["lyric"]>(async () => LINES);
+    const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
     const { hooks, nextLyrics } = mount(lyric);
 
     const changed = nextLyrics();
@@ -59,7 +103,7 @@ describe("Lyrics plugin follows the current track", () => {
 
   it("drops a stale fetch when the track changes again mid-flight (generation guard)", async () => {
     const gate: Array<(lines: Lyric[]) => void> = [];
-    const lyric = vi.fn<MusicProvider["lyric"]>(
+    const lyric = vi.fn<LyricProvider["lyric"]>(
       () => new Promise<Lyric[]>((res) => gate.push(res)),
     );
     const { hooks, nextLyrics } = mount(lyric);

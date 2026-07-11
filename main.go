@@ -3,7 +3,7 @@ package main
 import (
 	"embed"
 
-	"changeme/backend"
+	"github.com/Tangerg/planet_new/backend"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -28,6 +28,7 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 8, G: 8, B: 11, A: 1},
 		OnStartup:        app.Startup,
+		OnShutdown:       app.Shutdown,
 		Bind:             app.Bind(),
 	})
 

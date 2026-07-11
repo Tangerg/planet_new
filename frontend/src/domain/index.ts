@@ -1,12 +1,17 @@
-/** @domain public surface: domain ports (the MusicProvider contract) + domain
+/** @domain public surface: context ports + domain
  *  models (entities / value objects). Models are also importable by subpath:
  *  @domain/model/<entity>. */
 export * from "./ports/provider";
-export * from "./ports/capability";
+export * from "./ports/source";
+export * from "./ports/catalog";
+export * from "./ports/playback";
 export * from "./ports/auth";
 export * from "./ports/credentials";
 export * from "./ports/userLibrary";
+export * from "./ports/engagement";
 export * from "./model/account";
+export * from "./model/entity-key";
+export * from "./model/provider-id";
 export * from "./model/auth";
 export * from "./model/track";
 export * from "./model/album";

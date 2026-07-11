@@ -36,6 +36,7 @@
          @shared/*    —— 框架无关纯工具
          @domain/*    —— 领域模型与端口
          @core/*      —— 应用内核 / 插件 / 服务
+         @contexts/*  —— 限界上下文与稳定跨上下文契约
          @providers/* —— 数据源适配器
          @/*          —— UI 层（src/ui/*），React 实现
        说明：TS 6+ 起，paths 可不依赖 baseUrl，直接以 tsconfig 所在目录为锚点。 */
@@ -46,6 +47,7 @@
       "@domain/*": ["./src/domain/*"],
       "@core": ["./src/core/index.ts"],
       "@core/*": ["./src/core/*"],
+      "@contexts/*": ["./src/contexts/*"],
       "@providers": ["./src/providers/index.ts"],
       "@providers/*": ["./src/providers/*"],
       "@/*": ["./src/ui/*"],

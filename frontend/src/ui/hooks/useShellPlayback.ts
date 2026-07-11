@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { RepeatMode } from "@domain/model/repeat";
+import { RepeatMode } from "@contexts/playback";
 
 import { PLACEHOLDER_TRACK } from "@/model/defaults";
 import { useVibePlayback } from "@/hooks/useVibePlayback";

@@ -1,30 +1,24 @@
-import { Engine, Planet } from "@core";
-import {
-  Playback,
-  Volume,
-  PlayQueue,
-  Progress,
-  Lyrics,
-  ProviderRegistry,
-  AudioEngine,
-} from "@core/plugin";
+import { Engine } from "@core";
 import type { Provider } from "@providers";
 import { LocalCredentialStore, LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from "@providers";
+import type { ProviderId } from "@contexts/contracts";
+import { WebAudioRuntime } from "../infrastructure/audio";
+import { SystemRandom } from "../infrastructure/random";
+import { composePlanet } from "./composePlanet";
 
 import { resolveDesktopMediaAnalysisSource } from "@/infra/mediaSource";
-import { PlayQueueStoreBridge } from "@/store/bridge";
 
 const env = import.meta.env;
 
 /** On-device credential store, shared by auth-capable providers + the Engine. */
 const credentials = new LocalCredentialStore();
 
-/** VITE_PROVIDER value → provider `name`. */
-const PROVIDER_NAMES: Record<string, string> = {
-  spotify: Spotify.NAME,
-  netease: NeteaseCloudMusic.NAME,
-  qqmusic: QQMusic.NAME,
-  local: LocalMusic.NAME,
+/** VITE_PROVIDER value → stable provider id. */
+const PROVIDER_IDS: Record<string, ProviderId> = {
+  spotify: Spotify.ID,
+  netease: NeteaseCloudMusic.ID,
+  qqmusic: QQMusic.ID,
+  local: LocalMusic.ID,
 };
 
 /**
@@ -33,7 +27,7 @@ const PROVIDER_NAMES: Record<string, string> = {
  * only mounted when present; NeteaseCloudMusic is the default and the fallback
  * for an unset/unknown selection (it's always constructible).
  */
-function buildProviders(): { providers: Provider[]; active: string } {
+function buildProviders(): { providers: Provider[]; active: ProviderId } {
   const providers: Provider[] = [
     new NeteaseCloudMusic({
       host: env.VITE_NETEASE_HOST ?? "http://localhost:3000",
@@ -53,27 +47,23 @@ function buildProviders(): { providers: Provider[]; active: string } {
       }),
     );
   }
-  const wanted = PROVIDER_NAMES[env.VITE_PROVIDER ?? "netease"] ?? NeteaseCloudMusic.NAME;
-  const active = providers.some((p) => p.name === wanted) ? wanted : NeteaseCloudMusic.NAME;
+  const wanted = PROVIDER_IDS[env.VITE_PROVIDER ?? "netease"] ?? NeteaseCloudMusic.ID;
+  const active = providers.some((provider) => provider.providerId === wanted)
+    ? wanted
+    : NeteaseCloudMusic.ID;
   return { providers, active };
 }
 
 const { providers, active } = buildProviders();
 
-const planet = new Planet({
-  plugins: [
-    ...providers,
-    new Playback(),
-    new PlayQueue(),
-    new Volume(),
-    new Progress(),
-    new AudioEngine(resolveDesktopMediaAnalysisSource),
-    new ProviderRegistry(active),
-    new Lyrics(),
-    new PlayQueueStoreBridge(),
-  ],
+const planet = composePlanet({
+  audio: new WebAudioRuntime(),
+  random: new SystemRandom(),
+  providers,
+  activeProviderId: active,
+  resolveAnalysisSource: resolveDesktopMediaAnalysisSource,
 });
 
 /** The application Engine — the UI's single handle to the kernel (events +
- *  playback/media/auth use-cases + provider selection). */
+ *  playback/media/identity use-cases + provider selection). */
 export const engine = new Engine(planet, credentials);

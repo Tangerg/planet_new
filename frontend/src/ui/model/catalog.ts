@@ -1,5 +1,4 @@
-import type { Chart } from "@domain/model/chart";
-import type { Personalized } from "@domain/model/personalized";
+import type { Chart, Personalized } from "@contexts/catalog";
 
 import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
 import { toVibeArtist } from "@/model/adapters/artist";

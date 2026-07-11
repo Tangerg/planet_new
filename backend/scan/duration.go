@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 // probeDuration returns an audio file's playback length, best-effort. dhowden/tag

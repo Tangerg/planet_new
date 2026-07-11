@@ -1,7 +1,7 @@
-import { Track } from "@domain/model/track";
-import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
+import { Track } from "@contexts/catalog";
+import type { PlaybackAvailabilityPolicy } from "@contexts/playback";
 
-import type { VibeTrack } from "./vibe";
+import { sameVibeTrack, type VibeTrack } from "./vibe";
 
 export type TrackRowLeading =
   | { kind: "rank"; value: number; active: boolean }
@@ -31,7 +31,7 @@ export type TrackRowModel = {
 
 export function trackRowModel({
   track,
-  currentId,
+  current,
   playing,
   hover,
   index,
@@ -40,7 +40,7 @@ export function trackRowModel({
   policy,
 }: {
   track: VibeTrack;
-  currentId?: string;
+  current?: VibeTrack;
   playing: boolean;
   hover: boolean;
   index: number;
@@ -48,15 +48,23 @@ export function trackRowModel({
   delta?: number;
   policy?: PlaybackAvailabilityPolicy;
 }): TrackRowModel {
-  const current = currentId === track.id;
+  const isCurrent = sameVibeTrack(current, track);
   const unavailable = track.source ? Track.isUnavailable(track.source, policy) : false;
   const chart = rank != null;
 
   return {
-    current,
+    current: isCurrent,
     unavailable,
     chart,
-    leading: trackRowLeading({ chart, current, playing, hover, unavailable, index, rank }),
+    leading: trackRowLeading({
+      chart,
+      current: isCurrent,
+      playing,
+      hover,
+      unavailable,
+      index,
+      rank,
+    }),
     badges: trackRowBadges(track, unavailable),
     trend: chart ? trackRowTrend(delta) : undefined,
   };

@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { ProviderId } from "@contexts/contracts";
 
 import { useEngine } from "@/hooks/useEngine";
-import { scanLocalFolder, LOCAL_PROVIDER_NAME } from "@/infra/localLibrary";
+import { scanLocalFolder, LOCAL_PROVIDER_ID } from "@/infra/localLibrary";
 import {
   DEFAULT_SOURCE_LABELS,
   initialSettingsSource,
@@ -18,7 +19,7 @@ import { warnWriteFailure } from "@shared/debug";
 
 const SOURCE_LABELS: Record<string, string> = {
   ...DEFAULT_SOURCE_LABELS,
-  [LOCAL_PROVIDER_NAME]: "本地",
+  [LOCAL_PROVIDER_ID]: "本地",
 };
 
 export type LibrarySourceSettingsModel = {
@@ -27,8 +28,8 @@ export type LibrarySourceSettingsModel = {
   scan: SettingsScanState;
   status: SettingsScanStatusDescriptor;
   source: string;
-  sources: string[];
-  switchSource: (name: string) => void;
+  sources: ProviderId[];
+  switchSource: (providerId: string) => void;
 };
 
 /**
@@ -39,16 +40,19 @@ export type LibrarySourceSettingsModel = {
 export function useLibrarySourceSettings(): LibrarySourceSettingsModel {
   const engine = useEngine();
   const queryClient = useQueryClient();
-  const sources = engine.providers.providers.map((p) => p.name);
+  const sources = engine.providers.providers.map((provider) => provider.providerId);
   const [source, setSource] = useState(
-    initialSettingsSource(engine.providers.active?.name, sources),
+    initialSettingsSource(engine.providers.active?.providerId, sources),
   );
   const [scan, setScan] = useState<SettingsScanState>({ phase: "idle" });
 
   const switchSource = useCallback(
-    (name: string) => {
-      engine.providers.setActive(name);
-      setSource(name);
+    (value: string) => {
+      const providerId = ProviderId.of(value);
+      if (!engine.providers.providers.some((provider) => provider.providerId === providerId))
+        return;
+      engine.providers.setActive(providerId);
+      setSource(providerId);
       void queryClient.invalidateQueries();
     },
     [engine.providers, queryClient],
@@ -59,7 +63,7 @@ export function useLibrarySourceSettings(): LibrarySourceSettingsModel {
     try {
       const result = await scanLocalFolder();
       const nextScan = scanStateFromFolderResult(result);
-      if (shouldActivateScannedSource(nextScan)) switchSource(LOCAL_PROVIDER_NAME);
+      if (shouldActivateScannedSource(nextScan)) switchSource(LOCAL_PROVIDER_ID);
       setScan(nextScan);
     } catch (error) {
       warnWriteFailure("localLibrary.scan", error);

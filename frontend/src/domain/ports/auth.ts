@@ -1,23 +1,28 @@
-import type { Account } from "../model/account";
+import type { AccountSnapshot } from "../model/account";
 import type { LoginFlow } from "../model/auth";
-import type { MusicProvider } from "./provider";
-import { hasMethods } from "./capability";
+import type { ProviderId } from "../model/provider-id";
 
 /**
- * Login capability — orthogonal to MusicProvider, implemented only by providers
- * that can authenticate a user (gated by the "auth" capability). The provider
+ * Login port — orthogonal to catalog playback, implemented only by sources
+ * that can authenticate a user. The provider
  * owns its credential lifecycle (it persists the session to the injected
  * CredentialStore on success and attaches it to requests).
  */
-export interface AuthProvider {
+export interface IdentityGateway {
   /** Start a login; the returned flow tells the UI how to drive it (QR / redirect). */
   beginLogin(): Promise<LoginFlow>;
   /** The currently authenticated account (requires a stored session). */
-  account(): Promise<Account>;
+  account(): Promise<AccountSnapshot | undefined>;
   /** Drop the session (server + local). */
   logout(): Promise<void>;
 }
 
-export function isAuthProvider(provider: MusicProvider): provider is MusicProvider & AuthProvider {
-  return provider.supports("auth") && hasMethods(provider, ["beginLogin", "account", "logout"]);
+export type ActiveIdentitySource = Readonly<{
+  providerId: ProviderId;
+  diagnosticName: string;
+  identity: IdentityGateway | null;
+}>;
+
+export interface IdentitySourcePort {
+  active(): ActiveIdentitySource;
 }

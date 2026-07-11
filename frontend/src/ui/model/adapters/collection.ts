@@ -1,15 +1,12 @@
-import { Album } from "@domain/model/album";
-import type { Album as DomainAlbum } from "@domain/model/album";
-import { Playlist } from "@domain/model/playlist";
-import type { Playlist as DomainPlaylist } from "@domain/model/playlist";
+import { Album, Playlist, type AlbumSnapshot, type PlaylistSnapshot } from "@contexts/catalog";
 
 import { seedOf, type VibeCollection } from "@/model/vibe";
 import { toVibeTracks } from "@/model/adapters/track";
 
-export function toVibePlaylist(playlist: Partial<DomainPlaylist>): VibeCollection {
+export function toVibePlaylist(playlist: PlaylistSnapshot): VibeCollection {
   return {
-    id: String(playlist.id ?? ""),
-    name: playlist.name ?? "",
+    id: playlist.id,
+    name: playlist.name,
     kind: "Playlist",
     owner: Playlist.ownerName(playlist) ?? "Sonance",
     coverSeed: seedOf(playlist.id),
@@ -22,14 +19,14 @@ export function toVibePlaylist(playlist: Partial<DomainPlaylist>): VibeCollectio
   };
 }
 
-export const toVibePlaylists = (playlists?: readonly Partial<DomainPlaylist>[]) =>
+export const toVibePlaylists = (playlists?: readonly PlaylistSnapshot[]) =>
   (playlists ?? []).map((playlist) => toVibePlaylist(playlist));
 
-export function toVibeAlbum(album: Partial<DomainAlbum>): VibeCollection {
+export function toVibeAlbum(album: AlbumSnapshot): VibeCollection {
   const artistName = Album.artistNames(album);
   return {
-    id: String(album.id ?? ""),
-    name: album.name ?? "",
+    id: album.id,
+    name: album.name,
     kind: "Album",
     artist: artistName,
     artistId: Album.primaryArtist(album)?.id,

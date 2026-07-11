@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ProviderId } from "@domain/model/provider-id";
 
 import { toVibePlaylists } from "./collection";
 
@@ -7,6 +8,7 @@ describe("collection projection boundary", () => {
     expect(
       toVibePlaylists([
         {
+          providerId: ProviderId.of("test"),
           id: "p1",
           name: "Daily",
           owner: { id: "u1", displayName: "Alice" },

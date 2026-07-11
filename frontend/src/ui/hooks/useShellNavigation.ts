@@ -19,7 +19,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { MediaService } from "@core";
+import type { MediaService } from "@contexts/catalog";
 import { warnReadFailure } from "@shared/debug";
 
 import { useMorphTransition, type MorphLastTile } from "@/infra/morph";

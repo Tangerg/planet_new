@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { historyScreenModel } from "./history-screen";
 import type { VibeTrack } from "./vibe";
+import { ProviderId } from "@domain/model/provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 const track = (id: string): VibeTrack => ({
+  providerId: TEST_PROVIDER_ID,
   id,
   title: id,
   name: id,

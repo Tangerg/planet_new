@@ -1,12 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { Album } from "./album";
+import { ProviderId } from "./provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 describe("Album", () => {
   test("exposes named artist credits", () => {
     const album = {
       artists: [
-        { id: "empty", name: " " },
-        { id: "artist-1", name: "Album Artist" },
+        { providerId: TEST_PROVIDER_ID, id: "empty", name: " " },
+        { providerId: TEST_PROVIDER_ID, id: "artist-1", name: "Album Artist" },
       ],
     };
 

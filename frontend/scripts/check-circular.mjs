@@ -14,7 +14,6 @@ const ALLOWED = [
   // it flags them. Breaking the cycle would mean weakening the domain model.
   ["domain/model/album.ts", "domain/model/artist.ts", "domain/model/track.ts"],
   ["domain/model/album.ts", "domain/model/track.ts"],
-  ["domain/model/artist.ts", "domain/model/track.ts"],
   ["domain/model/album.ts", "domain/model/artist.ts"], // Artist now lists its Albums; Album lists its Artists
 ];
 

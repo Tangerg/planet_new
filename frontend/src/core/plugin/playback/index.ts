@@ -1,5 +1,6 @@
 import { Plugin, defineCapability } from "../../kernel";
 import type { Track } from "@domain/model/track";
+import type { AudioOutputPort } from "@domain/ports/playback";
 
 export enum PlayState {
   PLAYING = "playing",
@@ -15,7 +16,7 @@ declare module "../../kernel/event" {
 }
 
 /** Audio transport (resume/pause/stop). */
-export const TRANSPORT = defineCapability<Playback>("transport");
+export const TRANSPORT = defineCapability<AudioOutputPort>("transport");
 
 /**
  * Drives the shared <audio> element. Transport commands (resume/pause) arrive as
@@ -24,8 +25,10 @@ export const TRANSPORT = defineCapability<Playback>("transport");
  * element's native `ended` into the `playback:track-ended` choreography event
  * the queue plugin auto-advances on.
  */
-export class Playback extends Plugin {
+export class Playback extends Plugin implements AudioOutputPort {
   public static readonly id = "playback";
+  /** Invalidates a pending audio.play() continuation after pause/stop/dispose. */
+  private playGeneration = 0;
 
   get id(): string {
     return Playback.id;
@@ -44,24 +47,31 @@ export class Playback extends Plugin {
   }
 
   async resume(): Promise<void> {
-    if (!this.context.audioElement.src) {
-      this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+    const context = this.context;
+    const audio = context.audioElement;
+    const generation = ++this.playGeneration;
+    if (!audio.src) {
+      context.hooks.emit("playback:state-changed", PlayState.STOPPED);
       return;
     }
     try {
-      await this.context.audioElement.play();
-      this.context.hooks.emit("playback:state-changed", PlayState.PLAYING);
+      await audio.play();
+      if (generation !== this.playGeneration) return;
+      context.hooks.emit("playback:state-changed", PlayState.PLAYING);
     } catch {
-      this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+      if (generation !== this.playGeneration) return;
+      context.hooks.emit("playback:state-changed", PlayState.STOPPED);
     }
   }
 
   pause(): void {
+    this.playGeneration += 1;
     this.context.audioElement.pause();
     this.context.hooks.emit("playback:state-changed", PlayState.PAUSED);
   }
 
   stop(): void {
+    this.playGeneration += 1;
     this.context.audioElement.pause();
     this.context.audioElement.src = "";
     this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);

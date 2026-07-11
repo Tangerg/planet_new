@@ -62,8 +62,6 @@ export function VirtualGrid({
     if (scrollRef.current) ro.observe(scrollRef.current);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps — gap/minColumnWidth
-    // are read through stable refs; scrollRef is a stable RefObject
   }, [scrollRef]);
 
   // Re-measure when dependent values change (avoids stale columns/scrollMargin
@@ -77,8 +75,7 @@ export function VirtualGrid({
     setScrollMargin(
       el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps — scrollRef is a stable RefObject
-  }, [count, gap, minColumnWidth]);
+  }, [count, gap, minColumnWidth, scrollRef]);
 
   const rowCount = Math.ceil(count / columns);
   const virtualizer = useVirtualizer({

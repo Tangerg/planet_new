@@ -3,9 +3,11 @@
  * provider.toplistDetail(id), which reuses the Playlist shape to return tracks.
  */
 export type Chart = {
+  providerId: ProviderId;
   id: string;
   title: string;
   image: string;
   /** Optional: chart type / period description. */
   period?: string;
 };
+import type { ProviderId } from "./provider-id";

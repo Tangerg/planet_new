@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
+import type { PlaybackAvailabilityPolicy } from "@contexts/playback";
 
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 

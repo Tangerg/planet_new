@@ -8,20 +8,40 @@ export type LikeSyncMergePlan = {
   mergedThisSession: boolean;
 };
 
-export function likesAreAccountBacked(loggedIn: boolean, librarySupported: boolean): boolean {
-  return loggedIn && librarySupported;
+export function likesAreAccountBacked(loggedIn: boolean, likesSupported: boolean): boolean {
+  return loggedIn && likesSupported;
 }
 
 export function likedSetForSource({
+  providerId,
   accountIds,
   localLiked,
   synced,
 }: {
+  providerId: ProviderId;
   accountIds?: readonly string[];
   localLiked: ReadonlySet<string>;
   synced: boolean;
 }): Set<string> {
-  return synced ? new Set(accountIds ?? []) : new Set(localLiked);
+  const liked = new Set<string>();
+  for (const key of localLiked) {
+    if (synced && TrackKey.parse(key).providerId === providerId) continue;
+    liked.add(key);
+  }
+  if (synced) {
+    for (const id of accountIds ?? []) {
+      if (id) liked.add(TrackKey.of(providerId, id));
+    }
+  }
+  return liked;
+}
+
+export function isVibeTrackLiked(
+  liked: ReadonlySet<string>,
+  track: Pick<VibeTrack, "providerId" | "id"> | null | undefined,
+): boolean {
+  const key = vibeTrackKey(track);
+  return key ? liked.has(key) : false;
 }
 
 export function toggleLikedId(ids: readonly string[], id: string): string[] {
@@ -47,10 +67,12 @@ export function toggleLocalLiked(prev: ReadonlySet<string>, id: string): Set<str
 }
 
 export function likeSyncMergePlan({
+  providerId,
   localLiked,
   mergedThisSession,
   synced,
 }: {
+  providerId: ProviderId;
   localLiked: ReadonlySet<string>;
   mergedThisSession: boolean;
   synced: boolean;
@@ -58,7 +80,19 @@ export function likeSyncMergePlan({
   if (!synced) return { idsToSync: [], mergedThisSession: false };
   if (mergedThisSession) return { idsToSync: [], mergedThisSession: true };
   return {
-    idsToSync: [...localLiked],
+    idsToSync: [...localLiked]
+      .map((key) => TrackKey.parse(key))
+      .filter((parts) => parts.providerId === providerId)
+      .map((parts) => parts.localId),
     mergedThisSession: true,
   };
 }
+
+export function withoutLikedSource(
+  liked: ReadonlySet<string>,
+  providerId: ProviderId,
+): Set<string> {
+  return new Set([...liked].filter((key) => TrackKey.parse(key).providerId !== providerId));
+}
+import { TrackKey, type ProviderId } from "@contexts/contracts";
+import { vibeTrackKey, type VibeTrack } from "./vibe";

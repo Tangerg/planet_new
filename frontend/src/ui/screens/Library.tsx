@@ -35,7 +35,7 @@ type LibraryScreenProps = {
   openAlbum: (a: VibeCollection) => void;
   openArtist: (artist: ArtistRef) => void;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   // Controlled by Shell so the active tab/view survives a back-navigation round-trip.
   tab: string;
   view: string;

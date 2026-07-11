@@ -1,10 +1,12 @@
 package backend
 
 import (
+	"context"
+	"sync"
 	"time"
 
-	"changeme/backend/application"
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/application"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 // Library is the Wails-bound adapter over the application service: it converts
@@ -14,6 +16,23 @@ import (
 type Library struct {
 	service *application.Service
 	urls    mediaURLs
+	ctxMu   sync.RWMutex
+	ctx     context.Context
+}
+
+func (l *Library) attach(ctx context.Context) {
+	l.ctxMu.Lock()
+	defer l.ctxMu.Unlock()
+	l.ctx = ctx
+}
+
+func (l *Library) requestContext() context.Context {
+	l.ctxMu.RLock()
+	defer l.ctxMu.RUnlock()
+	if l.ctx == nil {
+		return context.Background()
+	}
+	return l.ctx
 }
 
 func newLibrary(service *application.Service, urls mediaURLs) *Library {
@@ -22,45 +41,64 @@ func newLibrary(service *application.Service, urls mediaURLs) *Library {
 
 // ── scanning ─────────────────────────────────────────────────────────────────
 
-func (l *Library) PickFolder() (string, error) { return l.service.PickFolder() }
+func (l *Library) PickFolder() (string, error) {
+	folder, err := l.service.PickFolder(l.requestContext())
+	return folder, projectError("localLibrary.pickFolder", err)
+}
 
 func (l *Library) PickAndScan() (ScanResult, error) {
 	start := time.Now()
-	report, err := l.service.PickAndScan()
+	report, err := l.service.PickAndScan(l.requestContext())
 	if err != nil {
-		return ScanResult{}, err
+		if application.Classify("", err).Code == application.ErrorCancelled {
+			return ScanResult{Status: ScanCancelled}, nil
+		}
+		return ScanResult{}, projectError("localLibrary.pickAndScan", err)
 	}
 	return scanResult(report, start), nil
 }
 
 func (l *Library) ScanFolder(folder string) (ScanResult, error) {
 	start := time.Now()
-	report, err := l.service.ScanFolder(folder)
+	report, err := l.service.ScanFolder(l.requestContext(), folder)
 	if err != nil {
-		return ScanResult{}, err
+		if application.Classify("", err).Code == application.ErrorCancelled {
+			return ScanResult{Status: ScanCancelled}, nil
+		}
+		return ScanResult{}, projectError("localLibrary.scanFolder", err)
 	}
 	return scanResult(report, start), nil
 }
 
 func scanResult(r application.ScanReport, start time.Time) ScanResult {
+	status := ScanPartial
+	if r.Folder == "" {
+		status = ScanCancelled
+	} else if r.Complete {
+		status = ScanComplete
+	}
 	return ScanResult{
 		Folder:     r.Folder,
 		Scanned:    r.Scanned,
 		Added:      r.Added,
 		Total:      r.Total,
+		Status:     status,
 		DurationMs: time.Since(start).Milliseconds(),
 	}
 }
 
 // ── reads ────────────────────────────────────────────────────────────────────
 
-func (l *Library) TrackCount() (int, error) { return l.service.Count() }
+func (l *Library) TrackCount() (int, error) {
+	count, err := l.service.Count(l.requestContext())
+	return count, projectError("localLibrary.trackCount", err)
+}
 
 func (l *Library) Home() (Home, error) {
 	home := Home{RecentTracks: []Track{}, Albums: []Album{}, Artists: []Artist{}}
-	data, err := l.service.Home()
+	data, err := l.service.Home(l.requestContext())
 	if err != nil {
-		return home, err
+		return home, projectError("localLibrary.home", err)
 	}
 	home.RecentTracks = l.urls.tracks(data.Recent)
 	home.Albums = l.urls.albums(data.Albums)
@@ -69,38 +107,64 @@ func (l *Library) Home() (Home, error) {
 }
 
 func (l *Library) AllTracks() ([]Track, error) {
-	tracks, err := l.service.AllTracks()
-	return l.urls.tracks(tracks), err
+	tracks, err := l.service.AllTracks(l.requestContext())
+	return l.urls.tracks(tracks), projectError("localLibrary.allTracks", err)
 }
 
 func (l *Library) Albums() ([]Album, error) {
-	albums, err := l.service.Albums()
-	return l.urls.albums(albums), err
+	albums, err := l.service.Albums(l.requestContext())
+	return l.urls.albums(albums), projectError("localLibrary.albums", err)
 }
 
 func (l *Library) Artists() ([]Artist, error) {
-	artists, err := l.service.Artists()
-	return l.urls.artists(artists), err
+	artists, err := l.service.Artists(l.requestContext())
+	return l.urls.artists(artists), projectError("localLibrary.artists", err)
 }
 
-func (l *Library) AlbumDetail(id string) (AlbumDetail, error) {
-	detail, err := l.service.AlbumDetail(domain.AlbumID(id))
+func (l *Library) AlbumDetail(id string) (AlbumDetailResult, error) {
+	detail, err := l.service.AlbumDetail(l.requestContext(), domain.AlbumID(id))
 	if err != nil {
-		return AlbumDetail{Tracks: []Track{}}, err
+		return AlbumDetailResult{}, projectError("localLibrary.albumDetail", err)
 	}
-	return AlbumDetail{Album: l.urls.album(detail.Album), Tracks: l.urls.tracks(detail.Tracks)}, nil
+	return albumDetailResult(detail, l.urls), nil
 }
 
-func (l *Library) ArtistDetail(id string) (ArtistDetail, error) {
-	detail, err := l.service.ArtistDetail(domain.ArtistID(id))
-	if err != nil {
-		return ArtistDetail{Albums: []Album{}, Tracks: []Track{}}, err
+func albumDetailResult(detail *application.AlbumDetail, urls mediaURLs) AlbumDetailResult {
+	if detail == nil {
+		return AlbumDetailResult{Status: LookupNotFound, Detail: AlbumDetail{Tracks: []Track{}}}
 	}
-	return ArtistDetail{
-		Artist: l.urls.artist(detail.Artist),
-		Albums: l.urls.albums(detail.Albums),
-		Tracks: l.urls.tracks(detail.Tracks),
-	}, nil
+	return AlbumDetailResult{
+		Status: LookupFound,
+		Detail: AlbumDetail{
+			Album:  urls.album(detail.Album),
+			Tracks: urls.tracks(detail.Tracks),
+		},
+	}
+}
+
+func (l *Library) ArtistDetail(id string) (ArtistDetailResult, error) {
+	detail, err := l.service.ArtistDetail(l.requestContext(), domain.ArtistID(id))
+	if err != nil {
+		return ArtistDetailResult{}, projectError("localLibrary.artistDetail", err)
+	}
+	return artistDetailResult(detail, l.urls), nil
+}
+
+func artistDetailResult(detail *application.ArtistDetail, urls mediaURLs) ArtistDetailResult {
+	if detail == nil {
+		return ArtistDetailResult{
+			Status: LookupNotFound,
+			Detail: ArtistDetail{Albums: []Album{}, Tracks: []Track{}},
+		}
+	}
+	return ArtistDetailResult{
+		Status: LookupFound,
+		Detail: ArtistDetail{
+			Artist: urls.artist(detail.Artist),
+			Albums: urls.albums(detail.Albums),
+			Tracks: urls.tracks(detail.Tracks),
+		},
+	}
 }
 
 func (l *Library) Tracks(ids []string) ([]Track, error) {
@@ -108,15 +172,15 @@ func (l *Library) Tracks(ids []string) ([]Track, error) {
 	for i, id := range ids {
 		tids[i] = domain.TrackID(id)
 	}
-	tracks, err := l.service.Tracks(tids)
-	return l.urls.tracks(tracks), err
+	tracks, err := l.service.Tracks(l.requestContext(), tids)
+	return l.urls.tracks(tracks), projectError("localLibrary.tracks", err)
 }
 
 func (l *Library) Search(query string) (SearchResult, error) {
 	empty := SearchResult{Tracks: []Track{}, Albums: []Album{}, Artists: []Artist{}}
-	result, err := l.service.Search(query)
+	result, err := l.service.Search(l.requestContext(), query)
 	if err != nil {
-		return empty, err
+		return empty, projectError("localLibrary.search", err)
 	}
 	return SearchResult{
 		Tracks:  l.urls.tracks(result.Tracks),
@@ -126,9 +190,10 @@ func (l *Library) Search(query string) (SearchResult, error) {
 }
 
 // StreamURL maps a playback URL to a loopback, CORS-clean URL: our own /media is
-// returned unchanged, a remote provider URL is wrapped in the /stream byte-proxy.
-// The frontend uses it for Web Audio analysis probes; audible playback remains
-// on the provider/native URL unless a future gateway policy explicitly changes.
+// returned unchanged, while a valid public remote URL is wrapped in the
+// authenticated /stream byte-proxy. Invalid/private targets fail closed to "".
+// The frontend uses it only for Web Audio analysis probes; audible playback
+// remains on the provider/native URL.
 func (l *Library) StreamURL(raw string) string {
 	return l.urls.stream(raw)
 }
@@ -136,5 +201,6 @@ func (l *Library) StreamURL(raw string) string {
 // Lyric returns a track's raw sidecar lyric text (LRC), "" when it has none. The
 // frontend parses the LRC into timed lines, so no wire DTO is needed.
 func (l *Library) Lyric(id string) (string, error) {
-	return l.service.Lyric(domain.TrackID(id))
+	lyric, err := l.service.Lyric(l.requestContext(), domain.TrackID(id))
+	return lyric, projectError("localLibrary.lyric", err)
 }

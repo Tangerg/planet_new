@@ -6,7 +6,22 @@
 
 /** The persisted credential a provider attaches to authenticated requests
  *  (an NCM session cookie, an OAuth access token, …). Opaque to the UI. */
-export type AuthSession = { token: string };
+export type AuthSession = Readonly<{ token: string }>;
+
+/** Opaque credential invariant. Storage adapters must parse untrusted persisted
+ * data through this value object instead of casting JSON into a session. */
+export const AuthSession = {
+  of(token: string): AuthSession {
+    if (!token.trim()) throw new Error("Auth session token must not be empty");
+    return { token };
+  },
+
+  parse(value: unknown): AuthSession | null {
+    if (typeof value !== "object" || value === null || !("token" in value)) return null;
+    const token = (value as { token?: unknown }).token;
+    return typeof token === "string" && token.trim() ? { token } : null;
+  },
+};
 
 /** Progress of an in-flight login (QR scan state, or redirect completion). */
 export type LoginStatus =

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, type QueryKey, type UseQueryResult } from "@tanstack/react-query";
+import type { QueryResult } from "@contexts/contracts";
+import { queryDataOr } from "@/model/application-query";
 
 type ProjectedQueryOptions<TQueryData, TView, TQueryKey extends QueryKey> = {
   queryKey: TQueryKey;
@@ -27,4 +29,24 @@ export function useProjectedQuery<TQueryData, TView, TQueryKey extends QueryKey>
   const data = useMemo(() => project(query.data), [project, query.data]);
 
   return { ...query, data };
+}
+
+type ProjectedResultQueryOptions<TQueryData, TView, TQueryKey extends QueryKey> = Omit<
+  ProjectedQueryOptions<TQueryData, TView, TQueryKey>,
+  "queryFn"
+> & {
+  queryFn: () => Promise<QueryResult<TQueryData>>;
+  fallback: TQueryData;
+};
+
+/** React Query adapter for explicit application results. */
+export function useProjectedResultQuery<TQueryData, TView, TQueryKey extends QueryKey>({
+  queryFn,
+  fallback,
+  ...options
+}: ProjectedResultQueryOptions<TQueryData, TView, TQueryKey>) {
+  return useProjectedQuery({
+    ...options,
+    queryFn: async () => queryDataOr(await queryFn(), fallback),
+  });
 }

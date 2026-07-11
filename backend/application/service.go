@@ -7,25 +7,22 @@
 package application
 
 import (
+	"context"
 	"errors"
-	"sync"
 	"time"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
-// ErrUnavailable is returned by every use case when the catalog failed to open
-// (a degraded shell), so the adapter can surface empty results instead of
-// crashing.
-var ErrUnavailable = errors.New("local library unavailable")
-
-// ScanReport summarizes a completed scan (counts only — wall-clock timing is a
-// presentation concern the adapter adds).
+// ScanReport summarizes a persisted scan. Complete is false when readable files
+// were saved but an unobservable subtree prevented authoritative pruning;
+// wall-clock timing remains a presentation concern added by the adapter.
 type ScanReport struct {
-	Folder  string
-	Scanned int
-	Added   int
-	Total   int
+	Folder   string
+	Scanned  int
+	Added    int
+	Total    int
+	Complete bool
 }
 
 // Home is the browse/personalized payload as domain entities.
@@ -47,24 +44,44 @@ type ArtistDetail struct {
 	Tracks []domain.Track
 }
 
+// Clock is the application time port used for persistence ordering. The
+// composition root supplies wall time; tests can supply a fixed instant.
+type Clock interface {
+	Now() time.Time
+}
+
 // Service is the on-device library's use cases. Depends only on ports, so it is
 // framework-free and testable in isolation.
 type Service struct {
-	catalog domain.Catalog
-	scanner domain.Scanner
-	picker  FolderPicker
-	lyrics  domain.LyricReader
-	mu      sync.Mutex // serializes scans (one writer at a time)
+	catalog  domain.Catalog
+	scanner  domain.Scanner
+	picker   FolderPicker
+	lyrics   domain.LyricReader
+	clock    Clock
+	scanGate chan struct{} // serializes scans while allowing waiters to cancel
 }
 
-func NewService(catalog domain.Catalog, scanner domain.Scanner, picker FolderPicker, lyrics domain.LyricReader) *Service {
-	return &Service{catalog: catalog, scanner: scanner, picker: picker, lyrics: lyrics}
+func NewService(catalog domain.Catalog, scanner domain.Scanner, picker FolderPicker, lyrics domain.LyricReader, clock Clock) *Service {
+	return &Service{
+		catalog: catalog, scanner: scanner, picker: picker, lyrics: lyrics, clock: clock,
+		scanGate: make(chan struct{}, 1),
+	}
 }
 
 // available guards a degraded backend (catalog + scanner are wired together, so
 // a nil catalog means the whole infra failed to open).
 func (s *Service) available() error {
-	if s.catalog == nil {
+	if s == nil || s.catalog == nil {
+		return ErrUnavailable
+	}
+	return nil
+}
+
+func (s *Service) scanAvailable() error {
+	if err := s.available(); err != nil {
+		return err
+	}
+	if s.scanner == nil || s.clock == nil || s.scanGate == nil {
 		return ErrUnavailable
 	}
 	return nil
@@ -73,153 +90,172 @@ func (s *Service) available() error {
 // ── scanning ─────────────────────────────────────────────────────────────────
 
 // PickFolder opens the native chooser; "" means the user cancelled.
-func (s *Service) PickFolder() (string, error) {
+func (s *Service) PickFolder(ctx context.Context) (string, error) {
 	if s.picker == nil {
 		return "", errors.New("no folder picker")
 	}
-	return s.picker.Pick()
+	return s.picker.Pick(ctx)
 }
 
 // PickAndScan chains a folder choice + scan. A cancelled dialog returns a zero
 // report (Folder == "") with no error.
-func (s *Service) PickAndScan() (ScanReport, error) {
-	folder, err := s.PickFolder()
+func (s *Service) PickAndScan(ctx context.Context) (ScanReport, error) {
+	folder, err := s.PickFolder(ctx)
 	if err != nil || folder == "" {
 		return ScanReport{}, err
 	}
-	return s.ScanFolder(folder)
+	return s.ScanFolder(ctx, folder)
 }
 
-// ScanFolder indexes every audio file under folder into the catalog.
-func (s *Service) ScanFolder(folder string) (ScanReport, error) {
-	if err := s.available(); err != nil {
+// ScanFolder indexes the observable audio files under folder into the catalog.
+func (s *Service) ScanFolder(ctx context.Context, folder string) (ScanReport, error) {
+	if err := s.scanAvailable(); err != nil {
 		return ScanReport{}, err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	select {
+	case s.scanGate <- struct{}{}:
+		defer func() { <-s.scanGate }()
+	case <-ctx.Done():
+		return ScanReport{}, ctx.Err()
+	}
 
-	metas, seen, err := s.scanner.Scan(folder)
+	snapshot, err := s.scanner.Scan(ctx, folder)
 	if err != nil {
 		return ScanReport{}, err
 	}
-	added, total, err := s.catalog.Save(folder, metas, time.Now().UnixMilli())
+	added, total, err := s.catalog.Save(ctx, folder, snapshot, s.clock.Now().UnixMilli())
 	if err != nil {
 		return ScanReport{}, err
 	}
-	return ScanReport{Folder: folder, Scanned: seen, Added: added, Total: total}, nil
+	return ScanReport{
+		Folder:   folder,
+		Scanned:  snapshot.FilesSeen,
+		Added:    added,
+		Total:    total,
+		Complete: snapshot.AllowsPrune(),
+	}, nil
 }
 
 // ── reads ────────────────────────────────────────────────────────────────────
 
-func (s *Service) Count() (int, error) {
+func (s *Service) Count(ctx context.Context) (int, error) {
 	if err := s.available(); err != nil {
 		return 0, err
 	}
-	return s.catalog.Count()
+	return s.catalog.Count(ctx)
 }
 
-func (s *Service) Home() (Home, error) {
+func (s *Service) Home(ctx context.Context) (Home, error) {
 	if err := s.available(); err != nil {
 		return Home{}, err
 	}
-	recent, err := s.catalog.RecentTracks(24)
+	recent, err := s.catalog.RecentTracks(ctx, 24)
 	if err != nil {
 		return Home{}, err
 	}
-	albums, err := s.catalog.Albums()
+	albums, err := s.catalog.Albums(ctx)
 	if err != nil {
 		return Home{}, err
 	}
-	artists, err := s.catalog.Artists()
+	artists, err := s.catalog.Artists(ctx)
 	if err != nil {
 		return Home{}, err
 	}
 	return Home{Recent: recent, Albums: albums, Artists: artists}, nil
 }
 
-func (s *Service) AllTracks() ([]domain.Track, error) {
+func (s *Service) AllTracks(ctx context.Context) ([]domain.Track, error) {
 	if err := s.available(); err != nil {
 		return nil, err
 	}
-	return s.catalog.AllTracks()
+	return s.catalog.AllTracks(ctx)
 }
 
-func (s *Service) Albums() ([]domain.Album, error) {
+func (s *Service) Albums(ctx context.Context) ([]domain.Album, error) {
 	if err := s.available(); err != nil {
 		return nil, err
 	}
-	return s.catalog.Albums()
+	return s.catalog.Albums(ctx)
 }
 
-func (s *Service) Artists() ([]domain.Artist, error) {
+func (s *Service) Artists(ctx context.Context) ([]domain.Artist, error) {
 	if err := s.available(); err != nil {
 		return nil, err
 	}
-	return s.catalog.Artists()
+	return s.catalog.Artists(ctx)
 }
 
-func (s *Service) AlbumDetail(id domain.AlbumID) (AlbumDetail, error) {
+func (s *Service) AlbumDetail(ctx context.Context, id domain.AlbumID) (*AlbumDetail, error) {
 	if err := s.available(); err != nil {
-		return AlbumDetail{}, err
+		return nil, err
 	}
-	album, err := s.catalog.Album(id)
-	if err != nil || album == nil {
-		return AlbumDetail{}, err
-	}
-	tracks, err := s.catalog.TracksByAlbum(id)
+	album, err := s.catalog.Album(ctx, id)
 	if err != nil {
-		return AlbumDetail{}, err
+		return nil, err
 	}
-	return AlbumDetail{Album: *album, Tracks: tracks}, nil
+	if album == nil {
+		return nil, nil
+	}
+	tracks, err := s.catalog.TracksByAlbum(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &AlbumDetail{Album: *album, Tracks: tracks}, nil
 }
 
-func (s *Service) ArtistDetail(id domain.ArtistID) (ArtistDetail, error) {
-	if err := s.available(); err != nil {
-		return ArtistDetail{}, err
-	}
-	artist, err := s.catalog.Artist(id)
-	if err != nil || artist == nil {
-		return ArtistDetail{}, err
-	}
-	albums, err := s.catalog.AlbumsByArtist(id)
-	if err != nil {
-		return ArtistDetail{}, err
-	}
-	tracks, err := s.catalog.TracksByArtist(id)
-	if err != nil {
-		return ArtistDetail{}, err
-	}
-	return ArtistDetail{Artist: *artist, Albums: albums, Tracks: tracks}, nil
-}
-
-func (s *Service) Tracks(ids []domain.TrackID) ([]domain.Track, error) {
+func (s *Service) ArtistDetail(ctx context.Context, id domain.ArtistID) (*ArtistDetail, error) {
 	if err := s.available(); err != nil {
 		return nil, err
 	}
-	return s.catalog.Tracks(ids)
+	artist, err := s.catalog.Artist(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if artist == nil {
+		return nil, nil
+	}
+	albums, err := s.catalog.AlbumsByArtist(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	tracks, err := s.catalog.TracksByArtist(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &ArtistDetail{Artist: *artist, Albums: albums, Tracks: tracks}, nil
 }
 
-func (s *Service) Search(query string) (domain.SearchResult, error) {
+func (s *Service) Tracks(ctx context.Context, ids []domain.TrackID) ([]domain.Track, error) {
+	if err := s.available(); err != nil {
+		return nil, err
+	}
+	return s.catalog.Tracks(ctx, ids)
+}
+
+func (s *Service) Search(ctx context.Context, query string) (domain.SearchResult, error) {
 	if err := s.available(); err != nil {
 		return domain.EmptySearchResult(), err
 	}
-	return s.catalog.Search(query, 50)
+	return s.catalog.Search(ctx, query, 50)
 }
 
 // Lyric returns the raw sidecar lyric text (LRC) for a track, "" when it has
-// none. Best-effort: an unknown track or an unreadable path degrades to "" (no
-// lyrics shown) rather than an error, matching the library's graceful-degrade
-// posture — the frontend parses the LRC into timed lines.
-func (s *Service) Lyric(id domain.TrackID) (string, error) {
+// none. A missing track is represented by an empty path from the catalog;
+// infrastructure failures and cancellation remain errors so callers do not
+// mistake a failed lookup for a valid "no lyrics" result.
+func (s *Service) Lyric(ctx context.Context, id domain.TrackID) (string, error) {
 	if err := s.available(); err != nil {
 		return "", err
 	}
 	if s.lyrics == nil {
 		return "", nil
 	}
-	path, err := s.catalog.TrackPath(id)
-	if err != nil || path == "" {
+	path, err := s.catalog.TrackPath(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
 		return "", nil
 	}
-	return s.lyrics.Lyric(path)
+	return s.lyrics.Lyric(ctx, path)
 }

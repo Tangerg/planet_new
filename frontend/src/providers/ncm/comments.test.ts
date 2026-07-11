@@ -24,13 +24,13 @@ describe("fetchNcmTrackComments", () => {
     expect(calls[0]).toMatchObject({ path: "comment/music", searchParams: { id: "t1" } });
   });
 
-  test("returns [] when the request fails", async () => {
+  test("propagates request failures to the engagement result boundary", async () => {
     const { http } = fakeKy({
       "comment/music": () => {
         throw new Error("down");
       },
     });
-    expect(await fetchNcmTrackComments(http, "t1")).toEqual([]);
+    await expect(fetchNcmTrackComments(http, "t1")).rejects.toThrow("down");
   });
 });
 

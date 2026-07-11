@@ -4,7 +4,7 @@
 // labels). Keeping them here makes the screens declarative and the logic
 // unit-testable, separate from rendering.
 // ============================================================
-import type { Image } from "@domain/model/image";
+import type { Image } from "@contexts/catalog";
 import type { VibeTrack, VibeCollection } from "./vibe";
 
 // ── CoverFlow items ──────────────────────────────────────────────────

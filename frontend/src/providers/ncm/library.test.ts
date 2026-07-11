@@ -15,13 +15,13 @@ describe("fetchNcmLikedTrackIds", () => {
     expect(await fetchNcmLikedTrackIds(http, "u1")).toEqual(["1", "2", "3"]);
   });
 
-  test("returns [] when the request fails", async () => {
+  test("propagates failures to the engagement result boundary", async () => {
     const { http } = fakeKy({
       likelist: () => {
         throw new Error("down");
       },
     });
-    expect(await fetchNcmLikedTrackIds(http, "u1")).toEqual([]);
+    await expect(fetchNcmLikedTrackIds(http, "u1")).rejects.toThrow("down");
   });
 });
 
@@ -45,6 +45,15 @@ describe("fetchNcmUserPlaylists", () => {
     const playlists = await fetchNcmUserPlaylists(http, "u1");
     expect(playlists).toHaveLength(1);
     expect(playlists[0]).toMatchObject({ id: "1", name: "P", totalTracks: 5, tracks: [] });
+  });
+
+  test("propagates failures to the account-library result boundary", async () => {
+    const { http } = fakeKy({
+      "user/playlist": () => {
+        throw new Error("down");
+      },
+    });
+    await expect(fetchNcmUserPlaylists(http, "u1")).rejects.toThrow("down");
   });
 });
 
@@ -71,6 +80,15 @@ describe("fetchNcmPlayRecord", () => {
     expect(record.map((t) => t.id)).toEqual(["20"]);
     expect(calls.find((c) => c.path === "user/record")?.searchParams.type).toBe(0);
   });
+
+  test("propagates failures to the engagement result boundary", async () => {
+    const { http } = fakeKy({
+      "user/record": () => {
+        throw new Error("down");
+      },
+    });
+    await expect(fetchNcmPlayRecord(http, "u1", "week")).rejects.toThrow("down");
+  });
 });
 
 describe("fetchNcmDailyRecommendations", () => {
@@ -90,12 +108,12 @@ describe("fetchNcmDailyRecommendations", () => {
     expect(daily.map((t) => t.index)).toEqual([1, 2]);
   });
 
-  test("returns [] when the request fails", async () => {
+  test("propagates failures to the account-library result boundary", async () => {
     const { http } = fakeKy({
       "recommend/songs": () => {
         throw new Error("down");
       },
     });
-    expect(await fetchNcmDailyRecommendations(http)).toEqual([]);
+    await expect(fetchNcmDailyRecommendations(http)).rejects.toThrow("down");
   });
 });

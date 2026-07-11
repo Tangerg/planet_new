@@ -42,15 +42,16 @@ describe("local mapper — toTrack", () => {
   it("renames the Go DTO fields onto a domain Track", () => {
     const track = toTrack(mkTrack());
     expect(track).toMatchObject({
+      providerId: "local",
       id: "t1",
       name: "Song",
       durationMs: 210_000,
       trackNumber: 3,
       discNumber: 1,
     });
-    expect(track.artists).toEqual([{ id: "ar1", name: "Artist" }]);
+    expect(track.artists).toEqual([{ providerId: "local", id: "ar1", name: "Artist" }]);
     expect(track.album).toMatchObject({ id: "al1", name: "Album" });
-    expect(track.album?.artists).toEqual([{ id: "ar1", name: "Artist" }]);
+    expect(track.album?.artists).toEqual([{ providerId: "local", id: "ar1", name: "Artist" }]);
     expect(track.album?.images).toEqual([{ url: "http://127.0.0.1:52341/cover/al1" }]);
   });
 
@@ -81,8 +82,13 @@ describe("local mapper — toTrack", () => {
 describe("local mapper — toAlbum", () => {
   it("maps an album and encodes the year as a local-midnight release date", () => {
     const album = toAlbum(mkAlbum());
-    expect(album).toMatchObject({ id: "al1", name: "Album", totalTracks: 12 });
-    expect(album.artists).toEqual([{ id: "ar1", name: "Artist" }]);
+    expect(album).toMatchObject({
+      providerId: "local",
+      id: "al1",
+      name: "Album",
+      totalTracks: 12,
+    });
+    expect(album.artists).toEqual([{ providerId: "local", id: "ar1", name: "Artist" }]);
     expect(album.images).toEqual([{ url: "http://127.0.0.1:52341/cover/al1" }]);
     // Local midnight (no Z) so Album.year()'s Date parse never drifts a year across zones.
     expect(album.releaseDate).toBe("2001-01-01T00:00:00");
@@ -105,6 +111,7 @@ describe("local mapper — toArtist", () => {
       coverUrl: "http://127.0.0.1:52341/artist/ar1",
     } as LocalArtist);
     expect(artist).toEqual({
+      providerId: "local",
       id: "ar1",
       name: "Artist",
       images: [{ url: "http://127.0.0.1:52341/artist/ar1" }],

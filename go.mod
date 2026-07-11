@@ -1,4 +1,4 @@
-module changeme
+module github.com/Tangerg/planet_new
 
 go 1.25.0
 

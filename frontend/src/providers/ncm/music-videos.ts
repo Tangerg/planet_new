@@ -1,6 +1,6 @@
 import type { KyInstance } from "ky";
 
-import type { MusicVideo } from "@domain/model/music-video";
+import type { MusicVideoDetailSnapshot, MusicVideoSummary } from "@domain/model/music-video";
 import { httpsUrl } from "@shared/url";
 import { warnReadFailure } from "@shared/debug";
 
@@ -15,7 +15,7 @@ import type {
 export async function fetchNcmMusicVideoDetail(
   http: KyInstance,
   id: string,
-): Promise<MusicVideo | undefined> {
+): Promise<MusicVideoDetailSnapshot | undefined> {
   const [detail, url, counts] = await Promise.all([
     http.get("mv/detail", { searchParams: { mvid: id } }).json<NcmMusicVideoDetailResponse>(),
     http
@@ -46,7 +46,7 @@ export async function fetchNcmMusicVideoDetail(
 export async function fetchNcmArtistMusicVideos(
   http: KyInstance,
   artistId: string,
-): Promise<Partial<MusicVideo>[]> {
+): Promise<MusicVideoSummary[]> {
   const res = await http
     .get("artist/mv", { searchParams: { id: artistId, limit: 50, offset: 0 } })
     .json<NcmArtistMusicVideosResponse>();

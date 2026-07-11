@@ -5,21 +5,17 @@ import { artBg } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { Icon } from "@/infra/icons";
 import type { XmbItemModel } from "@/model/navigation";
+import { xmbItemVisualState } from "@/model/xmb-item";
 
 import { XMB_EASE } from "./geometry";
 
 export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: number }) {
-  // one vertical column: passed items rise above the bar, upcoming sink below
-  const ad = Math.abs(o),
-    above = o < 0;
-  const op = active ? 1 : Math.max(0.14, (above ? 0.4 : 0.54) - 0.13 * ad);
-  const iconSz = active ? 52 : 30;
+  const visual = xmbItemVisualState(active, o);
   // Rack-focus depth, but only on the immediate ±1 neighbours (further rows are
   // already faded near-invisible by `op`, so blurring them buys nothing). A FIXED
   // radius with NO filter transition — on its own compositing layer — is the whole
   // point: tweening blur re-runs the convolution every frame (the XMB-scroll jank),
   // whereas snapping it once per move and caching the layer keeps the look cheap.
-  const nearBlur = !active && ad === 1;
   // Breathing glow on the active art — same accent-var box-shadow trick as
   // XmbCategory (template a 0→1→0 value so only the numbers tween).
   const glow = useMotionValue(0);
@@ -41,9 +37,9 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
     <div
       className="relative flex items-center"
       style={{
-        gap: active ? 22 : 18,
-        opacity: op,
-        ...(nearBlur ? { filter: "blur(1.1px)", willChange: "filter" } : null),
+        gap: visual.gap,
+        opacity: visual.opacity,
+        ...(visual.nearBlur ? { filter: "blur(1.1px)", willChange: "filter" } : null),
         transition: `opacity .38s ${XMB_EASE}`,
       }}
     >
@@ -52,11 +48,11 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
           data-art="1"
           data-xmb-active-art={active ? "1" : undefined}
           style={{
-            width: iconSz,
-            height: iconSz,
-            borderRadius: active ? 12 : 8,
+            width: visual.iconSize,
+            height: visual.iconSize,
+            borderRadius: visual.iconRadius,
             background: artBg(item.seed, item.grad),
-            boxShadow: active ? artShadow : "0 4px 12px rgba(0,0,0,.4)",
+            boxShadow: visual.iconShadow === "active" ? artShadow : "0 4px 12px rgba(0,0,0,.4)",
             display: "grid",
             placeItems: "center",
             color: "#fff",
@@ -85,11 +81,11 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
       <div className="relative z-[1] min-w-0">
         <div
           style={{
-            fontSize: active ? 27 : 18,
+            fontSize: visual.titleFontSize,
             fontWeight: 300,
-            letterSpacing: active ? ".02em" : ".005em",
+            letterSpacing: visual.titleLetterSpacing,
             lineHeight: 1.1,
-            color: active ? "#fff" : "rgba(255,255,255,.8)",
+            color: visual.titleColor,
             // Only these four differ between active/inactive; enumerated (not
             // `all`) so the browser doesn't diff every property each frame.
             transition: `font-size .38s ${XMB_EASE}, letter-spacing .38s ${XMB_EASE}, color .38s ${XMB_EASE}, max-width .38s ${XMB_EASE}`,
@@ -100,7 +96,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             // give it a far larger cap: at 27px a shared 340px cap truncated it
             // EARLIER than the 18px candidates, hiding text on selection. Widen
             // it so selecting reveals more of the title, never less.
-            maxWidth: active ? 600 : 340,
+            maxWidth: visual.titleMaxWidth,
           }}
         >
           {item.label}

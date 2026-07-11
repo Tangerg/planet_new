@@ -1,30 +1,32 @@
+import type { ProviderId } from "@contexts/contracts";
+
 type DetailQueryKind = "Album" | "Chart" | "Playlist";
 
 export const queryKeys = {
   accountRoot: () => ["account"] as const,
-  account: (providerName: string) => ["account", providerName] as const,
+  account: (providerId: ProviderId) => ["account", providerId] as const,
 
-  likedIds: (providerName: string) => ["likedIds", providerName] as const,
+  likedIds: (providerId: ProviderId) => ["likedIds", providerId] as const,
 
-  personalized: (providerName: string) => ["personalized", providerName] as const,
-  comments: (providerName: string, trackId: string | undefined) =>
-    ["comments", providerName, trackId] as const,
+  personalized: (providerId: ProviderId) => ["personalized", providerId] as const,
+  comments: (providerId: ProviderId, trackId: string | undefined) =>
+    ["comments", providerId, trackId] as const,
 
-  userPlaylists: (providerName: string) => ["userPlaylists", providerName] as const,
-  playRecord: (providerName: string, period: "week" | "all") =>
-    ["playRecord", providerName, period] as const,
-  dailyRecommendations: (providerName: string) => ["dailyRecommendations", providerName] as const,
+  userPlaylists: (providerId: ProviderId) => ["userPlaylists", providerId] as const,
+  playRecord: (providerId: ProviderId, period: "week" | "all") =>
+    ["playRecord", providerId, period] as const,
+  dailyRecommendations: (providerId: ProviderId) => ["dailyRecommendations", providerId] as const,
 
-  toplists: (providerName: string) => ["toplists", providerName] as const,
-  detail: (providerName: string, kind: DetailQueryKind, id: string) =>
-    ["detail", kind, providerName, id] as const,
-  artist: (providerName: string, id: string) => ["artist", providerName, id] as const,
+  toplists: (providerId: ProviderId) => ["toplists", providerId] as const,
+  detail: (providerId: ProviderId, kind: DetailQueryKind, id: string) =>
+    ["detail", kind, providerId, id] as const,
+  artist: (providerId: ProviderId, id: string) => ["artist", providerId, id] as const,
 
-  musicVideo: (providerName: string, id: string) => ["musicVideo", providerName, id] as const,
-  musicVideoDiscovery: (providerName: string, artistIds: readonly string[]) =>
-    ["musicVideos", "artistDiscovery", providerName, [...artistIds]] as const,
-  artistMusicVideos: (providerName: string, artistId: string | undefined) =>
-    ["artistMusicVideos", providerName, artistId] as const,
-  musicVideoComments: (providerName: string, musicVideoId: string | undefined) =>
-    ["musicVideoComments", providerName, musicVideoId] as const,
+  musicVideo: (providerId: ProviderId, id: string) => ["musicVideo", providerId, id] as const,
+  musicVideoDiscovery: (providerId: ProviderId, artistIds: readonly string[]) =>
+    ["musicVideos", "artistDiscovery", providerId, [...artistIds]] as const,
+  artistMusicVideos: (providerId: ProviderId, artistId: string | undefined) =>
+    ["artistMusicVideos", providerId, artistId] as const,
+  musicVideoComments: (providerId: ProviderId, musicVideoId: string | undefined) =>
+    ["musicVideoComments", providerId, musicVideoId] as const,
 };

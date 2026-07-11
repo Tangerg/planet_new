@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MusicProvider, ProviderCapability } from "@domain";
+import { ProviderId, type PlaybackResolver } from "@domain";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 
 import type { Planet } from "../kernel";
@@ -16,7 +16,10 @@ function defer<T>(): Deferred<T> {
   return { promise, resolve };
 }
 
-const track = (id: string): Track => ({
+const TEST_PROVIDER_ID = ProviderId.of("test");
+
+const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
+  providerId,
   id,
   playbackId: id,
   name: id,
@@ -26,7 +29,10 @@ const track = (id: string): Track => ({
 
 /** Minimal harness: a fake queue capability + a provider stub. play() only ever
  *  touches PLAY_QUEUE and the provider, so nothing else needs resolving. */
-function makeService(provider: Partial<MusicProvider>) {
+function makeService(
+  resolver: Partial<PlaybackResolver>,
+  additionalResolvers: Partial<PlaybackResolver>[] = [],
+) {
   const playNow = vi.fn<(tracks: readonly Track[], start?: Track) => void>();
   const setShuffle = vi.fn<(enabled: boolean) => void>();
   const addNext = vi.fn<(track: Track) => void>();
@@ -36,23 +42,35 @@ function makeService(provider: Partial<MusicProvider>) {
     resolve: (cap: unknown) => (cap === PLAY_QUEUE ? queue : null),
   } as unknown as Planet;
 
-  const capabilities = (provider.capabilities ??
-    new Set<ProviderCapability>(["fullPlayback"])) as ReadonlySet<ProviderCapability>;
-  const full = {
-    name: "fake",
-    capabilities,
-    supports: (cap: ProviderCapability) => capabilities.has(cap),
-    playUrls: async (): Promise<TrackPlayUrl[]> => [],
-    ...provider,
-  } as unknown as MusicProvider;
+  const complete = (partial: Partial<PlaybackResolver>, index: number): PlaybackResolver => {
+    return {
+      providerId: index === 0 ? TEST_PROVIDER_ID : ProviderId.of(`source-${index}`),
+      diagnosticName: `fake-${index}`,
+      policy: { canResolveFullPlayback: true, canUsePreviewPlayback: false },
+      resolve: async (): Promise<TrackPlayUrl[]> => [],
+      ...partial,
+    };
+  };
+  const active = complete(resolver, 0);
+  const resolvers = [active, ...additionalResolvers.map(complete)];
 
-  return { service: new PlaybackService(planet, () => full), playNow, setShuffle, addNext, clear };
+  return {
+    service: new PlaybackService(planet, {
+      active: () => active,
+      get: (providerId) =>
+        resolvers.find((candidate) => candidate.providerId === providerId) ?? null,
+    }),
+    playNow,
+    setShuffle,
+    addNext,
+    clear,
+  };
 }
 
 describe("PlaybackService.play", () => {
-  it("exposes the active provider's playback policy from its capabilities", () => {
+  it("exposes the active resolver's playback policy", () => {
     const { service } = makeService({
-      capabilities: new Set<string>(["previewPlayback"]) as MusicProvider["capabilities"],
+      policy: { canResolveFullPlayback: false, canUsePreviewPlayback: true },
     });
     expect(service.playbackPolicy()).toEqual({
       canResolveFullPlayback: false,
@@ -63,7 +81,7 @@ describe("PlaybackService.play", () => {
   it("still switches track when play-URL resolution fails (resilient fallback)", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { service, playNow } = makeService({
-      playUrls: async () => {
+      resolve: async () => {
         throw new Error("resolve failed");
       },
     });
@@ -82,7 +100,7 @@ describe("PlaybackService.play", () => {
     const deferreds = [defer<TrackPlayUrl[]>(), defer<TrackPlayUrl[]>()];
     let call = 0;
     const { service, playNow } = makeService({
-      playUrls: () => deferreds[call++].promise,
+      resolve: () => deferreds[call++].promise,
     });
 
     const older = service.play([track("a")], track("a"));
@@ -100,10 +118,34 @@ describe("PlaybackService.play", () => {
     expect(playNow).toHaveBeenCalledTimes(1);
   });
 
+  it("drops a stale resolution across a rapid provider switch", async () => {
+    const activePending = defer<TrackPlayUrl[]>();
+    const otherPending = defer<TrackPlayUrl[]>();
+    const otherId = ProviderId.of("other");
+    const { service, playNow } = makeService({ resolve: () => activePending.promise }, [
+      { providerId: otherId, resolve: () => otherPending.promise },
+    ]);
+
+    const oldPlay = service.play([track("same")], track("same"));
+    const newPlay = service.play([track("same", otherId)], track("same", otherId));
+
+    otherPending.resolve([{ playbackId: "same", playUrl: "other://same" }]);
+    await newPlay;
+    expect(playNow).toHaveBeenCalledTimes(1);
+    expect(playNow.mock.calls[0][1]).toMatchObject({
+      providerId: otherId,
+      playUrl: "other://same",
+    });
+
+    activePending.resolve([{ playbackId: "same", playUrl: "test://stale" }]);
+    await oldPlay;
+    expect(playNow).toHaveBeenCalledTimes(1);
+  });
+
   it("does not revive a cleared queue when an older play() resolves late", async () => {
     const pending = defer<TrackPlayUrl[]>();
     const { service, playNow, clear } = makeService({
-      playUrls: () => pending.promise,
+      resolve: () => pending.promise,
     });
 
     const playing = service.play([track("a")], track("a"));
@@ -115,6 +157,49 @@ describe("PlaybackService.play", () => {
     await playing;
 
     expect(playNow).not.toHaveBeenCalled();
+  });
+
+  it("resolves an old queue item through its own provider after the active source changed", async () => {
+    const activeResolve = vi.fn<PlaybackResolver["resolve"]>(async () => []);
+    const oldSourceId = ProviderId.of("old-source");
+    const oldResolve = vi.fn<PlaybackResolver["resolve"]>(async (ids) =>
+      ids.map((playbackId) => ({ playbackId, playUrl: `old://${playbackId}` })),
+    );
+    const { service, playNow } = makeService({ resolve: activeResolve }, [
+      { providerId: oldSourceId, diagnosticName: "old", resolve: oldResolve },
+    ]);
+    const queued = track("song", oldSourceId);
+
+    await service.play([queued], queued);
+
+    expect(activeResolve).not.toHaveBeenCalled();
+    expect(oldResolve).toHaveBeenCalledWith(["song"]);
+    expect(playNow.mock.calls[0][0][0].playUrl).toBe("old://song");
+  });
+
+  it("keeps identical playback ids isolated between providers in a mixed queue", async () => {
+    const otherId = ProviderId.of("other");
+    const { service, playNow } = makeService(
+      {
+        resolve: async () => [{ playbackId: "same", playUrl: "test://same" }],
+      },
+      [
+        {
+          providerId: otherId,
+          resolve: async () => [{ playbackId: "same", playUrl: "other://same" }],
+        },
+      ],
+    );
+    const active = track("same", TEST_PROVIDER_ID);
+    const other = track("same", otherId);
+
+    await service.play([active, other], other);
+
+    expect(playNow.mock.calls[0][0].map((item) => item.playUrl)).toEqual([
+      "test://same",
+      "other://same",
+    ]);
+    expect(playNow.mock.calls[0][1]?.providerId).toBe(otherId);
   });
 
   it("shufflePlay turns shuffle on before starting; an empty list is a no-op", async () => {

@@ -8,7 +8,7 @@
 import React from "react";
 import { motion, useReducedMotion } from "motion/react";
 
-import { pickImageUrl, type Image } from "@domain/model/image";
+import { pickImageUrl, type Image } from "@contexts/catalog";
 import "./primitives.css";
 
 /* animated equalizer mark (top-right tool in references) */

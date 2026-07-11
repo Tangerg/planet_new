@@ -99,7 +99,7 @@ export default function Shell() {
   } = useShellLibraryData();
 
   /* ---- likes / settings / history ---- */
-  const { liked, toggleLike, isLiked, settings, setSettings } = useLikes(playback.current?.id);
+  const { liked, toggleLike, isLiked, settings, setSettings } = useLikes(playback.current);
   const history = usePlayHistory(playback.current);
   const settingsNowPlayingMode: NowPlayingMode = settings.npMode === "LYRICS" ? "lyrics" : "cover";
   /* ---- navigation + shared-element transition machine (extracted hook) ----
@@ -197,7 +197,7 @@ export default function Shell() {
     playPrev,
     volume: playback.volume,
     setVolume: playback.setVolume,
-    currentId: playback.current?.id,
+    currentTrack: playback.current,
     hasCurrentTrack: !!playback.current,
     toggleLike,
   });
@@ -339,7 +339,7 @@ export default function Shell() {
                 playing={playing}
                 onTogglePlay={onTogglePlay}
                 liked={isLiked}
-                toggleLike={() => current && toggleLike(current.id)}
+                toggleLike={() => current && toggleLike(current)}
                 accent={accent}
                 shuffle={shuffle}
                 onToggleShuffle={onToggleShuffle}

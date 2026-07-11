@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { PlaybackIntent } from "./playback-intent";
 import type { Track } from "./track";
+import { ProviderId } from "./provider-id";
 
-const track = (id: string, playbackId = id): Track => ({
+const TEST_PROVIDER_ID = ProviderId.of("test");
+const OTHER_PROVIDER_ID = ProviderId.of("other");
+
+const track = (id: string, playbackId = id, providerId = TEST_PROVIDER_ID): Track => ({
+  providerId,
   id,
   playbackId,
   name: id,
@@ -40,11 +45,12 @@ describe("PlaybackIntent", () => {
       ready,
     );
 
-    expect(intent.playbackIdsToResolve({ canResolveFullPlayback: true })).toEqual([
-      "missing",
-      "preview",
-    ]);
-    expect(intent.playbackIdsToResolve({ canResolveFullPlayback: false })).toEqual([]);
+    expect(intent.playbackIdsToResolve(TEST_PROVIDER_ID, { canResolveFullPlayback: true })).toEqual(
+      ["missing", "preview"],
+    );
+    expect(
+      intent.playbackIdsToResolve(TEST_PROVIDER_ID, { canResolveFullPlayback: false }),
+    ).toEqual([]);
   });
 
   it("resolves play URLs without mutating the source tracks", () => {
@@ -53,7 +59,10 @@ describe("PlaybackIntent", () => {
     const intent = PlaybackIntent.from([t1, t2], t2);
 
     const resolved = intent.withResolvedUrls([
-      { playbackId: "2", playUrl: "https://cdn.example/2.mp3" },
+      {
+        providerId: TEST_PROVIDER_ID,
+        urls: [{ playbackId: "2", playUrl: "https://cdn.example/2.mp3" }],
+      },
     ]);
 
     expect(t2.playUrl).toBeUndefined();
@@ -65,5 +74,23 @@ describe("PlaybackIntent", () => {
     const intent = PlaybackIntent.from([track("1"), track("2")], track("missing"));
 
     expect(intent.withResolvedUrls([]).current.id).toBe("1");
+  });
+
+  it("matches current and resolved URLs by source-qualified identity", () => {
+    const test = track("same", "same", TEST_PROVIDER_ID);
+    const other = track("same", "same", OTHER_PROVIDER_ID);
+    const resolved = PlaybackIntent.from([test, other], other).withResolvedUrls([
+      {
+        providerId: TEST_PROVIDER_ID,
+        urls: [{ playbackId: "same", playUrl: "test://same" }],
+      },
+      {
+        providerId: OTHER_PROVIDER_ID,
+        urls: [{ playbackId: "same", playUrl: "other://same" }],
+      },
+    ]);
+
+    expect(resolved.current.providerId).toBe(OTHER_PROVIDER_ID);
+    expect(resolved.tracks.map((item) => item.playUrl)).toEqual(["test://same", "other://same"]);
   });
 });

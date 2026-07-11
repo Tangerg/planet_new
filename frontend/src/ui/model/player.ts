@@ -1,4 +1,4 @@
-import { Volume } from "@domain/model/volume";
+import { Volume } from "@contexts/playback";
 
 export type VolumeLevel = "muted" | "low" | "high";
 

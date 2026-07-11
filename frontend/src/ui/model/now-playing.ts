@@ -1,4 +1,4 @@
-import type { Lyric } from "@domain/model/lyric";
+import type { Lyric } from "@contexts/playback";
 import type { VibeTrack } from "./vibe";
 
 const DEFAULT_NO_LYRICS = "No lyrics for this track.";

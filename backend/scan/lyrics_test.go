@@ -1,6 +1,8 @@
 package scan
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,7 +16,7 @@ func TestSidecarLyricsReadsSiblingLrc(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := SidecarLyrics{}.Lyric(audio)
+	got, err := SidecarLyrics{}.Lyric(context.Background(), audio)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +30,7 @@ func TestSidecarLyricsMatchesUppercaseExtension(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "song.LRC"), []byte("[00:00.00]x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	got, err := SidecarLyrics{}.Lyric(filepath.Join(dir, "song.mp3"))
+	got, err := SidecarLyrics{}.Lyric(context.Background(), filepath.Join(dir, "song.mp3"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,11 +41,21 @@ func TestSidecarLyricsMatchesUppercaseExtension(t *testing.T) {
 
 func TestSidecarLyricsMissingIsEmptyNotError(t *testing.T) {
 	dir := t.TempDir()
-	got, err := SidecarLyrics{}.Lyric(filepath.Join(dir, "song.mp3"))
+	got, err := SidecarLyrics{}.Lyric(context.Background(), filepath.Join(dir, "song.mp3"))
 	if err != nil {
 		t.Errorf("a missing sidecar must not error, got %v", err)
 	}
 	if got != "" {
 		t.Errorf("lyric = %q, want empty for a track with no .lrc", got)
+	}
+}
+
+func TestSidecarLyricsHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := SidecarLyrics{}.Lyric(ctx, filepath.Join(t.TempDir(), "song.mp3"))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Lyric error = %v, want context.Canceled", err)
 	}
 }

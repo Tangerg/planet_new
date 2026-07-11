@@ -10,8 +10,8 @@ import type {
   VibeMusicVideo,
   VibeTrack,
 } from "@/model/vibe";
-import type { Lyric } from "@domain/model/lyric";
-import type { MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import type { Lyric } from "@contexts/playback";
+import type { MusicVideoAvailabilityPolicy } from "@contexts/catalog";
 import type { XmbCat, XmbItemModel } from "@/model/navigation";
 import type { Settings } from "@/model/defaults";
 import { XMB } from "@/screens/XMB";
@@ -32,6 +32,7 @@ import { MusicVideosScreen } from "@/screens/music-videos/MusicVideosScreen";
 import { MusicVideoDetailScreen } from "@/screens/music-videos/MusicVideoDetailScreen";
 import { MusicVideoTheaterScreen } from "@/screens/music-videos/MusicVideoTheaterScreen";
 import type { NowPlayingMode } from "@/model/now-playing";
+import { resolveShellScreen } from "@/model/shell-screen";
 
 // Screen props grouped by bounded context so the router is a screen *assembler*,
 // not a 50-field forwarder. Field names mirror the values each screen consumes;
@@ -88,7 +89,7 @@ type LibraryBundle = {
   setLibraryView: (view: string) => void;
   liked: Set<string>;
   isLiked: boolean;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   history: readonly VibeTrack[];
   playRecord: { week: VibeTrack[]; all: VibeTrack[] };
 };
@@ -187,260 +188,263 @@ export function ShellScreenRouter(props: Props) {
   } = props.musicVideo;
   const { settings, setSettings, accent, setAccent, accentOptions, heroTreatment } = props.settings;
   const mono = heroTreatment === "mono";
+  const route = resolveShellScreen(view, detail, musicVideoObj);
+  if (!route) return null;
 
-  if (view === "xmb") {
-    return (
-      <XMB
-        cats={cats}
-        accent={accent}
-        playing={playing}
-        np={
-          hasCurrentTrack
-            ? { image: current.image, seed: current.coverSeed, grad: current.gradient }
-            : undefined
-        }
-        showWaves={settings.waves}
-        onOpen={startForward}
-        cState={xmbCategory}
-        setCState={setXmbCategory}
-        rowsState={xmbRowByCategory}
-        setRowsState={setXmbRowByCategory}
-      />
-    );
+  switch (route.kind) {
+    case "xmb": {
+      return (
+        <XMB
+          cats={cats}
+          accent={accent}
+          playing={playing}
+          np={
+            hasCurrentTrack
+              ? { image: current.image, seed: current.coverSeed, grad: current.gradient }
+              : undefined
+          }
+          showWaves={settings.waves}
+          onOpen={startForward}
+          cState={xmbCategory}
+          setCState={setXmbCategory}
+          rowsState={xmbRowByCategory}
+          setRowsState={setXmbRowByCategory}
+        />
+      );
+    }
+
+    case "home": {
+      return (
+        <ForYouScreen
+          data={catalog}
+          daily={daily}
+          accent={accent}
+          openPlaylist={openDetail}
+          openAlbum={albumDetail}
+          openArtist={openArtist}
+          openLibrary={openLibrary}
+          onPlay={onPlay}
+        />
+      );
+    }
+
+    case "search": {
+      return (
+        <SearchScreen
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          accent={accent}
+          query={searchQuery}
+          onQuery={setSeedQuery}
+          liked={liked}
+          toggleLike={toggleLike}
+          openArtist={openArtist}
+          openPlaylist={openDetail}
+          openAlbum={albumDetail}
+          search={search}
+        />
+      );
+    }
+
+    case "music-videos": {
+      return (
+        <MusicVideosScreen
+          videos={musicVideos}
+          isLoading={musicVideosLoading}
+          accent={accent}
+          onOpenVideo={openMusicVideo}
+        />
+      );
+    }
+
+    case "mv-detail": {
+      return (
+        <MusicVideoDetailScreen
+          video={route.video}
+          related={musicVideoRail}
+          accent={accent}
+          playbackPolicy={musicVideoPlaybackPolicy}
+          onPlay={(mv) => {
+            onPause();
+            openMusicVideoTheater(mv);
+          }}
+          onOpenVideo={openMusicVideo}
+          onOpenArtist={openArtist}
+        />
+      );
+    }
+
+    case "mv-theater": {
+      return (
+        <MusicVideoTheaterScreen
+          video={route.video}
+          comments={musicVideoComments}
+          accent={accent}
+          playbackPolicy={musicVideoPlaybackPolicy}
+          onClose={goBack}
+        />
+      );
+    }
+
+    case "charts": {
+      return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
+    }
+
+    case "library": {
+      return (
+        <LibraryScreen
+          tab={libraryTab}
+          view={libraryView}
+          onTab={setLibraryTab}
+          onView={setLibraryView}
+          data={libraryData}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          accent={accent}
+          openPlaylist={openDetail}
+          openAlbum={albumDetail}
+          openArtist={openArtist}
+          liked={liked}
+          toggleLike={toggleLike}
+        />
+      );
+    }
+
+    case "detail": {
+      return (
+        <PlaylistDetailScreen
+          playlist={route.detail}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          onOpenArtist={openArtist}
+          onShufflePlay={shufflePlay}
+        />
+      );
+    }
+
+    case "queue": {
+      return (
+        <QueueScreen
+          current={current}
+          queue={queue}
+          onPlay={selectTrack}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          onOpenArtist={openArtist}
+          onRemoveFromQueue={removeFromQueue}
+          onClearQueue={clearQueue}
+        />
+      );
+    }
+
+    case "history": {
+      return (
+        <HistoryScreen
+          session={history}
+          week={playRecord.week}
+          all={playRecord.all}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          onOpenArtist={openArtist}
+        />
+      );
+    }
+
+    case "settings": {
+      return (
+        <SettingsScreen
+          accent={accent}
+          setAccent={setAccent}
+          accentOptions={accentOptions}
+          settings={settings}
+          setSettings={setSettings}
+        />
+      );
+    }
+
+    case "artist": {
+      return (
+        <ArtistScreen
+          artist={artistObj}
+          tracks={artistObj?.tracks ?? []}
+          albums={artistObj?.albums ?? []}
+          similar={artistObj?.similar ?? []}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          mono={mono}
+          onOpenAlbum={albumDetail}
+          onOpenArtist={openArtist}
+        />
+      );
+    }
+
+    case "profile": {
+      return (
+        <ProfileScreen
+          accent={accent}
+          playlists={libraryData.playlists}
+          onOpenPlaylist={openDetail}
+          mono={mono}
+        />
+      );
+    }
+
+    case "comments": {
+      return (
+        <CommentsScreen
+          track={current}
+          comments={comments}
+          accent={accent}
+          liked={isLiked}
+          toggleLike={() => current && toggleLike(current)}
+          mono={mono}
+        />
+      );
+    }
+
+    case "np": {
+      return (
+        <NowPlaying
+          track={current}
+          accent={accent}
+          liked={isLiked}
+          toggleLike={() => current && toggleLike(current)}
+          lyrics={lyrics}
+          comments={comments}
+          mono={mono}
+          queue={queue}
+          onPlay={selectTrack}
+          current={current}
+          onNext={onNext}
+          onPrev={onPrev}
+          onRemoveFromQueue={removeFromQueue}
+          onClearQueue={clearQueue}
+          initialMode={props.settings.nowPlayingInitialMode}
+          onClose={goBack}
+          onOpenStage={openStage}
+          onOpenArtist={openArtist}
+        />
+      );
+    }
+
+    case "stage": {
+      return <Stage track={current} accent={accent} playing={playing} onClose={goBack} />;
+    }
   }
-
-  if (view === "home") {
-    return (
-      <ForYouScreen
-        data={catalog}
-        daily={daily}
-        accent={accent}
-        openPlaylist={openDetail}
-        openAlbum={albumDetail}
-        openArtist={openArtist}
-        openLibrary={openLibrary}
-        onPlay={onPlay}
-      />
-    );
-  }
-
-  if (view === "search") {
-    return (
-      <SearchScreen
-        onPlay={onPlay}
-        current={current}
-        playing={playing}
-        accent={accent}
-        query={searchQuery}
-        onQuery={setSeedQuery}
-        liked={liked}
-        toggleLike={toggleLike}
-        openArtist={openArtist}
-        openPlaylist={openDetail}
-        openAlbum={albumDetail}
-        search={search}
-      />
-    );
-  }
-
-  if (view === "music-videos") {
-    return (
-      <MusicVideosScreen
-        videos={musicVideos}
-        isLoading={musicVideosLoading}
-        accent={accent}
-        onOpenVideo={openMusicVideo}
-      />
-    );
-  }
-
-  if (view === "mv-detail" && musicVideoObj) {
-    return (
-      <MusicVideoDetailScreen
-        video={musicVideoObj}
-        related={musicVideoRail}
-        accent={accent}
-        playbackPolicy={musicVideoPlaybackPolicy}
-        onPlay={(mv) => {
-          onPause();
-          openMusicVideoTheater(mv);
-        }}
-        onOpenVideo={openMusicVideo}
-        onOpenArtist={openArtist}
-      />
-    );
-  }
-
-  if (view === "mv-theater" && musicVideoObj) {
-    return (
-      <MusicVideoTheaterScreen
-        video={musicVideoObj}
-        comments={musicVideoComments}
-        accent={accent}
-        playbackPolicy={musicVideoPlaybackPolicy}
-        onClose={goBack}
-      />
-    );
-  }
-
-  if (view === "charts")
-    return <ChartsScreen data={{ charts: toplists }} onOpenChart={openChart} />;
-
-  if (view === "library") {
-    return (
-      <LibraryScreen
-        tab={libraryTab}
-        view={libraryView}
-        onTab={setLibraryTab}
-        onView={setLibraryView}
-        data={libraryData}
-        onPlay={onPlay}
-        current={current}
-        playing={playing}
-        accent={accent}
-        openPlaylist={openDetail}
-        openAlbum={albumDetail}
-        openArtist={openArtist}
-        liked={liked}
-        toggleLike={toggleLike}
-      />
-    );
-  }
-
-  if (view === "detail" && detail) {
-    return (
-      <PlaylistDetailScreen
-        playlist={detail}
-        onPlay={onPlay}
-        current={current}
-        playing={playing}
-        liked={liked}
-        toggleLike={toggleLike}
-        accent={accent}
-        onOpenArtist={openArtist}
-        onShufflePlay={shufflePlay}
-      />
-    );
-  }
-
-  if (view === "queue") {
-    return (
-      <QueueScreen
-        current={current}
-        queue={queue}
-        onPlay={selectTrack}
-        playing={playing}
-        liked={liked}
-        toggleLike={toggleLike}
-        accent={accent}
-        onOpenArtist={openArtist}
-        onRemoveFromQueue={removeFromQueue}
-        onClearQueue={clearQueue}
-      />
-    );
-  }
-
-  if (view === "history") {
-    return (
-      <HistoryScreen
-        session={history}
-        week={playRecord.week}
-        all={playRecord.all}
-        onPlay={onPlay}
-        current={current}
-        playing={playing}
-        liked={liked}
-        toggleLike={toggleLike}
-        accent={accent}
-        onOpenArtist={openArtist}
-      />
-    );
-  }
-
-  if (view === "settings") {
-    return (
-      <SettingsScreen
-        accent={accent}
-        setAccent={setAccent}
-        accentOptions={accentOptions}
-        settings={settings}
-        setSettings={setSettings}
-      />
-    );
-  }
-
-  if (view === "artist") {
-    return (
-      <ArtistScreen
-        artist={artistObj}
-        tracks={artistObj?.tracks ?? []}
-        albums={artistObj?.albums ?? []}
-        similar={artistObj?.similar ?? []}
-        onPlay={onPlay}
-        current={current}
-        playing={playing}
-        liked={liked}
-        toggleLike={toggleLike}
-        accent={accent}
-        mono={mono}
-        onOpenAlbum={albumDetail}
-        onOpenArtist={openArtist}
-      />
-    );
-  }
-
-  if (view === "profile") {
-    return (
-      <ProfileScreen
-        accent={accent}
-        playlists={libraryData.playlists}
-        onOpenPlaylist={openDetail}
-        mono={mono}
-      />
-    );
-  }
-
-  if (view === "comments") {
-    return (
-      <CommentsScreen
-        track={current}
-        comments={comments}
-        accent={accent}
-        liked={isLiked}
-        toggleLike={() => current && toggleLike(current.id)}
-        mono={mono}
-      />
-    );
-  }
-
-  if (view === "np") {
-    return (
-      <NowPlaying
-        track={current}
-        accent={accent}
-        liked={isLiked}
-        toggleLike={() => current && toggleLike(current.id)}
-        lyrics={lyrics}
-        comments={comments}
-        mono={mono}
-        queue={queue}
-        onPlay={selectTrack}
-        current={current}
-        onNext={onNext}
-        onPrev={onPrev}
-        onRemoveFromQueue={removeFromQueue}
-        onClearQueue={clearQueue}
-        initialMode={props.settings.nowPlayingInitialMode}
-        onClose={goBack}
-        onOpenStage={openStage}
-        onOpenArtist={openArtist}
-      />
-    );
-  }
-
-  if (view === "stage") {
-    return <Stage track={current} accent={accent} playing={playing} onClose={goBack} />;
-  }
-
-  return null;
 }

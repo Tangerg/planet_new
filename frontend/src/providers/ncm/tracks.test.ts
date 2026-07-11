@@ -82,6 +82,28 @@ describe("fetchNcmTrackDetails", () => {
     expect(result.map((t) => t.id)).toEqual(ids);
     expect(calls).toHaveLength(2);
   });
+
+  test("keeps successful batches but fails when every batch is unavailable", async () => {
+    const ids = Array.from({ length: 150 }, (_, i) => String(i + 1));
+    const { http } = fakeKy({
+      "song/detail": (sp: Record<string, unknown>) => {
+        const batch = String(sp.ids).split(",");
+        if (batch[0] === "1") throw new Error("first batch failed");
+        return { songs: batch.map((id) => ({ id: Number(id), name: `s${id}` })) };
+      },
+    });
+    const partial = await fetchNcmTrackDetails(http, ids);
+    expect(partial.map((track) => track.id)).toEqual(ids.slice(100));
+
+    const { http: failed } = fakeKy({
+      "song/detail": () => {
+        throw new Error("all batches failed");
+      },
+    });
+    await expect(fetchNcmTrackDetails(failed, ["1"])).rejects.toThrow(
+      "NCM track detail batches failed",
+    );
+  });
 });
 
 describe("fetchNcmLyrics", () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Track } from "@domain/model/track";
+import { ProviderId } from "@domain/model/provider-id";
 
 import { EventEmitter } from "../../event";
 import type { PlanetEventMap } from "../../kernel/event";
@@ -9,12 +10,20 @@ import type { PluginContext } from "../../kernel/context";
 import "../playback"; // pulls the "playback:track-ended" event-type augmentation
 import { PLAY_QUEUE, PlayQueue } from "./index";
 
-const track = (id: string): Track => ({ id, name: id, durationMs: 1000, artists: [] });
+const TEST_PROVIDER_ID = ProviderId.of("test");
+
+const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
+  providerId,
+  id,
+  name: id,
+  durationMs: 1000,
+  artists: [],
+});
 
 function mount() {
   const hooks = new EventEmitter<PlanetEventMap>();
   const registry = new CapabilityRegistry();
-  const plugin = new PlayQueue();
+  const plugin = new PlayQueue({ next: () => 0.5 });
   plugin.init({ hooks, registry } as unknown as PluginContext);
   return { plugin, hooks, registry };
 }
@@ -56,6 +65,24 @@ describe("PlayQueue plugin event flow", () => {
     plugin.addNext(b);
 
     expect(queues.at(-1)?.map((t) => t.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("preserves colliding local ids from different providers", () => {
+    const { plugin, hooks } = mount();
+    const queues: (readonly Track[])[] = [];
+    const currents: (Track | undefined)[] = [];
+    hooks.on("queue:changed", (q) => queues.push(q));
+    hooks.on("queue:current-changed", (track) => currents.push(track));
+    const local = track("same");
+    const remote = track("same", ProviderId.of("other"));
+
+    plugin.playNow([local, remote], remote);
+    expect(queues.at(-1)).toEqual([local, remote]);
+    expect(currents.at(-1)).toBe(remote);
+
+    plugin.remove(local);
+    expect(queues.at(-1)).toEqual([remote]);
+    expect(currents.at(-1)).toBe(remote);
   });
 
   it("does not wrap manual next in sequence mode, but does in list-repeat mode", () => {

@@ -59,8 +59,7 @@ export function VirtualList({
     setScrollMargin(
       el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps — scrollRef is a stable RefObject
-  }, [count]);
+  }, [count, scrollRef]);
 
   const virtualizer = useVirtualizer({
     count,

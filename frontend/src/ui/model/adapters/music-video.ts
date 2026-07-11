@@ -1,15 +1,14 @@
-import { MusicVideo } from "@domain/model/music-video";
-import type { MusicVideo as DomainMusicVideo } from "@domain/model/music-video";
+import { MusicVideo, type MusicVideoSnapshot } from "@contexts/catalog";
 
 import { seedOf, type VibeMusicVideo } from "@/model/vibe";
 import { toArtistRefs } from "@/model/adapters/helpers";
 
-export function toVibeMusicVideo(mv: Partial<DomainMusicVideo>): VibeMusicVideo {
+export function toVibeMusicVideo(mv: MusicVideoSnapshot): VibeMusicVideo {
   const credited = MusicVideo.artistCredits(mv);
   return {
-    id: String(mv.id ?? ""),
-    title: mv.name ?? "",
-    name: mv.name ?? "",
+    id: mv.id,
+    title: mv.name,
+    name: mv.name,
     artist: MusicVideo.artistNames(mv),
     artistId: MusicVideo.primaryArtist(mv)?.id,
     artists: toArtistRefs(credited),
@@ -32,5 +31,5 @@ export function toVibeMusicVideo(mv: Partial<DomainMusicVideo>): VibeMusicVideo 
   };
 }
 
-export const toVibeMusicVideos = (videos?: readonly Partial<DomainMusicVideo>[]) =>
+export const toVibeMusicVideos = (videos?: readonly MusicVideoSnapshot[]) =>
   (videos ?? []).map((video) => toVibeMusicVideo(video));

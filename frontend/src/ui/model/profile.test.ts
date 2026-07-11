@@ -30,6 +30,12 @@ const track = (id: string): VibeTrack => ({
   duration: "0:10",
 });
 
+const account = (overrides: Record<string, unknown> = {}) => ({
+  id: "account",
+  name: "Listener",
+  ...overrides,
+});
+
 describe("profile screen model", () => {
   it("derives connection and auth labels from provider support/login state", () => {
     expect(profileConnectionLabel(true, true)).toBe("Connected");
@@ -41,16 +47,16 @@ describe("profile screen model", () => {
   });
 
   it("keeps the anonymous demo stats until a real account is connected", () => {
-    expect(profileFollowerLabel({ followers: 1234 }, false)).toBe("598");
-    expect(profileFollowingLabel({ following: 88 }, false)).toBe("6");
-    expect(profileFollowerLabel({ followers: 1234 }, true)).toBe("1.2K");
-    expect(profileFollowingLabel({ following: 88 }, true)).toBe("88");
+    expect(profileFollowerLabel(account({ followers: 1234 }), false)).toBe("598");
+    expect(profileFollowingLabel(account({ following: 88 }), false)).toBe("6");
+    expect(profileFollowerLabel(account({ followers: 1234 }), true)).toBe("1.2K");
+    expect(profileFollowingLabel(account({ following: 88 }), true)).toBe("88");
   });
 
   it("marks membership only for a connected premium account", () => {
-    expect(profileMembership({ premium: true }, true)).toBe(true);
-    expect(profileMembership({ premium: true }, false)).toBe(false); // anonymous demo
-    expect(profileMembership({ premium: false }, true)).toBe(false);
+    expect(profileMembership(account({ premium: true }), true)).toBe(true);
+    expect(profileMembership(account({ premium: true }), false)).toBe(false); // anonymous demo
+    expect(profileMembership(account({ premium: false }), true)).toBe(false);
     expect(profileMembership(null, true)).toBe(false);
   });
 
@@ -74,7 +80,13 @@ describe("profile screen model", () => {
   it("collects the profile view model", () => {
     expect(
       profileScreenModel({
-        account: { name: "  Monster  ", followers: 17, following: 30, premium: true },
+        account: {
+          id: "account",
+          name: "  Monster  ",
+          followers: 17,
+          following: 30,
+          premium: true,
+        },
         activePlaylistIndex: 0,
         loggedIn: true,
         playlists: [playlist("liked")],

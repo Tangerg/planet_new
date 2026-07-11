@@ -1,4 +1,5 @@
 import type { Track } from "./track";
+import { TrackKey } from "./entity-key";
 import { RepeatMode } from "./repeat";
 import { shuffleArray } from "@shared/array";
 
@@ -11,6 +12,12 @@ export type AdvanceOutcome =
 export type QueueMoveOutcome =
   | "changed" // current moved to another track
   | "unchanged"; // no next/previous track in the active repeat mode
+
+/** Entropy port used by shuffle; infrastructure owns the concrete source. */
+export interface RandomSource {
+  /** A value in the half-open range [0, 1). */
+  next(): number;
+}
 
 /**
  * The play-queue aggregate — the whole ruleset of "what plays next", pure (no
@@ -31,6 +38,8 @@ export class PlayQueue {
   private playOrder: Track[] = [];
   private cursor = -1;
   private shuffled = false;
+
+  constructor(private readonly random: RandomSource) {}
 
   /** Tracks in display order (what the queue UI renders). */
   get tracks(): readonly Track[] {
@@ -58,7 +67,8 @@ export class PlayQueue {
   /** Domain projection used by read models: what should be shown after current. */
   static upNext(tracks: readonly Track[], current: Track | undefined): readonly Track[] {
     if (!current) return tracks;
-    const at = tracks.findIndex((track) => track.id === current.id);
+    const currentKey = PlayQueue.keyOf(current);
+    const at = tracks.findIndex((track) => PlayQueue.keyOf(track) === currentKey);
     return at >= 0 ? tracks.slice(at + 1) : tracks;
   }
 
@@ -69,13 +79,20 @@ export class PlayQueue {
 
   /** Replace the queue and place the cursor at `start` (or the first track). */
   setTracks(tracks: readonly Track[], start?: Track): void {
-    this.displayOrder = [...tracks];
+    const seen = new Set<TrackKey>();
+    this.displayOrder = tracks.filter((track) => {
+      const key = PlayQueue.keyOf(track);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     if (this.displayOrder.length === 0) {
       this.playOrder = [];
       this.cursor = -1;
       return;
     }
-    const anchor = start && this.displayIndexOf(start) >= 0 ? start : this.displayOrder[0];
+    const startAt = start ? this.displayIndexOf(start) : -1;
+    const anchor = startAt >= 0 ? this.displayOrder[startAt] : this.displayOrder[0];
     this.rebuildPlayOrder(anchor);
   }
 
@@ -96,7 +113,7 @@ export class PlayQueue {
   /** Insert or move a track so it becomes the next track after the current one. */
   addNext(track: Track): boolean {
     const current = this.current;
-    if (current?.id === track.id) return false;
+    if (current && PlayQueue.keyOf(current) === PlayQueue.keyOf(track)) return false;
 
     // If it's already queued, pull it out first, keeping the cursor on `current`.
     const at = this.detach(track);
@@ -198,14 +215,17 @@ export class PlayQueue {
   /** Derive playOrder from displayOrder: a shuffle of it when shuffled, else a copy. */
   private rebuildPlayOrder(anchor?: Track): void {
     if (!anchor || this.displayIndexOf(anchor) === -1) {
-      this.playOrder = this.shuffled ? shuffleArray(this.displayOrder) : [...this.displayOrder];
+      this.playOrder = this.shuffled
+        ? shuffleArray(this.displayOrder, () => this.random.next())
+        : [...this.displayOrder];
       this.cursor = this.playOrder.length > 0 ? 0 : -1;
       return;
     }
 
     if (this.shuffled) {
-      const rest = this.displayOrder.filter((track) => track.id !== anchor.id);
-      this.playOrder = [anchor, ...shuffleArray(rest)];
+      const anchorKey = PlayQueue.keyOf(anchor);
+      const rest = this.displayOrder.filter((track) => PlayQueue.keyOf(track) !== anchorKey);
+      this.playOrder = [anchor, ...shuffleArray(rest, () => this.random.next())];
       this.cursor = 0;
       return;
     }
@@ -215,11 +235,13 @@ export class PlayQueue {
   }
 
   private indexOf(track: Track): number {
-    return this.playOrder.findIndex((t) => t.id === track.id);
+    const key = PlayQueue.keyOf(track);
+    return this.playOrder.findIndex((candidate) => PlayQueue.keyOf(candidate) === key);
   }
 
   private displayIndexOf(track: Track): number {
-    return this.displayOrder.findIndex((t) => t.id === track.id);
+    const key = PlayQueue.keyOf(track);
+    return this.displayOrder.findIndex((candidate) => PlayQueue.keyOf(candidate) === key);
   }
 
   /**
@@ -228,9 +250,14 @@ export class PlayQueue {
    * (remove() may stop; addNext() shifts to keep the current track).
    */
   private detach(track: Track): number {
+    const key = PlayQueue.keyOf(track);
     const at = this.indexOf(track);
     if (at !== -1) this.playOrder.splice(at, 1);
-    this.displayOrder = this.displayOrder.filter((t) => t.id !== track.id);
+    this.displayOrder = this.displayOrder.filter((candidate) => PlayQueue.keyOf(candidate) !== key);
     return at;
+  }
+
+  private static keyOf(track: Track): TrackKey {
+    return TrackKey.of(track.providerId, track.id);
   }
 }

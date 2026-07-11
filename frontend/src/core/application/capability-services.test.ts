@@ -1,113 +1,107 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { AuthService } from "./AuthService";
+import { IdentityService } from "./IdentityService";
 import { LibraryService } from "./LibraryService";
 import {
-  Playlist,
-  SearchResult,
+  ProviderId,
   type Account,
   type CredentialStore,
+  type IdentityGateway,
+  type IdentitySourcePort,
   type LoginFlow,
   type LoginStatus,
-  type MusicProvider,
-  type ProviderCapability,
-  type Track,
+  type Playlist,
+  type TrackSnapshot,
+  type UserLibrary,
+  type UserLibrarySourcePort,
 } from "@domain";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 function makeCredentials(): CredentialStore {
   const sessions = new Map<string, { token: string }>();
   return {
-    get(provider) {
-      return sessions.get(provider) ?? null;
-    },
-    set(provider, session) {
-      sessions.set(provider, session);
-    },
-    clear(provider) {
-      sessions.delete(provider);
-    },
+    get: (provider) => sessions.get(provider) ?? null,
+    set: (provider, session) => sessions.set(provider, session),
+    clear: (provider) => sessions.delete(provider),
   };
 }
 
-function makeProvider(
-  capabilities: ProviderCapability[],
-  overrides: Partial<MusicProvider> & Record<string, unknown> = {},
-): MusicProvider {
-  const caps = new Set<ProviderCapability>(capabilities);
-  const provider: MusicProvider = {
-    name: "test",
-    capabilities: caps,
-    supports(cap) {
-      return caps.has(cap);
-    },
-    playlistDetail: async (id) => Playlist.empty(id),
-    lyric: async () => [],
-    albumDetail: async (id) => ({ id, name: "", images: [], artists: [], tracks: [] }),
-    artistDetail: async (id) => ({ id, name: "", images: [] }),
-    trackDetail: async () => undefined,
-    trackDetails: async () => [],
-    musicVideoDetail: async () => undefined,
-    artistMusicVideos: async () => [],
-    musicVideoComments: async () => [],
-    playUrls: async () => [],
-    personalized: async () => ({ playlists: [] }),
-    search: async () => SearchResult.empty(),
-    toplists: async () => [],
-    toplistDetail: async (id) => Playlist.empty(id),
-    comments: async () => [],
+function identitySources(identity: IdentityGateway | null): IdentitySourcePort {
+  return {
+    active: () => ({ providerId: TEST_PROVIDER_ID, diagnosticName: "test", identity }),
   };
-  return Object.assign(provider, overrides);
 }
 
-describe("AuthService capability port", () => {
-  it("does not treat an auth capability string as an auth port by itself", async () => {
-    const service = new AuthService(() => makeProvider(["auth"]), makeCredentials());
+function librarySources(library: UserLibrary | null): UserLibrarySourcePort {
+  return {
+    active: () => ({ providerId: TEST_PROVIDER_ID, diagnosticName: "test", library }),
+  };
+}
+
+describe("IdentityService capability port", () => {
+  it("rejects a source that registered no identity gateway", () => {
+    const service = new IdentityService(identitySources(null), makeCredentials());
 
     expect(service.supported).toBe(false);
-    expect(() => service.beginLogin()).toThrow("does not support auth");
+    expect(() => service.beginLogin()).toThrow("does not support identity");
   });
 
-  it("uses a provider that actually implements the auth port", async () => {
+  it("uses the registered identity gateway", async () => {
     const flow: LoginFlow = {
       kind: "qr",
       image: "data:image/png;base64,qr",
       poll: vi.fn<() => Promise<LoginStatus>>(async () => ({ state: "pending" })),
     };
     const beginLogin = vi.fn<() => Promise<LoginFlow>>(async () => flow);
-    const provider = makeProvider(["auth"], {
+    const identity: IdentityGateway = {
       beginLogin,
       account: vi.fn<() => Promise<Account>>(async () => ({ id: "u1", name: "Ada", avatar: [] })),
       logout: vi.fn<() => Promise<void>>(async () => {}),
-    });
-    const service = new AuthService(() => provider, makeCredentials());
+    };
+    const service = new IdentityService(identitySources(identity), makeCredentials());
 
     await expect(service.beginLogin()).resolves.toBe(flow);
     expect(beginLogin).toHaveBeenCalledTimes(1);
     expect(service.supported).toBe(true);
+    expect(service.providerId).toBe(TEST_PROVIDER_ID);
+  });
+
+  it("clears local identity state even when remote logout fails", async () => {
+    const credentials = makeCredentials();
+    credentials.set(TEST_PROVIDER_ID, { token: "session" });
+    const identity: IdentityGateway = {
+      beginLogin: vi.fn<IdentityGateway["beginLogin"]>(),
+      account: vi.fn<IdentityGateway["account"]>(),
+      logout: vi.fn<IdentityGateway["logout"]>(async () => {
+        throw new Error("offline");
+      }),
+    };
+    const service = new IdentityService(identitySources(identity), credentials);
+
+    await expect(service.logout()).rejects.toThrow("offline");
+    expect(service.isLoggedIn()).toBe(false);
   });
 });
 
 describe("LibraryService capability port", () => {
-  it("does not treat a userLibrary capability string as a library port by itself", async () => {
-    const service = new LibraryService(() => makeProvider(["userLibrary"]));
+  it("rejects a source that registered no user-library port", () => {
+    const service = new LibraryService(librarySources(null));
 
     expect(service.supported).toBe(false);
-    expect(() => service.likedTrackIds()).toThrow("has no user library");
+    expect(() => service.userPlaylists()).toThrow("has no user library");
   });
 
-  it("uses a provider that actually implements the user library port", async () => {
-    const likedTrackIds = vi.fn<() => Promise<string[]>>(async () => ["1", "2"]);
-    const provider = makeProvider(["userLibrary"], {
-      likedTrackIds,
-      setLiked: vi.fn<(trackId: string, liked: boolean) => Promise<void>>(async () => {}),
-      userPlaylists: vi.fn<() => Promise<Playlist[]>>(async () => []),
-      playRecord: vi.fn<(period: "week" | "all") => Promise<Partial<Track>[]>>(async () => []),
-      dailyRecommendations: vi.fn<() => Promise<Partial<Track>[]>>(async () => []),
-    });
-    const service = new LibraryService(() => provider);
+  it("uses the registered user-library port", async () => {
+    const userPlaylists = vi.fn<() => Promise<Playlist[]>>(async () => []);
+    const library: UserLibrary = {
+      userPlaylists,
+      dailyRecommendations: vi.fn<() => Promise<TrackSnapshot[]>>(async () => []),
+    };
+    const service = new LibraryService(librarySources(library));
 
-    await expect(service.likedTrackIds()).resolves.toEqual(["1", "2"]);
-    expect(likedTrackIds).toHaveBeenCalledTimes(1);
+    await expect(service.userPlaylists()).resolves.toEqual([]);
+    expect(userPlaylists).toHaveBeenCalledTimes(1);
     expect(service.supported).toBe(true);
   });
 });

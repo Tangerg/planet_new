@@ -1,8 +1,8 @@
 import type { KyInstance } from "ky";
 
-import type { Album } from "@domain/model/album";
-import type { Artist } from "@domain/model/artist";
-import type { Playlist } from "@domain/model/playlist";
+import type { AlbumDetailSnapshot } from "@domain/model/album";
+import type { ArtistDetailSnapshot } from "@domain/model/artist";
+import type { PlaylistDetailSnapshot } from "@domain/model/playlist";
 
 import {
   coverSet,
@@ -12,6 +12,7 @@ import {
   mapNcmPlaylist,
   mapNcmTrack,
 } from "./mapper";
+import { NCM_PROVIDER_ID } from "./identity";
 import type {
   NcmAlbumDetailResponse,
   NcmArtistAlbumsResponse,
@@ -23,7 +24,10 @@ import type {
 } from "./types";
 import { fetchNcmPlaylistTracks } from "./tracks";
 
-export async function fetchNcmPlaylistDetail(http: KyInstance, id: string): Promise<Playlist> {
+export async function fetchNcmPlaylistDetail(
+  http: KyInstance,
+  id: string,
+): Promise<PlaylistDetailSnapshot> {
   const res = await http
     .get("playlist/detail", {
       searchParams: { id },
@@ -37,7 +41,10 @@ export async function fetchNcmPlaylistDetail(http: KyInstance, id: string): Prom
   });
 }
 
-export async function fetchNcmAlbumDetail(http: KyInstance, id: string): Promise<Album> {
+export async function fetchNcmAlbumDetail(
+  http: KyInstance,
+  id: string,
+): Promise<AlbumDetailSnapshot> {
   const res = await http
     .get("album", {
       searchParams: { id },
@@ -46,12 +53,12 @@ export async function fetchNcmAlbumDetail(http: KyInstance, id: string): Promise
   return mapNcmAlbum(res.album ?? {}, res.songs ?? []);
 }
 
-export async function fetchNcmArtistDetail(http: KyInstance, id: string): Promise<Artist> {
+export async function fetchNcmArtistDetail(
+  http: KyInstance,
+  id: string,
+): Promise<ArtistDetailSnapshot> {
   const [info, desc, albumRes, simiRes] = await Promise.all([
-    http
-      .get("artists", { searchParams: { id } })
-      .json<NcmArtistInfoResponse>()
-      .catch((): NcmArtistInfoResponse => ({ artist: {}, hotSongs: [] })),
+    http.get("artists", { searchParams: { id } }).json<NcmArtistInfoResponse>(),
     http
       .get("artist/desc", { searchParams: { id } })
       .json<NcmArtistDescriptionResponse>()
@@ -74,6 +81,7 @@ export async function fetchNcmArtistDetail(http: KyInstance, id: string): Promis
   const similar = (simiRes.artists ?? []).map(mapNcmFeaturedArtist);
   const description = desc.briefDesc || desc.introduction?.[0]?.txt || "";
   return {
+    providerId: NCM_PROVIDER_ID,
     id: artist.id?.toString() ?? id,
     name: artist.name ?? "",
     images: coverSet(artist.img1v1Url ?? artist.picUrl),

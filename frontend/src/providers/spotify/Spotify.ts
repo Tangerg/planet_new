@@ -2,12 +2,11 @@ import type { KyInstance } from "ky";
 import ky from "ky";
 
 import { Provider } from "../provider";
-import type { ProviderCapability } from "@domain";
-import type { Playlist } from "@domain/model/playlist";
+import type { CatalogPorts, PlaybackAvailabilityPolicy, ProviderId } from "@domain";
+import type { PlaylistDetailSnapshot, PlaylistSnapshot } from "@domain/model/playlist";
 import type { TrackPlayUrl } from "@domain/model/track";
-import type { Artist } from "@domain/model/artist";
-import type { Album } from "@domain/model/album";
-import type { Lyric } from "@domain/model/lyric";
+import type { ArtistDetailSnapshot, ArtistLink, ArtistSnapshot } from "@domain/model/artist";
+import type { AlbumDetailSnapshot, AlbumSnapshot } from "@domain/model/album";
 import type { Personalized } from "@domain/model/personalized";
 import { toImages, toTrack } from "./mapper";
 import type {
@@ -17,6 +16,7 @@ import type {
   SpotifySimplifiedArtist,
   SpotifyTrack,
 } from "./types";
+import { SPOTIFY_PROVIDER_ID, SPOTIFY_PROVIDER_NAME } from "./identity";
 
 /**
  * Spotify Web API provider.
@@ -25,7 +25,7 @@ import type {
  *   - No full playback URL: each track has at most a 30s `preview_url`, and many
  *     are null. Full playback needs Spotify Premium + the Web Playback SDK,
  *     which this provider does not implement.
- *   - No lyrics: the Web API has no lyric endpoint, so `lyric()` returns [].
+ *   - No lyrics: the Web API has no lyric endpoint, so no lyric port is registered.
  *   - Recommendations via Client Credentials: new-releases / search are stitched
  *     into playlists + albums + artists; featured-playlists is unavailable to
  *     apps created after 2024-11, so we do not rely on it.
@@ -40,21 +40,16 @@ export type SpotifyOptions = {
   apiHost?: string;
   /** Market filter, e.g. "US" / "JP" (optional). */
   market?: string;
+  /** Optional concrete clients for deterministic adapter tests. */
+  accounts?: KyInstance;
+  api?: KyInstance;
 };
 
 export class Spotify extends Provider {
-  public static readonly NAME = "Spotify";
-  private static readonly CAPABILITIES: ReadonlySet<ProviderCapability> =
-    new Set<ProviderCapability>([
-      "playlistDetail",
-      "albumDetail",
-      "artistDetail",
-      "personalized",
-      "previewPlayback",
-      // No lyric (Web API has none); no fullPlayback (only a 30s preview_url).
-    ]);
-
-  private readonly opts: Required<Omit<SpotifyOptions, "market">> & Pick<SpotifyOptions, "market">;
+  public static readonly ID = SPOTIFY_PROVIDER_ID;
+  public static readonly NAME = SPOTIFY_PROVIDER_NAME;
+  private readonly opts: Required<Omit<SpotifyOptions, "market" | "accounts" | "api">> &
+    Pick<SpotifyOptions, "market">;
   private readonly accounts: KyInstance;
   private readonly api: KyInstance;
   private accessToken: string | null = null;
@@ -70,27 +65,47 @@ export class Spotify extends Provider {
       apiHost: opts.apiHost ?? "https://api.spotify.com",
       market: opts.market,
     };
-    this.accounts = ky.create({ prefix: this.opts.accountsHost });
-    this.api = ky.create({
-      prefix: `${this.opts.apiHost}/v1`,
-      hooks: {
-        beforeRequest: [
-          async ({ request }) => {
-            const token = await this.ensureToken();
-            request.headers.set("Authorization", `Bearer ${token}`);
-          },
-        ],
-      },
-      retry: { limit: 1, statusCodes: [401] },
-    });
+    this.accounts = opts.accounts ?? ky.create({ prefix: this.opts.accountsHost });
+    this.api =
+      opts.api ??
+      ky.create({
+        prefix: `${this.opts.apiHost}/v1`,
+        hooks: {
+          beforeRequest: [
+            async ({ request }) => {
+              const token = await this.ensureToken();
+              request.headers.set("Authorization", `Bearer ${token}`);
+            },
+          ],
+        },
+        retry: { limit: 1, statusCodes: [401] },
+      });
   }
 
   get name(): string {
     return Spotify.NAME;
   }
 
-  get capabilities(): ReadonlySet<ProviderCapability> {
-    return Spotify.CAPABILITIES;
+  get providerId(): ProviderId {
+    return Spotify.ID;
+  }
+
+  protected get catalogPorts(): CatalogPorts {
+    return {
+      home: this,
+      playlists: this,
+      albums: this,
+      artists: this,
+      tracks: null,
+      search: null,
+      charts: null,
+      musicVideos: null,
+      artistMusicVideos: null,
+    };
+  }
+
+  protected get playbackPolicy(): PlaybackAvailabilityPolicy {
+    return { canResolveFullPlayback: false, canUsePreviewPlayback: true };
   }
 
   private async ensureToken(): Promise<string> {
@@ -127,7 +142,7 @@ export class Spotify extends Provider {
     return this.opts.market ? { ...params, market: this.opts.market } : params;
   }
 
-  async playlistDetail(id: string): Promise<Playlist> {
+  async playlistDetail(id: string): Promise<PlaylistDetailSnapshot | undefined> {
     const res = await this.api.get(`playlists/${id}`, { searchParams: this.withMarket({}) }).json<{
       id: string;
       name: string;
@@ -144,6 +159,7 @@ export class Spotify extends Provider {
     const tracks = items.map((t, i) => toTrack(t, undefined, i + 1));
 
     return {
+      providerId: SPOTIFY_PROVIDER_ID,
       id: res.id,
       name: res.name,
       description: res.description ?? "",
@@ -157,7 +173,7 @@ export class Spotify extends Provider {
     };
   }
 
-  async albumDetail(id: string): Promise<Album> {
+  async albumDetail(id: string): Promise<AlbumDetailSnapshot | undefined> {
     const res = await this.api.get(`albums/${id}`, { searchParams: this.withMarket({}) }).json<{
       id: string;
       name: string;
@@ -176,6 +192,7 @@ export class Spotify extends Provider {
     const tracks = (res.tracks.items ?? []).map((t, i) => toTrack(t, albumStub, i + 1));
 
     return {
+      providerId: SPOTIFY_PROVIDER_ID,
       id: res.id,
       name: res.name,
       alias: [],
@@ -183,11 +200,13 @@ export class Spotify extends Provider {
       totalTracks: res.total_tracks,
       releaseDate: res.release_date,
       tracks,
-      artists: res.artists.map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
+      artists: res.artists.map(
+        (a): ArtistLink => ({ providerId: SPOTIFY_PROVIDER_ID, id: a.id, name: a.name }),
+      ),
     };
   }
 
-  async artistDetail(id: string): Promise<Artist> {
+  async artistDetail(id: string): Promise<ArtistDetailSnapshot | undefined> {
     type ArtistInfo = {
       id: string;
       name: string;
@@ -198,17 +217,7 @@ export class Spotify extends Provider {
     type TopTracksRes = { tracks?: SpotifyTrack[] };
     // /artists/{id} for basics; /artists/{id}/top-tracks for top tracks.
     const [info, top] = await Promise.all([
-      this.api
-        .get(`artists/${id}`)
-        .json<ArtistInfo>()
-        .catch(
-          () =>
-            ({
-              id,
-              name: "",
-              images: [],
-            }) as ArtistInfo,
-        ),
+      this.api.get(`artists/${id}`).json<ArtistInfo>(),
       this.api
         .get(`artists/${id}/top-tracks`, {
           searchParams: this.withMarket({}),
@@ -220,6 +229,7 @@ export class Spotify extends Provider {
     const topTracks = (top.tracks ?? []).slice(0, 10).map((t, i) => toTrack(t, undefined, i + 1));
 
     return {
+      providerId: SPOTIFY_PROVIDER_ID,
       id: info.id,
       name: info.name,
       images: toImages(info.images),
@@ -227,6 +237,8 @@ export class Spotify extends Provider {
       genres: info.genres ?? [],
       followers: info.followers?.total,
       topTracks,
+      albums: [],
+      similar: [],
     };
   }
 
@@ -249,11 +261,6 @@ export class Spotify extends Provider {
       }
     }
     return out;
-  }
-
-  async lyric(_id: string): Promise<Lyric[]> {
-    // Spotify Web API provides no lyrics.
-    return [];
   }
 
   async personalized(): Promise<Personalized> {
@@ -315,17 +322,21 @@ export class Spotify extends Provider {
     ]);
 
     const albums = (newReleases.albums.items ?? []).map(
-      (al): Partial<Album> => ({
+      (al): AlbumSnapshot => ({
+        providerId: SPOTIFY_PROVIDER_ID,
         id: al.id,
         name: al.name,
         images: toImages(al.images),
         totalTracks: al.total_tracks ?? 0,
-        artists: (al.artists ?? []).map((a): Partial<Artist> => ({ id: a.id, name: a.name })),
+        artists: (al.artists ?? []).map(
+          (a): ArtistLink => ({ providerId: SPOTIFY_PROVIDER_ID, id: a.id, name: a.name }),
+        ),
       }),
     );
 
     const playlists = (popularPlaylists.playlists.items ?? []).map(
-      (pl): Partial<Playlist> => ({
+      (pl): PlaylistSnapshot => ({
+        providerId: SPOTIFY_PROVIDER_ID,
         id: pl.id,
         name: pl.name,
         images: toImages(pl.images),
@@ -334,7 +345,8 @@ export class Spotify extends Provider {
     );
 
     const artists = (popularArtists.artists.items ?? []).map(
-      (ar): Partial<Artist> => ({
+      (ar): ArtistSnapshot => ({
+        providerId: SPOTIFY_PROVIDER_ID,
         id: ar.id,
         name: ar.name,
         images: toImages(ar.images),

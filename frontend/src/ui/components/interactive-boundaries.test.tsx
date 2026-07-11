@@ -191,7 +191,7 @@ describe("interactive component boundaries", () => {
   it("keeps track-row artist and like actions separate from playing", () => {
     const onPlay = vi.fn<(track: VibeTrack) => void>();
     const onOpenArtist = vi.fn<(artist: { id: string; name: string }) => void>();
-    const toggleLike = vi.fn<(id: string) => void>();
+    const toggleLike = vi.fn<(track: VibeTrack) => void>();
 
     render(
       <TrackRow
@@ -211,7 +211,7 @@ describe("interactive component boundaries", () => {
     expect(onPlay).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Like" }));
-    expect(toggleLike).toHaveBeenCalledWith("track-1");
+    expect(toggleLike).toHaveBeenCalledWith(expect.objectContaining({ id: "track-1" }));
     expect(onPlay).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Play Song" })[0]);

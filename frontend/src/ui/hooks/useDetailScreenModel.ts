@@ -9,6 +9,7 @@ import {
   firstDetailSelectedTrack,
   nextDetailSelection,
 } from "@/model/detail";
+import { vibeTrackKey } from "@/model/vibe";
 import { useScreenActions } from "@/hooks/screenActions";
 
 /** Hero band height; also the scroll offset that reveals the condensed header. */
@@ -79,7 +80,10 @@ export function useDetailScreenModel(
     if (hasTracks) onShufflePlay(tracks);
   };
   const enqueueSelected = () => {
-    detailSelectedTracks(tracks, sel).forEach((t) => enqueue(t.id));
+    detailSelectedTracks(tracks, sel).forEach((track) => {
+      const key = vibeTrackKey(track);
+      if (key) enqueue(key);
+    });
     clearSel();
   };
   const playSelected = () => {

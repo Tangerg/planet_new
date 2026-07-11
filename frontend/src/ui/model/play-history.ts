@@ -1,4 +1,4 @@
-import type { VibeTrack } from "./vibe";
+import { sameVibeTrack, vibeTrackKey, type VibeTrack } from "./vibe";
 
 export type HistoryGroups = {
   today: VibeTrack[];
@@ -13,8 +13,8 @@ export function appendPlayHistoryTrack(
   track: VibeTrack | undefined,
 ): readonly VibeTrack[] {
   // Return the same reference on a no-op so a setState updater bails the re-render.
-  if (!track?.id) return history;
-  if (history[history.length - 1]?.id === track.id) return history;
+  if (!track || !vibeTrackKey(track)) return history;
+  if (sameVibeTrack(history[history.length - 1], track)) return history;
   return [...history, track];
 }
 
@@ -33,16 +33,18 @@ export function groupPlayHistory(
   for (let i = session.length - 1; i >= 0; i--) {
     const track = session[i];
     if (!track) continue;
-    if (today.length && today[today.length - 1].id === track.id) continue;
+    if (!vibeTrackKey(track)) continue;
+    if (today.length && sameVibeTrack(today[today.length - 1], track)) continue;
     today.push(track);
   }
 
-  const seen = new Set(today.map((track) => track.id));
+  const seen = new Set(today.map(vibeTrackKey).filter((key) => key !== undefined));
   const dedupe = (tracks: readonly VibeTrack[]): VibeTrack[] => {
     const out: VibeTrack[] = [];
     for (const track of tracks) {
-      if (seen.has(track.id)) continue;
-      seen.add(track.id);
+      const key = vibeTrackKey(track);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
       out.push(track);
     }
     return out;

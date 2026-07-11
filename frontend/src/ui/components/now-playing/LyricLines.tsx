@@ -1,6 +1,6 @@
 import React, { useEffect, type RefObject } from "react";
 
-import type { Lyric } from "@domain/model/lyric";
+import type { Lyric } from "@contexts/playback";
 
 type Props = {
   lines: readonly Lyric[];
@@ -8,6 +8,18 @@ type Props = {
   active: number;
   scrollRef: RefObject<HTMLDivElement | null>;
 };
+
+function stopSmoothScroll(container: HTMLDivElement): void {
+  container.scrollTo({ top: container.scrollTop, behavior: "auto" });
+}
+
+export function activeLyricScrollTop(
+  scrollTop: number,
+  line: Pick<DOMRect, "top" | "height">,
+  container: Pick<DOMRect, "top" | "height">,
+): number {
+  return scrollTop + (line.top - container.top) - container.height / 2 + line.height / 2;
+}
 
 /**
  * Timed lyric rendering plus active-line centering. The screen owns layout;
@@ -30,19 +42,11 @@ export const LyricLines = React.memo(function LyricLines({
     if (!el || !container) return;
     const elRect = el.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    const top =
-      container.scrollTop +
-      (elRect.top - containerRect.top) -
-      containerRect.height / 2 +
-      elRect.height / 2;
+    const top = activeLyricScrollTop(container.scrollTop, elRect, containerRect);
     // Interrupt any in-flight smooth scroll before starting a new one.
-    // eslint-disable-next-line no-self-assign
-    container.scrollTop = container.scrollTop;
+    stopSmoothScroll(container);
     container.scrollTo({ top, behavior: "smooth" });
-    return () => {
-      // eslint-disable-next-line no-self-assign
-      container.scrollTop = container.scrollTop;
-    };
+    return () => stopSmoothScroll(container);
   }, [active, scrollRef]);
 
   return (

@@ -1,49 +1,33 @@
-import {
-  isUserLibraryProvider,
-  type MusicProvider,
-  type Playlist,
-  type Track,
-  type UserLibrary,
-} from "@domain";
+import type { Playlist, TrackSnapshot } from "@domain";
+import type { UserLibrarySourcePort } from "@domain/ports/userLibrary";
 
 /**
- * Application service for the logged-in user's own library (liked songs, …).
+ * Application service for browsing the logged-in user's saved library.
+ * Likes and play history belong to EngagementService.
  * Bound to the active provider; callers gate on `supported` + login state
- * (AuthService.isLoggedIn). Never imports React or `@providers`.
+ * (IdentityService.isLoggedIn). Never imports React or `@providers`.
  */
 export class LibraryService {
-  constructor(private readonly getProvider: () => MusicProvider) {}
+  constructor(private readonly sources: UserLibrarySourcePort) {}
 
   /** Whether the active provider exposes account library at all. */
   get supported(): boolean {
-    return isUserLibraryProvider(this.getProvider());
+    return this.sources.active().library !== null;
   }
 
-  private lib(): UserLibrary {
-    const provider = this.getProvider();
-    if (!isUserLibraryProvider(provider)) {
-      throw new Error(`Provider ${provider.name} has no user library.`);
+  private lib() {
+    const source = this.sources.active();
+    if (!source.library) {
+      throw new Error(`Provider ${source.diagnosticName} has no user library.`);
     }
-    return provider;
-  }
-
-  likedTrackIds(): Promise<string[]> {
-    return this.lib().likedTrackIds();
-  }
-
-  setLiked(trackId: string, liked: boolean): Promise<void> {
-    return this.lib().setLiked(trackId, liked);
+    return source.library;
   }
 
   userPlaylists(): Promise<Playlist[]> {
     return this.lib().userPlaylists();
   }
 
-  playRecord(period: "week" | "all"): Promise<Partial<Track>[]> {
-    return this.lib().playRecord(period);
-  }
-
-  dailyRecommendations(): Promise<Partial<Track>[]> {
+  dailyRecommendations(): Promise<TrackSnapshot[]> {
     return this.lib().dailyRecommendations();
   }
 }

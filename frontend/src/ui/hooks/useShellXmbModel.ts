@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { MediaService } from "@core";
+import type { MediaService } from "@contexts/catalog";
 
 import type { ScreenData, VibeTrack } from "@/model/vibe";
 import { buildWorlds, type XmbCat } from "@/model/navigation";
@@ -34,7 +34,7 @@ export function useShellXmbModel({
     const worlds = buildWorlds(
       {
         catalog,
-        supports: (cap) => media.supports(cap),
+        availability: media.availability,
         liked,
         current,
         queueLength,

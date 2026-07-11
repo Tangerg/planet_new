@@ -1,13 +1,12 @@
-import { Artist } from "@domain/model/artist";
-import type { Artist as DomainArtist } from "@domain/model/artist";
+import { Artist, type ArtistSnapshot } from "@contexts/catalog";
 
 import { seedOf, type VibeArtist } from "@/model/vibe";
 import { toVibeAlbum } from "@/model/adapters/collection";
 
-export function toVibeArtist(artist: Partial<DomainArtist>): VibeArtist {
+export function toVibeArtist(artist: ArtistSnapshot): VibeArtist {
   return {
-    id: String(artist.id ?? ""),
-    name: artist.name ?? "",
+    id: artist.id,
+    name: artist.name,
     coverSeed: seedOf(artist.id),
     gradient: undefined,
     image: Artist.coverUrl(artist),

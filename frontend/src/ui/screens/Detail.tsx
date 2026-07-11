@@ -27,7 +27,7 @@ type PlaylistDetailScreenProps = {
   current?: VibeTrack;
   playing: boolean;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
 };

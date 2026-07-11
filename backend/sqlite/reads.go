@@ -1,9 +1,10 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 // ── tracks ───────────────────────────────────────────────────────────────────
@@ -13,8 +14,8 @@ const trackCols = `t.id, t.title, t.album_id, al.name, t.artist_id, t.artist,
 
 const trackFrom = ` FROM tracks t JOIN albums al ON al.id = t.album_id`
 
-func scanTracks(rows *sql.Rows) ([]domain.Track, error) {
-	defer rows.Close()
+func scanTracks(rows *sql.Rows) (_ []domain.Track, err error) {
+	defer closeRows(rows, &err)
 	out := []domain.Track{}
 	for rows.Next() {
 		var (
@@ -40,8 +41,8 @@ func scanTracks(rows *sql.Rows) ([]domain.Track, error) {
 	return out, rows.Err()
 }
 
-func (c *Catalog) AllTracks() ([]domain.Track, error) {
-	rows, err := c.db.Query(`SELECT ` + trackCols + trackFrom +
+func (c *Catalog) AllTracks(ctx context.Context) ([]domain.Track, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` ORDER BY t.artist, al.name, t.disc_no, t.track_no, t.title`)
 	if err != nil {
 		return nil, err
@@ -49,8 +50,8 @@ func (c *Catalog) AllTracks() ([]domain.Track, error) {
 	return scanTracks(rows)
 }
 
-func (c *Catalog) RecentTracks(limit int) ([]domain.Track, error) {
-	rows, err := c.db.Query(`SELECT `+trackCols+trackFrom+
+func (c *Catalog) RecentTracks(ctx context.Context, limit int) ([]domain.Track, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` ORDER BY t.added_at DESC, t.title LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
@@ -58,8 +59,8 @@ func (c *Catalog) RecentTracks(limit int) ([]domain.Track, error) {
 	return scanTracks(rows)
 }
 
-func (c *Catalog) TracksByAlbum(id domain.AlbumID) ([]domain.Track, error) {
-	rows, err := c.db.Query(`SELECT `+trackCols+trackFrom+
+func (c *Catalog) TracksByAlbum(ctx context.Context, id domain.AlbumID) ([]domain.Track, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` WHERE t.album_id = ? ORDER BY t.disc_no, t.track_no, t.title`, id.String())
 	if err != nil {
 		return nil, err
@@ -67,8 +68,8 @@ func (c *Catalog) TracksByAlbum(id domain.AlbumID) ([]domain.Track, error) {
 	return scanTracks(rows)
 }
 
-func (c *Catalog) TracksByArtist(id domain.ArtistID) ([]domain.Track, error) {
-	rows, err := c.db.Query(`SELECT `+trackCols+trackFrom+
+func (c *Catalog) TracksByArtist(ctx context.Context, id domain.ArtistID) ([]domain.Track, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` WHERE t.artist_id = ? ORDER BY al.year DESC, al.name, t.disc_no, t.track_no`, id.String())
 	if err != nil {
 		return nil, err
@@ -76,7 +77,7 @@ func (c *Catalog) TracksByArtist(id domain.ArtistID) ([]domain.Track, error) {
 	return scanTracks(rows)
 }
 
-func (c *Catalog) Tracks(ids []domain.TrackID) ([]domain.Track, error) {
+func (c *Catalog) Tracks(ctx context.Context, ids []domain.TrackID) ([]domain.Track, error) {
 	if len(ids) == 0 {
 		return []domain.Track{}, nil
 	}
@@ -84,7 +85,7 @@ func (c *Catalog) Tracks(ids []domain.TrackID) ([]domain.Track, error) {
 	for i, id := range ids {
 		keys[i] = id.String()
 	}
-	rows, err := c.db.Query(`SELECT `+trackCols+trackFrom+
+	rows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` WHERE t.id IN (`+placeholders(len(keys))+`)`, toArgs(keys)...)
 	if err != nil {
 		return nil, err
@@ -112,8 +113,8 @@ func (c *Catalog) Tracks(ids []domain.TrackID) ([]domain.Track, error) {
 const albumCols = `al.id, al.name, al.artist_id, al.artist, al.year, al.cover_ext, al.added_at,
 	(SELECT COUNT(*) FROM tracks t WHERE t.album_id = al.id) AS track_count`
 
-func scanAlbums(rows *sql.Rows) ([]domain.Album, error) {
-	defer rows.Close()
+func scanAlbums(rows *sql.Rows) (_ []domain.Album, err error) {
+	defer closeRows(rows, &err)
 	out := []domain.Album{}
 	for rows.Next() {
 		var (
@@ -134,8 +135,8 @@ func scanAlbums(rows *sql.Rows) ([]domain.Album, error) {
 	return out, rows.Err()
 }
 
-func (c *Catalog) Albums() ([]domain.Album, error) {
-	rows, err := c.db.Query(`SELECT ` + albumCols + ` FROM albums al ORDER BY al.artist, al.year DESC, al.name`)
+func (c *Catalog) Albums(ctx context.Context) ([]domain.Album, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+albumCols+` FROM albums al ORDER BY al.artist, al.year DESC, al.name`)
 	if err != nil {
 		return nil, err
 	}
@@ -143,16 +144,16 @@ func (c *Catalog) Albums() ([]domain.Album, error) {
 }
 
 // AlbumsByArtist lists an artist's albums, newest first (for artist detail).
-func (c *Catalog) AlbumsByArtist(id domain.ArtistID) ([]domain.Album, error) {
-	rows, err := c.db.Query(`SELECT `+albumCols+` FROM albums al WHERE al.artist_id = ? ORDER BY al.year DESC, al.name`, id.String())
+func (c *Catalog) AlbumsByArtist(ctx context.Context, id domain.ArtistID) ([]domain.Album, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+albumCols+` FROM albums al WHERE al.artist_id = ? ORDER BY al.year DESC, al.name`, id.String())
 	if err != nil {
 		return nil, err
 	}
 	return scanAlbums(rows)
 }
 
-func (c *Catalog) Album(id domain.AlbumID) (*domain.Album, error) {
-	rows, err := c.db.Query(`SELECT `+albumCols+` FROM albums al WHERE al.id = ?`, id.String())
+func (c *Catalog) Album(ctx context.Context, id domain.AlbumID) (*domain.Album, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+albumCols+` FROM albums al WHERE al.id = ?`, id.String())
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +171,8 @@ const artistCols = `ar.id, ar.name,
 	(SELECT COUNT(*) FROM tracks t  WHERE t.artist_id  = ar.id) AS track_count,
 	(SELECT al.id FROM albums al WHERE al.artist_id = ar.id AND al.cover_ext <> '' ORDER BY al.year DESC LIMIT 1) AS cover_album`
 
-func scanArtists(rows *sql.Rows) ([]domain.Artist, error) {
-	defer rows.Close()
+func scanArtists(rows *sql.Rows) (_ []domain.Artist, err error) {
+	defer closeRows(rows, &err)
 	out := []domain.Artist{}
 	for rows.Next() {
 		var (
@@ -191,16 +192,16 @@ func scanArtists(rows *sql.Rows) ([]domain.Artist, error) {
 	return out, rows.Err()
 }
 
-func (c *Catalog) Artists() ([]domain.Artist, error) {
-	rows, err := c.db.Query(`SELECT ` + artistCols + ` FROM artists ar ORDER BY ar.name`)
+func (c *Catalog) Artists(ctx context.Context) ([]domain.Artist, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+artistCols+` FROM artists ar ORDER BY ar.name`)
 	if err != nil {
 		return nil, err
 	}
 	return scanArtists(rows)
 }
 
-func (c *Catalog) Artist(id domain.ArtistID) (*domain.Artist, error) {
-	rows, err := c.db.Query(`SELECT `+artistCols+` FROM artists ar WHERE ar.id = ?`, id.String())
+func (c *Catalog) Artist(ctx context.Context, id domain.ArtistID) (*domain.Artist, error) {
+	rows, err := c.db.QueryContext(ctx, `SELECT `+artistCols+` FROM artists ar WHERE ar.id = ?`, id.String())
 	if err != nil {
 		return nil, err
 	}
@@ -213,11 +214,11 @@ func (c *Catalog) Artist(id domain.ArtistID) (*domain.Artist, error) {
 
 // ── search ───────────────────────────────────────────────────────────────────
 
-func (c *Catalog) Search(query string, limit int) (domain.SearchResult, error) {
+func (c *Catalog) Search(ctx context.Context, query string, limit int) (domain.SearchResult, error) {
 	res := domain.EmptySearchResult()
 	like := "%" + escapeLike(query) + "%"
 
-	trackRows, err := c.db.Query(`SELECT `+trackCols+trackFrom+
+	trackRows, err := c.db.QueryContext(ctx, `SELECT `+trackCols+trackFrom+
 		` WHERE t.title LIKE ? ESCAPE '\' ORDER BY t.title LIMIT ?`, like, limit)
 	if err != nil {
 		return res, err
@@ -226,7 +227,7 @@ func (c *Catalog) Search(query string, limit int) (domain.SearchResult, error) {
 		return res, err
 	}
 
-	albumRows, err := c.db.Query(`SELECT `+albumCols+` FROM albums al WHERE al.name LIKE ? ESCAPE '\' ORDER BY al.name LIMIT ?`, like, limit)
+	albumRows, err := c.db.QueryContext(ctx, `SELECT `+albumCols+` FROM albums al WHERE al.name LIKE ? ESCAPE '\' ORDER BY al.name LIMIT ?`, like, limit)
 	if err != nil {
 		return res, err
 	}
@@ -234,10 +235,16 @@ func (c *Catalog) Search(query string, limit int) (domain.SearchResult, error) {
 		return res, err
 	}
 
-	artistRows, err := c.db.Query(`SELECT `+artistCols+` FROM artists ar WHERE ar.name LIKE ? ESCAPE '\' ORDER BY ar.name LIMIT ?`, like, limit)
+	artistRows, err := c.db.QueryContext(ctx, `SELECT `+artistCols+` FROM artists ar WHERE ar.name LIKE ? ESCAPE '\' ORDER BY ar.name LIMIT ?`, like, limit)
 	if err != nil {
 		return res, err
 	}
 	res.Artists, err = scanArtists(artistRows)
 	return res, err
+}
+
+func closeRows(rows *sql.Rows, scanErr *error) {
+	if closeErr := rows.Close(); *scanErr == nil && closeErr != nil {
+		*scanErr = closeErr
+	}
 }

@@ -1,8 +1,9 @@
 import type { Track } from "@domain/model/track";
 import type { Album } from "@domain/model/album";
-import type { Artist } from "@domain/model/artist";
+import type { Artist, ArtistLink } from "@domain/model/artist";
 import { singleImage } from "@providers/mapping";
 import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
+import { LOCAL_PROVIDER_ID } from "./identity";
 
 /**
  * Go DTO → domain. Local tracks arrive with their loopback `playUrl` and album
@@ -11,8 +12,8 @@ import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
  */
 
 /** One artist reference, dropped when the name is blank. */
-function artistRef(id: string, name: string): Partial<Artist>[] {
-  return name ? [{ id, name }] : [];
+function artistRef(id: string, name: string): ArtistLink[] {
+  return name ? [{ providerId: LOCAL_PROVIDER_ID, id, name }] : [];
 }
 
 /** Parse a numeric year, kept undefined when the tag had none. Encoded as a
@@ -24,11 +25,13 @@ function releaseDate(year: number): string | undefined {
 
 export function toTrack(t: LocalTrack): Track {
   return {
+    providerId: LOCAL_PROVIDER_ID,
     id: t.id,
     name: t.title,
     durationMs: t.durationMs,
     artists: artistRef(t.artistId, t.artist),
     album: {
+      providerId: LOCAL_PROVIDER_ID,
       id: t.albumId,
       name: t.album,
       images: singleImage(t.coverUrl),
@@ -46,6 +49,7 @@ export function toTrack(t: LocalTrack): Track {
 
 export function toAlbum(a: LocalAlbum): Album {
   return {
+    providerId: LOCAL_PROVIDER_ID,
     id: a.id,
     name: a.name,
     images: singleImage(a.coverUrl),
@@ -57,6 +61,7 @@ export function toAlbum(a: LocalAlbum): Album {
 
 export function toArtist(a: LocalArtist): Artist {
   return {
+    providerId: LOCAL_PROVIDER_ID,
     id: a.id,
     name: a.name,
     images: singleImage(a.coverUrl),
