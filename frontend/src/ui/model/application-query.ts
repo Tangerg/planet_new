@@ -9,8 +9,8 @@ export function queryDataOr<T>(result: QueryResult<T>, fallback: T): T {
   return fallback;
 }
 
+/** Same read policy as {@link queryDataOr} with a null fallback (unsupported /
+ *  not-found render nothing rather than a caller-provided default). */
 export function queryDataOrNull<T>(result: QueryResult<T>): T | null {
-  if (result.status === "success" || result.status === "partial") return result.data;
-  if (result.status === "failed") throw result.error;
-  return null;
+  return queryDataOr<T | null>(result, null);
 }
