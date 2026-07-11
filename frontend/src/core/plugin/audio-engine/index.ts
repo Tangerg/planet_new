@@ -74,6 +74,7 @@ export class AudioEngine extends Plugin implements AnalyserPort {
       audioContext: this.context.audioContext,
       playbackElement: this.context.audioElement,
       resolveAnalysisSource: this.resolveAnalysisSource,
+      createProbeElement: () => this.context.createAnalysisElement(),
     });
     this.probe = probe;
     return probe;

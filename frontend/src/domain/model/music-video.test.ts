@@ -1,12 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { MusicVideo } from "./music-video";
+import { ProviderId } from "./provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 describe("MusicVideo", () => {
   test("exposes artist credit behavior", () => {
     const mv = {
       artists: [
-        { id: "artist-1", name: "Lin Junjie" },
-        { id: "artist-2", name: "Faye Wong" },
+        { providerId: TEST_PROVIDER_ID, id: "artist-1", name: "Lin Junjie" },
+        { providerId: TEST_PROVIDER_ID, id: "artist-2", name: "Faye Wong" },
       ],
     };
 

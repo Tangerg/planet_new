@@ -1,7 +1,3 @@
-import type { ProviderCapability } from "@domain/ports/provider";
-
-export type CapabilitySupport = (capability: ProviderCapability) => boolean;
-
 export function userLibraryQueryEnabled(loggedIn: boolean, librarySupported: boolean): boolean {
   return loggedIn && librarySupported;
 }
@@ -9,63 +5,57 @@ export function userLibraryQueryEnabled(loggedIn: boolean, librarySupported: boo
 export function supportedContentQueryEnabled({
   requested = true,
   hasTarget = true,
-  capability,
-  supports,
+  supported,
 }: {
   requested?: boolean;
   hasTarget?: boolean;
-  capability: ProviderCapability;
-  supports: CapabilitySupport;
+  supported: boolean;
 }): boolean {
-  return requested && hasTarget && supports(capability);
+  return requested && hasTarget && supported;
 }
 
 export function artistMusicVideoDiscoveryQueryEnabled(
   artistIds: readonly string[],
-  supports: CapabilitySupport,
+  supported: boolean,
 ): boolean {
   return supportedContentQueryEnabled({
     hasTarget: artistIds.length > 0,
-    capability: "artistMusicVideos",
-    supports,
+    supported,
   });
 }
 
 export function artistMusicVideosQueryEnabled(
   artistId: string | undefined,
   requested: boolean,
-  supports: CapabilitySupport,
+  supported: boolean,
 ): boolean {
   return supportedContentQueryEnabled({
     requested,
     hasTarget: Boolean(artistId),
-    capability: "artistMusicVideos",
-    supports,
+    supported,
   });
 }
 
 export function musicVideoCommentsQueryEnabled(
   musicVideoId: string | undefined,
   requested: boolean,
-  supports: CapabilitySupport,
+  supported: boolean,
 ): boolean {
   return supportedContentQueryEnabled({
     requested,
     hasTarget: Boolean(musicVideoId),
-    capability: "musicVideoComments",
-    supports,
+    supported,
   });
 }
 
 export function trackCommentsQueryEnabled(
   trackId: string | undefined,
   requested: boolean,
-  supports: CapabilitySupport,
+  supported: boolean,
 ): boolean {
   return supportedContentQueryEnabled({
     requested,
     hasTarget: Boolean(trackId),
-    capability: "comments",
-    supports,
+    supported,
   });
 }

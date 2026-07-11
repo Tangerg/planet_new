@@ -1,7 +1,7 @@
 // ============================================================
 // Profile — restrained music identity: square image · thin account type · rows.
 // ============================================================
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -25,6 +25,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
   const open = useMorphOpen();
   const { supported, loggedIn, account, beginLogin, markLoggedIn, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
+  const closeLogin = useCallback(() => setLoginOpen(false), []);
   const [active, setActive] = useState(0);
   const model = profileScreenModel({
     account,
@@ -194,7 +195,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
       </div>
       <LoginSheet
         open={loginOpen}
-        onClose={() => setLoginOpen(false)}
+        onClose={closeLogin}
         accent={accent}
         beginLogin={beginLogin}
         markLoggedIn={markLoggedIn}

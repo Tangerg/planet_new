@@ -21,7 +21,7 @@ type QueueScreenProps = {
   accent: string;
   playing: boolean;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   onOpenArtist?: (artist: ArtistRef) => void;
   onRemoveFromQueue: (track: VibeTrack) => void;
   onClearQueue: () => void;

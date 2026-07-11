@@ -1,7 +1,8 @@
-import type { Artist } from "./artist";
+import type { ArtistLink } from "./artist";
 import { ArtistCredit } from "./artist-credit";
 import { type Image, pickImageUrl } from "./image";
 import { formatDuration, Minute, Second } from "@shared/time";
+import type { ProviderId } from "./provider-id";
 
 /**
  * Music video, deliberately narrower than a generic "video" model.
@@ -9,10 +10,12 @@ import { formatDuration, Minute, Second } from "@shared/time";
  * surface; short-video feeds, live rooms, Mlog, etc. stay out of scope.
  */
 export type MusicVideo = {
+  /** Stable source identity; `id` below is local to this provider. */
+  providerId: ProviderId;
   id: string;
   name: string;
   images: Image[];
-  artists: Partial<Artist>[];
+  artists: ArtistLink[];
   durationMs?: number;
   description?: string;
   publishDate?: string;
@@ -31,6 +34,18 @@ export type MusicVideo = {
   /** Chosen resolution, e.g. 1080. */
   quality?: number;
 };
+
+export type MusicVideoSummary = Pick<
+  MusicVideo,
+  "providerId" | "id" | "name" | "images" | "artists" | "durationMs"
+>;
+
+export type MusicVideoDetailSnapshot = MusicVideo;
+
+/** Catalog list/detail projection input. Summary fields are complete while
+ * detail-only playback and engagement facts remain optional until resolved. */
+export type MusicVideoSnapshot = MusicVideoSummary &
+  Partial<Omit<MusicVideo, keyof MusicVideoSummary>>;
 
 export type MusicVideoAvailabilityStatus = "ready" | "resolvable" | "unavailable";
 
@@ -51,12 +66,16 @@ export type MusicVideoAvailability = {
   reason?: MusicVideoUnavailableReason;
 };
 
+export type MusicVideoPlaybackCandidate = Partial<
+  Pick<MusicVideo, "id" | "playUrl" | "playbackResolved" | "available">
+>;
+
 export const MusicVideo = {
   coverUrl(mv: Partial<MusicVideo>, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(mv.images, prefer);
   },
 
-  primaryArtist(mv: Partial<MusicVideo>): Partial<Artist> | undefined {
+  primaryArtist(mv: Partial<MusicVideo>): ArtistLink | undefined {
     return mv.artists?.find((artist) => artist?.name?.trim());
   },
 
@@ -77,7 +96,7 @@ export const MusicVideo = {
   },
 
   playbackAvailability(
-    mv: Partial<MusicVideo>,
+    mv: MusicVideoPlaybackCandidate,
     policy: MusicVideoAvailabilityPolicy = {},
   ): MusicVideoAvailability {
     if (mv.available === false) {
@@ -94,17 +113,17 @@ export const MusicVideo = {
     return { status: "unavailable", canStart: false, reason: "provider-unsupported" };
   },
 
-  isPlayable(mv: Partial<MusicVideo>, policy?: MusicVideoAvailabilityPolicy): boolean {
+  isPlayable(mv: MusicVideoPlaybackCandidate, policy?: MusicVideoAvailabilityPolicy): boolean {
     return MusicVideo.playbackAvailability(mv, policy).canStart;
   },
 
-  isUnavailable(mv: Partial<MusicVideo>, policy?: MusicVideoAvailabilityPolicy): boolean {
+  isUnavailable(mv: MusicVideoPlaybackCandidate, policy?: MusicVideoAvailabilityPolicy): boolean {
     return !MusicVideo.isPlayable(mv, policy);
   },
 
-  uniqueById(videos: readonly Partial<MusicVideo>[]): Partial<MusicVideo>[] {
+  uniqueById<T extends { id?: string }>(videos: readonly T[]): T[] {
     const seen = new Set<string>();
-    const unique: Partial<MusicVideo>[] = [];
+    const unique: T[] = [];
     for (const video of videos) {
       const id = String(video.id ?? "");
       if (!id || seen.has(id)) continue;

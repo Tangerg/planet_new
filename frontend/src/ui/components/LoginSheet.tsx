@@ -5,14 +5,18 @@
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { LoginFlow, LoginStatus } from "@domain";
+import type { LoginFlow, LoginStatus } from "@contexts/identity";
+import { warnReadFailure } from "@shared/debug";
 import { Sheet } from "@/components/Sheet";
 
-const STATUS_LABEL_KEY: Record<LoginStatus["state"], string> = {
+type LoginViewStatus = LoginStatus["state"] | "failed";
+
+const STATUS_LABEL_KEY: Record<LoginViewStatus, string> = {
   pending: "login.pending",
   scanned: "login.scanned",
   authorized: "login.authorized",
   expired: "login.expired",
+  failed: "login.failed",
 };
 
 export function LoginSheet({
@@ -30,7 +34,7 @@ export function LoginSheet({
 }) {
   const { t } = useTranslation();
   const [flow, setFlow] = useState<LoginFlow | null>(null);
-  const [status, setStatus] = useState<LoginStatus["state"]>("pending");
+  const [status, setStatus] = useState<LoginViewStatus>("pending");
 
   useEffect(() => {
     if (!open) {
@@ -40,30 +44,46 @@ export function LoginSheet({
     }
     let alive = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    void beginLogin().then((f) => {
-      if (!alive) return;
-      setFlow(f);
-      if (f.kind !== "qr") return;
-      const tick = async () => {
-        const s = await f.poll();
+    void beginLogin()
+      .then((f) => {
         if (!alive) return;
-        setStatus(s.state);
-        if (s.state === "authorized") {
-          markLoggedIn();
-          onClose();
+        setFlow(f);
+        if (f.kind !== "qr") {
+          const error = new Error(`Unsupported login flow: ${f.kind}`);
+          warnReadFailure("identity.login.flow", error);
+          setStatus("failed");
           return;
         }
-        if (s.state === "expired") return; // stop; user reopens to retry
+        const tick = async () => {
+          try {
+            const next = await f.poll();
+            if (!alive) return;
+            setStatus(next.state);
+            if (next.state === "authorized") {
+              markLoggedIn();
+              onClose();
+              return;
+            }
+            if (next.state === "expired") return; // stop; user reopens to retry
+            timer = setTimeout(tick, 2000);
+          } catch (error) {
+            if (!alive) return;
+            warnReadFailure("identity.login.poll", error);
+            setStatus("failed");
+          }
+        };
         timer = setTimeout(tick, 2000);
-      };
-      timer = setTimeout(tick, 2000);
-    });
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        warnReadFailure("identity.login.begin", error);
+        setStatus("failed");
+      });
     return () => {
       alive = false;
       if (timer) clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one login attempt per open
-  }, [open]);
+  }, [beginLogin, markLoggedIn, onClose, open]);
 
   return (
     <Sheet

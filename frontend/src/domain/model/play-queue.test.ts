@@ -2,14 +2,25 @@ import { describe, expect, test } from "vitest";
 import type { Track } from "./track";
 import { PlayQueue } from "./play-queue";
 import { RepeatMode } from "./repeat";
+import { ProviderId } from "./provider-id";
 
-const track = (id: string): Track => ({ id, name: id, durationMs: 1000, artists: [] });
+const TEST_PROVIDER_ID = ProviderId.of("test");
+const OTHER_PROVIDER_ID = ProviderId.of("other");
+
+const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
+  providerId,
+  id,
+  name: id,
+  durationMs: 1000,
+  artists: [],
+});
 const ids = (q: PlayQueue) => q.tracks.map((t) => t.id);
 const [t1, t2, t3] = [track("1"), track("2"), track("3")];
+const queue = () => new PlayQueue({ next: () => 0.5 });
 
 describe("PlayQueue.setTracks", () => {
   test("starts at the given track, else the first", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t2);
     expect(q.current?.id).toBe("2");
 
@@ -18,10 +29,22 @@ describe("PlayQueue.setTracks", () => {
   });
 
   test("empty queue has no current", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([]);
     expect(q.current).toBeUndefined();
     expect(q.size).toBe(0);
+  });
+
+  test("deduplicates by TrackKey and selects the source-qualified start", () => {
+    const q = queue();
+    const first = track("same");
+    const duplicate = { ...first, name: "duplicate row" };
+    const otherSource = track("same", OTHER_PROVIDER_ID);
+
+    q.setTracks([first, duplicate, otherSource], otherSource);
+
+    expect(q.tracks).toEqual([first, otherSource]);
+    expect(q.current).toBe(otherSource);
   });
 });
 
@@ -37,15 +60,21 @@ describe("PlayQueue.upNext", () => {
   });
 
   test("uses the actual playback order when read from an instance", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t2);
     expect(q.upNext.map((t) => t.id)).toEqual(["3"]);
+  });
+
+  test("does not confuse identical local ids from different providers", () => {
+    const local = track("same");
+    const remote = track("same", OTHER_PROVIDER_ID);
+    expect(PlayQueue.upNext([local, remote, t3], remote)).toEqual([t3]);
   });
 });
 
 describe("PlayQueue user skip", () => {
   test("does not wrap in sequence mode", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t3);
     expect(q.next(RepeatMode.OFF)).toBe("unchanged");
     expect(q.current?.id).toBe("3");
@@ -56,7 +85,7 @@ describe("PlayQueue user skip", () => {
   });
 
   test("wraps at the ends only in list-repeat mode", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t3);
     expect(q.next(RepeatMode.ALL)).toBe("changed");
     expect(q.current?.id).toBe("1");
@@ -65,7 +94,7 @@ describe("PlayQueue user skip", () => {
   });
 
   test("can start from a queued item when there is no current track", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.add(t1);
     q.add(t2);
 
@@ -77,14 +106,14 @@ describe("PlayQueue user skip", () => {
 
 describe("PlayQueue.advance (track ended, repeat-aware)", () => {
   test("repeat one replays without moving", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2], t1);
     expect(q.advance(RepeatMode.ONE)).toBe("replay");
     expect(q.current?.id).toBe("1");
   });
 
   test("repeat off stops at the last track, advances otherwise", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2], t1);
     expect(q.advance(RepeatMode.OFF)).toBe("advanced");
     expect(q.current?.id).toBe("2");
@@ -93,39 +122,60 @@ describe("PlayQueue.advance (track ended, repeat-aware)", () => {
   });
 
   test("repeat all wraps past the last track", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2], t2);
     expect(q.advance(RepeatMode.ALL)).toBe("advanced");
     expect(q.current?.id).toBe("1");
   });
 
   test("empty queue stops", () => {
-    expect(new PlayQueue().advance(RepeatMode.ALL)).toBe("stopped");
+    expect(queue().advance(RepeatMode.ALL)).toBe("stopped");
   });
 });
 
 describe("PlayQueue.select", () => {
   test("moves to a present track, no-ops on same or absent", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t1);
     expect(q.select(t3)).toBe(true);
     expect(q.current?.id).toBe("3");
     expect(q.select(t3)).toBe(false); // already current
     expect(q.select(track("nope"))).toBe(false);
   });
+
+  test("selects by TrackKey when local ids collide", () => {
+    const q = queue();
+    const local = track("same");
+    const remote = track("same", OTHER_PROVIDER_ID);
+    q.setTracks([local, remote], local);
+
+    expect(q.select(remote)).toBe(true);
+    expect(q.current).toBe(remote);
+  });
 });
 
 describe("PlayQueue.add / remove", () => {
   test("add appends once; duplicates are ignored", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1]);
     expect(q.add(t2)).toBe(true);
     expect(q.add(t2)).toBe(false);
     expect(ids(q)).toEqual(["1", "2"]);
   });
 
+  test("add and remove keep same local ids from different providers independent", () => {
+    const q = queue();
+    const local = track("same");
+    const remote = track("same", OTHER_PROVIDER_ID);
+    q.setTracks([local]);
+
+    expect(q.add(remote)).toBe(true);
+    expect(q.remove(local)).toBe(true);
+    expect(q.tracks).toEqual([remote]);
+  });
+
   test("addNext inserts a new track directly after current", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t3], t1);
     expect(q.addNext(t2)).toBe(true);
     expect(q.playbackOrder.map((t) => t.id)).toEqual(["1", "2", "3"]);
@@ -133,7 +183,7 @@ describe("PlayQueue.add / remove", () => {
   });
 
   test("addNext moves an existing queued track after current", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t2);
     expect(q.addNext(t1)).toBe(true);
     expect(q.playbackOrder.map((t) => t.id)).toEqual(["2", "1", "3"]);
@@ -142,7 +192,7 @@ describe("PlayQueue.add / remove", () => {
   });
 
   test("removing the current track lands the cursor on the next", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t2);
     expect(q.remove(t2)).toBe(true);
     expect(ids(q)).toEqual(["1", "3"]);
@@ -150,7 +200,7 @@ describe("PlayQueue.add / remove", () => {
   });
 
   test("removing the current tail leaves the queue but stops the current track", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2], t2);
     q.remove(t2);
     expect(ids(q)).toEqual(["1"]);
@@ -159,7 +209,7 @@ describe("PlayQueue.add / remove", () => {
   });
 
   test("removing everything empties the queue", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1]);
     q.remove(t1);
     expect(q.size).toBe(0);
@@ -168,8 +218,25 @@ describe("PlayQueue.add / remove", () => {
 });
 
 describe("PlayQueue.toggleShuffle", () => {
+  test("derives a reproducible playback order from injected entropy", () => {
+    let calls = 0;
+    const q = new PlayQueue({
+      next: () => {
+        calls += 1;
+        return 0;
+      },
+    });
+    const t4 = track("4");
+    q.setTracks([t1, t2, t3, t4], t2);
+
+    q.setShuffle(true);
+
+    expect(q.playbackOrder.map((item) => item.id)).toEqual(["2", "3", "4", "1"]);
+    expect(calls).toBe(2);
+  });
+
   test("keeps display order and the current track, only changes play sequence", () => {
-    const q = new PlayQueue();
+    const q = queue();
     const many = Array.from({ length: 8 }, (_, i) => track(String(i)));
     q.setTracks(many, many[3]);
     const before = q.current;
@@ -187,7 +254,7 @@ describe("PlayQueue.toggleShuffle", () => {
   });
 
   test("setShuffle explicitly changes shuffle state without moving the current track", () => {
-    const q = new PlayQueue();
+    const q = queue();
     q.setTracks([t1, t2, t3], t2);
     const before = q.current;
 

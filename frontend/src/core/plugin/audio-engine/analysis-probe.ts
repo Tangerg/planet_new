@@ -12,7 +12,7 @@ export type AudioAnalysisProbeOptions = {
   audioContext: AudioContext;
   playbackElement: HTMLAudioElement;
   resolveAnalysisSource?: MediaAnalysisSourceResolver;
-  createProbeElement?: () => HTMLAudioElement;
+  createProbeElement: () => HTMLAudioElement;
   clock?: AudioAnalysisProbeClock;
 };
 
@@ -38,7 +38,7 @@ export class AudioAnalysisProbe {
 
   constructor(private readonly options: AudioAnalysisProbeOptions) {
     this.resolveAnalysisSource = options.resolveAnalysisSource ?? directMediaAnalysisSource;
-    this.createProbeElement = options.createProbeElement ?? (() => new Audio());
+    this.createProbeElement = options.createProbeElement;
     this.clock = options.clock ?? performanceClock;
   }
 

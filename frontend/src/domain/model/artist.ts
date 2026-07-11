@@ -1,12 +1,15 @@
 import { type Image, pickImageUrl } from "./image";
-import type { Track } from "./track";
-import type { Album } from "./album";
+import type { TrackSnapshot } from "./track";
+import type { AlbumSummary } from "./album";
+import type { ProviderId } from "./provider-id";
 
 /**
  * Artist, aligned with the Spotify Artist object (camelCase).
  * `followers` is flattened to a number (Spotify nests it as `followers.total`).
  */
 export type Artist = {
+  /** Stable source identity; `id` below is local to this provider. */
+  providerId: ProviderId;
   id: string;
   name: string;
   images: Image[];
@@ -19,15 +22,34 @@ export type Artist = {
   /** Wide hero banner; provider-specific, not part of Spotify. */
   banner?: string;
   /** Top tracks, filled in by `artistDetail`. */
-  topTracks?: Partial<Track>[];
+  topTracks?: TrackSnapshot[];
   /** The artist's albums, filled in by `artistDetail`. */
-  albums?: Partial<Album>[];
+  albums?: AlbumSummary[];
   /** Related artists, filled in by `artistDetail`. */
-  similar?: Partial<Artist>[];
+  similar?: ArtistSummary[];
 };
 
-/** Minimal artist reference for provider lookups and cross-entity linking. */
-export type ArtistReference = Pick<Partial<Artist>, "id">;
+/** Minimal active-source lookup input. It is deliberately not an entity
+ * identity: cross-source references use provider-qualified ArtistLink data. */
+export type ArtistLookupReference = Pick<Artist, "id">;
+
+/** Credit/link embedded in another catalog entity. Provider payloads may omit
+ * id or artwork, but the owning source remains mandatory. */
+export type ArtistLink = Pick<Artist, "providerId"> &
+  Partial<Pick<Artist, "id" | "name" | "images">>;
+
+/** Catalog list shape. Detail-only relationships are deliberately absent. */
+export type ArtistSummary = Omit<Artist, "topTracks" | "albums" | "similar">;
+
+export type ArtistSnapshot = ArtistSummary &
+  Partial<Pick<Artist, "topTracks" | "albums" | "similar">>;
+
+/** Successful artist-detail query snapshot with explicit collection completeness. */
+export type ArtistDetailSnapshot = ArtistSummary & {
+  topTracks: TrackSnapshot[];
+  albums: AlbumSummary[];
+  similar: ArtistSummary[];
+};
 
 /** Artist behavior; see `Track` for the companion-object rationale. */
 export const Artist = {
@@ -36,7 +58,7 @@ export const Artist = {
   },
 
   /** Top tracks (filled by `artistDetail`), never undefined. */
-  hotTracks(a: Partial<Artist>): Partial<Track>[] {
+  hotTracks(a: Partial<Artist>): TrackSnapshot[] {
     return a.topTracks ?? [];
   },
 
@@ -44,7 +66,10 @@ export const Artist = {
    * Provider lookup ids from a seed set, de-duplicated in encounter order.
    * Useful for fan-out reads such as "find videos for these artists".
    */
-  uniqueIds(artists: readonly ArtistReference[], limit = Number.POSITIVE_INFINITY): string[] {
+  uniqueIds(
+    artists: readonly Partial<ArtistLookupReference>[],
+    limit = Number.POSITIVE_INFINITY,
+  ): string[] {
     const ids: string[] = [];
     const seen = new Set<string>();
     for (const artist of artists) {

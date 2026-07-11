@@ -3,19 +3,31 @@ package backend
 import (
 	"testing"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 func TestMediaURLsProjectLoopbackURLs(t *testing.T) {
-	u := mediaURLs{base: "http://127.0.0.1:9999"}
+	proxied := ""
+	u := mediaURLs{
+		base: "http://127.0.0.1:9999",
+		streamProxy: func(raw string) string {
+			if raw == "http://127.0.0.1:9999/media/trk1" {
+				return raw
+			}
+			proxied = raw
+			return "http://127.0.0.1:9999/stream?secured=1"
+		},
+	}
 
 	track := u.track(domain.Track{ID: "trk1", AlbumID: "alb1", Duration: 1000, Cover: domain.Cover{Album: "alb1"}})
 	if track.PlayURL != "http://127.0.0.1:9999/media/trk1" {
 		t.Errorf("track playURL = %q", track.PlayURL)
 	}
-	// A remote CDN URL is wrapped (and query-escaped) in the /stream byte-proxy.
-	if u.stream("https://cdn.example/song.mp3?br=320000") != "http://127.0.0.1:9999/stream?url=https%3A%2F%2Fcdn.example%2Fsong.mp3%3Fbr%3D320000" {
-		t.Errorf("stream URL was not escaped correctly")
+	// A remote CDN URL is delegated to the media server, which owns proxy
+	// authentication and target validation.
+	remote := "https://cdn.example/song.mp3?br=320000"
+	if u.stream(remote) != "http://127.0.0.1:9999/stream?secured=1" || proxied != remote {
+		t.Errorf("stream URL was not delegated to the secured proxy")
 	}
 	if u.stream("") != "" {
 		t.Error("empty stream URL should stay empty")
@@ -44,5 +56,12 @@ func TestMediaURLsProjectLoopbackURLs(t *testing.T) {
 	}
 	if u.artist(domain.Artist{ID: "art2"}).CoverURL != "" {
 		t.Error("artist with no art should have empty coverURL")
+	}
+}
+
+func TestMediaURLCollectionsStayNonNilForWireContract(t *testing.T) {
+	u := mediaURLs{}
+	if u.tracks(nil) == nil || u.albums(nil) == nil || u.artists(nil) == nil {
+		t.Fatal("empty DTO collections must encode as arrays, not null")
 	}
 }

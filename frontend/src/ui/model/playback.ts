@@ -1,5 +1,5 @@
-import { PlayQueue } from "@domain/model/play-queue";
-import type { Track } from "@domain/model/track";
+import { PlayQueue } from "@contexts/playback";
+import type { TrackSnapshot as Track } from "@contexts/catalog";
 
 import { toTrack, toVibeTrack } from "@/model/adapters/track";
 import type { VibeTrack } from "@/model/vibe";

@@ -1,11 +1,6 @@
 package backend
 
-import (
-	"net/url"
-	"strings"
-
-	"changeme/backend/domain"
-)
+import "github.com/Tangerg/planet_new/backend/domain"
 
 // Wire DTOs — the shape the frontend consumes (Wails generates matching
 // TypeScript). Kept flat + provider-neutral; the frontend mapper translates them
@@ -59,6 +54,23 @@ type ArtistDetail struct {
 	Tracks []Track `json:"tracks"`
 }
 
+type LookupStatus string
+
+const (
+	LookupFound    LookupStatus = "found"
+	LookupNotFound LookupStatus = "notFound"
+)
+
+type AlbumDetailResult struct {
+	Status LookupStatus `json:"status"`
+	Detail AlbumDetail  `json:"detail"`
+}
+
+type ArtistDetailResult struct {
+	Status LookupStatus `json:"status"`
+	Detail ArtistDetail `json:"detail"`
+}
+
 type SearchResult struct {
 	Tracks  []Track  `json:"tracks"`
 	Albums  []Album  `json:"albums"`
@@ -71,17 +83,29 @@ type Home struct {
 	Artists      []Artist `json:"artists"`
 }
 
+type ScanStatus string
+
+const (
+	ScanCancelled ScanStatus = "cancelled"
+	ScanPartial   ScanStatus = "partial"
+	ScanComplete  ScanStatus = "complete"
+)
+
 type ScanResult struct {
-	Folder     string `json:"folder"`
-	Scanned    int    `json:"scanned"`
-	Added      int    `json:"added"`
-	Total      int    `json:"total"`
-	DurationMs int64  `json:"durationMs"`
+	Folder     string     `json:"folder"`
+	Scanned    int        `json:"scanned"`
+	Added      int        `json:"added"`
+	Total      int        `json:"total"`
+	Status     ScanStatus `json:"status"`
+	DurationMs int64      `json:"durationMs"`
 }
 
 // mediaURLs builds absolute loopback URLs from ids — the one place URL format
 // lives. Owned by the app layer, not the repository.
-type mediaURLs struct{ base string }
+type mediaURLs struct {
+	base        string
+	streamProxy func(string) string
+}
 
 func (u mediaURLs) media(id domain.TrackID) string { return u.base + "/media/" + id.String() }
 
@@ -91,10 +115,13 @@ func (u mediaURLs) media(id domain.TrackID) string { return u.base + "/media/" +
 // byte-proxy. This is intended for analysis/probing, not as the default audible
 // playback path.
 func (u mediaURLs) stream(raw string) string {
-	if raw == "" || strings.HasPrefix(raw, u.base) {
+	if raw == "" {
 		return raw
 	}
-	return u.base + "/stream?url=" + url.QueryEscape(raw)
+	if u.streamProxy == nil {
+		return ""
+	}
+	return u.streamProxy(raw)
 }
 
 func (u mediaURLs) cover(c domain.Cover) string {
@@ -147,25 +174,21 @@ func (u mediaURLs) artist(a domain.Artist) Artist {
 }
 
 func (u mediaURLs) tracks(ts []domain.Track) []Track {
-	out := make([]Track, 0, len(ts))
-	for _, t := range ts {
-		out = append(out, u.track(t))
-	}
-	return out
+	return mapSlice(ts, u.track)
 }
 
 func (u mediaURLs) albums(as []domain.Album) []Album {
-	out := make([]Album, 0, len(as))
-	for _, a := range as {
-		out = append(out, u.album(a))
-	}
-	return out
+	return mapSlice(as, u.album)
 }
 
 func (u mediaURLs) artists(as []domain.Artist) []Artist {
-	out := make([]Artist, 0, len(as))
-	for _, a := range as {
-		out = append(out, u.artist(a))
+	return mapSlice(as, u.artist)
+}
+
+func mapSlice[From, To any](values []From, project func(From) To) []To {
+	out := make([]To, len(values))
+	for i, value := range values {
+		out[i] = project(value)
 	}
 	return out
 }

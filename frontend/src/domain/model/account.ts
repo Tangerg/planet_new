@@ -15,20 +15,22 @@ export type Account = {
   following?: number;
 };
 
+export type AccountSnapshot = Account;
+
 export const Account = {
-  displayName(account: Partial<Account> | null | undefined, fallback = "Listener"): string {
+  displayName(account: Account | null | undefined, fallback = "Listener"): string {
     return account?.name?.trim() || fallback;
   },
 
-  followerCount(account: Partial<Account> | null | undefined): number {
+  followerCount(account: Account | null | undefined): number {
     return Math.max(0, account?.followers ?? 0);
   },
 
-  followingCount(account: Partial<Account> | null | undefined): number {
+  followingCount(account: Account | null | undefined): number {
     return Math.max(0, account?.following ?? 0);
   },
 
-  hasMembership(account: Partial<Account> | null | undefined): boolean {
+  hasMembership(account: Account | null | undefined): boolean {
     return account?.premium === true;
   },
 };

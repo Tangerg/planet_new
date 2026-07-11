@@ -1,6 +1,6 @@
 import { Plugin, defineCapability } from "../../kernel";
 import type { Track } from "@domain/model/track";
-import { PlayQueue as PlayQueueModel } from "@domain/model/play-queue";
+import { PlayQueue as PlayQueueModel, type RandomSource } from "@domain/model/play-queue";
 import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 
 declare module "../../kernel/event" {
@@ -24,8 +24,13 @@ export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
  */
 export class PlayQueue extends Plugin {
   public static readonly id = "play-queue";
-  private readonly queue = new PlayQueueModel();
+  private readonly queue: PlayQueueModel;
   private repeat = RepeatMode.OFF;
+
+  constructor(random: RandomSource) {
+    super();
+    this.queue = new PlayQueueModel(random);
+  }
 
   get id(): string {
     return PlayQueue.id;

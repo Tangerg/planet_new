@@ -1,8 +1,10 @@
-import type { ProviderCapability } from "@domain";
-import type { Album } from "@domain/model/album";
-import { Artist } from "@domain/model/artist";
-import type { MusicVideo } from "@domain/model/music-video";
-import type { Playlist } from "@domain/model/playlist";
+import {
+  Artist,
+  type AlbumDetailSnapshot,
+  type ArtistDetailSnapshot,
+  type MusicVideoDetailSnapshot,
+  type PlaylistDetailSnapshot,
+} from "@contexts/catalog";
 
 import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
 import { toVibeArtist } from "@/model/adapters/artist";
@@ -20,17 +22,17 @@ import type {
 export type DetailKind = "Album" | "Chart" | "Playlist";
 
 export type CollectionDetailReader = {
-  albumDetail(id: string): Promise<Album>;
-  playlistDetail(id: string): Promise<Playlist>;
-  toplistDetail(id: string): Promise<Playlist>;
+  albumDetail(id: string): Promise<AlbumDetailSnapshot>;
+  playlistDetail(id: string): Promise<PlaylistDetailSnapshot>;
+  toplistDetail(id: string): Promise<PlaylistDetailSnapshot>;
 };
 
 export type ArtistDetailReader = {
-  artistDetail(id: string): Promise<Artist>;
+  artistDetail(id: string): Promise<ArtistDetailSnapshot>;
 };
 
 export type MusicVideoDetailReader = {
-  musicVideoDetail(id: string): Promise<MusicVideo | undefined>;
+  musicVideoDetail(id: string): Promise<MusicVideoDetailSnapshot | undefined>;
 };
 
 export function weightedDisplayLength(value: string): number {
@@ -143,11 +145,8 @@ export async function loadArtistTarget(
   };
 }
 
-export function shouldFetchMusicVideoDetail(
-  target: VibeMusicVideo,
-  supports: (capability: ProviderCapability) => boolean,
-): boolean {
-  return Boolean(target.id && supports("musicVideoDetail"));
+export function shouldFetchMusicVideoDetail(target: VibeMusicVideo, supported: boolean): boolean {
+  return Boolean(target.id && supported);
 }
 
 export async function loadMusicVideoDetail(

@@ -4,7 +4,13 @@ import {
   collectionTrackCountLabel,
   type FlowItem,
 } from "./derive";
-import type { ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
+import {
+  sameVibeTrack,
+  type ArtistTarget,
+  type VibeArtist,
+  type VibeCollection,
+  type VibeTrack,
+} from "./vibe";
 
 export const ARTIST_SECTION_TABS = [
   { value: "top", label: "Hot" },
@@ -78,7 +84,7 @@ export function isArtistTrackPlaying(
   current: VibeTrack | undefined,
   playing: boolean,
 ): boolean {
-  return playing && tracks.some((track) => track.id === current?.id);
+  return playing && tracks.some((track) => sameVibeTrack(track, current));
 }
 
 export function artistScreenModel({

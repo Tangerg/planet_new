@@ -1,7 +1,7 @@
 import type { KyInstance } from "ky";
 
 import { mergeTranslations, parseLyrics, type Lyric } from "@domain/model/lyric";
-import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { TrackPlayUrl, TrackSnapshot } from "@domain/model/track";
 
 import { httpsUrl } from "@shared/url";
 
@@ -47,24 +47,35 @@ export async function fetchNcmLyrics(http: KyInstance, id: string): Promise<Lyri
 export async function fetchNcmTrackDetails(
   http: KyInstance,
   ids: readonly string[],
-): Promise<Partial<Track>[]> {
+): Promise<TrackSnapshot[]> {
   const uniqueIds = [...new Set(ids.map(String).filter(Boolean))];
   if (uniqueIds.length === 0) return [];
 
-  const byId = new Map<string, Partial<Track>>();
+  const byId = new Map<string, TrackSnapshot>();
+  const failures: unknown[] = [];
+  let successfulBatches = 0;
   for (let i = 0; i < uniqueIds.length; i += TRACK_DETAIL_BATCH_SIZE) {
     const batch = uniqueIds.slice(i, i + TRACK_DETAIL_BATCH_SIZE);
-    const res = await http
-      .get("song/detail", { searchParams: { ids: batch.join(",") } })
-      .json<NcmSongDetailResponse>()
-      .catch((): NcmSongDetailResponse => ({ songs: [] }));
+    let res: NcmSongDetailResponse;
+    try {
+      res = await http
+        .get("song/detail", { searchParams: { ids: batch.join(",") } })
+        .json<NcmSongDetailResponse>();
+      successfulBatches += 1;
+    } catch (error) {
+      failures.push(error);
+      continue;
+    }
     for (const raw of res.songs ?? []) {
       const track = mapNcmTrack(raw);
       if (track.id) byId.set(track.id, track);
     }
   }
+  if (successfulBatches === 0) {
+    throw new AggregateError(failures, "NCM track detail batches failed");
+  }
 
-  return ids.map((id) => byId.get(String(id))).filter((track): track is Partial<Track> => !!track);
+  return ids.map((id) => byId.get(String(id))).filter((track): track is TrackSnapshot => !!track);
 }
 
 export async function fetchNcmPlayUrls(

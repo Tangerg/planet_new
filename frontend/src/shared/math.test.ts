@@ -4,14 +4,14 @@ import { clamp, getRandomInt } from "./math";
 describe("getRandomInt", () => {
   test("stays within the half-open range", () => {
     for (let i = 0; i < 100; i++) {
-      const n = getRandomInt(0, 5);
+      const n = getRandomInt(0, 5, Math.random);
       expect(n).toBeGreaterThanOrEqual(0);
       expect(n).toBeLessThan(5);
     }
   });
 
   test("throws when min >= max", () => {
-    expect(() => getRandomInt(5, 5)).toThrow("min must be less than max");
+    expect(() => getRandomInt(5, 5, Math.random)).toThrow("min must be less than max");
   });
 });
 

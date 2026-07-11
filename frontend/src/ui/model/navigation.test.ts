@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProviderCapability } from "@domain";
+import type { CatalogAvailability } from "@domain";
 
 import {
   buildWorlds,
@@ -34,10 +34,22 @@ const catalog = (overrides: Partial<ScreenData> = {}): ScreenData => ({
   ...overrides,
 });
 
-const supports =
-  (...capabilities: ProviderCapability[]) =>
-  (capability: ProviderCapability) =>
-    capabilities.includes(capability);
+const NO_AVAILABILITY: CatalogAvailability = {
+  personalized: false,
+  playlistDetail: false,
+  albumDetail: false,
+  artistDetail: false,
+  trackDetail: false,
+  search: false,
+  toplist: false,
+  musicVideoDetail: false,
+  artistMusicVideos: false,
+};
+
+const availability = (overrides: Partial<CatalogAvailability> = {}): CatalogAvailability => ({
+  ...NO_AVAILABILITY,
+  ...overrides,
+});
 
 function actions(): NavActions {
   return {
@@ -60,7 +72,7 @@ describe("navigation model", () => {
     const worlds = buildWorlds(
       {
         catalog: catalog(),
-        supports: supports(),
+        availability: availability(),
         liked: new Set(),
         queueLength: 0,
       },
@@ -75,7 +87,7 @@ describe("navigation model", () => {
     const worlds = buildWorlds(
       {
         catalog: catalog(),
-        supports: supports("personalized", "search"),
+        availability: availability({ personalized: true, search: true }),
         liked: new Set(),
         current: track(),
         queueLength: 1,
@@ -106,7 +118,7 @@ describe("navigation model", () => {
     const worlds = buildWorlds(
       {
         catalog: catalog(),
-        supports: supports(),
+        availability: availability(),
         liked: new Set(),
         queueLength: 0,
       },
@@ -126,7 +138,7 @@ describe("navigation model", () => {
           albums: [{ id: "a", name: "A", kind: "Album", coverSeed: 1, tracks: [] }],
           artists: [{ id: "ar", name: "Ar", coverSeed: 1 }],
         }),
-        supports: supports("toplist"),
+        availability: availability({ toplist: true }),
         liked: new Set(["liked"]),
         queueLength: 2,
       },

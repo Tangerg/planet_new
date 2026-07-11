@@ -2,13 +2,13 @@ import type { KyInstance } from "ky";
 import ky from "ky";
 
 import { Provider } from "../provider";
-import type { ProviderCapability } from "@domain";
-import type { Album } from "@domain/model/album";
-import type { Artist } from "@domain/model/artist";
+import type { CatalogPorts, LyricProvider, PlaybackAvailabilityPolicy, ProviderId } from "@domain";
+import type { AlbumDetailSnapshot, AlbumSnapshot } from "@domain/model/album";
+import type { ArtistDetailSnapshot, ArtistSnapshot } from "@domain/model/artist";
 import type { Lyric } from "@domain/model/lyric";
 import { parseLyrics } from "@domain/model/lyric";
 import type { Personalized } from "@domain/model/personalized";
-import type { Playlist } from "@domain/model/playlist";
+import type { PlaylistDetailSnapshot, PlaylistSnapshot } from "@domain/model/playlist";
 import type { TrackPlayUrl } from "@domain/model/track";
 import { SearchResult } from "@domain/model/search";
 import type { Chart } from "@domain/model/chart";
@@ -41,71 +41,87 @@ import type {
   QQLyricResponse,
   QQTrack,
 } from "./types";
+import { QQMUSIC_PROVIDER_ID, QQMUSIC_PROVIDER_NAME } from "./identity";
+import { requireSomeSettled, settledOr } from "../settled";
 
 export type QQMusicOptions = {
   /** Like `http://localhost:3200`; targets the Rain120/qq-music-api server. */
   host: string;
+  /** Optional concrete client for deterministic adapter tests. */
+  http?: KyInstance;
 };
 
 export class QQMusic extends Provider {
-  public static readonly NAME = "QQMusic";
-  private static readonly CAPABILITIES: ReadonlySet<ProviderCapability> =
-    new Set<ProviderCapability>([
-      "playlistDetail",
-      "albumDetail",
-      "artistDetail",
-      "lyric",
-      "personalized",
-      "search",
-      "toplist",
-      "fullPlayback",
-    ]);
-
+  public static readonly ID = QQMUSIC_PROVIDER_ID;
+  public static readonly NAME = QQMUSIC_PROVIDER_NAME;
   private readonly http: KyInstance;
 
   constructor(opts: QQMusicOptions) {
     super();
-    this.http = ky.create({ prefix: opts.host, timeout: 10_000 });
+    this.http = opts.http ?? ky.create({ prefix: opts.host, timeout: 10_000 });
   }
 
   get name(): string {
     return QQMusic.NAME;
   }
 
-  get capabilities(): ReadonlySet<ProviderCapability> {
-    return QQMusic.CAPABILITIES;
+  get providerId(): ProviderId {
+    return QQMusic.ID;
   }
 
-  async playlistDetail(id: string): Promise<Playlist> {
+  protected get catalogPorts(): CatalogPorts {
+    return {
+      home: this,
+      playlists: this,
+      albums: this,
+      artists: this,
+      tracks: null,
+      search: this,
+      charts: this,
+      musicVideos: null,
+      artistMusicVideos: null,
+    };
+  }
+
+  protected get playbackPolicy(): PlaybackAvailabilityPolicy {
+    return { canResolveFullPlayback: true, canUsePreviewPlayback: false };
+  }
+
+  protected get lyricsPort(): LyricProvider {
+    return this;
+  }
+
+  async playlistDetail(id: string): Promise<PlaylistDetailSnapshot | undefined> {
     const res = await this.http
       .get("getSongListDetail", { searchParams: { disstid: id } })
       .json<QQSongListDetailResponse>();
-    const cd = res.response?.cdlist?.[0] ?? {};
-    return mapQQPlaylistDetail(cd);
+    const detail = res.response?.cdlist?.[0];
+    return detail ? mapQQPlaylistDetail(detail) : undefined;
   }
 
-  async albumDetail(id: string): Promise<Album> {
+  async albumDetail(id: string): Promise<AlbumDetailSnapshot | undefined> {
     const res = await this.http
       .get("getAlbumInfo", { searchParams: { albummid: id } })
       .json<QQAlbumInfoResponse>();
-    const data = res.response?.data ?? {};
-    return mapQQAlbumDetail(data);
+    const detail = res.response?.data;
+    return detail ? mapQQAlbumDetail(detail) : undefined;
   }
 
-  async artistDetail(id: string): Promise<Artist> {
+  async artistDetail(id: string): Promise<ArtistDetailSnapshot | undefined> {
     // Parallel: top tracks + bio.
-    const [hotsong, desc] = await Promise.all([
+    const [hotsongResult, descriptionResult] = await Promise.allSettled([
       this.http
         .get("getSingerHotsong", {
           searchParams: { singermid: id, limit: 10, page: 1 },
         })
-        .json<QQSingerHotsongResponse>()
-        .catch((): QQSingerHotsongResponse => ({})),
+        .json<QQSingerHotsongResponse>(),
       this.http
         .get("getSingerDesc", { searchParams: { singermid: id } })
-        .json<QQSingerDescriptionResponse>()
-        .catch((): QQSingerDescriptionResponse => ({})),
+        .json<QQSingerDescriptionResponse>(),
     ]);
+    requireSomeSettled(`QQ Music artist detail (${id})`, [hotsongResult, descriptionResult]);
+    const hotsong: QQSingerHotsongResponse = settledOr(hotsongResult, {});
+    const desc: QQSingerDescriptionResponse = settledOr(descriptionResult, {});
 
     const songs =
       hotsong.response?.songList
@@ -119,12 +135,15 @@ export class QQMusic extends Provider {
 
     const artistImage = singerImage(id, 500);
     return {
+      providerId: QQMUSIC_PROVIDER_ID,
       id,
       name: singerInfo.singer_name ?? basicInfo.name ?? "",
       images: artistImage ? [{ url: artistImage }] : [],
       banner: singerImage(id, 800),
       description,
       topTracks,
+      albums: [],
+      similar: [],
     };
   }
 
@@ -155,34 +174,34 @@ export class QQMusic extends Provider {
 
   async personalized(): Promise<Personalized> {
     // Fetch 3 sections in parallel; tracks are left empty (the QQ chart endpoint returns no songmid, so they cannot join the playback flow and are not rendered yet).
-    const [popularPlaylists, newAlbums, hotSingers] = await Promise.all([
+    const [playlistsResult, albumsResult, singersResult] = await Promise.allSettled([
       this.http
         .get("getSongLists", { searchParams: { page: 0, limit: 20 } })
-        .json<QQSongListsResponse>()
-        .catch(() => ({ response: { data: { list: [] } } })),
+        .json<QQSongListsResponse>(),
       this.http
         .get("getNewDisks", { searchParams: { page: 2, limit: 10 } })
-        .json<QQNewDisksResponse>()
-        .catch(() => ({ response: { new_album: { data: { albums: [] } } } })),
+        .json<QQNewDisksResponse>(),
       this.http
         .get("getSingerList", {
           searchParams: { index: -100, page: 1 },
         })
-        .json<QQSingerListResponse>()
-        .catch(() => ({
-          response: { singerList: { data: { singerlist: [] } } },
-        })),
+        .json<QQSingerListResponse>(),
     ]);
+    const sections = [playlistsResult, albumsResult, singersResult];
+    requireSomeSettled("QQ Music personalized sections", sections);
+    const popularPlaylists: QQSongListsResponse = settledOr(playlistsResult, {});
+    const newAlbums: QQNewDisksResponse = settledOr(albumsResult, {});
+    const hotSingers: QQSingerListResponse = settledOr(singersResult, {});
 
-    const playlists: Partial<Playlist>[] = (popularPlaylists.response?.data?.list ?? [])
+    const playlists: PlaylistSnapshot[] = (popularPlaylists.response?.data?.list ?? [])
       .slice(0, 10)
       .map(mapQQPlaylistStub);
 
-    const albums: Partial<Album>[] = (newAlbums.response?.new_album?.data?.albums ?? [])
+    const albums: AlbumSnapshot[] = (newAlbums.response?.new_album?.data?.albums ?? [])
       .slice(0, 10)
       .map(mapQQNewAlbum);
 
-    const artists: Partial<Artist>[] = (hotSingers.response?.singerList?.data?.singerlist ?? [])
+    const artists: ArtistSnapshot[] = (hotSingers.response?.singerList?.data?.singerlist ?? [])
       .slice(0, 10)
       .map(mapQQArtistFromList);
 
@@ -200,8 +219,7 @@ export class QQMusic extends Provider {
     // The old client_search_cp was retired upstream (500); use smartbox suggest, which returns songs/singers/albums in one call.
     const res = await this.http
       .get("getSmartbox", { searchParams: { key: q } })
-      .json<QQSmartboxResponse>()
-      .catch((): QQSmartboxResponse => ({}));
+      .json<QQSmartboxResponse>();
     const d = res.response?.data ?? {};
     return {
       tracks: (d.song?.itemlist ?? []).map(mapQQSmartboxSong),
@@ -212,21 +230,18 @@ export class QQMusic extends Provider {
   }
 
   async toplists(): Promise<Chart[]> {
-    const res = await this.http
-      .get("getTopLists")
-      .json<QQTopListsResponse>()
-      .catch((): QQTopListsResponse => ({}));
+    const res = await this.http.get("getTopLists").json<QQTopListsResponse>();
     return (res.response?.data?.topList ?? []).map(mapQQChart).filter((c) => c.id && c.title);
   }
 
-  async toplistDetail(id: string): Promise<Playlist> {
+  async toplistDetail(id: string): Promise<PlaylistDetailSnapshot | undefined> {
     const res = await this.http
       .get("getRanks", { searchParams: { topId: id, limit: 100, page: 0 } })
-      .json<QQRanksResponse>()
-      .catch((): QQRanksResponse => ({}));
+      .json<QQRanksResponse>();
     const list = res.response?.req_1?.data?.data?.song ?? [];
     const tracks = list.map((s, i) => mapQQRankSong(s, i + 1));
     return {
+      providerId: QQMUSIC_PROVIDER_ID,
       id,
       name: "",
       description: "",

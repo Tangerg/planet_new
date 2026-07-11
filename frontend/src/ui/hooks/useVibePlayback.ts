@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { PlayState } from "@core/plugin";
-import { RepeatMode } from "@domain/model/repeat";
+import { PlayState, RepeatMode } from "@contexts/playback";
 
 import { useEngine } from "@/hooks/useEngine";
 import { usePlaybackService } from "@/hooks/usePlaybackService";

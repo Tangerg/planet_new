@@ -31,7 +31,7 @@ type SearchScreenProps = {
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   /** Real search: provider.search results projected to vibe shapes. */
   search?: (q: string) => Promise<SearchResults>;
 };

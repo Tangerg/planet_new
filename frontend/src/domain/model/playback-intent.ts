@@ -1,5 +1,7 @@
 import { PlaybackAvailability, type PlaybackAvailabilityPolicy } from "./playback-availability";
-import { Track, type TrackPlayUrl } from "./track";
+import { Track, type ProviderTrackPlayUrls } from "./track";
+import { TrackKey } from "./entity-key";
+import type { ProviderId } from "./provider-id";
 
 /**
  * A user's intent to start playback from a list. It is pure domain state:
@@ -33,19 +35,31 @@ export class PlaybackIntent {
     return Track.uniquePlaybackIds(this.queue);
   }
 
-  playbackIdsToResolve(policy: PlaybackAvailabilityPolicy): string[] {
+  get providerIds(): ProviderId[] {
+    return [...new Set(this.queue.map((track) => track.providerId))];
+  }
+
+  tracksFor(providerId: ProviderId): readonly Track[] {
+    return this.queue.filter((track) => track.providerId === providerId);
+  }
+
+  playbackIdsToResolve(providerId: ProviderId, policy: PlaybackAvailabilityPolicy): string[] {
     return Track.uniquePlaybackIds(
-      this.queue.filter((track) =>
-        PlaybackAvailability.requiresFullUrlResolution(Track.playbackAvailability(track, policy)),
+      this.queue.filter(
+        (track) =>
+          track.providerId === providerId &&
+          PlaybackAvailability.requiresFullUrlResolution(Track.playbackAvailability(track, policy)),
       ),
     );
   }
 
-  withResolvedUrls(urls: readonly TrackPlayUrl[]): ResolvedPlaybackIntent {
-    const queue = Track.withResolvedPlayUrls(this.queue, urls);
+  withResolvedUrls(resolutions: readonly ProviderTrackPlayUrls[]): ResolvedPlaybackIntent {
+    const queue = Track.withResolvedPlayUrls(this.queue, resolutions);
+    const requestedKey = TrackKey.of(this.requested.providerId, this.requested.id);
     return {
       tracks: queue,
-      current: queue.find((track) => track.id === this.requested.id) ?? queue[0],
+      current:
+        queue.find((track) => TrackKey.of(track.providerId, track.id) === requestedKey) ?? queue[0],
     };
   }
 }

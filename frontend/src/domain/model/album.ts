@@ -1,17 +1,20 @@
-import type { Artist } from "./artist";
+import type { ArtistLink } from "./artist";
 import { ArtistCredit } from "./artist-credit";
 import { type Image, pickImageUrl } from "./image";
-import type { Track } from "./track";
+import type { TrackSnapshot } from "./track";
+import type { ProviderId } from "./provider-id";
 
 /**
  * Album, aligned with the Spotify Album object (camelCase).
  * `releaseDate` is an ISO string (e.g. "2009-11-02").
  */
 export type Album = {
+  /** Stable source identity; `id` below is local to this provider. */
+  providerId: ProviderId;
   id: string;
   name: string;
   images: Image[];
-  artists: Partial<Artist>[];
+  artists: ArtistLink[];
   releaseDate?: string;
   totalTracks?: number;
   albumType?: "album" | "single" | "compilation";
@@ -19,12 +22,23 @@ export type Album = {
   alias?: string[];
   /** Album blurb / liner notes, when the provider exposes one. */
   description?: string;
-  tracks?: Partial<Track>[];
+  tracks?: TrackSnapshot[];
+};
+
+export type AlbumSummary = Omit<Album, "tracks">;
+
+export type AlbumReference = Pick<Album, "providerId"> &
+  Partial<Pick<Album, "id" | "name" | "images" | "artists">>;
+
+export type AlbumSnapshot = AlbumSummary & Partial<Pick<Album, "tracks">>;
+
+export type AlbumDetailSnapshot = AlbumSummary & {
+  tracks: TrackSnapshot[];
 };
 
 /** Album behavior; see `Track` for the companion-object rationale. */
 export const Album = {
-  primaryArtist(a: Partial<Album>): Partial<Artist> | undefined {
+  primaryArtist(a: Partial<Album>): ArtistLink | undefined {
     return a.artists?.find((artist) => artist?.name?.trim());
   },
 

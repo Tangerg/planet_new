@@ -4,6 +4,7 @@ import { SearchResult } from "@domain/model/search";
 
 import { mapNcmAlbumNewest, mapNcmFeaturedArtist, mapNcmPlaylistStub, mapNcmTrack } from "./mapper";
 import type { NcmSearchResponse } from "./types";
+import { requireSomeSettled, settledOr } from "../settled";
 
 export async function searchNcm(http: KyInstance, query: string): Promise<SearchResult> {
   const q = query.trim();
@@ -12,15 +13,25 @@ export async function searchNcm(http: KyInstance, query: string): Promise<Search
   const byType = (type: number) =>
     http
       .get("cloudsearch", { searchParams: { keywords: q, type, limit: 30 } })
-      .json<NcmSearchResponse>()
-      .catch((): NcmSearchResponse => ({ result: {} }));
+      .json<NcmSearchResponse>();
 
-  const [songs, artists, albums, playlists] = await Promise.all([
+  const [songsResult, artistsResult, albumsResult, playlistsResult] = await Promise.allSettled([
     byType(1),
     byType(100),
     byType(10),
     byType(1000),
   ]);
+  requireSomeSettled("NCM search sections", [
+    songsResult,
+    artistsResult,
+    albumsResult,
+    playlistsResult,
+  ]);
+  const empty: NcmSearchResponse = { result: {} };
+  const songs = settledOr(songsResult, empty);
+  const artists = settledOr(artistsResult, empty);
+  const albums = settledOr(albumsResult, empty);
+  const playlists = settledOr(playlistsResult, empty);
 
   return {
     tracks: (songs.result?.songs ?? []).map((song, i) => mapNcmTrack(song, { index: i + 1 })),

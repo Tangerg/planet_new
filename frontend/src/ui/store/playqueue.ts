@@ -1,9 +1,7 @@
 import { create } from "zustand";
 
-import type { FormattedDuration, Progress } from "@domain/model/duration";
-import type { Track } from "@domain/model/track";
-import type { Lyric } from "@domain/model/lyric";
-import { PlayState } from "@core/plugin";
+import type { TrackSnapshot as Track } from "@contexts/catalog";
+import { PlayState, type FormattedDuration, type Lyric, type Progress } from "@contexts/playback";
 
 import { withSelectors } from "./selector";
 

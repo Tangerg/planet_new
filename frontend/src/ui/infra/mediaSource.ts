@@ -1,6 +1,5 @@
-import * as Library from "@wailsjs/go/backend/Library";
 import type { MediaAnalysisSourceResolver } from "@core/plugin";
-import { wailsGoBridgeReady } from "./wails";
+import { localLibraryStreamURL } from "./localLibrary";
 
 /** Desktop audio-analysis media-source gateway.
  *
@@ -14,9 +13,8 @@ export const resolveDesktopMediaAnalysisSource: MediaAnalysisSourceResolver = lo
  *  CORS-clean source (Web Audio sampling and canvas pixel reads both need one).
  *  No-op (returns the input) without the desktop bridge or on failure. */
 export async function loopbackProxyUrl(url: string): Promise<string> {
-  if (!wailsGoBridgeReady()) return url;
   try {
-    return (await Library.StreamURL(url)) || url;
+    return (await localLibraryStreamURL(url)) || url;
   } catch {
     return url;
   }

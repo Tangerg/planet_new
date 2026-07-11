@@ -1,11 +1,11 @@
-import type { Playlist } from "./playlist";
-import type { Album } from "./album";
-import type { Track } from "./track";
-import type { Artist } from "./artist";
+import type { PlaylistSnapshot } from "./playlist";
+import type { AlbumSnapshot } from "./album";
+import type { TrackSnapshot } from "./track";
+import type { ArtistSnapshot } from "./artist";
 
 export type Personalized = {
-  playlists: Partial<Playlist>[];
-  albums?: Partial<Album>[];
-  artists?: Partial<Artist>[];
-  tracks?: Partial<Track>[];
+  playlists: PlaylistSnapshot[];
+  albums?: AlbumSnapshot[];
+  artists?: ArtistSnapshot[];
+  tracks?: TrackSnapshot[];
 };

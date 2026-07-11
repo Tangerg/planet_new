@@ -86,4 +86,17 @@ describe("fetchNcmArtistDetail", () => {
     expect(artist.albums).toEqual([]);
     expect(artist.description).toBe("from-introduction");
   });
+
+  test("propagates failure of the primary artist endpoint", async () => {
+    const { http } = fakeKy({
+      artists: () => {
+        throw new Error("artist unavailable");
+      },
+      "artist/desc": {},
+      "artist/album": {},
+      "simi/artist": {},
+    });
+
+    await expect(fetchNcmArtistDetail(http, "7")).rejects.toThrow("artist unavailable");
+  });
 });

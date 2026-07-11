@@ -2,8 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import type { VibeTrack } from "./vibe";
 import { trackRowModel } from "./track-row";
+import { ProviderId } from "@domain/model/provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
+
+const source = (overrides: Partial<NonNullable<VibeTrack["source"]>> = {}) => ({
+  providerId: TEST_PROVIDER_ID,
+  id: "track-1",
+  name: "Track",
+  durationMs: 180_000,
+  artists: [],
+  ...overrides,
+});
 
 const track = (overrides: Partial<VibeTrack> = {}): VibeTrack => ({
+  providerId: TEST_PROVIDER_ID,
   id: "track-1",
   title: "Track",
   name: "Track",
@@ -19,7 +32,7 @@ describe("track row model", () => {
     expect(
       trackRowModel({
         track: track(),
-        currentId: "track-1",
+        current: track(),
         playing: true,
         hover: false,
         index: 3,
@@ -39,7 +52,7 @@ describe("track row model", () => {
 
     expect(
       trackRowModel({
-        track: track({ source: { id: "track-1", name: "Track", durationMs: 180_000 } }),
+        track: track({ source: source() }),
         playing: false,
         hover: true,
         index: 3,
@@ -54,7 +67,7 @@ describe("track row model", () => {
         track: track({
           version: "live",
           requiresSubscription: true,
-          source: { id: "track-1", name: "Track", durationMs: 180_000, available: false },
+          source: source({ available: false }),
         }),
         playing: false,
         hover: false,
@@ -80,7 +93,7 @@ describe("track row model", () => {
     expect(
       trackRowModel({
         track: track(),
-        currentId: "track-1",
+        current: track(),
         playing: false,
         hover: true,
         index: 4,

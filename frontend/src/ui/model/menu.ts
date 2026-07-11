@@ -1,4 +1,5 @@
-import type { ArtistTarget, CardItem, VibeTrack } from "@/model/vibe";
+import { vibeTrackKey, type ArtistTarget, type CardItem, type VibeTrack } from "@/model/vibe";
+import { isVibeTrackLiked } from "./likes";
 
 export type MenuItem = {
   label?: string;
@@ -36,20 +37,29 @@ export function trackMenuItems(opts: {
   track: VibeTrack;
   onPlay: (track: VibeTrack) => void;
   enqueue: (trackId: string, next?: boolean) => void;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   liked: ReadonlySet<string>;
   openArtist: (ar: ArtistTarget) => void;
 }): MenuItem[] {
   const { track, onPlay, enqueue, toggleLike, liked, openArtist } = opts;
+  const likedTrack = vibeTrackKey(track);
   const items: OptionalMenuItem[] = [
     { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
-    { label: "Play Next", icon: "next", onClick: () => enqueue(track.id, true) },
-    { label: "Add to Queue", icon: "list", onClick: () => enqueue(track.id) },
+    {
+      label: "Play Next",
+      icon: "next",
+      onClick: () => likedTrack && enqueue(likedTrack, true),
+    },
+    {
+      label: "Add to Queue",
+      icon: "list",
+      onClick: () => likedTrack && enqueue(likedTrack),
+    },
     { sep: true },
     {
-      label: liked.has(track.id) ? "Remove from Liked" : "Add to Liked",
+      label: isVibeTrackLiked(liked, track) ? "Remove from Liked" : "Add to Liked",
       icon: "heart",
-      onClick: () => toggleLike(track.id),
+      onClick: () => toggleLike(track),
     },
     artistMenuItem(openArtist, track.artistId, track.artist),
   ];

@@ -1,21 +1,24 @@
-import type { Artist } from "./artist";
-import type { Album } from "./album";
+import type { ArtistLink } from "./artist";
+import type { AlbumReference } from "./album";
 import { ArtistCredit } from "./artist-credit";
 import { pickImageUrl } from "./image";
 import { PlaybackAvailability, type PlaybackAvailabilityPolicy } from "./playback-availability";
 import { formatDuration, Minute, Second } from "@shared/time";
+import type { ProviderId } from "./provider-id";
 
 /**
  * Track, aligned with the Spotify Track object's semantics (camelCase).
  * Duration is milliseconds (`durationMs`, mirroring Spotify's `duration_ms`).
  */
 export type Track = {
+  /** Stable source identity; `id` below is local to this provider. */
+  providerId: ProviderId;
   index?: number;
   id: string;
   name: string;
   durationMs: number;
-  artists: Partial<Artist>[];
-  album?: Partial<Album>;
+  artists: ArtistLink[];
+  album?: AlbumReference;
   trackNumber?: number;
   discNumber?: number;
   explicit?: boolean;
@@ -40,12 +43,21 @@ export type Track = {
   available?: boolean;
 };
 
+/** Stable list/detail track snapshot. Track currently has no separate
+ * detail-only fields, but the explicit name prevents Partial<Track> contracts. */
+export type TrackSnapshot = Track;
+
 export type TrackPlayUrl = {
   playbackId: string;
   playUrl: string;
 };
 
-function creditedArtists(t: Partial<Track>): Partial<Artist>[] {
+export type ProviderTrackPlayUrls = {
+  providerId: ProviderId;
+  urls: readonly TrackPlayUrl[];
+};
+
+function creditedArtists(t: Partial<Track>): ArtistLink[] {
   const artists = t.artists?.filter((artist) => artist?.name?.trim()) ?? [];
   if (artists.length) return artists;
   return t.album?.artists?.filter((artist) => artist?.name?.trim()) ?? [];
@@ -54,12 +66,13 @@ function creditedArtists(t: Partial<Track>): Partial<Artist>[] {
 /**
  * Track behavior. Co-located with the type so display/business derivations
  * live in the domain rather than being re-implemented in each UI consumer.
- * Accepts `Partial<Track>` because entities flow as partials across provider
- * boundaries (list payloads omit fields a detail call would carry).
+ * Helpers accept partial projection input so placeholders and defensive display
+ * code can derive safe values. Provider and application boundaries still use
+ * explicit TrackSnapshot contracts.
  */
 export const Track = {
   /** The credited lead artist, falling back to album credit when a list payload omits track artists. */
-  primaryArtist(t: Partial<Track>): Partial<Artist> | undefined {
+  primaryArtist(t: Partial<Track>): ArtistLink | undefined {
     return creditedArtists(t)[0];
   },
 
@@ -107,11 +120,21 @@ export const Track = {
     return canPlayAnything && !Track.isPlayable(t, policy);
   },
 
-  /** Clone tracks and apply resolved provider playback URLs by playback id, preserving order. */
-  withResolvedPlayUrls(tracks: readonly Track[], urls: readonly TrackPlayUrl[]): Track[] {
-    const byPlaybackId = new Map(urls.map((url) => [url.playbackId, url.playUrl]));
+  /** Clone tracks and apply resolved URLs by source + playback id, preserving order. */
+  withResolvedPlayUrls(
+    tracks: readonly Track[],
+    resolutions: readonly ProviderTrackPlayUrls[],
+  ): Track[] {
+    const byProvider = new Map(
+      resolutions.map(({ providerId, urls }) => [
+        providerId,
+        new Map(urls.map((url) => [url.playbackId, url.playUrl])),
+      ]),
+    );
     return tracks.map((track) => {
-      const playUrl = track.playbackId ? byPlaybackId.get(track.playbackId) : undefined;
+      const playUrl = track.playbackId
+        ? byProvider.get(track.providerId)?.get(track.playbackId)
+        : undefined;
       return playUrl ? { ...track, playUrl } : { ...track };
     });
   },

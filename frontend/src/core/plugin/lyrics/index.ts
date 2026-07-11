@@ -2,6 +2,7 @@ import { Plugin } from "../../kernel";
 import { PROVIDER_REGISTRY, ProviderRegistry } from "../provider-registry";
 import type { Lyric } from "@domain/model/lyric";
 import type { Track } from "@domain/model/track";
+import { TrackKey, type TrackKey as TrackKeyValue } from "@domain/model/entity-key";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
@@ -11,7 +12,7 @@ declare module "../../kernel/event" {
 
 /**
  * Reactive lyric source. Follows the current track: on queue:current-changed it
- * resolves the active provider (via the ProviderRegistry) and fetches its
+ * resolves the track's owning provider (via the ProviderRegistry) and fetches its
  * lyrics, broadcasting lyrics:changed. The UI reads the current lyrics from the
  * store and never fetches them — it doesn't even know which track's lyrics to
  * ask for. This is the "reactive business → kernel plugin" pattern (vs. on-demand
@@ -25,8 +26,8 @@ export class Lyrics extends Plugin {
     return Lyrics.id;
   }
 
-  /** Last track id fetched — skip refetch when the track hasn't actually changed. */
-  private lastTrackId: string | undefined;
+  /** Last source-qualified track fetched — skip only the same domain identity. */
+  private lastTrackKey: TrackKeyValue | null | undefined;
   /** Generation guard: a newer track supersedes a slow in-flight lyric fetch. */
   private generation = 0;
 
@@ -36,25 +37,26 @@ export class Lyrics extends Plugin {
 
   protected onDispose(): void {
     this.context.hooks.off("queue:current-changed", this.onTrackChanged);
-    this.lastTrackId = undefined;
+    this.lastTrackKey = undefined;
     this.generation = 0;
   }
 
   private onTrackChanged = async (track: Track | undefined): Promise<void> => {
-    const id = track?.id ? String(track.id) : "";
-    if (id === this.lastTrackId) return;
-    this.lastTrackId = id;
+    const key = track?.id ? TrackKey.of(track.providerId, track.id) : null;
+    if (key === this.lastTrackKey) return;
+    this.lastTrackKey = key;
     const gen = ++this.generation;
 
-    if (!id) {
+    if (!track || key === null) {
       this.context.hooks.emit("lyrics:changed", []);
       return;
     }
 
-    const provider = this.context.registry.resolve(PROVIDER_REGISTRY)?.active ?? null;
+    const provider =
+      this.context.registry.resolve(PROVIDER_REGISTRY)?.get(track.providerId) ?? null;
     let lyrics: Lyric[] = [];
     try {
-      lyrics = provider ? await provider.lyric(id) : [];
+      lyrics = provider?.lyrics ? await provider.lyrics.lyric(track.id) : [];
     } catch {
       // Provider lacks lyric support / fetch failed → emit empty (UI shows "no lyrics").
       lyrics = [];

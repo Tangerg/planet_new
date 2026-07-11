@@ -1,3 +1,6 @@
+import type { LocalLibraryScanOutcome } from "@contexts/local-library";
+import type { ProviderId } from "@contexts/contracts";
+
 export type SettingsOption = {
   value: string;
   label: string;
@@ -7,20 +10,20 @@ export type SettingsScanState =
   | { phase: "idle" }
   | { phase: "scanning" }
   | { phase: "done"; added: number; total: number }
+  | { phase: "partial"; added: number; total: number }
   | { phase: "error" };
 
 export type SettingsScanStatusDescriptor =
   | { key: "settings.addFolderSub" }
   | { key: "settings.scanning" }
   | { key: "settings.scanDone"; values: { added: number; total: number } }
+  | { key: "settings.scanPartial"; values: { added: number; total: number } }
   | { key: "settings.scanError" };
 
-export type SettingsFolderScanResult = { added: number; total: number } | null | undefined;
-
 export const DEFAULT_SOURCE_LABELS: Record<string, string> = {
-  NeteaseCloudMusic: "网易云",
-  QQMusic: "QQ 音乐",
-  Spotify: "Spotify",
+  netease: "网易云",
+  qqmusic: "QQ 音乐",
+  spotify: "Spotify",
 };
 
 export const AUDIO_QUALITY_OPTIONS = tokenOptions("STD", "HQ", "SQ");
@@ -31,7 +34,7 @@ export function tokenOptions(...values: readonly string[]): SettingsOption[] {
 }
 
 export function sourceOptions(
-  sources: readonly string[],
+  sources: readonly ProviderId[],
   labels: Readonly<Record<string, string>> = DEFAULT_SOURCE_LABELS,
 ): SettingsOption[] {
   return sources.map((source) => ({
@@ -41,18 +44,24 @@ export function sourceOptions(
 }
 
 export function initialSettingsSource(
-  activeSourceName: string | undefined,
-  sources: readonly string[],
+  activeProviderId: ProviderId | undefined,
+  sources: readonly ProviderId[],
 ): string {
-  return activeSourceName ?? sources[0] ?? "";
+  return activeProviderId ?? sources[0] ?? "";
 }
 
-export function scanStateFromFolderResult(result: SettingsFolderScanResult): SettingsScanState {
-  return result ? { phase: "done", added: result.added, total: result.total } : { phase: "idle" };
+export function scanStateFromFolderResult(result: LocalLibraryScanOutcome): SettingsScanState {
+  if (result.status === "cancelled") return { phase: "idle" };
+  if (result.status === "unavailable") return { phase: "error" };
+  return {
+    phase: result.status === "complete" ? "done" : "partial",
+    added: result.added,
+    total: result.total,
+  };
 }
 
 export function shouldActivateScannedSource(scan: SettingsScanState): boolean {
-  return scan.phase === "done";
+  return scan.phase === "done" || (scan.phase === "partial" && scan.total > 0);
 }
 
 export function scanStatusDescriptor(scan: SettingsScanState): SettingsScanStatusDescriptor {
@@ -60,6 +69,12 @@ export function scanStatusDescriptor(scan: SettingsScanState): SettingsScanStatu
   if (scan.phase === "done") {
     return {
       key: "settings.scanDone",
+      values: { added: scan.added, total: scan.total },
+    };
+  }
+  if (scan.phase === "partial") {
+    return {
+      key: "settings.scanPartial",
       values: { added: scan.added, total: scan.total },
     };
   }

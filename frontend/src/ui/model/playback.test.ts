@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Track } from "@domain/model/track";
+import { ProviderId } from "@domain/model/provider-id";
 
 import { toVibeTrack } from "@/model/adapters/track";
 import type { VibeTrack } from "./vibe";
@@ -14,17 +15,21 @@ import {
   upNextView,
 } from "./playback";
 
+const TEST_PROVIDER_ID = ProviderId.of("test");
+
 const domainTrack = (id: string): Track => ({
+  providerId: TEST_PROVIDER_ID,
   id,
   name: id,
   durationMs: 180_000,
   trackNumber: 1,
   discNumber: 1,
   explicit: false,
-  artists: [{ id: `artist-${id}`, name: "Artist" }],
+  artists: [{ providerId: TEST_PROVIDER_ID, id: `artist-${id}`, name: "Artist" }],
 });
 
 const viewTrack = (id: string): VibeTrack => ({
+  providerId: TEST_PROVIDER_ID,
   id,
   title: id,
   name: id,

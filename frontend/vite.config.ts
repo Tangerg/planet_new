@@ -10,13 +10,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   return {
     /* —— 路径别名(与 tsconfig.app.json 的 paths 一致) ——
-     *   清晰架构分层:@shared(纯工具) ← @domain(实体+端口) ← @core(内核/运行时) ←
+     *   清晰架构分层:@shared(纯工具) ← @domain(实体+端口) ← @core/@contexts ←
      *   @providers(数据源适配器);@(表现层 UI)在最外。 */
     resolve: {
       alias: {
         "@shared": "/src/shared",
         "@domain": "/src/domain",
         "@core": "/src/core",
+        "@contexts": "/src/contexts",
         "@providers": "/src/providers",
         "@": "/src/ui",
         // Wails-generated Go bridge (outside src/). The `local` provider (infra
@@ -60,6 +61,11 @@ export default defineConfig(({ mode }) => {
     },
 
     build: {
+      // The resident shell intentionally keeps every morph destination loaded;
+      // a sourcemap audit measured the entry at 580 kB minified / 172 kB gzip.
+      // Static splitting would keep the same preload graph, while lazy-loading
+      // destinations would discard screen state. Keep a narrow measured budget.
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
           manualChunks: (id: string) => {
@@ -86,6 +92,33 @@ export default defineConfig(({ mode }) => {
         enabled: true,
         provider: "istanbul",
         include: ["src/**/*"],
+        thresholds: {
+          "src/domain/**": { statements: 92, functions: 93, branches: 84, lines: 93 },
+          "src/core/application/**": {
+            statements: 64,
+            functions: 57,
+            branches: 70,
+            lines: 64,
+          },
+          "src/providers/local/**": {
+            statements: 92,
+            functions: 92,
+            branches: 90,
+            lines: 92,
+          },
+          "src/contexts/local-library/**": {
+            statements: 95,
+            functions: 95,
+            branches: 78,
+            lines: 95,
+          },
+          "src/infrastructure/audio/**": {
+            statements: 88,
+            functions: 70,
+            branches: 95,
+            lines: 95,
+          },
+        },
       },
       typecheck: { enabled: true },
       restoreMocks: true,

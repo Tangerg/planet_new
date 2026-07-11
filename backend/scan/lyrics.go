@@ -1,12 +1,13 @@
 package scan
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 // SidecarLyrics reads a track's sibling lyric file — "<name>.lrc" next to the
@@ -21,12 +22,18 @@ var _ domain.LyricReader = SidecarLyrics{}
 // Lyric returns the raw LRC text of the sidecar next to audioPath. The audio
 // file's extension is swapped for .lrc; both lower- and upper-case extensions
 // are tried so a "song.LRC" is found on case-sensitive filesystems too.
-func (SidecarLyrics) Lyric(audioPath string) (string, error) {
+func (SidecarLyrics) Lyric(ctx context.Context, audioPath string) (string, error) {
 	dir := filepath.Dir(audioPath)
 	stem := strings.TrimSuffix(filepath.Base(audioPath), filepath.Ext(audioPath))
 	for _, name := range []string{stem + ".lrc", stem + ".LRC"} {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err == nil {
+			if err := ctx.Err(); err != nil {
+				return "", err
+			}
 			return string(data), nil
 		}
 		if !errors.Is(err, os.ErrNotExist) {

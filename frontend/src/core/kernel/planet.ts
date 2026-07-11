@@ -6,8 +6,10 @@ import { PluginContext } from "./context";
 import type { Capability } from "./capability";
 import { CapabilityRegistry } from "./capability";
 import { warn } from "@shared/debug";
+import type { AudioRuntimePort } from "./context";
 
 export type PlanetOption = {
+  audio: AudioRuntimePort;
   plugins?: Plugin[];
 };
 
@@ -70,38 +72,43 @@ function topoSort(plugins: Plugin[]): Plugin[] {
 
 export class Planet implements Disposable {
   private readonly context: PluginContext;
+  private readonly audio: AudioRuntimePort;
   // Insertion-ordered registry, keyed by plugin id. topoSort already guarantees
   // id uniqueness, so a plain Map is enough — no separate manager abstraction.
   private readonly plugins = new Map<string, Plugin>();
   // Capability registry, shared into the PluginContext so plugins publish/discover.
   private readonly capabilities = new CapabilityRegistry();
+  private disposed = false;
 
-  constructor(opt?: PlanetOption) {
-    this.context = new PluginContext(this.capabilities);
+  constructor(opt: PlanetOption) {
+    this.audio = opt.audio;
+    this.context = new PluginContext(this.capabilities, this.audio);
 
-    if (opt?.plugins?.length) {
-      const sorted = topoSort(opt.plugins);
-      const installed: Plugin[] = [];
-      try {
+    const installed: Plugin[] = [];
+    try {
+      if (opt.plugins?.length) {
+        const sorted = topoSort(opt.plugins);
         for (const plugin of sorted) {
           plugin.init(this.context);
           this.plugins.set(plugin.id, plugin);
           installed.push(plugin);
         }
-      } catch (e) {
-        // If a plugin init throws, dispose already-mounted plugins in reverse to avoid a half-built state
-        for (const p of [...installed].reverse()) {
-          try {
-            p.dispose();
-          } catch (err) {
-            warn(`rollback dispose ${p.id} failed: ${(err as Error).message}`);
-          }
-        }
-        this.plugins.clear();
-        this.capabilities.clear();
-        this.context.hooks.clear();
-        throw e;
       }
+    } catch (e) {
+      // If dependency validation or plugin init throws, release every resource
+      // whose ownership was transferred to this Planet.
+      for (const p of [...installed].reverse()) {
+        try {
+          p.dispose();
+        } catch (err) {
+          warn(`rollback dispose ${p.id} failed: ${(err as Error).message}`);
+        }
+      }
+      this.plugins.clear();
+      this.capabilities.clear();
+      this.context.hooks.clear();
+      this.disposeAudio();
+      throw e;
     }
   }
 
@@ -118,6 +125,9 @@ export class Planet implements Disposable {
   }
 
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+
     // Unmount in reverse, symmetric with init order
     for (const plugin of [...this.plugins.values()].reverse()) {
       try {
@@ -129,5 +139,14 @@ export class Planet implements Disposable {
     this.plugins.clear();
     this.capabilities.clear();
     this.context.hooks.clear();
+    this.disposeAudio();
+  }
+
+  private disposeAudio(): void {
+    try {
+      this.audio.dispose();
+    } catch (e) {
+      warn(`dispose audio runtime failed: ${(e as Error).message}`);
+    }
   }
 }

@@ -10,8 +10,13 @@ import {
   artistStatLabels,
   isArtistTrackPlaying,
 } from "./artist-screen";
+import { ProviderId } from "@domain/model/provider-id";
 
-const track = (id: string): VibeTrack => ({
+const TEST_PROVIDER_ID = ProviderId.of("test");
+const OTHER_PROVIDER_ID = ProviderId.of("other");
+
+const track = (id: string, providerId = TEST_PROVIDER_ID): VibeTrack => ({
+  providerId,
   id,
   title: id,
   name: id,
@@ -71,6 +76,7 @@ describe("artist screen model", () => {
     expect(isArtistTrackPlaying(tracks, track("b"), true)).toBe(true);
     expect(isArtistTrackPlaying(tracks, track("x"), true)).toBe(false);
     expect(isArtistTrackPlaying(tracks, track("b"), false)).toBe(false);
+    expect(isArtistTrackPlaying(tracks, track("b", OTHER_PROVIDER_ID), true)).toBe(false);
   });
 
   it("collects the model consumed by the Artist screen", () => {

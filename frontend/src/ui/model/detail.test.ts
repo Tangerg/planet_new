@@ -18,11 +18,16 @@ import {
   shouldFetchMusicVideoDetail,
   weightedDisplayLength,
 } from "./detail";
-import type { Artist } from "@domain/model/artist";
-import type { Album } from "@domain/model/album";
-import type { Playlist } from "@domain/model/playlist";
-import type { MusicVideo } from "@domain/model/music-video";
+import type {
+  AlbumDetailSnapshot,
+  ArtistDetailSnapshot,
+  MusicVideoDetailSnapshot,
+  PlaylistDetailSnapshot,
+} from "@contexts/catalog";
 import type { DetailTarget, VibeCollection, VibeMusicVideo, VibeTrack } from "./vibe";
+import { ProviderId } from "@domain/model/provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 const track = (id: string): VibeTrack => ({
   id,
@@ -114,17 +119,24 @@ describe("detail read-model helpers", () => {
   test("loads collection detail by domain kind", async () => {
     const calls: string[] = [];
     const reader = {
-      albumDetail: async (id: string): Promise<Album> => {
+      albumDetail: async (id: string): Promise<AlbumDetailSnapshot> => {
         calls.push(`album:${id}`);
-        return { id, name: "Album", images: [], artists: [], tracks: [] };
+        return {
+          providerId: TEST_PROVIDER_ID,
+          id,
+          name: "Album",
+          images: [],
+          artists: [],
+          tracks: [],
+        };
       },
-      playlistDetail: async (id: string): Promise<Playlist> => {
+      playlistDetail: async (id: string): Promise<PlaylistDetailSnapshot> => {
         calls.push(`playlist:${id}`);
-        return { id, name: "Playlist", images: [], tracks: [] };
+        return { providerId: TEST_PROVIDER_ID, id, name: "Playlist", images: [], tracks: [] };
       },
-      toplistDetail: async (id: string): Promise<Playlist> => {
+      toplistDetail: async (id: string): Promise<PlaylistDetailSnapshot> => {
         calls.push(`chart:${id}`);
-        return { id, name: "Chart", images: [], tracks: [] };
+        return { providerId: TEST_PROVIDER_ID, id, name: "Chart", images: [], tracks: [] };
       },
     };
 
@@ -154,11 +166,22 @@ describe("detail read-model helpers", () => {
 
   test("loads artist detail with top tracks projected into the play context", async () => {
     const reader = {
-      artistDetail: async (id: string): Promise<Artist> => ({
+      artistDetail: async (id: string): Promise<ArtistDetailSnapshot> => ({
+        providerId: TEST_PROVIDER_ID,
         id,
         name: "Artist",
         images: [],
-        topTracks: [{ id: "track", name: "Track", durationMs: 1000, artists: [] }],
+        topTracks: [
+          {
+            providerId: TEST_PROVIDER_ID,
+            id: "track",
+            name: "Track",
+            durationMs: 1000,
+            artists: [],
+          },
+        ],
+        albums: [],
+        similar: [],
       }),
     };
 
@@ -179,8 +202,8 @@ describe("detail read-model helpers", () => {
     };
     const detail: VibeMusicVideo = { ...current, title: "Full", name: "Full", playUrl: "url" };
 
-    expect(shouldFetchMusicVideoDetail(current, () => true)).toBe(true);
-    expect(shouldFetchMusicVideoDetail(current, () => false)).toBe(false);
+    expect(shouldFetchMusicVideoDetail(current, true)).toBe(true);
+    expect(shouldFetchMusicVideoDetail(current, false)).toBe(false);
     expect(mergeMusicVideoDetail(current, "mv", detail)).toMatchObject({
       title: "Full",
       playUrl: "url",
@@ -190,7 +213,8 @@ describe("detail read-model helpers", () => {
 
   test("loads optional music-video detail", async () => {
     const reader = {
-      musicVideoDetail: async (id: string): Promise<MusicVideo> => ({
+      musicVideoDetail: async (id: string): Promise<MusicVideoDetailSnapshot> => ({
+        providerId: TEST_PROVIDER_ID,
         id,
         name: "MV",
         images: [],

@@ -1,8 +1,8 @@
-import { Comment } from "@domain/model/comment";
+import { Comment, type CommentSnapshot } from "@contexts/engagement";
 
 import type { VibeComment } from "@/model/vibe";
 
-export function toVibeComment(comment: Comment): VibeComment {
+export function toVibeComment(comment: CommentSnapshot): VibeComment {
   return {
     id: comment.id,
     name: comment.user.name,
@@ -13,5 +13,5 @@ export function toVibeComment(comment: Comment): VibeComment {
   };
 }
 
-export const toVibeComments = (comments?: readonly Comment[]) =>
+export const toVibeComments = (comments?: readonly CommentSnapshot[]) =>
   (comments ?? []).map((comment) => toVibeComment(comment));

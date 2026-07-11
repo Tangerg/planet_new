@@ -1,11 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { Track } from "./track";
+import { ProviderId } from "./provider-id";
+
+const TEST_PROVIDER_ID = ProviderId.of("test");
 
 describe("Track", () => {
   test("uses track artist credits before album artist credits", () => {
     const track = {
-      artists: [{ id: "track-artist", name: "Track Artist" }],
-      album: { artists: [{ id: "album-artist", name: "Album Artist" }] },
+      artists: [{ providerId: TEST_PROVIDER_ID, id: "track-artist", name: "Track Artist" }],
+      album: {
+        providerId: TEST_PROVIDER_ID,
+        artists: [{ providerId: TEST_PROVIDER_ID, id: "album-artist", name: "Album Artist" }],
+      },
     };
 
     expect(Track.primaryArtist(track)?.id).toBe("track-artist");
@@ -15,8 +21,11 @@ describe("Track", () => {
 
   test("falls back to album credits when list payloads omit named track artists", () => {
     const track = {
-      artists: [{ id: "empty", name: " " }],
-      album: { artists: [{ id: "album-artist", name: "Album Artist" }] },
+      artists: [{ providerId: TEST_PROVIDER_ID, id: "empty", name: " " }],
+      album: {
+        providerId: TEST_PROVIDER_ID,
+        artists: [{ providerId: TEST_PROVIDER_ID, id: "album-artist", name: "Album Artist" }],
+      },
     };
 
     expect(Track.primaryArtist(track)?.id).toBe("album-artist");
@@ -25,8 +34,16 @@ describe("Track", () => {
   });
 
   test("applies resolved provider playback URLs without mutating tracks", () => {
-    const original = { id: "1", playbackId: "mid-1", name: "Song", durationMs: 1, artists: [] };
+    const original = {
+      providerId: TEST_PROVIDER_ID,
+      id: "1",
+      playbackId: "mid-1",
+      name: "Song",
+      durationMs: 1,
+      artists: [],
+    };
     const untouched = {
+      providerId: TEST_PROVIDER_ID,
       id: "2",
       playbackId: "mid-2",
       name: "Other",
@@ -37,7 +54,12 @@ describe("Track", () => {
 
     const resolved = Track.withResolvedPlayUrls(
       [original, untouched],
-      [{ playbackId: "mid-1", playUrl: "https://stream.example/song.mp3" }],
+      [
+        {
+          providerId: TEST_PROVIDER_ID,
+          urls: [{ playbackId: "mid-1", playUrl: "https://stream.example/song.mp3" }],
+        },
+      ],
     );
 
     expect(resolved).toEqual([

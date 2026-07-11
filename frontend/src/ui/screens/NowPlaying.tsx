@@ -14,7 +14,7 @@ import { TagStack } from "@/components/now-playing/TagStack";
 import { UpNextHandle } from "@/components/now-playing/UpNextHandle";
 import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
-import type { Lyric } from "@domain/model/lyric";
+import type { Lyric } from "@contexts/playback";
 import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
 import { nowPlayingTrackModel } from "@/model/now-playing";
 

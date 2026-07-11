@@ -45,7 +45,7 @@ export function TrackCollectionView({
   current?: VibeTrack;
   playing: boolean;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
   flowCenter: number;

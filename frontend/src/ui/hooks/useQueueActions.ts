@@ -15,9 +15,9 @@ export function useQueueActions(opts: {
   const { addToQueue, addNextToQueue, catalogTracks, playbackTracks, queueTracks, playContext } =
     opts;
 
-  const enqueueById = useCallback(
-    (trackId: string, next = false) => {
-      const track = findQueueTrack(trackId, {
+  const enqueueByKey = useCallback(
+    (trackKey: string, next = false) => {
+      const track = findQueueTrack(trackKey, {
         catalogTracks,
         playContext: playContext.current ?? [],
         playbackTracks,
@@ -30,5 +30,5 @@ export function useQueueActions(opts: {
     [addNextToQueue, addToQueue, catalogTracks, playContext, playbackTracks, queueTracks],
   );
 
-  return { enqueueById };
+  return { enqueueByKey };
 }

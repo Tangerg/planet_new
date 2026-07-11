@@ -1,6 +1,7 @@
-import type { AuthSession, CredentialStore } from "@domain";
+import { AuthSession, type CredentialStore } from "@contexts/identity";
+import type { ProviderId } from "@contexts/contracts";
 
-const keyOf = (provider: string) => `planet.auth.${provider}`;
+const keyOf = (providerId: ProviderId) => `planet.auth.${providerId}`;
 
 /**
  * localStorage-backed credential store (single-user desktop app). Kept behind
@@ -8,20 +9,29 @@ const keyOf = (provider: string) => `planet.auth.${provider}`;
  * without touching providers or services.
  */
 export class LocalCredentialStore implements CredentialStore {
-  get(provider: string): AuthSession | null {
+  get(providerId: ProviderId): AuthSession | null {
+    const key = keyOf(providerId);
     try {
-      const raw = localStorage.getItem(keyOf(provider));
-      return raw ? (JSON.parse(raw) as AuthSession) : null;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const session = AuthSession.parse(JSON.parse(raw));
+      if (!session) localStorage.removeItem(key);
+      return session;
     } catch {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Storage can be unavailable as well as corrupt.
+      }
       return null;
     }
   }
 
-  set(provider: string, session: AuthSession): void {
-    localStorage.setItem(keyOf(provider), JSON.stringify(session));
+  set(providerId: ProviderId, session: AuthSession): void {
+    localStorage.setItem(keyOf(providerId), JSON.stringify(session));
   }
 
-  clear(provider: string): void {
-    localStorage.removeItem(keyOf(provider));
+  clear(providerId: ProviderId): void {
+    localStorage.removeItem(keyOf(providerId));
   }
 }

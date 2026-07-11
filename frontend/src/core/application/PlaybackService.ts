@@ -1,8 +1,8 @@
 import type { Capability, Planet } from "../kernel";
-import type { MusicProvider } from "@domain";
+import type { PlaybackResolverRegistry, ProviderId } from "@domain";
 import { PlaybackIntent } from "@domain/model/playback-intent";
 import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
-import type { Track, TrackPlayUrl } from "@domain/model/track";
+import type { ProviderTrackPlayUrls, Track } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
 import { VOLUME_CONTROL } from "../plugin/volume";
@@ -32,7 +32,7 @@ export class PlaybackService {
 
   constructor(
     private readonly planet: Planet,
-    private readonly getProvider: () => MusicProvider,
+    private readonly resolvers: PlaybackResolverRegistry,
   ) {}
 
   // ── Queue + play ──────────────────────────────────────────────────
@@ -45,25 +45,13 @@ export class PlaybackService {
   async play(tracks: Track[], track: Track): Promise<void> {
     const gen = ++this.playGeneration;
     const intent = PlaybackIntent.from(tracks, track);
-    const provider = this.getProvider();
-    const resolutionPolicy = this.playbackPolicy();
-
-    let urls: readonly TrackPlayUrl[] = [];
-    const playbackIdsToResolve = intent.playbackIdsToResolve(resolutionPolicy);
-    if (playbackIdsToResolve.length) {
-      try {
-        urls = await provider.playUrls(playbackIdsToResolve);
-      } catch (error) {
-        // We only get here for a provider that *claims* playback support (the
-        // resolution policy gated on it), so a throw is a real resolve failure,
-        // not "unsupported". Surface it, but still switch track on the fallback.
-        warnReadFailure(`${provider.name}.playUrls`, error);
-      }
-    }
+    const resolutions = await Promise.all(
+      intent.providerIds.map((providerId) => this.resolveUrls(intent, providerId)),
+    );
     // A newer play() superseded this one while awaiting — drop the stale result.
     if (gen !== this.playGeneration) return;
 
-    const resolved = intent.withResolvedUrls(urls);
+    const resolved = intent.withResolvedUrls(resolutions);
     this.queue.playNow(resolved.tracks, resolved.current);
   }
 
@@ -73,11 +61,31 @@ export class PlaybackService {
    * availability — one source of truth for "how can this provider play audio".
    */
   playbackPolicy(): PlaybackAvailabilityPolicy {
-    const provider = this.getProvider();
-    return {
-      canResolveFullPlayback: provider.supports("fullPlayback"),
-      canUsePreviewPlayback: provider.supports("previewPlayback"),
-    };
+    return this.resolvers.active().policy;
+  }
+
+  private async resolveUrls(
+    intent: PlaybackIntent,
+    providerId: ProviderId,
+  ): Promise<ProviderTrackPlayUrls> {
+    const resolver = this.resolvers.get(providerId);
+    if (!resolver) {
+      warnReadFailure(
+        `playback provider ${providerId}`,
+        new Error("The track source is no longer registered."),
+      );
+      return { providerId, urls: [] };
+    }
+    const playbackIds = intent.playbackIdsToResolve(providerId, resolver.policy);
+    if (!playbackIds.length) return { providerId, urls: [] };
+    try {
+      return { providerId, urls: await resolver.resolve(playbackIds) };
+    } catch (error) {
+      // A declared playback capability failed. Keep the queue transition
+      // resilient, but make the adapter fault observable.
+      warnReadFailure(`${resolver.diagnosticName}.resolvePlayback`, error);
+      return { providerId, urls: [] };
+    }
   }
 
   /** Start this list in shuffle mode. The queue owns the actual shuffled order. */

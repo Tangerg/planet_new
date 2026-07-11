@@ -6,7 +6,13 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
-import { trackRowModel, type TrackRowTrend } from "@/model/track-row";
+import { isVibeTrackLiked } from "@/model/likes";
+import {
+  trackRowModel,
+  type TrackRowBadge,
+  type TrackRowLeading,
+  type TrackRowTrend,
+} from "@/model/track-row";
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -23,7 +29,7 @@ type TrackRowProps = {
   current?: VibeTrack;
   playing: boolean;
   liked: Set<string>;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   accent: string;
   dark?: boolean;
   rank?: number;
@@ -34,6 +40,119 @@ type TrackRowProps = {
   onRemoveFromQueue?: (track: VibeTrack) => void;
   onMenuPlay?: (track: VibeTrack) => void;
 };
+
+const BADGE_CLASS =
+  "flex-none rounded-sm px-[5px] py-[2px] font-mono text-[8.5px] uppercase leading-[1.3] tracking-[0.08em]";
+
+function TrackLeading({
+  leading,
+  accent,
+  color,
+  muted,
+}: {
+  leading: TrackRowLeading;
+  accent: string;
+  color: string;
+  muted: string;
+}) {
+  switch (leading.kind) {
+    case "rank":
+      return (
+        <span
+          className="mlabel text-[16px] font-medium"
+          style={{ color: leading.active ? accent : color }}
+        >
+          {leading.value}
+        </span>
+      );
+    case "equalizer":
+      return <Equalizer playing color={accent} size={14} />;
+    case "play":
+      return (
+        <span style={{ color }}>
+          <Icon.play size={15} />
+        </span>
+      );
+    case "index":
+      return (
+        <span className="mlabel text-[12px]" style={{ color: muted }}>
+          {leading.value}
+        </span>
+      );
+  }
+}
+
+function TrackTrend({
+  trend,
+  accent,
+  muted,
+}: {
+  trend: TrackRowTrend;
+  accent: string;
+  muted: string;
+}) {
+  switch (trend.kind) {
+    case "new":
+      return (
+        <span className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: accent }}>
+          NEW
+        </span>
+      );
+    case "up":
+      return (
+        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#1ed98a" }}>
+          ▲<span className="text-[9px]">{trend.value}</span>
+        </span>
+      );
+    case "down":
+      return (
+        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#ff6b6b" }}>
+          ▼<span className="text-[9px]">{trend.value}</span>
+        </span>
+      );
+    case "same":
+      return (
+        <span className="text-[12px]" style={{ color: muted }}>
+          –
+        </span>
+      );
+  }
+}
+
+function TrackBadges({
+  badges,
+  accent,
+  muted,
+}: {
+  badges: readonly TrackRowBadge[];
+  accent: string;
+  muted: string;
+}) {
+  return badges.map((badge) =>
+    badge.kind === "subscription" ? (
+      <span
+        key={badge.kind}
+        className={`${BADGE_CLASS} font-bold`}
+        style={{ color: "#06060a", background: accent }}
+      >
+        {badge.label}
+      </span>
+    ) : (
+      <span
+        key={badge.kind}
+        className={BADGE_CLASS}
+        style={{
+          color: badge.kind === "version" ? "rgba(255,255,255,.7)" : muted,
+          border: `1px solid ${
+            badge.kind === "version" ? "rgba(255,255,255,.22)" : "rgba(255,255,255,.18)"
+          }`,
+        }}
+      >
+        {badge.label}
+      </span>
+    ),
+  );
+}
 
 // React.memo: this row is the leaf of every virtualized track list, so on each
 // scroll windowing tick the list re-invokes renderItem for all visible rows.
@@ -66,7 +185,7 @@ export const TrackRow = React.memo(function TrackRow({
   const [hover, setHover] = useState(false);
   const model = trackRowModel({
     track,
-    currentId: current?.id,
+    current,
     playing,
     hover,
     index,
@@ -76,6 +195,7 @@ export const TrackRow = React.memo(function TrackRow({
   });
   const col = dark ? "#fff" : "#16161a";
   const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
+  const isLiked = isVibeTrackLiked(liked, track);
   const activateTrack = (e?: React.MouseEvent) => {
     if (model.unavailable) return;
     if (e && onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
@@ -84,41 +204,13 @@ export const TrackRow = React.memo(function TrackRow({
     }
     onPlay(track);
   };
-  // Shared chart/version/VIP badge chrome (colours added per badge inline).
-  const badgeCls =
-    "flex-none rounded-sm px-[5px] py-[2px] font-mono text-[8.5px] uppercase leading-[1.3] tracking-[0.08em]";
-  const Trend = ({ trend }: { trend: TrackRowTrend }) => {
-    if (trend.kind === "new")
-      return (
-        <span className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: accent }}>
-          NEW
-        </span>
-      );
-    if (trend.kind === "up")
-      return (
-        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#1ed98a" }}>
-          ▲<span className="text-[9px]">{trend.value}</span>
-        </span>
-      );
-    if (trend.kind === "down")
-      return (
-        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#ff6b6b" }}>
-          ▼<span className="text-[9px]">{trend.value}</span>
-        </span>
-      );
-    return (
-      <span className="text-[12px]" style={{ color: sub }}>
-        –
-      </span>
-    );
-  };
   return (
     <div
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       draggable={!model.unavailable}
       onDragStart={(e: React.DragEvent) => {
-        writeTrackDragData(e.dataTransfer, track.id);
+        writeTrackDragData(e.dataTransfer, track);
         e.dataTransfer.effectAllowed = "copy";
       }}
       onContextMenu={(e: React.MouseEvent) =>
@@ -148,24 +240,7 @@ export const TrackRow = React.memo(function TrackRow({
         className="flex flex-none items-center gap-4"
       >
         <div className="flex-none text-center" style={{ width: model.chart ? 30 : 22 }}>
-          {model.leading.kind === "rank" ? (
-            <span
-              className="mlabel text-[16px] font-medium"
-              style={{ color: model.leading.active ? accent : col }}
-            >
-              {model.leading.value}
-            </span>
-          ) : model.leading.kind === "equalizer" ? (
-            <Equalizer playing color={accent} size={14} />
-          ) : model.leading.kind === "play" ? (
-            <span style={{ color: col }}>
-              <Icon.play size={15} />
-            </span>
-          ) : (
-            <span className="mlabel text-[12px]" style={{ color: sub }}>
-              {model.leading.value}
-            </span>
-          )}
+          <TrackLeading leading={model.leading} accent={accent} color={col} muted={sub} />
         </div>
         <Art
           seed={track.coverSeed}
@@ -192,30 +267,7 @@ export const TrackRow = React.memo(function TrackRow({
           >
             {track.title}
           </span>
-          {model.badges.map((badge) =>
-            badge.kind === "subscription" ? (
-              <span
-                key={badge.kind}
-                className={badgeCls + " font-bold"}
-                style={{ color: "#06060a", background: accent }}
-              >
-                {badge.label}
-              </span>
-            ) : (
-              <span
-                key={badge.kind}
-                className={badgeCls}
-                style={{
-                  color: badge.kind === "version" ? "rgba(255,255,255,.7)" : sub,
-                  border: `1px solid ${
-                    badge.kind === "version" ? "rgba(255,255,255,.22)" : "rgba(255,255,255,.18)"
-                  }`,
-                }}
-              >
-                {badge.label}
-              </span>
-            ),
-          )}
+          <TrackBadges badges={model.badges} accent={accent} muted={sub} />
         </div>
         <div className="truncate text-[12.5px] font-light" style={{ color: sub }}>
           <ArtistLinks
@@ -230,19 +282,19 @@ export const TrackRow = React.memo(function TrackRow({
       </div>
       {model.trend && (
         <span className="w-[38px] flex-none text-center">
-          <Trend trend={model.trend} />
+          <TrackTrend trend={model.trend} accent={accent} muted={sub} />
         </span>
       )}
       <Button
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          toggleLike(track.id);
+          toggleLike(track);
         }}
         aria-label={t("a11y.like")}
         className="p-1"
-        style={{ color: liked.has(track.id) ? accent : hover ? col : "transparent" }}
+        style={{ color: isLiked ? accent : hover ? col : "transparent" }}
       >
-        <Icon.heart size={17} filled={liked.has(track.id)} />
+        <Icon.heart size={17} filled={isLiked} />
       </Button>
       <span className="mlabel w-[42px] flex-none text-right text-[11px]" style={{ color: sub }}>
         {track.duration}

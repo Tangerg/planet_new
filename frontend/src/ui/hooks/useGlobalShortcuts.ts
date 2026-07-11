@@ -11,7 +11,8 @@
  */
 import { useEffect } from "react";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { likedShortcutTarget, nextVolumeLevel } from "@/model/player";
+import { nextVolumeLevel } from "@/model/player";
+import type { VibeTrack } from "@/model/vibe";
 import {
   canUsePlaybackShortcut,
   elementMatchesClosest,
@@ -41,10 +42,10 @@ export type GlobalShortcutHandlers = {
   playPrev: () => void;
   volume: number;
   setVolume: (v: number) => void;
-  /** Active track id (undefined when nothing is playing → like is a no-op). */
-  currentId?: string;
+  /** Active source-qualified track (undefined when nothing is playing). */
+  currentTrack?: VibeTrack;
   hasCurrentTrack: boolean;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
 };
 
 export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
@@ -59,7 +60,7 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
     playPrev,
     volume,
     setVolume,
-    currentId,
+    currentTrack,
     hasCurrentTrack,
     toggleLike,
   } = h;
@@ -78,8 +79,7 @@ export function useGlobalShortcuts(h: GlobalShortcutHandlers): void {
   useHotkey(
     "Mod+L",
     () => {
-      const target = likedShortcutTarget(currentId);
-      if (target) toggleLike(target);
+      if (currentTrack) toggleLike(currentTrack);
     },
     HK_IGNORE_INPUTS,
   );

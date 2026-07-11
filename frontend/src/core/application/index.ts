@@ -1,9 +1,3 @@
-/** @core/application public surface: the Engine facade + application services
- *  (use-case layer over the kernel). The UI holds the Engine; the services are
- *  reachable through it (engine.playback / engine.media). */
+/** Root runtime facade. Context use cases publish through @contexts/<context>. */
 export * from "./Engine";
-export * from "./PlaybackService";
-export * from "./MediaService";
-export * from "./AuthService";
-export * from "./LibraryService";
 export * from "./AudioAnalysisService";

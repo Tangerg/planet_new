@@ -12,6 +12,7 @@ build/bin
 frontend/dist
 frontend/coverage
 frontend/.tanstack
+frontend/package.json.md5
 
 # —— 依赖 —— #
 node_modules

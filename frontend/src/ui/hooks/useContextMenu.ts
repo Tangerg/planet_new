@@ -15,7 +15,7 @@ export function useContextMenu(opts: {
   enqueue: (trackId: string, next?: boolean) => void;
   openDetail: (item: CardItem) => void;
   openArtist: (ar: ArtistTarget) => void;
-  toggleLike: (id: string) => void;
+  toggleLike: (track: VibeTrack) => void;
   liked: Set<string>;
 }) {
   const [menu, setMenu] = useState<MenuState>(null);

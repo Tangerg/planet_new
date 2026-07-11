@@ -1,8 +1,12 @@
-import type { Image } from "@domain/model/image";
-import type { Track } from "@domain/model/track";
+import type { Image } from "@contexts/catalog";
+import type { TrackSnapshot } from "@contexts/catalog";
+import { TrackKey, type ProviderId, type TrackKeyValue } from "@contexts/contracts";
 
 /** Display shape for a track, shared by mock and real data alike. */
 export type VibeTrack = {
+  /** Source namespace for the provider-local `id`. Required before a view-only
+   * track can cross back into the domain/playback boundary. */
+  providerId?: ProviderId;
   id: string;
   index?: number;
   title: string;
@@ -38,11 +42,29 @@ export type VibeTrack = {
   _delta?: number;
   /** The domain track this view was projected from. Carried so a "play" gesture
    *  can hand the kernel the full entity without re-fetching (the queue stores
-   *  domain tracks and re-projects them for Now Playing). Absent only on
-   *  hand-built view tracks like the placeholder. Boundary rule: only the track
-   *  adapter writes it (hence `readonly`), only `toTrack()` reads it back. */
-  readonly source?: Partial<Track>;
+   *  domain tracks and re-projects them for Now Playing). It may be absent on
+   *  hand-built view tracks; those must carry `providerId` before crossing back
+   *  into the domain. Boundary rule: only the track adapter writes `source`
+   *  (hence `readonly`), only `toTrack()` reads it back. */
+  readonly source?: TrackSnapshot;
 };
+
+/** Source-qualified identity at the presentation boundary. View-only
+ * placeholders deliberately have no key and cannot participate in identity
+ * comparisons, persistence, likes or playback commands. */
+export function vibeTrackKey(
+  track: Pick<VibeTrack, "providerId" | "id"> | null | undefined,
+): TrackKeyValue | undefined {
+  return track?.providerId && track.id ? TrackKey.of(track.providerId, track.id) : undefined;
+}
+
+export function sameVibeTrack(
+  left: Pick<VibeTrack, "providerId" | "id"> | null | undefined,
+  right: Pick<VibeTrack, "providerId" | "id"> | null | undefined,
+): boolean {
+  const leftKey = vibeTrackKey(left);
+  return leftKey !== undefined && leftKey === vibeTrackKey(right);
+}
 
 /** Display shape for a collection (playlist / album / chart). */
 export type VibeCollection = {

@@ -1,6 +1,6 @@
 # PLANET
 
-一个 **Wails 桌面音乐播放器** —— Go 壳 + React 19 / TypeScript 前端。微内核 + 插件架构,所有数据经 `MusicProvider` 抽象接入(网易云 / QQ / Spotify / Mock 可切换)。
+一个 **Wails 桌面音乐播放器** —— Go 壳 + React 19 / TypeScript 前端。微内核 + 插件架构,所有数据经 provider 端口接入(网易云 / QQ / Spotify / 本地音乐可切换)。
 
 > 架构法则与开发约定见 [`frontend/CLAUDE.md`](frontend/CLAUDE.md)。
 
@@ -9,9 +9,9 @@
 ## 环境要求
 
 - **Go** 1.25+(确保 `go` 在 `PATH`,通常需 `/usr/local/go/bin` 与 `~/go/bin`)
-- **Node** 18+ 与 **Yarn**(classic 1.x)
+- **Node** 22+ 与 **Yarn**(classic 1.x)
 - **Wails CLI** v2.12（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）
-- 一个**数据源后端**(见下)——除非用 `mock`
+- 一个**数据源后端**(见下)；只使用本地音乐时不需要
 
 ---
 
@@ -44,10 +44,6 @@
 - 仓库:**https://github.com/Rain120/qq-music-api**
 - 启动后默认跑在 `:3200`。
 
-#### Mock(无需后端)
-
-`VITE_PROVIDER=mock`:走真实取数路径但使用内置假数据,适合纯前端 / 离线开发。
-
 ### 2. 选择 provider(`frontend/.env.local`)
 
 ```ini
@@ -59,11 +55,11 @@ VITE_NETEASE_HOST=http://localhost:3300
 # VITE_PROVIDER=qqmusic
 # VITE_QQMUSIC_HOST=http://localhost:3200
 
-# 纯前端无后端:
-# VITE_PROVIDER=mock
+# 使用本地音乐库:
+# VITE_PROVIDER=local
 ```
 
-`VITE_PROVIDER` 取值:`netease` | `qqmusic` | `spotify` | `mock`(缺省回退 `mock`)。`VITE_*_HOST` 必须与数据后端实际监听的端口一致。
+`VITE_PROVIDER` 取值:`netease` | `qqmusic` | `spotify` | `local`，缺省回退 `netease`。`VITE_*_HOST` 必须与数据后端实际监听的端口一致。
 
 ### 3. 启动应用(前后端一起)
 
@@ -76,7 +72,7 @@ wails dev
 
 - 桌面窗口会自动打开。
 - 想在浏览器里调试并调用 Go 方法:打开 http://localhost:34115 。
-- 后端数据服务没起时,相关页面会显示诚实空态(不会崩);想要有数据的体验就先起 provider 后端,或用 `VITE_PROVIDER=mock`。
+- 后端数据服务没起时,相关页面会显示诚实空态(不会崩);想要有数据的体验就启动 provider 后端，或切到 `VITE_PROVIDER=local` 扫描本地音乐。
 
 #### 只跑前端(可选)
 
@@ -100,9 +96,10 @@ wails build       # 产出可分发的 PLANET 应用(build/bin/)
 
 ## 质量门禁
 
-前端改动提交前需全绿(husky 预提交会对暂存文件跑 prettier + oxlint):
+提交前在仓库根目录运行唯一全量门禁：
 
 ```bash
-cd frontend
-yarn check        # typecheck + lint + format:check + test + knip + check:circular + check:layers
+make check         # Go vet/race + 前端 check + production build
 ```
+
+只验证前端时使用 `cd frontend && yarn run check`。必须写 `run`，因为 `yarn check` 是 Yarn Classic 自带的依赖完整性命令，不是本项目脚本。

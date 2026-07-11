@@ -12,7 +12,7 @@
  * testable and free of React. The XMB screen consumes these types.
  */
 import { clampIndex } from "@shared/number";
-import type { ProviderCapability } from "@domain";
+import type { CatalogAvailability } from "@contexts/catalog";
 
 import type { ScreenData, VibeTrack } from "@/model/vibe";
 
@@ -40,8 +40,8 @@ export type XmbCat = {
 /** Session/data inputs the tree projects into menu structure. */
 export type NavContext = {
   catalog: ScreenData;
-  /** Active-provider capability predicate (MediaService.supports). */
-  supports: (cap: ProviderCapability) => boolean;
+  /** Active-source availability projected from its registered Catalog ports. */
+  availability: CatalogAvailability;
   liked: ReadonlySet<string>;
   current?: VibeTrack;
   queueLength: number;
@@ -149,12 +149,12 @@ export function xmbWheelNavigation({
  * exists. Empty worlds drop out.
  */
 export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
-  const { catalog, supports, liked, current, queueLength } = ctx;
+  const { catalog, availability, liked, current, queueLength } = ctx;
   const { goto, openSearch, openLibrary, openLikedSongs } = actions;
 
   // 2 · DISCOVER — Catalog (find music). Provider-capability gated.
   const discover: XmbItemModel[] = [];
-  if (supports("personalized")) {
+  if (availability.personalized) {
     discover.push({
       key: "foryou",
       label: "For You",
@@ -166,7 +166,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       run: () => goto("home"),
     });
   }
-  if (supports("toplist")) {
+  if (availability.toplist) {
     discover.push({
       key: "charts",
       label: "Charts",
@@ -178,7 +178,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       run: () => goto("charts"),
     });
   }
-  if (supports("search")) {
+  if (availability.search) {
     discover.push({
       key: "search",
       label: "Search",

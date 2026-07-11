@@ -4,12 +4,14 @@
 package scan
 
 import (
+	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
-	"changeme/backend/domain"
+	"github.com/Tangerg/planet_new/backend/domain"
 
 	"github.com/dhowden/tag"
 )
@@ -24,31 +26,59 @@ var coverNames = []string{"cover", "folder", "front", "albumart"}
 // Scanner extracts album art into coversDir (once per album) while walking.
 type Scanner struct {
 	coversDir string
+	walkDir   func(string, fs.WalkDirFunc) error
 }
 
 var _ domain.Scanner = (*Scanner)(nil)
 
-func New(coversDir string) *Scanner { return &Scanner{coversDir: coversDir} }
+func New(coversDir string) *Scanner {
+	return &Scanner{coversDir: coversDir, walkDir: filepath.WalkDir}
+}
 
-// Scan walks root and returns metadata for every audio file, plus the count of
-// audio files seen. Unreadable entries are skipped, not fatal — one bad file
-// must not abort a whole-library scan.
-func (s *Scanner) Scan(root string) ([]domain.TrackMetadata, int, error) {
+// Scan walks root and returns an authoritative complete snapshot only when the
+// entire tree was observable. A recoverable subtree error marks the snapshot
+// partial: readable files are still indexed, but the repository must not prune
+// paths absent from that observation. Root failure and cancellation abort the
+// use case because no meaningful folder scan occurred.
+func (s *Scanner) Scan(ctx context.Context, root string) (domain.ScanSnapshot, error) {
 	var metas []domain.TrackMetadata
 	seen := 0
+	complete := true
 
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
+	err := s.walkDir(root, func(path string, d os.DirEntry, walkErr error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if walkErr != nil {
+			if path == root {
+				return walkErr
+			}
+			complete = false
 			return nil
 		}
 		if d.IsDir() || !audioExts[strings.ToLower(filepath.Ext(path))] {
 			return nil
 		}
 		seen++
-		metas = append(metas, s.parseFile(path))
+		meta := s.parseFile(path)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		metas = append(metas, meta)
 		return nil
 	})
-	return metas, seen, err
+	if err != nil {
+		return domain.ScanSnapshot{}, err
+	}
+	completeness := domain.ScanPartial
+	if complete {
+		completeness = domain.ScanComplete
+	}
+	return domain.ScanSnapshot{
+		Metadata:     metas,
+		FilesSeen:    seen,
+		Completeness: completeness,
+	}, nil
 }
 
 func (s *Scanner) parseFile(path string) domain.TrackMetadata {

@@ -48,7 +48,7 @@ describe("NCM mapper", () => {
       likedCount: 34,
       shareCount: 56,
     });
-    expect(mv.artists[0]).toEqual({ id: "8926", name: "莫文蔚" });
+    expect(mv.artists[0]).toEqual({ providerId: "netease", id: "8926", name: "莫文蔚" });
     expect(mv.images[0]?.url).toContain("https://");
   });
 

@@ -1,4 +1,4 @@
-import type { ArtistCredit as DomainArtistCredit } from "@domain/model/artist-credit";
+import type { ArtistCredit as DomainArtistCredit } from "@contexts/catalog";
 
 import type { ArtistRef } from "@/model/vibe";
 

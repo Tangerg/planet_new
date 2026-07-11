@@ -11,7 +11,7 @@
 // ============================================================
 import { useMemo, useRef } from "react";
 
-import { activeLyricIndex, type Lyric } from "@domain/model/lyric";
+import { activeLyricIndex, type Lyric } from "@contexts/playback";
 
 import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 import { lyricLinesOrFallback } from "@/model/now-playing";

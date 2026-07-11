@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as Library from "@wailsjs/go/backend/Library";
 import { backend } from "@wailsjs/go/models";
+import { Planet, type AudioRuntimePort } from "@core";
+import { ProviderRegistry } from "@core/plugin";
 import { LocalMusic } from "./LocalMusic";
 import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
 
@@ -45,6 +47,15 @@ function artist(over: Partial<LocalArtist> = {}): LocalArtist {
   return { id: "ar1", name: "Artist", albumCount: 1, trackCount: 2, coverUrl: "", ...over };
 }
 
+function audioRuntime(): AudioRuntimePort {
+  return {
+    audioElement: {} as HTMLAudioElement,
+    audioContext: {} as AudioContext,
+    createAnalysisElement: () => ({}) as HTMLAudioElement,
+    dispose() {},
+  };
+}
+
 // vi.mock-factory mocks aren't swept by the suite's restoreMocks, so reset their
 // call history + implementations per test to keep the "not called" assertions honest.
 beforeEach(() => {
@@ -64,14 +75,24 @@ describe("LocalMusic — bridge present", () => {
     delete (window as unknown as { go?: object }).go;
   });
 
-  it("names itself and declares its capabilities", () => {
+  it("registers only the context ports it actually implements", () => {
     expect(provider.name).toBe("Local");
-    expect(provider.supports("fullPlayback")).toBe(true);
-    expect(provider.supports("search")).toBe(true);
-    expect(provider.supports("lyric")).toBe(true); // sidecar .lrc
-    // Network-only concepts the on-device library does not have.
-    expect(provider.supports("toplist")).toBe(false);
-    expect(provider.supports("auth")).toBe(false);
+    expect(provider.providerId).toBe("local");
+    const registry = new ProviderRegistry(provider.providerId);
+    const planet = new Planet({ audio: audioRuntime(), plugins: [provider, registry] });
+    const source = registry.active;
+
+    expect(source?.catalog.search).toBe(provider);
+    expect(source?.catalog.tracks).toBe(provider);
+    expect(source?.lyrics).toBe(provider);
+    expect(source?.playback.policy).toEqual({
+      canResolveFullPlayback: true,
+      canUsePreviewPlayback: false,
+    });
+    expect(source?.catalog.charts).toBeNull();
+    expect(source?.identity).toBeNull();
+    expect(source?.userLibrary).toBeNull();
+    planet.dispose();
   });
 
   it("projects Home into a synthetic 'all tracks' playlist plus recent rows", async () => {
@@ -85,7 +106,7 @@ describe("LocalMusic — bridge present", () => {
 
     const home = await provider.personalized();
     expect(home.playlists).toEqual([
-      { id: "library:all", name: "全部歌曲", images: [], totalTracks: 5 },
+      { providerId: "local", id: "library:all", name: "全部歌曲", images: [], totalTracks: 5 },
     ]);
     expect(home.albums).toHaveLength(2);
     expect(home.artists).toHaveLength(1);
@@ -103,62 +124,62 @@ describe("LocalMusic — bridge present", () => {
     vi.mocked(Library.AllTracks).mockResolvedValue([track({ id: "t1" }), track({ id: "t2" })]);
     const playlist = await provider.playlistDetail("library:all");
     expect(playlist).toMatchObject({ id: "library:all", name: "全部歌曲", totalTracks: 2 });
-    expect(playlist.tracks?.map((t) => t.id)).toEqual(["t1", "t2"]);
+    expect(playlist?.tracks.map((t) => t.id)).toEqual(["t1", "t2"]);
     expect(Library.AllTracks).toHaveBeenCalledOnce();
   });
 
-  it("returns an empty shell for an unknown playlist id without hitting the catalog", async () => {
+  it("returns undefined for an unknown playlist id without hitting the catalog", async () => {
     const playlist = await provider.playlistDetail("something-else");
-    expect(playlist).toEqual({
-      id: "something-else",
-      name: "",
-      images: [],
-      tracks: [],
-      totalTracks: 0,
-    });
+    expect(playlist).toBeUndefined();
     expect(Library.AllTracks).not.toHaveBeenCalled();
   });
 
-  it("assembles an album with its tracks, and an empty shell when missing", async () => {
+  it("assembles an album with its tracks, and returns undefined when missing", async () => {
     vi.mocked(Library.AlbumDetail).mockResolvedValueOnce(
-      backend.AlbumDetail.createFrom({
-        album: album({ id: "al1", name: "Album" }),
-        tracks: [track()],
+      backend.AlbumDetailResult.createFrom({
+        status: "found",
+        detail: {
+          album: album({ id: "al1", name: "Album" }),
+          tracks: [track()],
+        },
       }),
     );
     const found = await provider.albumDetail("al1");
     expect(found).toMatchObject({ id: "al1", name: "Album" });
-    expect(found.tracks).toHaveLength(1);
+    expect(found?.tracks).toHaveLength(1);
 
-    // A blank album id signals "not found" → an empty shell, tracks untouched.
     vi.mocked(Library.AlbumDetail).mockResolvedValueOnce(
-      backend.AlbumDetail.createFrom({ album: album({ id: "" }), tracks: [] }),
+      backend.AlbumDetailResult.createFrom({
+        status: "notFound",
+        detail: { album: album({ id: "" }), tracks: [] },
+      }),
     );
-    expect(await provider.albumDetail("nope")).toEqual({
-      id: "nope",
-      name: "",
-      images: [],
-      artists: [],
-    });
+    expect(await provider.albumDetail("nope")).toBeUndefined();
   });
 
-  it("assembles an artist with top tracks + albums, and a shell when missing", async () => {
+  it("assembles an artist with top tracks + albums, and returns undefined when missing", async () => {
     vi.mocked(Library.ArtistDetail).mockResolvedValueOnce(
-      backend.ArtistDetail.createFrom({
-        artist: artist({ id: "ar1", name: "Artist" }),
-        albums: [album()],
-        tracks: [track(), track({ id: "t2" })],
+      backend.ArtistDetailResult.createFrom({
+        status: "found",
+        detail: {
+          artist: artist({ id: "ar1", name: "Artist" }),
+          albums: [album()],
+          tracks: [track(), track({ id: "t2" })],
+        },
       }),
     );
     const found = await provider.artistDetail("ar1");
     expect(found).toMatchObject({ id: "ar1", name: "Artist" });
-    expect(found.topTracks).toHaveLength(2);
-    expect(found.albums).toHaveLength(1);
+    expect(found?.topTracks).toHaveLength(2);
+    expect(found?.albums).toHaveLength(1);
 
     vi.mocked(Library.ArtistDetail).mockResolvedValueOnce(
-      backend.ArtistDetail.createFrom({ artist: artist({ id: "" }), albums: [], tracks: [] }),
+      backend.ArtistDetailResult.createFrom({
+        status: "notFound",
+        detail: { artist: artist({ id: "" }), albums: [], tracks: [] },
+      }),
     );
-    expect(await provider.artistDetail("nope")).toEqual({ id: "nope", name: "", images: [] });
+    expect(await provider.artistDetail("nope")).toBeUndefined();
   });
 
   it("maps requested track details and short-circuits an empty id list", async () => {
@@ -217,7 +238,7 @@ describe("LocalMusic — bridge present", () => {
   });
 });
 
-describe("LocalMusic — no bridge (plain browser)", () => {
+describe("LocalMusic — unavailable bridge (plain browser)", () => {
   let provider: LocalMusic;
 
   beforeEach(() => {
@@ -225,26 +246,24 @@ describe("LocalMusic — no bridge (plain browser)", () => {
     provider = new LocalMusic();
   });
 
-  it("degrades every read to an empty result without touching the bridge", async () => {
-    expect(await provider.personalized()).toEqual({ playlists: [] });
-    expect(await provider.playlistDetail("library:all")).toEqual({
-      id: "library:all",
-      name: "",
-      images: [],
-      tracks: [],
-      totalTracks: 0,
-    });
-    expect(await provider.albumDetail("al1")).toEqual({ id: "al1", name: "", images: [], artists: [] }); // prettier-ignore
-    expect(await provider.artistDetail("ar1")).toEqual({ id: "ar1", name: "", images: [] });
-    expect(await provider.trackDetails(["t1"])).toEqual([]);
-    expect(await provider.playUrls(["t1"])).toEqual([]);
-    expect(await provider.search("song")).toEqual({
+  it("reports unavailable reads without confusing them with empty or not-found", async () => {
+    await expect(provider.personalized()).rejects.toThrow("bridge is unavailable");
+    await expect(provider.playlistDetail("library:all")).rejects.toThrow("bridge is unavailable");
+    await expect(provider.albumDetail("al1")).rejects.toThrow("bridge is unavailable");
+    await expect(provider.artistDetail("ar1")).rejects.toThrow("bridge is unavailable");
+    expect(await provider.playlistDetail("unknown")).toBeUndefined();
+    expect(await provider.trackDetails([])).toEqual([]);
+    await expect(provider.trackDetails(["t1"])).rejects.toThrow("bridge is unavailable");
+    expect(await provider.playUrls([])).toEqual([]);
+    await expect(provider.playUrls(["t1"])).rejects.toThrow("bridge is unavailable");
+    expect(await provider.search(" ")).toEqual({
       tracks: [],
       artists: [],
       albums: [],
       playlists: [],
     });
-    expect(await provider.lyric("t1")).toEqual([]);
+    await expect(provider.search("song")).rejects.toThrow("bridge is unavailable");
+    await expect(provider.lyric("t1")).rejects.toThrow("bridge is unavailable");
 
     for (const fn of [
       Library.Home,

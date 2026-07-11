@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { VibeComment, VibeMusicVideo } from "@/model/vibe";
-import { type MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
+import { type MusicVideoAvailabilityPolicy } from "@contexts/catalog";
 import { Art } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";

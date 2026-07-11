@@ -2,11 +2,11 @@
  * Random integer in the half-open range [min, max) (array-index friendly).
  * @throws if min >= max
  */
-export function getRandomInt(min: number, max: number): number {
+export function getRandomInt(min: number, max: number, random: () => number): number {
   if (min >= max) {
     throw new Error("min must be less than max");
   }
-  return Math.floor(Math.random() * (max - min)) + min;
+  return Math.floor(random() * (max - min)) + min;
 }
 
 /**

@@ -1,8 +1,6 @@
 import { Plugin } from "@core";
-import type { FormattedDuration, Progress } from "@domain/model/duration";
-import type { Track } from "@domain/model/track";
-import type { Lyric } from "@domain/model/lyric";
-import type { PlayState } from "@core/plugin";
+import type { TrackSnapshot as Track } from "@contexts/catalog";
+import type { FormattedDuration, Lyric, PlayState, Progress } from "@contexts/playback";
 
 import { usePlayQueueStore } from "./playqueue";
 

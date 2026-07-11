@@ -1,11 +1,19 @@
 import type { Planet } from "../kernel";
-import type { CredentialStore, MusicProvider } from "@domain";
+import type {
+  CredentialStore,
+  IdentitySourcePort,
+  MusicSource,
+  PlaybackResolverRegistry,
+  ProviderId,
+} from "@domain";
+import type { UserLibrarySourcePort } from "@domain/ports/userLibrary";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { PlaybackService } from "./PlaybackService";
-import { MediaService } from "./MediaService";
-import { AuthService } from "./AuthService";
+import { MediaService } from "@contexts/catalog";
+import { IdentityService } from "@contexts/identity";
 import { LibraryService } from "./LibraryService";
 import { AudioAnalysisService } from "./AudioAnalysisService";
+import { EngagementService } from "@contexts/engagement";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
@@ -22,25 +30,53 @@ import { AudioAnalysisService } from "./AudioAnalysisService";
 export class Engine {
   readonly playback: PlaybackService;
   readonly media: MediaService;
-  readonly auth: AuthService;
+  readonly identity: IdentityService;
   readonly library: LibraryService;
+  readonly engagement: EngagementService;
   readonly audio: AudioAnalysisService;
 
   constructor(
     private readonly planet: Planet,
     credentials: CredentialStore,
   ) {
-    const getProvider = (): MusicProvider => {
+    const getSource = (): MusicSource => {
       const provider = this.providers.active;
       if (!provider) {
         throw new Error("No music provider is registered on the Planet.");
       }
       return provider;
     };
-    this.playback = new PlaybackService(planet, getProvider);
-    this.media = new MediaService(getProvider);
-    this.auth = new AuthService(getProvider, credentials);
-    this.library = new LibraryService(getProvider);
+    const playbackResolvers: PlaybackResolverRegistry = {
+      active: () => getSource().playback,
+      get: (providerId: ProviderId) => {
+        return this.providers.get(providerId)?.playback ?? null;
+      },
+    };
+    this.playback = new PlaybackService(planet, playbackResolvers);
+    this.media = new MediaService(() => getSource());
+    const identitySources: IdentitySourcePort = {
+      active: () => {
+        const provider = getSource();
+        return {
+          providerId: provider.providerId,
+          diagnosticName: provider.name,
+          identity: provider.identity,
+        };
+      },
+    };
+    const librarySources: UserLibrarySourcePort = {
+      active: () => {
+        const provider = getSource();
+        return {
+          providerId: provider.providerId,
+          diagnosticName: provider.name,
+          library: provider.userLibrary,
+        };
+      },
+    };
+    this.identity = new IdentityService(identitySources, credentials);
+    this.library = new LibraryService(librarySources);
+    this.engagement = new EngagementService(() => getSource());
     this.audio = new AudioAnalysisService(planet);
   }
 

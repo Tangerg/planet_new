@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import type { ProviderCapability } from "@domain/ports/provider";
-
 import {
   artistMusicVideoDiscoveryQueryEnabled,
   artistMusicVideosQueryEnabled,
@@ -11,11 +9,6 @@ import {
   userLibraryQueryEnabled,
 } from "./content-query";
 
-const supports =
-  (...capabilities: ProviderCapability[]) =>
-  (capability: ProviderCapability) =>
-    capabilities.includes(capability);
-
 describe("content query model", () => {
   it("enables account-scoped library reads only for logged-in supported providers", () => {
     expect(userLibraryQueryEnabled(true, true)).toBe(true);
@@ -23,60 +16,52 @@ describe("content query model", () => {
     expect(userLibraryQueryEnabled(false, true)).toBe(false);
   });
 
-  it("combines request intent, target presence, and provider capability", () => {
-    const provider = supports("comments");
-
+  it("combines request intent, target presence, and port availability", () => {
     expect(
       supportedContentQueryEnabled({
         requested: true,
         hasTarget: true,
-        capability: "comments",
-        supports: provider,
+        supported: true,
       }),
     ).toBe(true);
     expect(
       supportedContentQueryEnabled({
         requested: false,
         hasTarget: true,
-        capability: "comments",
-        supports: provider,
+        supported: true,
       }),
     ).toBe(false);
     expect(
       supportedContentQueryEnabled({
         requested: true,
         hasTarget: false,
-        capability: "comments",
-        supports: provider,
+        supported: true,
       }),
     ).toBe(false);
     expect(
       supportedContentQueryEnabled({
-        capability: "artistMusicVideos",
-        supports: provider,
+        supported: false,
       }),
     ).toBe(false);
   });
 
-  it("plans artist music-video discovery from artist ids and capability support", () => {
-    expect(artistMusicVideoDiscoveryQueryEnabled(["a"], supports("artistMusicVideos"))).toBe(true);
-    expect(artistMusicVideoDiscoveryQueryEnabled([], supports("artistMusicVideos"))).toBe(false);
-    expect(artistMusicVideoDiscoveryQueryEnabled(["a"], supports("comments"))).toBe(false);
+  it("plans artist music-video discovery from artist ids and port availability", () => {
+    expect(artistMusicVideoDiscoveryQueryEnabled(["a"], true)).toBe(true);
+    expect(artistMusicVideoDiscoveryQueryEnabled([], true)).toBe(false);
+    expect(artistMusicVideoDiscoveryQueryEnabled(["a"], false)).toBe(false);
   });
 
   it("plans identified content queries only when requested and addressable", () => {
-    const allMvCaps = supports("artistMusicVideos", "musicVideoComments", "comments");
+    expect(artistMusicVideosQueryEnabled("artist", true, true)).toBe(true);
+    expect(artistMusicVideosQueryEnabled(undefined, true, true)).toBe(false);
+    expect(artistMusicVideosQueryEnabled("artist", false, true)).toBe(false);
 
-    expect(artistMusicVideosQueryEnabled("artist", true, allMvCaps)).toBe(true);
-    expect(artistMusicVideosQueryEnabled(undefined, true, allMvCaps)).toBe(false);
-    expect(artistMusicVideosQueryEnabled("artist", false, allMvCaps)).toBe(false);
+    expect(musicVideoCommentsQueryEnabled("mv", true, true)).toBe(true);
+    expect(musicVideoCommentsQueryEnabled(undefined, true, true)).toBe(false);
+    expect(musicVideoCommentsQueryEnabled("mv", true, false)).toBe(false);
 
-    expect(musicVideoCommentsQueryEnabled("mv", true, allMvCaps)).toBe(true);
-    expect(musicVideoCommentsQueryEnabled(undefined, true, allMvCaps)).toBe(false);
-    expect(musicVideoCommentsQueryEnabled("mv", true, supports("artistMusicVideos"))).toBe(false);
-
-    expect(trackCommentsQueryEnabled("track", true, allMvCaps)).toBe(true);
-    expect(trackCommentsQueryEnabled(undefined, true, allMvCaps)).toBe(false);
-    expect(trackCommentsQueryEnabled("track", false, allMvCaps)).toBe(false);
+    expect(trackCommentsQueryEnabled("track", true, true)).toBe(true);
+    expect(trackCommentsQueryEnabled(undefined, true, true)).toBe(false);
+    expect(trackCommentsQueryEnabled("track", false, true)).toBe(false);
   });
 });
