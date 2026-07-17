@@ -50,7 +50,7 @@ export function singerImage(singerMid: QQId | undefined, size = 300): string {
   return `${I_HOST}/T001R${size}x${size}M000${id}.jpg`;
 }
 
-export function mapQQArtist(raw: QQSinger): ArtistLink {
+function mapQQArtist(raw: QQSinger): ArtistLink {
   return {
     providerId: QQMUSIC_PROVIDER_ID,
     id: toIdString(raw.mid ?? raw.singer_mid),

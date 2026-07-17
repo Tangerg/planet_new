@@ -5,7 +5,7 @@ import { clamp } from "@shared/math";
 // (only @shared/math), so it lives in @shared — the live AnalyserNode (Web Audio
 // I/O) stays in @core; these are just the algorithms operating on number arrays.
 
-export const FFT_BYTE_MAX = 255;
+const FFT_BYTE_MAX = 255;
 
 // The lowest FFT bin is DC (0 Hz) — an offset, not music. Start the bass band at
 // the first real bin so a bin's worth of DC leakage never dominates the low end.
@@ -43,7 +43,7 @@ export type SpectrumFrame = {
   active: boolean;
 };
 
-export function assertBandCount(bandCount: number): void {
+function assertBandCount(bandCount: number): void {
   if (!Number.isInteger(bandCount) || bandCount <= 0) {
     throw new Error("bandCount must be a positive integer");
   }

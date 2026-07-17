@@ -30,7 +30,7 @@ import { NCM_PROVIDER_ID } from "./identity";
  *   pl.picUrl / coverImgUrl, ar.img1v1Url
  */
 
-export function resizeImage(url: string | undefined, size: number): string {
+function resizeImage(url: string | undefined, size: number): string {
   if (!url) return "";
   return `${httpsUrl(url)}?param=${size}y${size}`;
 }
@@ -49,7 +49,7 @@ export function coverSet(url: string | undefined): Image[] {
   return COVER_WIDTHS.map((w) => ({ url: `${base}?param=${w}y${w}`, width: w, height: w }));
 }
 
-export function mapNcmArtist(raw: NcmArtist): ArtistLink {
+function mapNcmArtist(raw: NcmArtist): ArtistLink {
   return {
     providerId: NCM_PROVIDER_ID,
     id: toIdString(raw.id),
@@ -68,7 +68,7 @@ export function mapNcmFeaturedArtist(raw: NcmArtist): ArtistSummary {
 }
 
 /** Slim album (used when embedded in a track). */
-export function mapNcmAlbumStub(raw: NcmAlbum): AlbumReference {
+function mapNcmAlbumStub(raw: NcmAlbum): AlbumReference {
   return {
     providerId: NCM_PROVIDER_ID,
     id: toIdString(raw.id),
@@ -111,7 +111,7 @@ export function mapNcmTrack(raw: NcmTrack, opts: MapTrackOptions = {}): Track {
   };
 }
 
-export function mapNcmCreator(raw: NcmUser): Partial<User> {
+function mapNcmCreator(raw: NcmUser): Partial<User> {
   return {
     id: toIdString(raw.userId ?? raw.id),
     displayName: raw.nickname ?? "",

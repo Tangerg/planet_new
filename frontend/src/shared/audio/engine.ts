@@ -77,7 +77,7 @@ export type ReactiveState = {
   beat: number;
 };
 
-export const initialReactiveState: ReactiveState = { mean: 0.5, beat: 0 };
+const initialReactiveState: ReactiveState = { mean: 0.5, beat: 0 };
 
 function group(bands: readonly number[], from: number, to: number): number {
   let sum = 0;
@@ -90,7 +90,7 @@ function group(bands: readonly number[], from: number, to: number): number {
  * the next running state. Pure. When paused, `overall` breathes gently so
  * idle-capable consumers still move.
  */
-export function audioReactive(
+function audioReactive(
   frame: AudioLightFrame,
   previous: ReactiveState,
   playing: boolean,
