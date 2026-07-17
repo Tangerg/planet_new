@@ -267,8 +267,8 @@ yarn check:circular
 yarn check:layers
 ```
 
-The repository-wide gate is `make check` (Go vet/race, frontend aggregate checks, and the production bundle). For frontend-only work use `yarn run check`; bare `yarn check` is a Yarn Classic built-in and must not be used as the project gate.
+The repository-wide gate is `make check`. It builds the production bundle before compiling the root Go package (which embeds `frontend/dist`), runs Go vet/race and `govulncheck` with the patch toolchain declared by `go.mod`, and then runs the frontend aggregate checks. The standalone Go targets have the same frontend-build prerequisite, so a clean checkout and a developer tree use the same dependency graph. For frontend-only work use `yarn run check`; bare `yarn check` is a Yarn Classic built-in and must not be used as the project gate.
 
 Vitest enforces separate coverage thresholds for domain, application, Local provider, Local Library contract and Web Audio adapter code; a global average cannot hide a critical-layer gap. Architecture checks reject outward dependencies, cross-context deep imports, old context paths/Provider APIs, direct Wails access outside approved adapters, browser audio construction in core, and ambient clock/random access in domain/application. Core E2E coverage exercises a real two-source Engine graph (browse → play → switch source → continue old queue → dispose) and a real local WAV flow (Scanner → Application → SQLite → Wails read → shutdown).
 
-CI uses the same `make check` entrypoint on macOS for pushes to `main` and pull requests. The workflow is present and locally validated; its first remote-run evidence is recorded separately in the roadmap because it requires pushing the branch.
+CI uses the same `make check` entrypoint on macOS for pushes to `main` and pull requests. Remote-run evidence and the current closure status are recorded separately in the roadmap.

@@ -26,26 +26,26 @@
 
 只有同时满足以下条件，本路线图才可以标记为完成：
 
-- [ ] 下文 Phase 0～5 的必做任务全部完成，或明确记录经批准的删减决策。
+- [x] 下文 Phase 0～5 的必做任务全部完成，或明确记录经批准的删减决策。
 - [x] Track / Album / Artist 等跨源实体使用来源限定身份，队列、历史、缓存和播放解析不再只比较裸 id。
 - [x] 应用用例不再依赖全能 `MusicProvider`；按用例依赖最小端口。
 - [x] Playback、Catalog、Local Library、Identity 至少形成清晰的限界上下文边界。
 - [x] Provider 成为上下文端口的基础设施适配器，而不是中心领域抽象。
 - [x] Go 本地库扫描、持久化和媒体服务支持取消、正确关闭与明确错误语义。
-- [ ] 前端、Go、架构规则和关键桌面流程的质量门禁在 CI 中稳定通过。
+- [x] 前端、Go、架构规则和关键桌面流程的质量门禁在 CI 中稳定通过。
 - [x] `doc/architecture.md` 已更新为最终真实架构，本文进度与代码一致。
 
 P5-06 审计证据：
 
 | ID     | 状态        | 证据                                                                                                                                                                 |
 | ------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DoD-01 | WAIT_REMOTE | Phase 1～5 与 P0-01～P0-06/P0-08 已完成；P0-07 workflow 已实现但尚未提交/推送，首次远程运行证据缺失。                                                                |
+| DoD-01 | DONE        | Phase 0～5 必做任务全部完成；P0-07 在 GitHub Actions 的 macOS 干净 checkout 中通过。                                                                                 |
 | DoD-02 | DONE        | `ProviderId` + Track/Album/Artist key；PlayQueue、PlaybackIntent、Lyrics、Likes、History、Query keys 的跨源测试；源码消费使用 `TrackKey`。                           |
 | DoD-03 | DONE        | `MusicProvider`/Capability API 搜索归零；Media/Playback/Identity/Library/Engagement 用例依赖最小端口；架构守卫只允许 `Engine` 组合 `MusicSource`。                   |
 | DoD-04 | DONE        | `src/contexts/{playback,catalog,identity,local-library}` 公开面与负类型测试；跨 context 深层 import 由 `check-layers` 拒绝。                                         |
 | DoD-05 | DONE        | NCM/QQ/Spotify/Local 只在组合根以端口适配器注册；UI 不导入具体 Provider；真实来源共享契约测试通过。                                                                  |
 | DoD-06 | DONE        | Wails lifecycle Context 贯通 scanner/SQLite/HTTP；不完整扫描禁止 prune；事务取消回滚；错误 code/operation 投影；启动回滚与逆序幂等 shutdown 测试。                   |
-| DoD-07 | WAIT_REMOTE | 本地 `make check` 已覆盖 Go vet/race、111 个前端测试文件/481 个测试、分层覆盖率、Knip、循环/分层规则、前后端 E2E 和生产构建；CI 使用同一命令，但未取得远程运行结果。 |
+| DoD-07 | DONE        | 远程 [`Verify #29553232298`](https://github.com/Tangerg/planet_new/actions/runs/29553232298) 通过 Go vet/race/vuln、123 个测试文件/529 个测试、分层覆盖率、Knip、循环/分层规则、前后端 E2E 和生产构建。 |
 | DoD-08 | DONE        | `doc/architecture.md` 已核对 contexts、组合根、前后端数据流、错误/资源边界、迁移和门禁；本路线图台账与实现同步。                                                     |
 
 ---
@@ -316,7 +316,7 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 - [x] **P0-04 媒体代理收口**：增加会话保护、HTTP 超时、redirect 策略和目标地址限制；补安全测试。
 - [x] **P0-05 ProviderRegistry 契约修复**：稳定 `ProviderId`；未知来源不改变状态、不广播事件。
 - [x] **P0-06 统一质量入口**：根目录提供唯一 `make check`/等价入口，包含 Go、前端 `build`、测试和架构检查。
-- [ ] **P0-07 CI**：workflow 已创建并复用 `make check`；首次 GitHub 远程运行证据待代码推送后补齐。
+- [x] **P0-07 CI**：workflow 复用 `make check`；修复干净 checkout 缺少嵌入资源的问题后，GitHub 远程运行通过。
 - [x] **P0-08 工程身份清理**：使用正式 Go module 路径；只保留一个前端 lockfile；修正文档中的质量命令和过期 Mock 说明。
 
 退出条件：P0 测试全绿；不完整扫描不会 prune；应用退出后端口和数据库被正确关闭；CI 可重复执行。
@@ -433,7 +433,7 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 | 阶段                   | 状态    | 完成度 | 当前说明                                                           |
 | ---------------------- | ------- | -----: | ------------------------------------------------------------------ |
 | Roadmap                | DONE    |   100% | 已建立目标、任务、验收和进度基线                                   |
-| Phase 0 安全与工程基线 | BLOCKED |    88% | 实现全部落地；P0-07 首次远程 CI 证据需要提交并推送后取得           |
+| Phase 0 安全与工程基线 | DONE    |   100% | P0-01～P0-08 全部完成；统一门禁已由远程干净 checkout 验证         |
 | Phase 1 来源限定身份   | DONE    |   100% | P1-01～P1-07 全部完成；身份、队列、解析和 UI read model 均来源限定 |
 | Phase 2 端口与用例     | DONE    |   100% | P2-01～P2-08 全部完成；最小端口、结果语义和共享契约均有自动化证据  |
 | Phase 3 限界上下文     | DONE    |   100% | P3-01～P3-07 全部完成；公开面位于 contexts 并受静态规则保护        |
@@ -450,7 +450,7 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 |    4 | P0-04 媒体代理安全收口                   | DONE    | P0-03        | token、私网/DNS 阻断、redirect、timeout、Range 测试通过                         |
 |    5 | P0-05 ProviderRegistry 契约与 ProviderId | DONE    | 无           | Registry 未知/重复选择测试；凭据、缓存、设置按 ProviderId 工作                  |
 |    6 | P0-06 统一质量入口                       | DONE    | 无           | 冻结依赖安装后 `make check` 通过                                                |
-|    7 | P0-07 CI                                 | BLOCKED | P0-06        | workflow YAML 与预提交边界审计通过；等待授权建分支、提交、推送并取得远程证据    |
+|    7 | P0-07 CI                                 | DONE    | P0-06        | `Verify #29553232298` 在 macOS 干净 checkout 中通过统一门禁                     |
 |    8 | P0-08 工程身份清理                       | DONE    | 无           | 正式 module；仅 yarn.lock；README/架构命令已同步                                |
 |    9 | P1-01 ProviderId 值对象                  | DONE    | P0-05        | 稳定机器身份与展示名分离；持久化命名空间已迁移                                  |
 |   10 | P1-02 来源限定实体 Key                   | DONE    | P1-01        | 品牌类型、严格构造/解析和特殊字符往返测试通过                                   |
@@ -485,7 +485,7 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 |   39 | P5-03 核心 E2E                           | DONE    | P5-02        | 双来源真实 Engine 流与真实 Scanner→SQLite→Wails 流覆盖启动、切源和退出          |
 |   40 | P5-04 删除过渡代码                       | DONE    | P5-03        | 旧目录/旧 API 搜索归零；删除死事件；旧路径与事件加入架构防回流规则              |
 |   41 | P5-05 更新架构总览                       | DONE    | P5-04        | 最终上下文、依赖 DAG、组合根、前后端运行流、错误/资源和质量门禁已对齐源码       |
-|   42 | P5-06 完成审计                           | DONE    | P5-05        | DoD-01～08 已逐项映射证据；只保留 P0-07/远程 CI 外部缺口                        |
+|   42 | P5-06 完成审计                           | DONE    | P5-05        | DoD-01～08 已逐项映射证据；P0-07 远程 CI 缺口已闭环                             |
 
 ### 8.3 已完成记录
 
@@ -527,6 +527,8 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 | 2026-07-11 | P5-05         | `doc/architecture.md` 按最终源码更新：明确 context 公开面与内部物理实现的区别、真实依赖 DAG、composePlanet/Engine 数据流、本地库 Context/事务/错误/迁移/退出链路、Web Audio 资源所有权、分层覆盖率和核心 E2E                                                                                                       | 与 contexts/app/core/infrastructure/providers、backend 各层、Makefile、架构脚本和 workflow 逐项核对；Markdown 格式与 `git diff --check` 通过          |
 | 2026-07-11 | P5-06         | 审计 §1.2 八条完成定义并建立 DoD-01～08 证据表；确认实现、边界、运行时可靠性、文档和本地门禁均完成；没有把未提交 workflow 误记为远程 CI 成功                                                                                                                                                                       | 最终 `make check`：Go vet/race、111 个前端测试文件/481 个测试、分层覆盖率、Knip、循环/分层架构规则及生产构建全部通过；仅 P0-07 WAIT_REMOTE            |
 | 2026-07-12 | P0-07 准备    | 完成提交前边界审计：确认全部改动仍在未暂存的 `main` 工作树；`.env.local`、coverage、dist 均由 Git 忽略；跟踪/未跟踪文件未命中常见私钥和 token 特征；新增文件无异常体积；CI workflow 可由 YAML 解析器读取                                                                                                           | `git diff --check`、`git status --ignored`、未跟踪文件清单、敏感特征路径级扫描和 workflow YAML 解析通过；未暂存、未提交、未推送                       |
+| 2026-07-17 | P0-07 首次运行 | 首次远程 Verify 暴露真实的干净 checkout 缺陷：根 Go 包嵌入被忽略的 `frontend/dist`，但 `make check` 在前端构建前执行 `go vet`                                                                                                                                                                                      | [`Verify #29166583245`](https://github.com/Tangerg/planet_new/actions/runs/29166583245) 在 `go vet` 阶段以 `pattern all:frontend/dist: no matching files found` 失败 |
+| 2026-07-17 | P0-07 闭环     | 为所有编译型 Go 目标声明前端构建前置依赖；门禁固定 Go 1.25.12 补丁工具链并加入版本化 `govulncheck`；README 与架构文档同步                                                                                                                                                                                          | [`Verify #29553232298`](https://github.com/Tangerg/planet_new/actions/runs/29553232298) 通过：Go vet/race、无已知可达漏洞、123 个测试文件/529 个测试、架构规则和生产构建全部成功 |
 
 ---
 
@@ -547,11 +549,9 @@ UI 决定如何展示空态、不可用和错误；Provider 与应用服务不�
 
 ## 10. 下一步
 
-Phase 1～5 与 P0 的全部实现任务已经完成，最终本地门禁通过。路线图唯一未闭环项是 **P0-07：首次远程 CI 证据**；workflow 当前仍是未提交文件，必须先由用户授权提交和推送，或由用户自行推送后提供远程运行结果。
+Phase 0～5、完成定义和首次远程 CI 证据已经全部闭环，本路线图进入维护状态，不再以继续拆层或增加抽象作为默认工作。
 
-下一批预计触及：
+后续演进遵循两条路径：
 
-- 若授权由我收口：从当前工作树创建 `codex/ddd-clean-architecture` 分支，暂存经审计的完整变更，创建提交并推送，然后读取 GitHub Actions 首次运行结果。
-- 若用户自行收口：提交并推送 `.github/workflows/ci.yml` 及本轮实现，确认 Verify workflow 通过，再把 P0-07/DoD-01/DoD-07 标记为 DONE。
-
-在得到推送授权前不创建提交、不推送，也不把本路线图总状态标记为完成。
+1. 合并当前质量门禁 PR，并确认 `main` 的 push Verify 继续通过。
+2. 新需求优先按限界上下文内的纵向业务切片交付；只有真实用例暴露边界压力时，才新增端口、聚合或上下文。架构防回流规则、分层覆盖率和统一门禁作为每个切片的持续约束。
