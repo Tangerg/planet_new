@@ -60,9 +60,16 @@ type serverOptions struct {
 	streamToken         string
 }
 
+// Extra SSRF denials layered on top of the standard private/loopback/link-local
+// checks in isDeniedAddress. NOTE: 198.18.0.0/15 (RFC 2544 benchmark range) is
+// deliberately NOT denied. Proxy tools in fake-ip mode (Clash/Surge default
+// fake-ip-range is 198.18.0.1/16) map PUBLIC provider domains onto that range and
+// route them transparently via TUN — so denying it 502s every proxied cover/stream
+// fetch (the audible player still works because it dials the fake IP directly).
+// The range carries no real internal infrastructure; the genuinely dangerous
+// targets (RFC 1918, loopback, link-local, CGNAT) stay blocked.
 var additionallyDeniedPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("100.64.0.0/10"), // carrier-grade NAT
-	netip.MustParsePrefix("198.18.0.0/15"), // benchmark networks
 }
 
 // Start binds an ephemeral loopback port and begins serving.

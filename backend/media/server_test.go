@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -240,6 +241,33 @@ func TestServerRejectsPrivateStreamTargets(t *testing.T) {
 		resp.Body.Close()
 		if resp.StatusCode != http.StatusBadRequest {
 			t.Errorf("private target %q status=%d, want 400", raw, resp.StatusCode)
+		}
+	}
+}
+
+func TestIsDeniedAddressPolicy(t *testing.T) {
+	// Genuinely dangerous SSRF targets stay blocked.
+	for _, s := range []string{
+		"127.0.0.1",       // loopback
+		"10.0.0.1",        // RFC 1918
+		"172.16.0.1",      // RFC 1918
+		"192.168.1.1",     // RFC 1918
+		"169.254.169.254", // link-local (cloud metadata)
+		"100.64.0.1",      // CGNAT (explicit extra denial)
+		"::1",             // IPv6 loopback
+	} {
+		addr, err := netip.ParseAddr(s)
+		if err != nil || !isDeniedAddress(addr) {
+			t.Errorf("isDeniedAddress(%s) = false, want denied", s)
+		}
+	}
+	// 198.18.0.0/15 (RFC 2544 benchmark) is intentionally ALLOWED: fake-ip proxy
+	// tools map public provider domains onto it, so denying it would 502 every
+	// proxied cover/stream fetch. Re-adding it to the denylist must fail this test.
+	for _, s := range []string{"198.18.0.149", "198.19.255.1", "1.1.1.1"} {
+		addr, err := netip.ParseAddr(s)
+		if err != nil || isDeniedAddress(addr) {
+			t.Errorf("isDeniedAddress(%s) = true, want allowed", s)
 		}
 	}
 }
