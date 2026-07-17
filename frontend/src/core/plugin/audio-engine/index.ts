@@ -1,3 +1,5 @@
+import { errorMessage, warn } from "@shared/debug";
+
 import { Plugin, defineCapability } from "../../kernel";
 import type { Track } from "@domain/model/track";
 import { directMediaAnalysisSource, type MediaAnalysisSourceResolver } from "../media-source";
@@ -62,7 +64,10 @@ export class AudioEngine extends Plugin implements AnalyserPort {
     if (state === PlayState.PLAYING) {
       void this.ensureProbe()
         .play()
-        .catch(() => this.probe?.pause());
+        .catch((error: unknown) => {
+          this.probe?.pause();
+          warn(`audio analysis probe play failed: ${errorMessage(error)}`);
+        });
       return;
     }
     this.probe?.pause();

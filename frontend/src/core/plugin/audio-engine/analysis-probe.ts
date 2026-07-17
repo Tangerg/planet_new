@@ -1,3 +1,5 @@
+import { errorMessage, warn } from "@shared/debug";
+
 import {
   directMediaAnalysisSource,
   resolveAnalysisSourceUrl,
@@ -63,8 +65,9 @@ export class AudioAnalysisProbe {
     try {
       this.loadProbe(analysisUrl);
       if (shouldPlay()) await this.play();
-    } catch {
+    } catch (error) {
       this.pause();
+      warn(`audio analysis probe load failed: ${errorMessage(error)}`);
     }
   }
 
