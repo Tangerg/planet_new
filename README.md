@@ -99,7 +99,9 @@ wails build       # 产出可分发的 PLANET 应用(build/bin/)
 提交前在仓库根目录运行唯一全量门禁：
 
 ```bash
-make check         # Go vet/race + 前端 check + production build
+make check         # production build + Go vet/race/vuln + 前端 check
 ```
+
+根 Go 包会嵌入 `frontend/dist`，因此 `make check` 以及单独的 `make test`、`make test-race`、`make vet`、`make vuln` 都会先构建前端。Go 检查统一使用 `go.mod` 声明的补丁版本；漏洞扫描工具也由 module tool directive 固定版本。
 
 只验证前端时使用 `cd frontend && yarn run check`。必须写 `run`，因为 `yarn check` 是 Yarn Classic 自带的依赖完整性命令，不是本项目脚本。
