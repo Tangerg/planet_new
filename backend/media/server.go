@@ -297,8 +297,16 @@ func isDeniedAddress(addr netip.Addr) bool {
 func newStreamClient(allowPrivate bool) *http.Client {
 	dialer := &net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}
 	transport := &http.Transport{
-		Proxy:                 nil,
-		DialContext:           dialer.DialContext,
+		Proxy:       nil,
+		DialContext: dialer.DialContext,
+		// Provider CDNs (e.g. NeteaseCloudMusic) mishandle connection reuse: a
+		// pooled idle connection returns a stale/"unsolicited" response, so a
+		// reused /stream request intermittently fails with a 400 — which makes the
+		// audible player and (worse) the analysis-probe media element get an
+		// unplayable body ("NotSupportedError"). Use a fresh connection per request
+		// so every proxied fetch is reliable; the loopback proxy is not hot enough
+		// for pooling to matter.
+		DisableKeepAlives:     true,
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          20,
 		IdleConnTimeout:       60 * time.Second,
