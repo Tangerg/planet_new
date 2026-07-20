@@ -52,6 +52,11 @@ export type TrackPlayUrl = {
   playUrl: string;
 };
 
+export type ProviderTrackPlayUrls = {
+  providerId: ProviderId;
+  urls: readonly TrackPlayUrl[];
+};
+
 function creditedArtists(t: Partial<Track>): ArtistLink[] {
   const artists = t.artists?.filter((artist) => artist?.name?.trim()) ?? [];
   if (artists.length) return artists;
@@ -113,6 +118,25 @@ export const Track = {
       policy?.canResolveFullPlayback || policy?.canUsePreviewPlayback,
     );
     return canPlayAnything && !Track.isPlayable(t, policy);
+  },
+
+  /** Clone tracks and apply resolved URLs by source + playback id, preserving order. */
+  withResolvedPlayUrls(
+    tracks: readonly Track[],
+    resolutions: readonly ProviderTrackPlayUrls[],
+  ): Track[] {
+    const byProvider = new Map(
+      resolutions.map(({ providerId, urls }) => [
+        providerId,
+        new Map(urls.map((url) => [url.playbackId, url.playUrl])),
+      ]),
+    );
+    return tracks.map((track) => {
+      const playUrl = track.playbackId
+        ? byProvider.get(track.providerId)?.get(track.playbackId)
+        : undefined;
+      return playUrl ? { ...track, playUrl } : { ...track };
+    });
   },
 
   /** Provider lookup ids from a track set, de-duplicated in encounter order. */

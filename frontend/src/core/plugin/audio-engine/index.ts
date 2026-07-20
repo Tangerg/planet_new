@@ -40,14 +40,12 @@ export class AudioEngine extends Plugin implements AnalyserPort {
 
   protected onInit(): void {
     this.context.registry.provide(AUDIO_ANALYSER, this);
-    // The probe follows the RESOLVED track (fresh play URL), not the raw queue
-    // identity — the URL is resolved just-in-time by the playback plugin.
-    this.context.hooks.on("playback:current-resolved", this.onCurrentResolved, this);
+    this.context.hooks.on("queue:current-changed", this.onCurrentChanged, this);
     this.context.hooks.on("playback:state-changed", this.onPlaybackStateChanged, this);
   }
 
   protected onDispose(): void {
-    this.context.hooks.off("playback:current-resolved", this.onCurrentResolved);
+    this.context.hooks.off("queue:current-changed", this.onCurrentChanged);
     this.context.hooks.off("playback:state-changed", this.onPlaybackStateChanged);
     this.probe?.dispose();
     this.probe = null;
@@ -57,7 +55,7 @@ export class AudioEngine extends Plugin implements AnalyserPort {
     return this.ensureProbe().analyser();
   }
 
-  private onCurrentResolved = async (track: Track | undefined): Promise<void> => {
+  private onCurrentChanged = async (track: Track | undefined): Promise<void> => {
     await this.ensureProbe().load(track?.playUrl, () => this.playbackState === PlayState.PLAYING);
   };
 

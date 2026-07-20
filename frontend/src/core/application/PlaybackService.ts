@@ -1,11 +1,13 @@
 import type { Capability, Planet } from "../kernel";
-import type { PlaybackResolverRegistry } from "@domain";
+import type { PlaybackResolverRegistry, ProviderId } from "@domain";
+import { PlaybackIntent } from "@domain/model/playback-intent";
 import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
-import type { Track } from "@domain/model/track";
+import type { ProviderTrackPlayUrls, Track } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
 import { VOLUME_CONTROL } from "../plugin/volume";
 import { PROGRESS } from "../plugin/progress";
+import { warnReadFailure } from "@shared/debug";
 
 /**
  * The playback command API — the single door the UI calls for every playback
@@ -14,16 +16,20 @@ import { PROGRESS } from "../plugin/progress";
  * exactly one receiver, so routing it through fire-and-forget pub/sub would only
  * lose the receiver and the result. State flows back the other way, as events.
  *
- * Play URLs are resolved JUST IN TIME — the playback plugin resolves each track's
- * URL when it becomes current, because provider stream URLs are short-lived and
- * resolving a whole queue up front would leave later tracks with expired URLs.
- *
  * The service resolves the capabilities it needs from the Planet registry on
  * each call (they're always provided by the time the UI issues a command). It
- * never imports concrete providers or React. Dependency direction:
- * core/application → core/kernel + core/plugin + domain.
+ * never imports concrete providers or React; provider play-URL resolution comes
+ * through the domain port. Dependency direction: core/application → core/kernel
+ * + core/plugin + domain.
  */
 export class PlaybackService {
+  /**
+   * Generation guard for play(): a newer play() bumps the counter, so a slow
+   * playUrls() resolve from an older call is discarded instead of overwriting
+   * the queue with a stale track when the user switches tracks rapidly.
+   */
+  private playGeneration = 0;
+
   constructor(
     private readonly planet: Planet,
     private readonly resolvers: PlaybackResolverRegistry,
@@ -32,31 +38,65 @@ export class PlaybackService {
   // ── Queue + play ──────────────────────────────────────────────────
 
   /**
-   * Set the play queue and start at the given track. The queue stores the tracks
-   * as-is; the playback plugin resolves the current track's fresh play URL when it
-   * starts (and again on each auto-advance), so URLs never go stale in the queue.
+   * Set the play queue and start at the given track. Resolves playable URLs via
+   * the provider first; tracks are cloned so the caller's domain objects are
+   * never mutated.
    */
-  play(tracks: Track[], track: Track): void {
-    this.queue.playNow(tracks, track);
+  async play(tracks: Track[], track: Track): Promise<void> {
+    const gen = ++this.playGeneration;
+    const intent = PlaybackIntent.from(tracks, track);
+    const resolutions = await Promise.all(
+      intent.providerIds.map((providerId) => this.resolveUrls(intent, providerId)),
+    );
+    // A newer play() superseded this one while awaiting — drop the stale result.
+    if (gen !== this.playGeneration) return;
+
+    const resolved = intent.withResolvedUrls(resolutions);
+    this.queue.playNow(resolved.tracks, resolved.current);
   }
 
   /**
    * The active provider's playback resolution policy (full-stream vs preview).
-   * The UI uses it to derive per-track availability — one source of truth for
-   * "how can this provider play audio".
+   * Used to resolve URLs on play() and, in the UI, to derive per-track
+   * availability — one source of truth for "how can this provider play audio".
    */
   playbackPolicy(): PlaybackAvailabilityPolicy {
     return this.resolvers.active().policy;
   }
 
+  private async resolveUrls(
+    intent: PlaybackIntent,
+    providerId: ProviderId,
+  ): Promise<ProviderTrackPlayUrls> {
+    const resolver = this.resolvers.get(providerId);
+    if (!resolver) {
+      warnReadFailure(
+        `playback provider ${providerId}`,
+        new Error("The track source is no longer registered."),
+      );
+      return { providerId, urls: [] };
+    }
+    const playbackIds = intent.playbackIdsToResolve(providerId, resolver.policy);
+    if (!playbackIds.length) return { providerId, urls: [] };
+    try {
+      return { providerId, urls: await resolver.resolve(playbackIds) };
+    } catch (error) {
+      // A declared playback capability failed. Keep the queue transition
+      // resilient, but make the adapter fault observable.
+      warnReadFailure(`${resolver.diagnosticName}.resolvePlayback`, error);
+      return { providerId, urls: [] };
+    }
+  }
+
   /** Start this list in shuffle mode. The queue owns the actual shuffled order. */
-  shufflePlay(tracks: Track[]): void {
+  async shufflePlay(tracks: Track[]): Promise<void> {
     if (tracks.length === 0) return;
     this.queue.setShuffle(true);
-    this.play(tracks, tracks[0]);
+    await this.play(tracks, tracks[0]);
   }
 
   selectTrack(track: Track): void {
+    this.cancelPendingPlay();
     this.queue.select(track);
   }
 
@@ -69,10 +109,12 @@ export class PlaybackService {
   }
 
   removeFromQueue(track: Track): void {
+    this.cancelPendingPlay();
     this.queue.remove(track);
   }
 
   clearQueue(): void {
+    this.cancelPendingPlay();
     this.queue.clear();
   }
 
@@ -93,10 +135,12 @@ export class PlaybackService {
   }
 
   next(): void {
+    this.cancelPendingPlay();
     this.queue.next();
   }
 
   previous(): void {
+    this.cancelPendingPlay();
     this.queue.previous();
   }
 
@@ -135,6 +179,10 @@ export class PlaybackService {
       throw new Error(`Playback requires the "${cap.key}" capability, which is not provided.`);
     }
     return impl;
+  }
+
+  private cancelPendingPlay(): void {
+    this.playGeneration += 1;
   }
 
   private get queue() {

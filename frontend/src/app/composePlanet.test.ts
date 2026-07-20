@@ -48,15 +48,14 @@ describe("application Planet composition", () => {
     expect(planet.resolve(VOLUME_CONTROL)).not.toBeNull();
     expect(planet.resolve(PROGRESS)).not.toBeNull();
     expect(planet.resolve(AUDIO_ANALYSER)).not.toBeNull();
-    // ended + error (playback) + timeupdate + durationchange (progress).
-    expect(addListener).toHaveBeenCalledTimes(4);
+    expect(addListener).toHaveBeenCalledTimes(3);
 
     planet.dispose();
 
     expect(planet.resolveAll(MUSIC_SOURCE)).toEqual([]);
     expect(planet.resolve(PROVIDER_REGISTRY)).toBeNull();
     expect(planet.resolve(TRANSPORT)).toBeNull();
-    expect(removeListener).toHaveBeenCalledTimes(4);
+    expect(removeListener).toHaveBeenCalledTimes(3);
     expect(audio.dispose).toHaveBeenCalledTimes(1);
   });
 
