@@ -277,7 +277,11 @@ export const cloudEffect: VisualEffect = {
           gl.deleteBuffer(buffers.luma);
           gl.deleteBuffer(buffers.rand);
         }
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
+        // NOTE: do NOT force-lose the context. React StrictMode (dev) remounts on
+        // the SAME canvas element (setup → cleanup → setup); loseContext() here
+        // poisons that shared context, so the re-created instance renders nothing
+        // until the canvas is replaced — the "first open is blank, a toggle fixes
+        // it" bug. The context is released when the canvas is removed / GC'd.
       },
     };
   },
