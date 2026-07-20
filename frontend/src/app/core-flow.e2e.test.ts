@@ -76,6 +76,9 @@ function track(providerId: ProviderIdValue, id: string): TrackSnapshot {
   };
 }
 
+/** Flush the plugin's async just-in-time resolve → play chain. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 describe("core application flow", () => {
   it("browses, plays, switches source, continues the old queue, and releases runtime state", async () => {
     const firstId = ProviderId.of("scenario-first");
@@ -103,8 +106,11 @@ describe("core application flow", () => {
     const firstHome = await engine.media.personalized();
     expect(firstHome).toMatchObject({ status: "success" });
     const browsedTracks = firstHome.status === "success" ? (firstHome.data.tracks ?? []) : [];
-    await engine.playback.play([...browsedTracks], browsedTracks[0]);
-    expect(first.resolveCalls).toEqual([["one", "two"]]);
+    engine.playback.play([...browsedTracks], browsedTracks[0]);
+    await flush();
+    // Only the CURRENT track resolves — URLs are fetched just-in-time, never for
+    // the whole queue up front (provider stream URLs are short-lived).
+    expect(first.resolveCalls).toEqual([["one"]]);
     expect(audioElement.src).toBe("https://audio.test/scenario-first/one");
 
     expect(engine.providers.setActive(secondId)).toBe(true);
@@ -114,7 +120,10 @@ describe("core application flow", () => {
     );
 
     engine.playback.next();
+    await flush();
     expect(audioElement.src).toBe("https://audio.test/scenario-first/two");
+    // The old queue item resolved through ITS OWN provider, not the now-active one.
+    expect(first.resolveCalls).toEqual([["one"], ["two"]]);
     expect(second.resolveCalls).toEqual([]);
 
     engine.dispose();

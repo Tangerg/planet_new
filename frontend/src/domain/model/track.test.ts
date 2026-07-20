@@ -33,44 +33,6 @@ describe("Track", () => {
     expect(Track.artistCredits(track)).toEqual([{ id: "album-artist", name: "Album Artist" }]);
   });
 
-  test("applies resolved provider playback URLs without mutating tracks", () => {
-    const original = {
-      providerId: TEST_PROVIDER_ID,
-      id: "1",
-      playbackId: "mid-1",
-      name: "Song",
-      durationMs: 1,
-      artists: [],
-    };
-    const untouched = {
-      providerId: TEST_PROVIDER_ID,
-      id: "2",
-      playbackId: "mid-2",
-      name: "Other",
-      durationMs: 1,
-      artists: [],
-      playUrl: "old",
-    };
-
-    const resolved = Track.withResolvedPlayUrls(
-      [original, untouched],
-      [
-        {
-          providerId: TEST_PROVIDER_ID,
-          urls: [{ playbackId: "mid-1", playUrl: "https://stream.example/song.mp3" }],
-        },
-      ],
-    );
-
-    expect(resolved).toEqual([
-      { ...original, playUrl: "https://stream.example/song.mp3" },
-      untouched,
-    ]);
-    expect(resolved[0]).not.toBe(original);
-    expect(resolved[1]).not.toBe(untouched);
-    expect(original).not.toHaveProperty("playUrl");
-  });
-
   test("keeps unique provider lookup ids in encounter order", () => {
     expect(
       Track.uniqueIds([

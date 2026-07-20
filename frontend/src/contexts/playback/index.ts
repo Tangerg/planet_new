@@ -2,7 +2,6 @@
 export { PlaybackService } from "@core/application/PlaybackService";
 export type { AudioOutputPort, PlaybackResolver } from "@domain/ports/playback";
 export { PlayQueue, type RandomSource } from "@domain/model/play-queue";
-export { PlaybackIntent } from "@domain/model/playback-intent";
 export type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
 export { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 export { Volume } from "@domain/model/volume";
