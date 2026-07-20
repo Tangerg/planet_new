@@ -77,7 +77,15 @@ export class AudioAnalysisProbe {
     this.ensureGraph(probe);
     this.syncProbeClock(probe, true);
     if (this.options.audioContext.state === "suspended") await this.options.audioContext.resume();
-    await probe.play();
+    try {
+      await probe.play();
+    } catch (error) {
+      // A superseded play — a newer load()/play()/seek interrupted this one —
+      // rejects with AbortError. That's benign for the visualization probe (the
+      // newer call takes over); swallow it so the caller doesn't treat it as a
+      // fault and pause the probe, which would leave the analyser silent.
+      if (!(error instanceof DOMException) || error.name !== "AbortError") throw error;
+    }
   }
 
   pause(): void {
