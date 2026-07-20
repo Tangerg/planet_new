@@ -42,7 +42,6 @@ type ArtistScreenProps = {
   accent: string;
   onOpenAlbum: (album: VibeCollection) => void;
   onOpenArtist: (artist: ArtistRef) => void;
-  mono: boolean;
 };
 
 export function ArtistScreen({
@@ -58,7 +57,6 @@ export function ArtistScreen({
   accent,
   onOpenAlbum,
   onOpenArtist,
-  mono,
 }: ArtistScreenProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -117,7 +115,6 @@ export function ArtistScreen({
                   grad={artist.gradient}
                   image={artist.image}
                   images={artist.images}
-                  mono={mono}
                   // Morph anchor: opening from a round artist card flies the tile
                   // straight into this circle — a clean circle→circle morph.
                   data-hero="1"

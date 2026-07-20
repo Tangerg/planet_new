@@ -15,18 +15,16 @@ type HeroArtProps = {
   images?: Image[];
   /** Square edge length in px. */
   size: number;
-  mono?: boolean;
   className?: string;
 };
 
-export function HeroArt({ seed, grad, image, images, size, mono, className }: HeroArtProps) {
+export function HeroArt({ seed, grad, image, images, size, className }: HeroArtProps) {
   return (
     <Art
       seed={seed}
       grad={grad}
       image={image}
       images={images}
-      mono={mono}
       data-hero="1"
       className={className}
       style={{ width: size, height: size, boxShadow: "0 30px 70px -14px rgba(0,0,0,.62)" }}

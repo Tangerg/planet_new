@@ -27,7 +27,6 @@ type Props = {
   comments?: VibeComment[];
   onClose: () => void;
   onOpenStage?: () => void;
-  mono?: boolean;
   initialMode?: string;
   queue?: VibeTrack[];
   onPlay?: (t: VibeTrack) => void;
@@ -48,7 +47,6 @@ export const NowPlaying = React.memo(function NowPlaying({
   comments = [],
   onClose,
   onOpenStage,
-  mono = false,
   initialMode = "cover",
   queue = [],
   onPlay,
@@ -112,7 +110,6 @@ export const NowPlaying = React.memo(function NowPlaying({
         grad={trackModel.gradient}
         image={trackModel.image}
         images={trackModel.images}
-        mono={mono}
         style={{ position: "absolute", inset: 0, height: "100%" }}
       >
         <div

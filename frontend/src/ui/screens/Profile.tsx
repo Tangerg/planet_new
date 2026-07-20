@@ -17,10 +17,9 @@ type ProfileScreenProps = {
   accent: string;
   playlists: VibeCollection[];
   onOpenPlaylist: (playlist: VibeCollection) => void;
-  mono: boolean;
 };
 
-export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: ProfileScreenProps) {
+export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScreenProps) {
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { supported, loggedIn, account, beginLogin, markLoggedIn, logout } = useAuth();
@@ -46,7 +45,6 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist, mono }: Profi
         seed={3}
         grad={["#171a18", "#2a2e2a"]}
         images={account?.avatar}
-        mono={mono}
         style={{ position: "absolute", inset: 0 }}
       >
         <div

@@ -52,9 +52,6 @@ export default function Shell() {
 
   /* ---- theme tweaks (example TweaksPanel knobs; fixed here, accent editable in Settings) ---- */
   const [accent, setAccent] = useState(DEFAULT_ACCENT);
-  // "color", never "mono": a greyscale portrait reads as a memorial photo
-  // (遗照) in Chinese culture — never desaturate a living artist's photo.
-  const [heroTreatment] = useState<"mono" | "color">("color");
   const [glass] = useState(DEFAULT_GLASS_BLUR);
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", accent);
@@ -303,7 +300,6 @@ export default function Shell() {
         accent,
         setAccent,
         accentOptions: [...ACCENT_OPTIONS],
-        heroTreatment,
         nowPlayingInitialMode,
       }}
     />

@@ -90,7 +90,6 @@ export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Render width in CSS px for image selection, when the box is sized by a CSS
    *  class rather than an inline numeric width (cards, tiles). */
   px?: number;
-  mono?: boolean;
   glow?: string;
   /** Film-grain overlay (the `.grain::before` mix-blend layer). Default on; turn
    *  OFF for fast-animating surfaces (e.g. CoverFlow) where ~N moving mix-blend
@@ -104,7 +103,6 @@ export function Art({
   image,
   images,
   px,
-  mono = false,
   grain = true,
   className = "",
   style = {},
@@ -143,7 +141,6 @@ export function Art({
           loading="lazy"
           decoding="async"
           className="absolute inset-0 z-0 h-full w-full object-cover"
-          style={{ filter: mono ? "grayscale(1) contrast(1.05)" : "none" }}
         />
       )}
       {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real

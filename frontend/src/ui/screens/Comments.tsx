@@ -17,7 +17,6 @@ type CommentsScreenProps = {
   accent: string;
   liked: boolean;
   toggleLike: () => void;
-  mono: boolean;
 };
 
 export function CommentsScreen({
@@ -26,7 +25,6 @@ export function CommentsScreen({
   accent,
   liked,
   toggleLike,
-  mono,
 }: CommentsScreenProps) {
   const { t } = useTranslation();
   const model = commentsTrackModel(track);
@@ -40,7 +38,6 @@ export function CommentsScreen({
         grad={model.gradient}
         image={model.image}
         images={model.images}
-        mono={mono}
         data-hero="1"
         className="h-full"
       >

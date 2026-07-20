@@ -116,7 +116,6 @@ type SettingsBundle = {
   accent: string;
   setAccent: (accent: string) => void;
   accentOptions: string[];
-  heroTreatment: "mono" | "color";
   nowPlayingInitialMode: NowPlayingMode;
 };
 
@@ -186,8 +185,7 @@ export function ShellScreenRouter(props: Props) {
     musicVideoComments,
     playbackPolicy: musicVideoPlaybackPolicy,
   } = props.musicVideo;
-  const { settings, setSettings, accent, setAccent, accentOptions, heroTreatment } = props.settings;
-  const mono = heroTreatment === "mono";
+  const { settings, setSettings, accent, setAccent, accentOptions } = props.settings;
   const route = resolveShellScreen(view, detail, musicVideoObj);
   if (!route) return null;
 
@@ -387,7 +385,6 @@ export function ShellScreenRouter(props: Props) {
           liked={liked}
           toggleLike={toggleLike}
           accent={accent}
-          mono={mono}
           onOpenAlbum={albumDetail}
           onOpenArtist={openArtist}
         />
@@ -400,7 +397,6 @@ export function ShellScreenRouter(props: Props) {
           accent={accent}
           playlists={libraryData.playlists}
           onOpenPlaylist={openDetail}
-          mono={mono}
         />
       );
     }
@@ -413,7 +409,6 @@ export function ShellScreenRouter(props: Props) {
           accent={accent}
           liked={isLiked}
           toggleLike={() => current && toggleLike(current)}
-          mono={mono}
         />
       );
     }
@@ -427,7 +422,6 @@ export function ShellScreenRouter(props: Props) {
           toggleLike={() => current && toggleLike(current)}
           lyrics={lyrics}
           comments={comments}
-          mono={mono}
           queue={queue}
           onPlay={selectTrack}
           current={current}
