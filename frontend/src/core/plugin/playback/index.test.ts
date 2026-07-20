@@ -2,16 +2,22 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Track } from "@domain/model/track";
 import { ProviderId } from "@domain/model/provider-id";
+import type { PlaybackResolver } from "@domain/ports/playback";
 
 import { EventEmitter } from "../../event";
 import { CapabilityRegistry } from "../../kernel/capability";
 import type { PluginContext } from "../../kernel/context";
 import type { PlanetEventMap } from "../../kernel/event";
+import { PROVIDER_REGISTRY } from "../provider-registry";
+import { PLAY_QUEUE } from "../playqueue";
 import { Playback, PlayState, TRANSPORT } from "./index";
 
+const PROVIDER = ProviderId.of("test");
+
 const track = (id: string, playUrl?: string): Track => ({
-  providerId: ProviderId.of("test"),
+  providerId: PROVIDER,
   id,
+  playbackId: id,
   name: id,
   durationMs: 1000,
   artists: [],
@@ -21,6 +27,7 @@ const track = (id: string, playUrl?: string): Track => ({
 function makeAudioElement() {
   return {
     src: "",
+    currentSrc: "",
     play: vi.fn<() => Promise<void>>(async () => {}),
     pause: vi.fn<() => void>(),
     addEventListener: vi.fn<() => void>(),
@@ -28,14 +35,40 @@ function makeAudioElement() {
   } as unknown as HTMLAudioElement;
 }
 
-function mount() {
+/** Provider registry stub exposing one full-URL playback resolver. */
+function makeRegistry(resolve: PlaybackResolver["resolve"]) {
+  const provider = {
+    playback: {
+      providerId: PROVIDER,
+      diagnosticName: "test",
+      policy: { canResolveFullPlayback: true, canUsePreviewPlayback: false },
+      resolve,
+    } satisfies PlaybackResolver,
+  };
+  return { active: provider, get: (id: ProviderId) => (id === PROVIDER ? provider : null) };
+}
+
+function mount(opts?: { resolve?: PlaybackResolver["resolve"]; next?: () => void }) {
   const hooks = new EventEmitter<PlanetEventMap>();
   const registry = new CapabilityRegistry();
+  if (opts?.resolve) registry.provide(PROVIDER_REGISTRY, makeRegistry(opts.resolve) as never);
+  if (opts?.next) registry.provide(PLAY_QUEUE, { next: opts.next } as never);
   const audioElement = makeAudioElement();
   const plugin = new Playback();
   plugin.init({ hooks, registry, audioElement } as unknown as PluginContext);
   return { plugin, hooks, registry, audioElement };
 }
+
+/** Pull a registered DOM listener off the mocked audio element. */
+function listener(audioElement: HTMLAudioElement, event: string): () => void {
+  const calls = (
+    audioElement.addEventListener as unknown as { mock: { calls: [string, () => void][] } }
+  ).mock.calls;
+  return calls.find(([name]) => name === event)?.[1] ?? (() => {});
+}
+
+/** Flush the async re-resolve chain. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("Playback plugin", () => {
   it("provides the TRANSPORT capability once mounted", () => {
@@ -104,5 +137,43 @@ describe("Playback plugin", () => {
 
     await expect(resume).resolves.toBeUndefined();
     expect(states).toEqual([PlayState.STOPPED]);
+  });
+
+  it("re-resolves a fresh URL and reloads when the current source errors", async () => {
+    const resolve = vi.fn<PlaybackResolver["resolve"]>(async (ids) =>
+      ids.map((playbackId) => ({ playbackId, playUrl: `fresh://${playbackId}` })),
+    );
+    const { hooks, audioElement } = mount({ resolve });
+    hooks.emit("queue:current-changed", track("song", "stale://song"));
+    (audioElement as { currentSrc: string }).currentSrc = "stale://song";
+
+    listener(audioElement, "error")();
+    await flush();
+
+    expect(resolve).toHaveBeenCalledWith(["song"]);
+    expect(audioElement.src).toBe("fresh://song");
+  });
+
+  it("skips to the next track when a fresh URL can't be resolved", async () => {
+    const next = vi.fn<() => void>();
+    const { hooks, audioElement } = mount({ resolve: async () => [], next });
+    hooks.emit("queue:current-changed", track("dead", "stale://dead"));
+    (audioElement as { currentSrc: string }).currentSrc = "stale://dead";
+
+    listener(audioElement, "error")();
+    await flush();
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores the empty-source error from a stop() reset", () => {
+    const next = vi.fn<() => void>();
+    const resolve = vi.fn<PlaybackResolver["resolve"]>(async () => []);
+    const { audioElement } = mount({ resolve, next }); // currentSrc stays ""
+
+    listener(audioElement, "error")();
+
+    expect(resolve).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 });
