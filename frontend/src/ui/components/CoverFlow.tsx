@@ -196,7 +196,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
 
       {/* progress dots */}
       {!expanded && (
-        <div className="z-[400] mt-[12px] flex justify-center">
+        <div className="z-[400] mt-[22px] flex justify-center gap-[7px]">
           {items.map((_, i) => {
             if (Math.abs(i - center) > COVER_DOT_WINDOW) return null;
             return (
@@ -204,20 +204,12 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
                 key={i}
                 onClick={() => setCenter(i)}
                 aria-label={t("a11y.goToSlide", { index: i + 1 })}
-                className="grid h-10 w-10 place-items-center rounded-full p-0"
+                className="h-[7px] rounded-full p-0 transition-[width,background-color] duration-300"
                 style={{
-                  background: "transparent",
+                  width: i === center ? 22 : 7,
+                  background: i === center ? accent : "rgba(255,255,255,.25)",
                 }}
-              >
-                <span
-                  aria-hidden
-                  className="block h-[7px] w-[22px] rounded-full transition-[transform,background-color] duration-200"
-                  style={{
-                    transform: i === center ? "scaleX(1)" : "scaleX(0.318)",
-                    background: i === center ? accent : "rgba(255,255,255,.25)",
-                  }}
-                />
-              </Button>
+              />
             );
           })}
         </div>
