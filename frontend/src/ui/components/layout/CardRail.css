@@ -8,7 +8,11 @@
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  /* Contain the X axis only: the rail is also a Y scroll container (overflow-y is
+     clipped), so `overscroll-behavior: contain` on both axes would swallow a
+     vertical wheel while hovering a rail cover and stop the page from scrolling.
+     Leave Y at the default so vertical wheel chains up to the page scroller. */
+  overscroll-behavior-x: contain;
 }
 .hrail::-webkit-scrollbar {
   width: 0;
