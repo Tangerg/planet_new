@@ -141,7 +141,6 @@ export function SearchScreen({
                     images={topArtist.images}
                     className="rounded-full"
                     style={{ width: 96, height: 96, boxShadow: "0 12px 30px rgba(0,0,0,.5)" }}
-                    mono
                   />
                   <div className="mt-5 line-clamp-2 text-[30px] font-light [overflow-wrap:anywhere]">
                     {topArtist.name}

@@ -48,7 +48,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   comments = [],
   onClose,
   onOpenStage,
-  mono = true,
+  mono = false,
   initialMode = "cover",
   queue = [],
   onPlay,
