@@ -305,11 +305,10 @@ func newStreamClient(allowPrivate bool) *http.Client {
 		// audible player and (worse) the analysis-probe media element get an
 		// unplayable body ("NotSupportedError"). Use a fresh connection per request
 		// so every proxied fetch is reliable; the loopback proxy is not hot enough
-		// for pooling to matter.
+		// for pooling to matter. With keep-alives off nothing is ever pooled, so the
+		// idle-pool knobs (MaxIdleConns/IdleConnTimeout) are deliberately omitted.
 		DisableKeepAlives:     true,
 		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          20,
-		IdleConnTimeout:       60 * time.Second,
 		TLSHandshakeTimeout:   5 * time.Second,
 		ResponseHeaderTimeout: 10 * time.Second,
 	}
