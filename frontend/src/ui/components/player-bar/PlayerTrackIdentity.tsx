@@ -2,9 +2,9 @@ import { useTranslation } from "react-i18next";
 
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { Marquee } from "@/components/Marquee";
 import { Art } from "@/components/primitives";
-import { activateOnKey } from "@/lib/keys";
 
 type Props = {
   track?: VibeTrack;
@@ -23,15 +23,9 @@ export function PlayerTrackIdentity({ track, accent, onOpenNowPlaying, onOpenArt
       data-player-identity
       className="relative z-[1] flex w-[224px] min-w-0 flex-none cursor-pointer items-center gap-[11px] pl-[18px] pr-1.5"
     >
-      <div
-        // Children are <div>s (invalid inside a native button), so role="button" +
-        // keyboard handling is the correct accessible pattern here.
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-        role="button"
-        tabIndex={0}
-        aria-label={t("a11y.openNowPlaying")}
-        onClick={(e) => openNowPlayingFrom(e.currentTarget)}
-        onKeyDown={activateOnKey<HTMLDivElement>((e) => openNowPlayingFrom(e.currentTarget))}
+      <PressTarget
+        label={t("a11y.openNowPlaying")}
+        onActivate={(e) => openNowPlayingFrom(e.currentTarget)}
         className="flex-none"
       >
         <Art
@@ -46,18 +40,14 @@ export function PlayerTrackIdentity({ track, accent, onOpenNowPlaying, onOpenArt
             boxShadow: "0 1px 2px rgba(0,0,0,.25), 0 6px 16px -4px rgba(0,0,0,.35)",
           }}
         />
-      </div>
+      </PressTarget>
       <div className="min-w-0">
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-          role="button"
-          tabIndex={0}
-          aria-label={t("a11y.openNowPlaying")}
-          onClick={(e) => openNowPlayingFrom(e.currentTarget)}
-          onKeyDown={activateOnKey<HTMLDivElement>((e) => openNowPlayingFrom(e.currentTarget))}
+        <PressTarget
+          label={t("a11y.openNowPlaying")}
+          onActivate={(e) => openNowPlayingFrom(e.currentTarget)}
         >
           <Marquee className="text-[16px] font-normal">{track?.title || "—"}</Marquee>
-        </div>
+        </PressTarget>
         <Marquee className="text-[13px] font-light text-[rgba(20,20,24,0.55)]">
           <ArtistLinks
             artists={track?.artists}

@@ -16,10 +16,10 @@ import {
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { usePlaybackPolicy } from "@/hooks/usePlaybackPolicy";
-import { activateOnKey } from "@/lib/keys";
 import { writeTrackDragData } from "@/model/track-actions";
 
 type TrackRowProps = {
@@ -196,9 +196,13 @@ export const TrackRow = React.memo(function TrackRow({
   const col = dark ? "#fff" : "#16161a";
   const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
   const isLiked = isVibeTrackLiked(liked, track);
-  const activateTrack = (e?: React.MouseEvent) => {
+  const activateTrack = (
+    e: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>,
+  ) => {
     if (model.unavailable) return;
-    if (e && onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+    // Modifier-click multi-selects; keyboard Enter/Space always plays. `"button"`
+    // is present on a MouseEvent but not a KeyboardEvent, so it narrows the union.
+    if ("button" in e && onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
       onSelect(track, e);
       return;
     }
@@ -230,13 +234,10 @@ export const TrackRow = React.memo(function TrackRow({
         boxShadow: selected ? `inset 2px 0 0 ${accent}` : "none",
       }}
     >
-      <div
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich leading area (rank/equalizer/art) plays the track
-        role="button"
-        tabIndex={model.unavailable ? -1 : 0}
-        aria-label={t("a11y.playItem", { name: track.title })}
-        onClick={(e: React.MouseEvent) => activateTrack(e)}
-        onKeyDown={activateOnKey(() => activateTrack())}
+      <PressTarget
+        label={t("a11y.playItem", { name: track.title })}
+        onActivate={activateTrack}
+        disabled={model.unavailable}
         className="flex flex-none items-center gap-4"
       >
         <div className="flex-none text-center" style={{ width: model.chart ? 30 : 22 }}>
@@ -250,15 +251,12 @@ export const TrackRow = React.memo(function TrackRow({
           className="flex-none"
           style={{ width: 44, height: 44 }}
         />
-      </div>
+      </PressTarget>
       <div className="min-w-0 flex-1">
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- title line is a secondary play target
-          role="button"
-          tabIndex={model.unavailable ? -1 : 0}
-          aria-label={t("a11y.playItem", { name: track.title })}
-          onClick={(e: React.MouseEvent) => activateTrack(e)}
-          onKeyDown={activateOnKey(() => activateTrack())}
+        <PressTarget
+          label={t("a11y.playItem", { name: track.title })}
+          onActivate={activateTrack}
+          disabled={model.unavailable}
           className="flex min-w-0 items-center gap-2"
         >
           <span
@@ -268,7 +266,7 @@ export const TrackRow = React.memo(function TrackRow({
             {track.title}
           </span>
           <TrackBadges badges={model.badges} accent={accent} muted={sub} />
-        </div>
+        </PressTarget>
         <div className="truncate text-[12.5px] font-light" style={{ color: sub }}>
           <ArtistLinks
             artists={track.artists}

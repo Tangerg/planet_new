@@ -10,9 +10,9 @@ import type { CardActivation } from "@/components/cards/activation";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
-import { activateOnKey } from "@/lib/keys";
 
 type CollectionRowProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
@@ -57,14 +57,7 @@ function CollectionRowInner<T extends CardItem>({
       style={{ background: hover ? "rgba(255,255,255,.06)" : "transparent" }}
     >
       <div className="relative flex-none">
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- cover art opens the collection with morph geometry
-          role="button"
-          tabIndex={0}
-          aria-label={item.name}
-          onClick={activateFromTarget}
-          onKeyDown={activateOnKey(activateFromTarget)}
-        >
+        <PressTarget label={item.name} onActivate={activateFromTarget}>
           <Art
             className="clrt"
             seed={item.coverSeed}
@@ -73,7 +66,7 @@ function CollectionRowInner<T extends CardItem>({
             images={item.images}
             style={{ width: 48, height: 48, borderRadius: round ? "50%" : 0 }}
           />
-        </div>
+        </PressTarget>
         {/* artists (round) are people, not playable — no cover play fab */}
         {onPlay && !round && playable && hover && (
           <Button
@@ -89,18 +82,10 @@ function CollectionRowInner<T extends CardItem>({
           </Button>
         )}
       </div>
-      <div
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- text body is a secondary open target
-        role="button"
-        tabIndex={0}
-        aria-label={item.name}
-        onClick={activateFromTarget}
-        onKeyDown={activateOnKey(activateFromTarget)}
-        className="min-w-0 flex-1"
-      >
+      <PressTarget label={item.name} onActivate={activateFromTarget} className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-normal">{item.name}</div>
         <div className="truncate text-[12.5px] font-light text-white/50">{sub}</div>
-      </div>
+      </PressTarget>
       {meta && <span className="mlabel flex-none text-[11px] text-white/40">{meta}</span>}
     </div>
   );

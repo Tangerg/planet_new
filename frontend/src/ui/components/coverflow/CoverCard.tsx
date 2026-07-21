@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 
 import { Art, artBg } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { Icon } from "@/infra/icons";
 import type { FlowItem } from "@/model/derive";
-import { activateOnKey } from "@/lib/keys";
 
 import { CARD_EASE, type CoverTransform } from "./geometry";
 
@@ -63,17 +63,9 @@ export function CoverCard({
     >
       {/* cover */}
       <div className="relative" style={{ width: cover, height: cover }}>
-        <div
-          // 3D card surface, not valid native button content — role="button" +
-          // keyboard is the right pattern, while the play fab remains a sibling
-          // so it cannot be swallowed by the cover activation target.
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
-          role="button"
-          tabIndex={0}
-          aria-label={item.name}
-          onClick={onActivate}
-          onKeyDown={activateOnKey(onActivate)}
-        >
+        {/* The play fab stays a sibling (not a child) so the cover activation
+            target cannot swallow it. */}
+        <PressTarget label={item.name} onActivate={onActivate}>
           <Art
             seed={item.seed}
             grad={item.grad}
@@ -92,7 +84,7 @@ export function CoverCard({
                 : "0 20px 50px -16px rgba(0,0,0,.7)",
             }}
           />
-        </div>
+        </PressTarget>
         {showPlay && (
           <Button
             onClick={(e) => {

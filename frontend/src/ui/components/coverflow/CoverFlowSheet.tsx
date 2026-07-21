@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 
 import { artPair } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { Sheet } from "@/components/Sheet";
 import type { FlowItem } from "@/model/derive";
 import type { VibeTrack } from "@/model/vibe";
-import { activateOnKey } from "@/lib/keys";
 
 /**
  * The expanded in-place tracklist for the centered cover — a Base UI Dialog Sheet
@@ -77,14 +77,10 @@ export function CoverFlowSheet({
           </Button>
         </div>
         {tracks.map((track, i) => (
-          <div
+          <PressTarget
             key={track.id + i}
-            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich track row (art + meta), not valid native button content
-            role="button"
-            tabIndex={0}
-            aria-label={t("a11y.playItem", { name: track.title })}
-            onClick={() => onPlayTrack && onPlayTrack(track)}
-            onKeyDown={activateOnKey(() => onPlayTrack?.(track))}
+            label={t("a11y.playItem", { name: track.title })}
+            onActivate={() => onPlayTrack?.(track)}
             onContextMenu={(e) => trackMenu(e, track)}
             className="flex cursor-pointer items-center gap-[14px] border-b border-white/[0.06] py-[9px]"
           >
@@ -96,7 +92,7 @@ export function CoverFlowSheet({
               <div className="truncate text-[12px] font-light text-white/45">{track.artist}</div>
             </div>
             <span className="mlabel flex-none text-[10px] text-white/[0.32]">{track.duration}</span>
-          </div>
+          </PressTarget>
         ))}
       </div>
     </Sheet>

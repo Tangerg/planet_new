@@ -11,9 +11,9 @@ import type { CardActivation } from "@/components/cards/activation";
 import { Art, artPair } from "@/components/primitives";
 import { LiftCard } from "@/components/lift";
 import { PlayFab } from "@/components/cards/PlayFab";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
-import { activateOnKey } from "@/lib/keys";
 
 type MediaCardProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
@@ -61,14 +61,7 @@ function MediaCardInner<T extends CardItem>({
       onContextMenu={(e) => collMenu(e, item)}
     >
       <div className="relative">
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich art surface, not valid native button content
-          role="button"
-          tabIndex={0}
-          aria-label={item.name}
-          onClick={activateFromTarget}
-          onKeyDown={activateOnKey(activateFromTarget)}
-        >
+        <PressTarget label={item.name} onActivate={activateFromTarget}>
           <Art
             seed={item.coverSeed}
             grad={item.gradient}
@@ -78,7 +71,7 @@ function MediaCardInner<T extends CardItem>({
             className="art"
             glow={round ? undefined : artPair(item.coverSeed, item.gradient)[1]}
           />
-        </div>
+        </PressTarget>
         {/* artists (round) are people, not playable — no cover play fab */}
         {onPlay && !round && playable && (
           <PlayFab
@@ -88,17 +81,9 @@ function MediaCardInner<T extends CardItem>({
           />
         )}
       </div>
-      <div
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- title is a secondary open target
-        role="button"
-        tabIndex={0}
-        aria-label={item.name}
-        onClick={activateFromTarget}
-        onKeyDown={activateOnKey(activateFromTarget)}
-        className="ttl"
-      >
+      <PressTarget label={item.name} onActivate={activateFromTarget} className="ttl">
         {item.name}
-      </div>
+      </PressTarget>
       {sub && <div className="sub">{sub}</div>}
     </LiftCard>
   );

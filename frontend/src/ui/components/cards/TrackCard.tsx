@@ -11,8 +11,8 @@ import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { LiftCard, RiseFab } from "@/components/lift";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
-import { activateOnKey } from "@/lib/keys";
 
 type TrackCardProps = {
   track: VibeTrack;
@@ -45,13 +45,9 @@ export const TrackCard = React.memo(function TrackCard({
       onContextMenu={(e) => trackMenu(e, track)}
     >
       <div className="relative">
-        <div
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich art tile, not valid native button content
-          role="button"
-          tabIndex={0}
-          aria-label={t("a11y.playItem", { name: track.title })}
-          onClick={playFromTarget}
-          onKeyDown={activateOnKey(playFromTarget)}
+        <PressTarget
+          label={t("a11y.playItem", { name: track.title })}
+          onActivate={playFromTarget}
           className="cursor-pointer"
         >
           <Art
@@ -61,7 +57,7 @@ export const TrackCard = React.memo(function TrackCard({
             image={track.image}
             images={track.images}
           />
-        </div>
+        </PressTarget>
         <RiseFab
           className="trackfab absolute bottom-3 right-3 grid h-[46px] w-[46px] place-items-center rounded-full border-0"
           onClick={(e: React.MouseEvent) => {
@@ -78,17 +74,13 @@ export const TrackCard = React.memo(function TrackCard({
           <Icon.play size={18} />
         </RiseFab>
       </div>
-      <div
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- title is a lightweight secondary play target
-        role="button"
-        tabIndex={0}
-        aria-label={t("a11y.playItem", { name: track.title })}
-        onClick={playFromTarget}
-        onKeyDown={activateOnKey(playFromTarget)}
+      <PressTarget
+        label={t("a11y.playItem", { name: track.title })}
+        onActivate={playFromTarget}
         className="mt-[11px] cursor-pointer truncate text-[14.5px] font-normal"
       >
         {track.title}
-      </div>
+      </PressTarget>
       <div className="truncate text-[12.5px] font-light text-white/50">
         <ArtistLinks
           artists={track.artists}

@@ -8,10 +8,10 @@ import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Empty } from "@/components/layout/Empty";
 import { VirtualList } from "@/components/layout/VirtualList";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { QueueClearButton } from "@/components/QueueClearButton";
 import { useScreenActions } from "@/hooks/screenActions";
 import { Icon } from "@/infra/icons";
-import { activateOnKey } from "@/lib/keys";
 
 type Props = {
   open: boolean;
@@ -123,13 +123,9 @@ export function UpNextSheet({
             renderItem={(vi) => {
               const queued = queue[vi];
               return (
-                <div
-                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich queue row (art + meta), not valid native button content
-                  role="button"
-                  tabIndex={0}
-                  aria-label={t("a11y.playItem", { name: queued.title })}
-                  onClick={() => onPlay?.(queued)}
-                  onKeyDown={activateOnKey(() => onPlay?.(queued))}
+                <PressTarget
+                  label={t("a11y.playItem", { name: queued.title })}
+                  onActivate={() => onPlay?.(queued)}
                   onContextMenu={(e) => trackMenu(e, queued, onPlay ? { onPlay } : undefined)}
                   className="flex cursor-pointer items-center gap-[14px] py-[9px]"
                 >
@@ -165,7 +161,7 @@ export function UpNextSheet({
                       <Icon.close size={15} />
                     </Button>
                   )}
-                </div>
+                </PressTarget>
               );
             }}
           />

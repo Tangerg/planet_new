@@ -14,11 +14,11 @@ import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { Empty } from "@/components/layout/Empty";
 import { Button } from "@/components/controls/Button";
+import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { forYouCollectionRoute, forYouScreenModel } from "@/model/for-you";
-import { activateOnKey } from "@/lib/keys";
 
 type ForYouScreenProps = {
   data: ScreenData;
@@ -159,13 +159,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 onClick={activate}
                 onContextMenu={(e) => collMenu(e, tile)}
               >
-                <div
-                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- rich tile body, not valid native button content
-                  role="button"
-                  tabIndex={0}
-                  aria-label={tile.name}
-                  onClick={activateFromTarget}
-                  onKeyDown={activateOnKey(activateFromTarget)}
+                <PressTarget
+                  label={tile.name}
+                  onActivate={activateFromTarget}
                   className="flex min-w-0 flex-1 items-center gap-[14px]"
                 >
                   <Art
@@ -177,7 +173,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                     className="tart"
                   />
                   <span className="tname">{tile.name}</span>
-                </div>
+                </PressTarget>
                 {canPlayCollection(tile) && (
                   <Button
                     className="tfab"
