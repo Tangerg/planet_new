@@ -14,13 +14,15 @@
 import { clampIndex } from "@shared/number";
 import type { CatalogAvailability } from "@contexts/catalog";
 
+import type { LocalizedText } from "@/i18n/text";
 import type { ScreenData, VibeTrack } from "@/model/vibe";
 
-/** One XMB sub-item (a launcher tile under a category). */
+/** One XMB sub-item (a launcher tile under a category). Display text is named,
+ *  not formatted: this projection is pure, so the XMB screen resolves it. */
 export type XmbItemModel = {
   key: string;
-  label: string;
-  sub?: string;
+  label: LocalizedText;
+  sub?: LocalizedText;
   icon?: string;
   seed: number;
   grad?: string[];
@@ -33,7 +35,7 @@ export type XmbItemModel = {
 export type XmbCat = {
   id: string;
   icon: string;
-  label: string;
+  label: LocalizedText;
   items: XmbItemModel[];
 };
 
@@ -55,10 +57,6 @@ export type NavActions = {
   openLibrary: (tab: string) => void;
   openLikedSongs: () => void;
 };
-
-export function nounCount(count: number, noun: string, plural = `${noun}s`): string {
-  return `${count} ${count === 1 ? noun : plural}`;
-}
 
 export type XmbRowMemory = Record<string, number>;
 
@@ -157,8 +155,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
   if (availability.personalized) {
     discover.push({
       key: "foryou",
-      label: "For You",
-      sub: "Your daily landing",
+      label: { key: "nav.forYou" },
+      sub: { key: "nav.yourDailyLanding" },
       icon: "star",
       seed: 7,
       grad: ["#1b1033", "#ff2188"],
@@ -169,8 +167,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
   if (availability.toplist) {
     discover.push({
       key: "charts",
-      label: "Charts",
-      sub: "Ranked by plays",
+      label: { key: "common.charts" },
+      sub: { key: "nav.rankedByPlays" },
       icon: "bars",
       seed: 10,
       grad: ["#240b04", "#ff8a3c"],
@@ -181,8 +179,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
   if (availability.search) {
     discover.push({
       key: "search",
-      label: "Search",
-      sub: "Tracks, artists, albums",
+      label: { key: "common.search" },
+      sub: { key: "nav.discoverSearchSub" },
       icon: "search",
       seed: 6,
       grad: ["#021e24", "#36c5e0"],
@@ -196,14 +194,14 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     {
       id: "np",
       icon: "play",
-      label: "Now Playing",
+      label: { key: "common.nowPlaying" },
       items: [
         ...(current
           ? [
               {
                 key: "player",
-                label: current.title || "Now Playing",
-                sub: current.artist,
+                label: current.title ? { text: current.title } : { key: "common.nowPlaying" },
+                sub: current.artist ? { text: current.artist } : undefined,
                 icon: "play",
                 seed: current.coverSeed || 0,
                 grad: current.gradient,
@@ -215,8 +213,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           : []),
         {
           key: "queue",
-          label: "Up Next",
-          sub: `${nounCount(queueLength, "track")} queued`,
+          label: { key: "common.upNext" },
+          sub: { key: "counts.queued", values: { count: queueLength } },
           icon: "list",
           seed: 5,
           dest: "queue",
@@ -224,8 +222,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "history",
-          label: "History",
-          sub: "Recently played",
+          label: { key: "common.history" },
+          sub: { key: "nav.historySub" },
           icon: "clock",
           seed: 12,
           grad: ["#161320", "#8a7bff"],
@@ -238,19 +236,19 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     {
       id: "discover",
       icon: "compass",
-      label: "Discover",
+      label: { key: "common.discover" },
       items: discover,
     },
     // 3 · LIBRARY — the user's own world (local, never gated).
     {
       id: "library",
       icon: "stack",
-      label: "Library",
+      label: { key: "common.library" },
       items: [
         {
           key: "liked",
-          label: "Liked Songs",
-          sub: nounCount(liked.size, "track"),
+          label: { key: "nav.likedSongs" },
+          sub: { key: "counts.tracks", values: { count: liked.size } },
           icon: "heart",
           seed: 0,
           grad: ["#2a0420", "#ff4fa3"],
@@ -259,8 +257,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "playlists",
-          label: "Playlists",
-          sub: nounCount(catalog.playlists.length, "playlist"),
+          label: { key: "common.playlists" },
+          sub: { key: "counts.playlists", values: { count: catalog.playlists.length } },
           icon: "list",
           seed: 1,
           grad: ["#1a0d3a", "#7755ff"],
@@ -269,8 +267,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "albums",
-          label: "Albums",
-          sub: nounCount(catalog.albums.length, "album"),
+          label: { key: "common.albums" },
+          sub: { key: "counts.albums", values: { count: catalog.albums.length } },
           icon: "stack",
           seed: 2,
           grad: ["#3a0d10", "#f3727f"],
@@ -279,8 +277,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "artists",
-          label: "Artists",
-          sub: catalog.artists.length + " following",
+          label: { key: "common.artists" },
+          sub: { key: "counts.artistsFollowing", values: { count: catalog.artists.length } },
           icon: "user",
           seed: 4,
           grad: ["#06222b", "#19d3c5"],
@@ -293,12 +291,12 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     {
       id: "you",
       icon: "user",
-      label: "You",
+      label: { key: "common.profile" },
       items: [
         {
           key: "profile",
-          label: "Profile",
-          sub: "You",
+          label: { key: "common.profile" },
+          sub: { key: "nav.profileSub" },
           icon: "user",
           seed: 3,
           grad: ["#1b1033", "#ff2188"],
@@ -307,8 +305,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "stats",
-          label: "Listening",
-          sub: "Your top artists & minutes",
+          label: { key: "nav.listening" },
+          sub: { key: "nav.listeningSub" },
           icon: "bars",
           seed: 9,
           grad: ["#2a0420", "#ff4fa3"],
@@ -321,12 +319,12 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     {
       id: "settings",
       icon: "gear",
-      label: "Settings",
+      label: { key: "common.settings" },
       items: [
         {
           key: "prefs",
-          label: "Preferences",
-          sub: "Audio, theme, interface",
+          label: { key: "nav.preferences" },
+          sub: { key: "nav.audioThemeInterface" },
           icon: "gear",
           seed: 9,
           grad: ["#13031f", "#b15cff"],
@@ -335,8 +333,8 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
         {
           key: "about",
-          label: "About Sonance",
-          sub: "Version 2.0",
+          label: { key: "nav.about" },
+          sub: { key: "nav.aboutSub" },
           icon: "note",
           seed: 2,
           dest: "settings",

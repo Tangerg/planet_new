@@ -11,6 +11,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { localize } from "@/i18n/text";
 import { HeroBackdrop } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { FlowWaves } from "@/components/xmb/FlowWaves";
@@ -113,7 +114,7 @@ export const XMB = React.memo(function XMB({
           className="whitespace-nowrap text-[54px] font-light leading-none tracking-[0.005em] text-white"
           style={{ textShadow: "0 2px 24px rgba(0,0,0,.45)" }}
         >
-          {cat.label}
+          {localize(t, cat.label)}
         </div>
       </div>
 

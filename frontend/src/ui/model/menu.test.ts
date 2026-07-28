@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { appMenuItems, collectionMenuItems, isMenuItem, trackMenuItems } from "./menu";
+import {
+  appMenuItems,
+  collectionMenuItems,
+  isMenuItem,
+  trackMenuItems,
+  type MenuItem,
+} from "./menu";
 import type { ArtistTarget, CardItem, VibeTrack } from "./vibe";
 import { ProviderId } from "@domain/model/provider-id";
 import { TrackKey } from "@domain/model/entity-key";
@@ -33,11 +39,14 @@ const trackIdMock = () => vi.fn<(trackId: string, next?: boolean) => void>();
 const artistMock = () => vi.fn<(artist: ArtistTarget) => void>();
 const cardMock = () => vi.fn<(item: CardItem) => void>();
 
+/** Menu labels are message keys, so assertions read the key, not rendered text. */
+const labelKey = (item: MenuItem): string =>
+  item.label && "key" in item.label ? item.label.key : "sep";
+
 describe("menu model", () => {
   it("filters optional menu entries with a type guard", () => {
-    expect([{ label: "Open" }, false, null, undefined].filter(isMenuItem)).toEqual([
-      { label: "Open" },
-    ]);
+    const open = { label: { key: "menu.open" } } as const;
+    expect([open, false, null, undefined].filter(isMenuItem)).toEqual([open]);
   });
 
   it("builds track menus from playback, queue, like, and artist actions", () => {
@@ -54,13 +63,13 @@ describe("menu model", () => {
       openArtist,
     });
 
-    expect(items.map((item) => item.label ?? "sep")).toEqual([
-      "Play",
-      "Play Next",
-      "Add to Queue",
+    expect(items.map(labelKey)).toEqual([
+      "menu.play",
+      "menu.playNext",
+      "menu.addToQueue",
       "sep",
-      "Remove from Liked",
-      "Go to artist",
+      "menu.removeFromLiked",
+      "menu.goToArtist",
     ]);
     items[0].onClick?.();
     items[1].onClick?.();
@@ -83,16 +92,16 @@ describe("menu model", () => {
         toggleLike: trackMock(),
         liked: new Set(),
         openArtist: artistMock(),
-      }).map((item) => item.label),
-    ).not.toContain("Go to artist");
+      }).map(labelKey),
+    ).not.toContain("menu.goToArtist");
 
     expect(
       collectionMenuItems({
         item: card({ artistId: "artist", artist: "Artist" }),
         openDetail: cardMock(),
         openArtist: artistMock(),
-      }).map((item) => item.label),
-    ).toEqual(["Open", "Go to artist"]);
+      }).map(labelKey),
+    ).toEqual(["menu.open", "menu.goToArtist"]);
   });
 
   it("builds the app menu from navigation state", () => {
@@ -106,7 +115,7 @@ describe("menu model", () => {
       openQueue: voidMock(),
       openProfile: voidMock(),
       openSettings: voidMock(),
-    }).map((item) => item.label ?? "sep");
+    }).map(labelKey);
 
     const withBackAndQueue = appMenuItems({
       canGoBack: true,
@@ -118,27 +127,27 @@ describe("menu model", () => {
       openQueue: voidMock(),
       openProfile: voidMock(),
       openSettings: voidMock(),
-    }).map((item) => item.label ?? "sep");
+    }).map(labelKey);
 
     expect(withoutBackOrQueue).toEqual([
-      "Home",
+      "menu.home",
       "sep",
-      "Search",
-      "Library",
+      "menu.search",
+      "menu.library",
       "sep",
-      "Profile",
-      "Settings",
+      "menu.profile",
+      "menu.settings",
     ]);
     expect(withBackAndQueue).toEqual([
-      "Back",
-      "Home",
+      "menu.back",
+      "menu.home",
       "sep",
-      "Search",
-      "Library",
-      "Queue",
+      "menu.search",
+      "menu.library",
+      "menu.queue",
       "sep",
-      "Profile",
-      "Settings",
+      "menu.profile",
+      "menu.settings",
     ]);
   });
 });

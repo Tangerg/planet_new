@@ -4,7 +4,6 @@ import type { CatalogAvailability } from "@domain";
 
 import {
   buildWorlds,
-  nounCount,
   xmbKeyboardIntent,
   xmbMoveCategory,
   xmbSelectedRow,
@@ -61,13 +60,6 @@ function actions(): NavActions {
 }
 
 describe("navigation model", () => {
-  it("formats simple English count labels", () => {
-    expect(nounCount(0, "track")).toBe("0 tracks");
-    expect(nounCount(1, "track")).toBe("1 track");
-    expect(nounCount(2, "playlist")).toBe("2 playlists");
-    expect(nounCount(2, "person", "people")).toBe("2 people");
-  });
-
   it("drops Discover when the provider exposes no discover capabilities", () => {
     const worlds = buildWorlds(
       {
@@ -99,12 +91,12 @@ describe("navigation model", () => {
 
     expect(discover?.items.map((item) => item.key)).toEqual(["foryou", "search"]);
     expect(nowPlaying?.items[0]).toMatchObject({
-      label: "Now",
-      sub: "Artist",
+      label: { text: "Now" },
+      sub: { text: "Artist" },
       seed: 11,
       dest: "np",
     });
-    expect(nowPlaying?.items[1].sub).toBe("1 track queued");
+    expect(nowPlaying?.items[1].sub).toEqual({ key: "counts.queued", values: { count: 1 } });
 
     discover?.items[0].run?.();
     discover?.items[1].run?.();
@@ -147,10 +139,10 @@ describe("navigation model", () => {
     const library = worlds.find((world) => world.id === "library");
 
     expect(library?.items.map((item) => item.sub)).toEqual([
-      "1 track",
-      "1 playlist",
-      "1 album",
-      "1 following",
+      { key: "counts.tracks", values: { count: 1 } },
+      { key: "counts.playlists", values: { count: 1 } },
+      { key: "counts.albums", values: { count: 1 } },
+      { key: "counts.artistsFollowing", values: { count: 1 } },
     ]);
     library?.items[0].run?.();
     library?.items[1].run?.();

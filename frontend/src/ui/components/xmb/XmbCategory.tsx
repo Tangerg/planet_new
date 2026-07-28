@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
+import { useTranslation } from "react-i18next";
 
+import { localize } from "@/i18n/text";
 import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";
 import type { XmbCat } from "@/model/navigation";
@@ -18,6 +20,7 @@ export function XmbCategory({
   dim: number;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const I = Icon[cat.icon] || Icon.note;
   const sz = active ? 92 : 58;
   // Breathing glow on the active icon. Motion can't interpolate a box-shadow
@@ -40,7 +43,7 @@ export function XmbCategory({
   );
   return (
     <Button
-      aria-label={cat.label}
+      aria-label={localize(t, cat.label)}
       onClick={onClick}
       style={{
         position: "absolute",

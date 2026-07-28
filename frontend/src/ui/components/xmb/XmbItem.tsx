@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
+import { useTranslation } from "react-i18next";
 
+import { localize } from "@/i18n/text";
 import { artBg } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { Icon } from "@/infra/icons";
@@ -10,6 +12,7 @@ import { xmbItemVisualState } from "@/model/xmb-item";
 import { XMB_EASE } from "./geometry";
 
 export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: number }) {
+  const { t } = useTranslation();
   const visual = xmbItemVisualState(active, o);
   // Rack-focus depth, but only on the immediate ±1 neighbours (further rows are
   // already faded near-invisible by `op`, so blurring them buys nothing). A FIXED
@@ -99,7 +102,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             maxWidth: visual.titleMaxWidth,
           }}
         >
-          {item.label}
+          {localize(t, item.label)}
         </div>
         {active && (
           <FadeIn
@@ -109,7 +112,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
         )}
         {active && item.sub && (
           <FadeIn className="mlabel mt-[9px] max-w-[600px] truncate text-[10.5px] text-white/[0.55]">
-            {item.sub}
+            {localize(t, item.sub)}
           </FadeIn>
         )}
       </div>

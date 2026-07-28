@@ -2,32 +2,10 @@ import React from "react";
 import { Menu } from "@base-ui/react/menu";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { localize } from "@/i18n/text";
 import { Icon } from "@/infra/icons";
 import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
-
-const MENU_LABEL_KEYS = {
-  "Add to Liked": "menu.addToLiked",
-  "Add to Queue": "menu.addToQueue",
-  Back: "menu.back",
-  "Go to artist": "menu.goToArtist",
-  Home: "menu.home",
-  Library: "menu.library",
-  Open: "menu.open",
-  Play: "menu.play",
-  "Play Next": "menu.playNext",
-  Profile: "menu.profile",
-  Queue: "menu.queue",
-  "Remove from Queue": "menu.removeFromQueue",
-  "Remove from Liked": "menu.removeFromLiked",
-  Search: "menu.search",
-  Settings: "menu.settings",
-} as const;
-
-function menuLabel(label: string | undefined, t: (key: string) => string): string | undefined {
-  if (!label) return undefined;
-  return t(MENU_LABEL_KEYS[label as keyof typeof MENU_LABEL_KEYS] ?? label);
-}
 
 // ============================================================
 // ContextMenu — right-click menu on Base UI Menu primitives. Edge-aware
@@ -88,7 +66,7 @@ export function ContextMenu({ x, y, items, onClose, accent }: Props) {
                     </span>
                   )}
                   <span className="ctxlabel" style={{ color: it.danger ? "#ff6b6b" : "#fff" }}>
-                    {menuLabel(it.label, t)}
+                    {localize(t, it.label)}
                   </span>
                   {it.hint && <span className="ctxhint">{it.hint}</span>}
                 </Menu.Item>

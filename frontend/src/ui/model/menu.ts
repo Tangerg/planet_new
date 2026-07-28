@@ -1,8 +1,9 @@
+import type { LocalizedText } from "@/i18n/text";
 import { vibeTrackKey, type ArtistTarget, type CardItem, type VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "./likes";
 
 export type MenuItem = {
-  label?: string;
+  label?: LocalizedText;
   icon?: string;
   accent?: boolean;
   sep?: boolean;
@@ -29,7 +30,11 @@ export function artistMenuItem(
   name: string | undefined,
 ): MenuItem | null {
   return id
-    ? { label: "Go to artist", icon: "user", onClick: () => openArtist({ id, name: name ?? "" }) }
+    ? {
+        label: { key: "menu.goToArtist" },
+        icon: "user",
+        onClick: () => openArtist({ id, name: name ?? "" }),
+      }
     : null;
 }
 
@@ -44,20 +49,22 @@ export function trackMenuItems(opts: {
   const { track, onPlay, enqueue, toggleLike, liked, openArtist } = opts;
   const likedTrack = vibeTrackKey(track);
   const items: OptionalMenuItem[] = [
-    { label: "Play", icon: "play", accent: true, onClick: () => onPlay(track) },
+    { label: { key: "menu.play" }, icon: "play", accent: true, onClick: () => onPlay(track) },
     {
-      label: "Play Next",
+      label: { key: "menu.playNext" },
       icon: "next",
       onClick: () => likedTrack && enqueue(likedTrack, true),
     },
     {
-      label: "Add to Queue",
+      label: { key: "menu.addToQueue" },
       icon: "list",
       onClick: () => likedTrack && enqueue(likedTrack),
     },
     { sep: true },
     {
-      label: isVibeTrackLiked(liked, track) ? "Remove from Liked" : "Add to Liked",
+      label: {
+        key: isVibeTrackLiked(liked, track) ? "menu.removeFromLiked" : "menu.addToLiked",
+      },
       icon: "heart",
       onClick: () => toggleLike(track),
     },
@@ -73,7 +80,7 @@ export function collectionMenuItems(opts: {
 }): MenuItem[] {
   const { item, openDetail, openArtist } = opts;
   const items: OptionalMenuItem[] = [
-    { label: "Open", icon: "play", accent: true, onClick: () => openDetail(item) },
+    { label: { key: "menu.open" }, icon: "play", accent: true, onClick: () => openDetail(item) },
     artistMenuItem(openArtist, item.artistId, item.artist),
   ];
   return items.filter(isMenuItem);
@@ -91,15 +98,15 @@ export function appMenuItems(opts: {
   openSettings: () => void;
 }): MenuItem[] {
   const items: OptionalMenuItem[] = [
-    opts.canGoBack && { label: "Back", icon: "back", onClick: opts.goBack },
-    { label: "Home", icon: "compass", onClick: opts.goHome },
+    opts.canGoBack && { label: { key: "menu.back" }, icon: "back", onClick: opts.goBack },
+    { label: { key: "menu.home" }, icon: "compass", onClick: opts.goHome },
     { sep: true },
-    { label: "Search", icon: "search", accent: true, onClick: opts.openSearch },
-    { label: "Library", icon: "stack", onClick: opts.openLibrary },
-    opts.hasQueue && { label: "Queue", icon: "list", onClick: opts.openQueue },
+    { label: { key: "menu.search" }, icon: "search", accent: true, onClick: opts.openSearch },
+    { label: { key: "menu.library" }, icon: "stack", onClick: opts.openLibrary },
+    opts.hasQueue && { label: { key: "menu.queue" }, icon: "list", onClick: opts.openQueue },
     { sep: true },
-    { label: "Profile", icon: "user", onClick: opts.openProfile },
-    { label: "Settings", icon: "gear", onClick: opts.openSettings },
+    { label: { key: "menu.profile" }, icon: "user", onClick: opts.openProfile },
+    { label: { key: "menu.settings" }, icon: "gear", onClick: opts.openSettings },
   ];
   return items.filter(isMenuItem);
 }
