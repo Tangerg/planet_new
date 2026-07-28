@@ -5,6 +5,7 @@
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import type { LoginFlow, LoginStatus } from "@contexts/identity";
 import { warnReadFailure } from "@shared/debug";
 import { Sheet } from "@/components/Sheet";
@@ -25,12 +26,15 @@ export function LoginSheet({
   accent,
   beginLogin,
   markLoggedIn,
+  sourceName,
 }: {
   open: boolean;
   onClose: () => void;
   accent: string;
   beginLogin: () => Promise<LoginFlow>;
   markLoggedIn: () => void;
+  /** The source being logged into, already resolved — the sheet stays a leaf. */
+  sourceName: string;
 }) {
   const { t } = useTranslation();
   const [flow, setFlow] = useState<LoginFlow | null>(null);
@@ -99,7 +103,7 @@ export function LoginSheet({
       }}
     >
       <div className="flex flex-col items-center gap-5 px-12 py-11">
-        <div className="text-[20px] font-light">{t("login.title")}</div>
+        <div className="text-[20px] font-light">{t("login.title", { source: sourceName })}</div>
         {flow?.kind === "qr" && flow.image ? (
           <img
             src={flow.image}

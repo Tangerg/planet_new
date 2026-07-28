@@ -1,10 +1,16 @@
 import type { LocalLibraryScanOutcome } from "@contexts/local-library";
 import type { ProviderId } from "@contexts/contracts";
 
+import type { LocalizedText } from "@/i18n/text";
+
+import { sourceDisplayName } from "./source-name";
+
 export type SettingsOption = {
   value: string;
   label: string;
 };
+
+export type SourceOption = { value: string; label: LocalizedText };
 
 export type SettingsScanState =
   | { phase: "idle" }
@@ -13,19 +19,6 @@ export type SettingsScanState =
   | { phase: "partial"; added: number; total: number }
   | { phase: "error" };
 
-export type SettingsScanStatusDescriptor =
-  | { key: "settings.addFolderSub" }
-  | { key: "settings.scanning" }
-  | { key: "settings.scanDone"; values: { added: number; total: number } }
-  | { key: "settings.scanPartial"; values: { added: number; total: number } }
-  | { key: "settings.scanError" };
-
-export const DEFAULT_SOURCE_LABELS: Record<string, string> = {
-  netease: "网易云",
-  qqmusic: "QQ 音乐",
-  spotify: "Spotify",
-};
-
 export const AUDIO_QUALITY_OPTIONS = tokenOptions("STD", "HQ", "SQ");
 export const NOW_PLAYING_OPEN_OPTIONS = tokenOptions("COVER", "LYRICS");
 
@@ -33,14 +26,9 @@ export function tokenOptions(...values: readonly string[]): SettingsOption[] {
   return values.map((value) => ({ value, label: value }));
 }
 
-export function sourceOptions(
-  sources: readonly ProviderId[],
-  labels: Readonly<Record<string, string>> = DEFAULT_SOURCE_LABELS,
-): SettingsOption[] {
-  return sources.map((source) => ({
-    value: source,
-    label: labels[source] ?? source,
-  }));
+/** Source picker rows, named by the shared source-name authority. */
+export function sourceOptions(sources: readonly ProviderId[]): SourceOption[] {
+  return sources.map((source) => ({ value: source, label: sourceDisplayName(source) }));
 }
 
 export function initialSettingsSource(
@@ -64,7 +52,7 @@ export function shouldActivateScannedSource(scan: SettingsScanState): boolean {
   return scan.phase === "done" || (scan.phase === "partial" && scan.total > 0);
 }
 
-export function scanStatusDescriptor(scan: SettingsScanState): SettingsScanStatusDescriptor {
+export function scanStatusDescriptor(scan: SettingsScanState): LocalizedText {
   if (scan.phase === "scanning") return { key: "settings.scanning" };
   if (scan.phase === "done") {
     return {

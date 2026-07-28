@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { ProviderId } from "@domain";
 
 import {
-  DEFAULT_SOURCE_LABELS,
   initialSettingsSource,
   scanStateFromFolderResult,
   scanStatusDescriptor,
@@ -19,16 +18,13 @@ describe("settings screen model", () => {
     ]);
   });
 
-  it("labels provider registry names while preserving unknown sources", () => {
+  it("names known sources by message and degrades unknown ones to their id", () => {
     expect(
-      sourceOptions([ProviderId.of("netease"), ProviderId.of("local"), ProviderId.of("future")], {
-        ...DEFAULT_SOURCE_LABELS,
-        local: "本地",
-      }),
+      sourceOptions([ProviderId.of("netease"), ProviderId.of("local"), ProviderId.of("future")]),
     ).toEqual([
-      { value: "netease", label: "网易云" },
-      { value: "local", label: "本地" },
-      { value: "future", label: "future" },
+      { value: "netease", label: { key: "source.netease" } },
+      { value: "local", label: { key: "source.local" } },
+      { value: "future", label: { text: "future" } },
     ]);
   });
 

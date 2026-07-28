@@ -1,6 +1,8 @@
 import { Account, type AccountSnapshot } from "@contexts/identity";
 import { compactCount } from "@shared/number";
 
+import type { LocalizedText, MessageKey } from "@/i18n/text";
+
 import { collectionTrackCount } from "./derive";
 import type { VibeCollection } from "./vibe";
 
@@ -10,40 +12,43 @@ export type ProfilePlaylistItem = {
   trackCount: number;
 };
 
+/** Follower/following counts, present only for a real connected account — an
+ *  anonymous profile has no social graph to report and must not invent one. */
+export type ProfileSocialCounts = Readonly<{ followers: string; following: string }>;
+
 export type ProfileScreenModel = {
-  authActionLabel?: string;
-  connectionLabel: string;
-  followers: string;
-  following: string;
-  name: string;
+  authActionKey?: MessageKey;
+  connectionKey: MessageKey;
+  social?: ProfileSocialCounts;
+  name: LocalizedText;
   /** Whether to show the account-level membership mark (a real connected premium account). */
   membership: boolean;
   playlists: ProfilePlaylistItem[];
 };
 
-export function profileConnectionLabel(loggedIn: boolean, supported: boolean): string {
-  if (loggedIn) return "Connected";
-  if (supported) return "Not connected";
-  return "Local profile";
+export function profileConnectionKey(loggedIn: boolean, supported: boolean): MessageKey {
+  if (loggedIn) return "profile.connected";
+  if (supported) return "profile.notConnected";
+  return "profile.localProfile";
 }
 
-export function profileAuthActionLabel(loggedIn: boolean, supported: boolean): string | undefined {
+export function profileAuthActionKey(
+  loggedIn: boolean,
+  supported: boolean,
+): MessageKey | undefined {
   if (!supported) return undefined;
-  return loggedIn ? "Log out" : "Log in with NetEase";
+  return loggedIn ? "profile.logout" : "profile.login";
 }
 
-export function profileFollowerLabel(
+export function profileSocialCounts(
   account: AccountSnapshot | null | undefined,
   loggedIn: boolean,
-): string {
-  return loggedIn && account ? compactCount(Account.followerCount(account)) : "598";
-}
-
-export function profileFollowingLabel(
-  account: AccountSnapshot | null | undefined,
-  loggedIn: boolean,
-): string {
-  return loggedIn && account ? compactCount(Account.followingCount(account)) : "6";
+): ProfileSocialCounts | undefined {
+  if (!loggedIn || !account) return undefined;
+  return {
+    followers: compactCount(Account.followerCount(account)),
+    following: compactCount(Account.followingCount(account)),
+  };
 }
 
 /** Account-level membership mark: only for a real connected account with a paid tier
@@ -81,12 +86,12 @@ export function profileScreenModel({
   playlists,
   supported,
 }: ProfileModelInput): ProfileScreenModel {
+  const accountName = account?.name?.trim();
   return {
-    authActionLabel: profileAuthActionLabel(loggedIn, supported),
-    connectionLabel: profileConnectionLabel(loggedIn, supported),
-    followers: profileFollowerLabel(account, loggedIn),
-    following: profileFollowingLabel(account, loggedIn),
-    name: Account.displayName(account, "Lily Tran"),
+    authActionKey: profileAuthActionKey(loggedIn, supported),
+    connectionKey: profileConnectionKey(loggedIn, supported),
+    social: profileSocialCounts(account, loggedIn),
+    name: accountName ? { text: accountName } : { key: "profile.anonymous" },
     membership: profileMembership(account, loggedIn),
     playlists: profilePlaylistItems(playlists, activePlaylistIndex),
   };

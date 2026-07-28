@@ -171,12 +171,13 @@ export const en = {
     empty: "No comments yet.",
   },
   profile: {
-    brand: "Netease Cloud Music",
+    anonymous: "Listener",
+
     connected: "Connected",
     followers: "Followers",
     following: "Following",
     localProfile: "Local profile",
-    login: "Log in with NetEase",
+    login: "Log in with {{source}}",
     logout: "Log out",
     notConnected: "Not connected",
     premium: "Premium",
@@ -205,7 +206,7 @@ export const en = {
   login: {
     label: "Log in",
     qrAlt: "Login QR code",
-    title: "Log in to NetEase Cloud Music",
+    title: "Log in to {{source}}",
     pending: "Scan with the NetEase Cloud Music app",
     scanned: "Scanned — confirm on your phone",
     authorized: "Logged in",
@@ -227,6 +228,12 @@ export const en = {
     resolvingStream: "Resolving video stream…",
     streamUnavailable: "Video URL unavailable",
     title: "Music Videos",
+  },
+  source: {
+    local: "Local",
+    netease: "NetEase Cloud Music",
+    qqmusic: "QQ Music",
+    spotify: "Spotify",
   },
   settings: {
     title: "Preferences",

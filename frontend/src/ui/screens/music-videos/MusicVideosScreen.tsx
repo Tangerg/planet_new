@@ -10,6 +10,8 @@ import { SectionHead } from "@/components/layout/SectionHead";
 import { LiftCard } from "@/components/lift";
 import { Icon } from "@/infra/icons";
 import { musicVideosScreenModel } from "@/model/music-video-screen";
+import { localize } from "@/i18n/text";
+import { useSourceName } from "@/hooks/useSourceName";
 
 import { VideoMeta } from "./VideoMeta";
 import { VideoThumb } from "./VideoThumb";
@@ -28,6 +30,7 @@ export function MusicVideosScreen({
   onOpenVideo,
 }: MusicVideosScreenProps) {
   const { t } = useTranslation();
+  const sourceName = useSourceName();
   const model = musicVideosScreenModel(videos, isLoading);
   const { featured, rest, related } = model;
 
@@ -44,7 +47,7 @@ export function MusicVideosScreen({
         <div className="mb-[30px] flex items-end justify-between">
           <div>
             <div className="mlabel mb-2 text-[10px]" style={{ color: accent }}>
-              {t("profile.brand")}
+              {localize(t, sourceName)}
             </div>
             <div className="text-[36px] font-extralight tracking-[0.01em]">
               {t("musicVideos.title")}

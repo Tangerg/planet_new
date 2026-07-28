@@ -11,7 +11,9 @@ import { FadeIn } from "@/components/motion";
 import { LoginSheet } from "@/components/LoginSheet";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useAuth } from "@/hooks/useAuth";
+import { localize } from "@/i18n/text";
 import { profileScreenModel } from "@/model/profile";
+import { useSourceName } from "@/hooks/useSourceName";
 
 type ProfileScreenProps = {
   accent: string;
@@ -23,6 +25,8 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { supported, loggedIn, account, beginLogin, markLoggedIn, logout } = useAuth();
+  const sourceName = useSourceName();
+  const sourceLabel = localize(t, sourceName);
   const [loginOpen, setLoginOpen] = useState(false);
   const closeLogin = useCallback(() => setLoginOpen(false), []);
   const [active, setActive] = useState(0);
@@ -33,12 +37,6 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
     playlists,
     supported,
   });
-  const connectionLabel = loggedIn
-    ? t("profile.connected")
-    : supported
-      ? t("profile.notConnected")
-      : t("profile.localProfile");
-  const authActionLabel = supported ? (loggedIn ? t("profile.logout") : t("profile.login")) : "";
   return (
     <FadeIn className="relative h-full overflow-hidden bg-[#08080b]">
       <Art
@@ -61,7 +59,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
       >
         <div className="min-w-0">
           <div className="mlabel mb-4 text-[11px]" style={{ color: accent }}>
-            {t("profile.brand")}
+            {sourceLabel}
           </div>
           <div className="text-[72px] font-extralight leading-none tracking-[0.01em]">
             {t("profile.title")}
@@ -80,11 +78,11 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
             />
             <div className="min-w-0 pt-[30px]">
               <div className="mlabel mb-[20px] inline-block pb-[8px]" style={{ color: accent }}>
-                {connectionLabel}
+                {t(model.connectionKey)}
               </div>
               <div className="flex max-w-[560px] items-center gap-3">
                 <div className="min-w-0 truncate text-[42px] font-extralight leading-tight">
-                  {model.name}
+                  {localize(t, model.name)}
                 </div>
                 {model.membership && (
                   <span
@@ -99,32 +97,36 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
                   </span>
                 )}
               </div>
-              <div className="mt-[30px] flex items-center gap-10">
-                <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
-                    {model.followers}
+              {/* Social counts only exist for a connected account; an anonymous
+                  profile shows no stat block rather than invented numbers. */}
+              {model.social && (
+                <div className="mt-[30px] flex items-center gap-10">
+                  <div>
+                    <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
+                      {model.social.followers}
+                    </div>
+                    <div className="mlabel mt-2 text-[10px] text-white/38">
+                      {t("profile.followers")}
+                    </div>
                   </div>
-                  <div className="mlabel mt-2 text-[10px] text-white/38">
-                    {t("profile.followers")}
+                  <div className="h-[42px] w-px bg-white/16" />
+                  <div>
+                    <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
+                      {model.social.following}
+                    </div>
+                    <div className="mlabel mt-2 text-[10px] text-white/38">
+                      {t("profile.following")}
+                    </div>
                   </div>
                 </div>
-                <div className="h-[42px] w-px bg-white/16" />
-                <div>
-                  <div className="font-mono text-[18px] tracking-[0.1em] tabular-nums">
-                    {model.following}
-                  </div>
-                  <div className="mlabel mt-2 text-[10px] text-white/38">
-                    {t("profile.following")}
-                  </div>
-                </div>
-              </div>
+              )}
 
-              {authActionLabel && (
+              {model.authActionKey && (
                 <Button
                   onClick={loggedIn ? () => void logout() : () => setLoginOpen(true)}
                   className="mlabel mt-[74px] inline-flex items-center gap-3 px-0 py-2 text-[10px] text-white/55"
                 >
-                  {authActionLabel}
+                  {t(model.authActionKey, { source: sourceLabel })}
                   <Icon.back size={13} className="rotate-180" />
                 </Button>
               )}
@@ -197,6 +199,7 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
         accent={accent}
         beginLogin={beginLogin}
         markLoggedIn={markLoggedIn}
+        sourceName={sourceLabel}
       />
     </FadeIn>
   );

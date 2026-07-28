@@ -181,12 +181,12 @@ export const zh = {
     empty: "暂无评论。",
   },
   profile: {
-    brand: "网易云音乐",
+    anonymous: "听众",
     connected: "已连接",
     followers: "粉丝",
     following: "关注",
     localProfile: "本地资料",
-    login: "登录网易云",
+    login: "登录 {{source}}",
     logout: "退出登录",
     notConnected: "未连接",
     premium: "会员",
@@ -215,7 +215,7 @@ export const zh = {
   login: {
     label: "登录",
     qrAlt: "登录二维码",
-    title: "登录网易云音乐",
+    title: "登录 {{source}}",
     pending: "使用网易云音乐 App 扫码",
     scanned: "已扫码，请在手机上确认",
     authorized: "已登录",
@@ -237,6 +237,12 @@ export const zh = {
     resolvingStream: "正在解析视频流…",
     streamUnavailable: "视频地址不可用",
     title: "音乐视频",
+  },
+  source: {
+    local: "本地",
+    netease: "网易云音乐",
+    qqmusic: "QQ 音乐",
+    spotify: "Spotify",
   },
   settings: {
     title: "偏好设置",

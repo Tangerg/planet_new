@@ -41,6 +41,7 @@ describe("LoginSheet", () => {
         accent="#18f58a"
         beginLogin={beginLogin}
         markLoggedIn={markLoggedIn}
+        sourceName="Test Source"
         onClose={onClose}
       />,
     );
@@ -66,6 +67,7 @@ describe("LoginSheet", () => {
         accent="#18f58a"
         beginLogin={beginLogin}
         markLoggedIn={vi.fn<() => void>()}
+        sourceName="Test Source"
         onClose={vi.fn<() => void>()}
       />,
     );
@@ -86,6 +88,7 @@ describe("LoginSheet", () => {
         accent="#18f58a"
         beginLogin={() => Promise.resolve(qrFlow(poll))}
         markLoggedIn={vi.fn<() => void>()}
+        sourceName="Test Source"
         onClose={vi.fn<() => void>()}
       />,
     );
@@ -115,6 +118,7 @@ describe("LoginSheet", () => {
         accent="#18f58a"
         beginLogin={() => Promise.resolve(qrFlow(poll))}
         markLoggedIn={markLoggedIn}
+        sourceName="Test Source"
         onClose={onClose}
       />,
     );

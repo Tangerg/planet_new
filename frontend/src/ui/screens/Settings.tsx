@@ -9,6 +9,8 @@ import { Button } from "@/components/controls/Button";
 import { Switch } from "@/components/controls/Switch";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { useTranslation } from "react-i18next";
+
+import { localize } from "@/i18n/text";
 import { LOCALES, LOCALE_LABELS } from "@/i18n";
 import { useLibrarySourceSettings } from "@/hooks/useLibrarySourceSettings";
 import { AUDIO_QUALITY_OPTIONS, NOW_PLAYING_OPEN_OPTIONS } from "@/model/settings-screen";
@@ -69,11 +71,7 @@ function SetSeg({
 function LibrarySection({ accent }: { accent: string }) {
   const { t } = useTranslation();
   const library = useLibrarySourceSettings();
-  const statusDescriptor = library.status;
-  const status =
-    "values" in statusDescriptor
-      ? t(statusDescriptor.key, statusDescriptor.values)
-      : t(statusDescriptor.key);
+  const status = localize(t, library.status);
 
   return (
     <div className="mt-[30px]">
@@ -85,7 +83,7 @@ function LibrarySection({ accent }: { accent: string }) {
         <SetSeg
           label={t("settings.source")}
           value={library.source}
-          options={library.options}
+          options={library.options.map((o) => ({ value: o.value, label: localize(t, o.label) }))}
           onChange={library.switchSource}
         />
       )}

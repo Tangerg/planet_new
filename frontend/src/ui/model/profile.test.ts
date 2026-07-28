@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { VibeCollection, VibeTrack } from "./vibe";
 import {
-  profileAuthActionLabel,
-  profileConnectionLabel,
-  profileFollowerLabel,
-  profileFollowingLabel,
+  profileAuthActionKey,
+  profileConnectionKey,
+  profileSocialCounts,
   profileMembership,
   profilePlaylistItems,
   profileScreenModel,
@@ -37,25 +36,27 @@ const account = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("profile screen model", () => {
-  it("derives connection and auth labels from provider support/login state", () => {
-    expect(profileConnectionLabel(true, true)).toBe("Connected");
-    expect(profileConnectionLabel(false, true)).toBe("Not connected");
-    expect(profileConnectionLabel(false, false)).toBe("Local profile");
-    expect(profileAuthActionLabel(true, true)).toBe("Log out");
-    expect(profileAuthActionLabel(false, true)).toBe("Log in with NetEase");
-    expect(profileAuthActionLabel(false, false)).toBeUndefined();
+  it("names connection and auth messages from provider support/login state", () => {
+    expect(profileConnectionKey(true, true)).toBe("profile.connected");
+    expect(profileConnectionKey(false, true)).toBe("profile.notConnected");
+    expect(profileConnectionKey(false, false)).toBe("profile.localProfile");
+    expect(profileAuthActionKey(true, true)).toBe("profile.logout");
+    expect(profileAuthActionKey(false, true)).toBe("profile.login");
+    expect(profileAuthActionKey(false, false)).toBeUndefined();
   });
 
-  it("keeps the anonymous demo stats until a real account is connected", () => {
-    expect(profileFollowerLabel(account({ followers: 1234 }), false)).toBe("598");
-    expect(profileFollowingLabel(account({ following: 88 }), false)).toBe("6");
-    expect(profileFollowerLabel(account({ followers: 1234 }), true)).toBe("1.2K");
-    expect(profileFollowingLabel(account({ following: 88 }), true)).toBe("88");
+  it("reports social counts only for a connected account", () => {
+    expect(profileSocialCounts(account({ followers: 1234 }), false)).toBeUndefined();
+    expect(profileSocialCounts(null, true)).toBeUndefined();
+    expect(profileSocialCounts(account({ followers: 1234, following: 88 }), true)).toEqual({
+      followers: "1.2K",
+      following: "88",
+    });
   });
 
   it("marks membership only for a connected premium account", () => {
     expect(profileMembership(account({ premium: true }), true)).toBe(true);
-    expect(profileMembership(account({ premium: true }), false)).toBe(false); // anonymous demo
+    expect(profileMembership(account({ premium: true }), false)).toBe(false); // not connected
     expect(profileMembership(account({ premium: false }), true)).toBe(false);
     expect(profileMembership(null, true)).toBe(false);
   });
@@ -93,13 +94,25 @@ describe("profile screen model", () => {
         supported: true,
       }),
     ).toMatchObject({
-      authActionLabel: "Log out",
-      connectionLabel: "Connected",
-      followers: "17",
-      following: "30",
-      name: "Monster",
+      authActionKey: "profile.logout",
+      connectionKey: "profile.connected",
+      social: { followers: "17", following: "30" },
+      name: { text: "Monster" },
       membership: true,
       playlists: [{ active: true, playlist: { id: "liked" } }],
     });
+  });
+
+  it("names an anonymous listener instead of inventing a person", () => {
+    const anonymous = profileScreenModel({
+      account: null,
+      activePlaylistIndex: 0,
+      loggedIn: false,
+      playlists: [],
+      supported: true,
+    });
+
+    expect(anonymous.name).toEqual({ key: "profile.anonymous" });
+    expect(anonymous.social).toBeUndefined();
   });
 });

@@ -2,31 +2,25 @@ import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProviderId } from "@contexts/contracts";
 
+import type { LocalizedText } from "@/i18n/text";
 import { useEngine } from "@/hooks/useEngine";
 import { scanLocalFolder, LOCAL_PROVIDER_ID } from "@/infra/localLibrary";
 import {
-  DEFAULT_SOURCE_LABELS,
   initialSettingsSource,
   scanStateFromFolderResult,
   scanStatusDescriptor,
   shouldActivateScannedSource,
   sourceOptions,
-  type SettingsOption,
   type SettingsScanState,
-  type SettingsScanStatusDescriptor,
+  type SourceOption,
 } from "@/model/settings-screen";
 import { warnWriteFailure } from "@shared/debug";
 
-const SOURCE_LABELS: Record<string, string> = {
-  ...DEFAULT_SOURCE_LABELS,
-  [LOCAL_PROVIDER_ID]: "本地",
-};
-
 export type LibrarySourceSettingsModel = {
   addFolder: () => Promise<void>;
-  options: SettingsOption[];
+  options: SourceOption[];
   scan: SettingsScanState;
-  status: SettingsScanStatusDescriptor;
+  status: LocalizedText;
   source: string;
   sources: ProviderId[];
   switchSource: (providerId: string) => void;
@@ -73,7 +67,7 @@ export function useLibrarySourceSettings(): LibrarySourceSettingsModel {
 
   return {
     addFolder,
-    options: useMemo(() => sourceOptions(sources, SOURCE_LABELS), [sources]),
+    options: useMemo(() => sourceOptions(sources), [sources]),
     scan,
     status: scanStatusDescriptor(scan),
     source,
