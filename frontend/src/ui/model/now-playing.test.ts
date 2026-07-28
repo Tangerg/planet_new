@@ -8,7 +8,7 @@ import {
   isNowPlayingPanelOpen,
   lyricLinesOrFallback,
   normalizeNowPlayingMode,
-  nowPlayingCreditsLabel,
+  nowPlayingCredits,
   nowPlayingTrackModel,
   swipeAction,
   toggleNowPlayingLyricsMode,
@@ -28,14 +28,12 @@ const track = (overrides: Partial<VibeTrack> = {}): VibeTrack => ({
 
 describe("now-playing model", () => {
   it("provides a stable no-lyrics fallback", () => {
-    expect(lyricLinesOrFallback([])).toEqual([
-      { content: "No lyrics for this track.", duration: 0 },
-    ]);
+    expect(lyricLinesOrFallback([], "No lyrics")).toEqual([{ content: "No lyrics", duration: 0 }]);
   });
 
   it("copies provided lyric lines", () => {
     const lines: Lyric[] = [{ content: "A", duration: 1000 }];
-    const result = lyricLinesOrFallback(lines);
+    const result = lyricLinesOrFallback(lines, "No lyrics");
 
     expect(result).toEqual(lines);
     expect(result).not.toBe(lines);
@@ -55,12 +53,17 @@ describe("now-playing model", () => {
   });
 
   it("formats credits without leaking missing fields", () => {
-    expect(nowPlayingCreditsLabel(undefined)).toBeUndefined();
-    expect(nowPlayingCreditsLabel({ music: "A" })).toBe("Written by A");
-    expect(nowPlayingCreditsLabel({ producer: "B" })).toBe("Produced by B");
-    expect(nowPlayingCreditsLabel({ music: "A", producer: "B" })).toBe(
-      "Written by A · Produced by B",
-    );
+    expect(nowPlayingCredits(undefined)).toEqual([]);
+    expect(nowPlayingCredits({ music: "A" })).toEqual([
+      { key: "player.writtenBy", values: { name: "A" } },
+    ]);
+    expect(nowPlayingCredits({ producer: "B" })).toEqual([
+      { key: "player.producedBy", values: { name: "B" } },
+    ]);
+    expect(nowPlayingCredits({ music: "A", producer: "B" })).toEqual([
+      { key: "player.writtenBy", values: { name: "A" } },
+      { key: "player.producedBy", values: { name: "B" } },
+    ]);
   });
 
   it("projects the current track into display-safe now-playing metadata", () => {
@@ -79,7 +82,7 @@ describe("now-playing model", () => {
       artist: "Singer",
       artistId: "artist",
       coverSeed: 8,
-      creditsLabel: "Produced by Producer",
+      credits: [{ key: "player.producedBy", values: { name: "Producer" } }],
       gradient: ["#111", "#222"],
       image: "cover.jpg",
       quality: "SQ",
@@ -89,7 +92,7 @@ describe("now-playing model", () => {
     expect(nowPlayingTrackModel(undefined)).toMatchObject({
       artist: "",
       coverSeed: 0,
-      creditsLabel: undefined,
+      credits: [],
       title: "",
     });
   });

@@ -1,11 +1,13 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { RepeatMode } from "@contexts/playback";
 
-import { PLACEHOLDER_TRACK } from "@/model/defaults";
+import { placeholderTrack } from "@/model/defaults";
 import { useVibePlayback } from "@/hooks/useVibePlayback";
 
 export function useShellPlayback() {
+  const { t } = useTranslation();
   const playback = useVibePlayback();
   const {
     play: playFn,
@@ -16,7 +18,9 @@ export function useShellPlayback() {
     prev: playPrevFn,
   } = playback;
 
-  const current = playback.current ?? PLACEHOLDER_TRACK;
+  // Stable identity: the idle track is compared by reference all over the shell.
+  const idleTrack = useMemo(() => placeholderTrack(t("player.notPlaying")), [t]);
+  const current = playback.current ?? idleTrack;
   const playing = playback.playing;
   const shuffle = playback.shuffle;
   const repeat = playback.repeat !== RepeatMode.OFF;

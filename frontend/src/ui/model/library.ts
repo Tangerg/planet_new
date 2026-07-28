@@ -1,15 +1,16 @@
-import { collectionFlowItems, collectionSub, type FlowItem } from "./derive";
+import type { LocalizedText } from "@/i18n/text";
+
 import type { ScreenData, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
 
 export type LibraryCardTab = "playlists" | "albums" | "artists";
 export type LibraryCollectionRoute = "playlist" | "album" | "artist";
 
 export const LIBRARY_SECTION_TABS = [
-  { value: "playlists", label: "Playlists" },
-  { value: "albums", label: "Albums" },
-  { value: "artists", label: "Artists" },
-  { value: "songs", label: "Songs" },
-] satisfies { value: string; label: string }[];
+  { value: "playlists", label: { key: "common.playlists" } },
+  { value: "albums", label: { key: "common.albums" } },
+  { value: "artists", label: { key: "common.artists" } },
+  { value: "songs", label: { key: "common.songs" } },
+] satisfies { value: string; label: LocalizedText }[];
 
 export const LIBRARY_INITIAL_FLOW_CENTER = 2;
 
@@ -23,7 +24,6 @@ export type LibraryScreenModel = {
   tabs: typeof LIBRARY_SECTION_TABS;
   tracks: readonly VibeTrack[];
   collections: VibeCollection[];
-  flowItems: FlowItem<VibeCollection>[];
   songColumns: LibrarySongColumns;
   cardTab: boolean;
   flowMode: boolean;
@@ -80,7 +80,6 @@ export function libraryScreenModel(
     tabs: LIBRARY_SECTION_TABS,
     tracks: data.allTracks,
     collections,
-    flowItems: collectionFlowItems(collections, (collection) => collectionSub(collection, tab)),
     songColumns: librarySongColumns(data.allTracks),
     cardTab,
     flowMode: cardTab && view === "flow",

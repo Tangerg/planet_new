@@ -3,6 +3,8 @@
 // ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
+
+import { localize } from "@/i18n/text";
 import type { VibeCollection } from "@/model/vibe";
 import { chartsScreenModel } from "@/model/charts-screen";
 import { ChartCard } from "@/components/cards/ChartCard";
@@ -32,7 +34,7 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
             <ChartCard
               key={tile.chart.id}
               title={tile.title}
-              time={tile.time}
+              time={localize(t, tile.time)}
               seed={tile.seed}
               grad={tile.grad}
               image={tile.image}

@@ -1,9 +1,11 @@
+import type { LocalizedText } from "@/i18n/text";
+
 import type { VibeCollection } from "./vibe";
 
 export type ChartTileModel = {
   chart: VibeCollection;
   title: string;
-  time: string;
+  time: LocalizedText;
   seed: number;
   grad?: string[];
   image?: string;
@@ -18,7 +20,9 @@ export function chartTileModel(chart: VibeCollection): ChartTileModel {
   return {
     chart,
     title: chart.title ?? chart.name,
-    time: chart.updatedAt ? `Updated ${chart.updatedAt}` : "Top chart",
+    time: chart.updatedAt
+      ? { key: "charts.updated", values: { when: chart.updatedAt } }
+      : { key: "charts.topChart" },
     seed: chart.coverSeed ?? 0,
     grad: chart.gradient,
     image: chart.image,

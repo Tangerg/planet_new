@@ -95,7 +95,7 @@ export function MusicVideoTheaterScreen({
           style={{ position: "absolute", inset: 0, height: "100%" }}
         >
           <div className="grid h-full place-items-center bg-black/35 text-[16px] font-light text-white/48">
-            {model.fallbackText}
+            {t(model.fallbackTextKey)}
           </div>
         </Art>
       )}

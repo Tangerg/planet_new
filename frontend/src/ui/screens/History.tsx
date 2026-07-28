@@ -48,19 +48,12 @@ export function HistoryScreen({
   const { t } = useTranslation();
   const model = historyScreenModel(session, weekRecord, all);
   const { hero, total } = model;
-  const sectionTitle = (label: HistorySection["label"]) =>
-    label === "Today"
-      ? t("history.sectionToday")
-      : label === "This week"
-        ? t("history.sectionWeek")
-        : t("history.sectionAllTime");
-
   const Group = ({ section }: { section: HistorySection }) => (
     <div className="mb-9">
-      <SectionHead title={sectionTitle(section.label)} style={{ marginBottom: 6 }} />
+      <SectionHead title={t(section.labelKey)} style={{ marginBottom: 6 }} />
       {section.items.map((t, i) => (
         <TrackRow
-          key={section.label + t.id + i}
+          key={section.labelKey + t.id + i}
           track={t}
           index={i + 1}
           onPlay={onPlay}
@@ -112,7 +105,7 @@ export function HistoryScreen({
           </div>
           {/* grouped lists */}
           {model.sections.map((section) => (
-            <Group key={section.label} section={section} />
+            <Group key={section.labelKey} section={section} />
           ))}
           {model.isEmpty && <Empty className="p-[50px]">{t("history.empty")}</Empty>}
         </PageColumn>

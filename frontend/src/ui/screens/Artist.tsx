@@ -5,12 +5,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/vibe";
-import {
-  artistAlbumSubtitle,
-  artistAlbumTrackCount,
-  artistScreenModel,
-} from "@/model/artist-screen";
+import { artistAlbumListMeta, artistAlbumSubtitle, artistScreenModel } from "@/model/artist-screen";
 import { clampIndex } from "@shared/number";
+import { localize, localizeJoined } from "@/i18n/text";
 import { Art, artPair, HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -69,17 +66,7 @@ export function ArtistScreen({
   const b = artPair(artist.coverSeed, artist.gradient)[1];
   const [followed, setFollowed] = useState(true);
   const model = artistScreenModel({ artist, tracks, albums, similar, tab, current, playing });
-  const tabLabels: Record<string, string> = {
-    albums: t("artist.allAlbums"),
-    similar: t("artist.similarArtist"),
-    top: t("artist.hot"),
-  };
-  const statLabels = [
-    t("counts.tracks", { count: model.tracks.length }),
-    model.albums.length > 0 ? t("counts.albums", { count: model.albums.length }) : undefined,
-    artist.listeners ? t("counts.listeners", { count: artist.listeners }) : undefined,
-    ...(artist.genres ?? []),
-  ].filter((label): label is string => Boolean(label));
+  const statLabels = model.statLabels.map((label) => localize(t, label));
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
 
   return (
@@ -192,7 +179,7 @@ export function ArtistScreen({
                 itemClassName="tab"
                 value={tab}
                 onValueChange={setTab}
-                items={model.tabs.map((it) => ({ ...it, label: tabLabels[it.value] ?? it.label }))}
+                items={model.tabs.map((it) => ({ value: it.value, label: localize(t, it.label) }))}
               />
               {model.showViewToggle && (
                 <ViewToggle
@@ -252,9 +239,7 @@ export function ArtistScreen({
                       <CollectionRow
                         item={al}
                         sub={al.artist || t("common.album")}
-                        meta={[al.year, t("counts.tracks", { count: artistAlbumTrackCount(al) })]
-                          .filter(Boolean)
-                          .join(" · ")}
+                        meta={localizeJoined(t, artistAlbumListMeta(al))}
                         onOpen={onOpenAlbum}
                         onPlay={playCollection}
                         playable={canPlayCollection(al)}

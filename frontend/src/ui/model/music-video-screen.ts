@@ -1,6 +1,8 @@
 import { MusicVideo, type MusicVideoAvailabilityPolicy } from "@contexts/catalog";
 import { compactCount } from "@shared/number";
 
+import type { LocalizedText, MessageKey } from "@/i18n/text";
+
 import { effectiveMediaDuration, mediaProgress } from "./media-playback";
 import type { ArtistRef, VibeComment, VibeMusicVideo } from "./vibe";
 
@@ -15,14 +17,14 @@ export type MusicVideoDetailModel = {
   artist?: ArtistRef;
   availability: ReturnType<typeof MusicVideo.playbackAvailability>;
   canPlay: boolean;
-  commentLabel?: string;
+  commentLabel?: LocalizedText;
   rail: VibeMusicVideo[];
 };
 
 export type MusicVideoTheaterModel = {
   availability: ReturnType<typeof MusicVideo.playbackAvailability>;
   commentsPreview: VibeComment[];
-  fallbackText: string;
+  fallbackTextKey: MessageKey;
   hasStream: boolean;
   progress: number;
   qualityLabel: string;
@@ -50,13 +52,11 @@ export function relatedMusicVideoRail(
   return related.filter((video) => video.id !== currentVideoId).slice(0, limit);
 }
 
-export function musicVideoCommentLabel(commentCount: number | undefined): string | undefined {
+export function musicVideoCommentLabel(
+  commentCount: number | undefined,
+): LocalizedText | undefined {
   if (!commentCount) return undefined;
-  return (
-    new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(
-      commentCount,
-    ) + " comments"
-  );
+  return { key: "counts.comments", values: { value: compactCount(commentCount) } };
 }
 
 export function musicVideoDetailModel(
@@ -74,32 +74,29 @@ export function musicVideoDetailModel(
   };
 }
 
-export function musicVideoFallbackText(
+export function musicVideoFallbackTextKey(
   availability: ReturnType<typeof MusicVideo.playbackAvailability>,
-): string {
+): MessageKey {
   return availability.status === "resolvable"
-    ? "Resolving video stream..."
-    : "Video URL unavailable";
+    ? "musicVideos.resolvingStream"
+    : "musicVideos.streamUnavailable";
 }
 
 export function musicVideoQualityLabel(video: Pick<VibeMusicVideo, "quality">): string {
   return video.quality ? `${video.quality}P` : "MV";
 }
 
+/** Quality · duration · play count, in display order. */
 export function musicVideoMetaPieces(
   video: Pick<VibeMusicVideo, "duration" | "playCount" | "quality">,
-): string[] {
+): LocalizedText[] {
   return [
-    musicVideoQualityLabel(video),
-    video.duration,
-    video.playCount ? `${compactCount(video.playCount)} plays` : "",
-  ].filter(Boolean);
-}
-
-export function musicVideoMetaLabel(
-  video: Pick<VibeMusicVideo, "duration" | "playCount" | "quality">,
-): string {
-  return musicVideoMetaPieces(video).join(" · ");
+    { text: musicVideoQualityLabel(video) },
+    { text: video.duration },
+    ...(video.playCount
+      ? [{ key: "counts.plays", values: { value: compactCount(video.playCount) } } as const]
+      : []),
+  ];
 }
 
 export function musicVideoTheaterModel({
@@ -120,7 +117,7 @@ export function musicVideoTheaterModel({
   return {
     availability,
     commentsPreview: comments.slice(0, 14),
-    fallbackText: musicVideoFallbackText(availability),
+    fallbackTextKey: musicVideoFallbackTextKey(availability),
     hasStream: availability.status === "ready",
     progress: mediaProgress(positionSec, totalSec),
     qualityLabel: musicVideoQualityLabel(video),

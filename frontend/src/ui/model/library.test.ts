@@ -98,13 +98,19 @@ describe("library screen model", () => {
       round: true,
       collectionRoute: "artist",
     });
+    expect(artists.tabs.map((tab) => tab.label.key)).toEqual([
+      "common.playlists",
+      "common.albums",
+      "common.artists",
+      "common.songs",
+    ]);
     expect(artists.tabs.map((tab) => tab.value)).toEqual([
       "playlists",
       "albums",
       "artists",
       "songs",
     ]);
-    expect(artists.flowItems).toHaveLength(2);
+    expect(artists.collections).toHaveLength(2);
     expect(songs).toMatchObject({
       cardTab: false,
       flowMode: false,

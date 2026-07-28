@@ -25,3 +25,19 @@ export function localize(t: TFunction, value: LocalizedText | undefined): string
   if (!value) return undefined;
   return "text" in value ? value.text : t(value.key, value.values);
 }
+
+/**
+ * Resolve a meta line whose parts are chosen by the model but joined for
+ * display (e.g. "2019 · 12 tracks"). Parts that resolve to nothing drop out, so
+ * the separator never dangles.
+ */
+export function localizeJoined(
+  t: TFunction,
+  parts: readonly LocalizedText[],
+  separator = " · ",
+): string {
+  return parts
+    .map((part) => localize(t, part))
+    .filter(Boolean)
+    .join(separator);
+}

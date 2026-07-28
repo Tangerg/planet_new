@@ -25,7 +25,7 @@ describe("charts screen model", () => {
       ),
     ).toMatchObject({
       title: "Top 100",
-      time: "Updated today",
+      time: { key: "charts.updated", values: { when: "today" } },
       seed: 7,
       image: "chart.jpg",
       grad: ["#111", "#222"],
@@ -34,7 +34,7 @@ describe("charts screen model", () => {
 
   it("uses conservative display fallbacks for sparse chart payloads", () => {
     expect(chartTileModel(chart()).title).toBe("Hot");
-    expect(chartTileModel(chart()).time).toBe("Top chart");
+    expect(chartTileModel(chart()).time).toEqual({ key: "charts.topChart" });
   });
 
   it("reports whether there are any chart tiles", () => {

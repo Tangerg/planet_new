@@ -29,11 +29,11 @@ describe("history screen model", () => {
     expect(model.total).toBe(4);
     expect(model.isEmpty).toBe(false);
     expect(
-      model.sections.map((section) => [section.label, section.items.map((t) => t.id)]),
+      model.sections.map((section) => [section.labelKey, section.items.map((t) => t.id)]),
     ).toEqual([
-      ["Today", ["session-new", "session-old"]],
-      ["This week", ["week"]],
-      ["All-time", ["all"]],
+      ["history.sectionToday", ["session-new", "session-old"]],
+      ["history.sectionWeek", ["week"]],
+      ["history.sectionAllTime", ["all"]],
     ]);
   });
 

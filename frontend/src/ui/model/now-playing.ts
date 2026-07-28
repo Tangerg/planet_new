@@ -1,17 +1,8 @@
 import type { Lyric } from "@contexts/playback";
+
+import type { LocalizedText } from "@/i18n/text";
+
 import type { VibeTrack } from "./vibe";
-
-const DEFAULT_NO_LYRICS = "No lyrics for this track.";
-
-export type NowPlayingCreditLabels = {
-  producedBy: (name: string) => string;
-  writtenBy: (name: string) => string;
-};
-
-const DEFAULT_CREDIT_LABELS: NowPlayingCreditLabels = {
-  producedBy: (name) => `Produced by ${name}`,
-  writtenBy: (name) => `Written by ${name}`,
-};
 
 export type NowPlayingMode = "cover" | "lyrics" | "comments";
 
@@ -20,7 +11,7 @@ export type NowPlayingTrackModel = {
   artistId?: string;
   artists?: VibeTrack["artists"];
   coverSeed: number;
-  creditsLabel?: string;
+  credits: LocalizedText[];
   gradient?: string[];
   image?: string;
   images?: VibeTrack["images"];
@@ -49,27 +40,25 @@ export function toggleNowPlayingLyricsMode(mode: NowPlayingMode): NowPlayingMode
   return mode === "lyrics" ? "cover" : "lyrics";
 }
 
-export function nowPlayingCreditsLabel(
-  credits: VibeTrack["credits"] | undefined,
-  labels: NowPlayingCreditLabels = DEFAULT_CREDIT_LABELS,
-): string | undefined {
-  const parts = [
-    credits?.music ? labels.writtenBy(credits.music) : "",
-    credits?.producer ? labels.producedBy(credits.producer) : "",
-  ].filter(Boolean);
-  return parts.length ? parts.join(" · ") : undefined;
+/** Writing/production credits, in display order; empty when the provider gave none. */
+export function nowPlayingCredits(credits: VibeTrack["credits"] | undefined): LocalizedText[] {
+  return [
+    ...(credits?.music
+      ? [{ key: "player.writtenBy", values: { name: credits.music } } as const]
+      : []),
+    ...(credits?.producer
+      ? [{ key: "player.producedBy", values: { name: credits.producer } } as const]
+      : []),
+  ];
 }
 
-export function nowPlayingTrackModel(
-  track: VibeTrack | undefined,
-  creditLabels?: NowPlayingCreditLabels,
-): NowPlayingTrackModel {
+export function nowPlayingTrackModel(track: VibeTrack | undefined): NowPlayingTrackModel {
   return {
     artist: track?.artist ?? "",
     artistId: track?.artistId,
     artists: track?.artists,
     coverSeed: track?.coverSeed ?? 0,
-    creditsLabel: nowPlayingCreditsLabel(track?.credits, creditLabels),
+    credits: nowPlayingCredits(track?.credits),
     gradient: track?.gradient,
     image: track?.image,
     images: track?.images,
@@ -78,11 +67,9 @@ export function nowPlayingTrackModel(
   };
 }
 
-/** The lyric lines to render, or a single "no lyrics" line when there are none. */
-export function lyricLinesOrFallback(
-  lines: readonly Lyric[],
-  fallback = DEFAULT_NO_LYRICS,
-): Lyric[] {
+/** The lyric lines to render, or a single "no lyrics" line when there are none.
+ *  The fallback text is required: there is no English default to fall back to. */
+export function lyricLinesOrFallback(lines: readonly Lyric[], fallback: string): Lyric[] {
   return lines.length ? [...lines] : [{ content: fallback, duration: 0 }];
 }
 

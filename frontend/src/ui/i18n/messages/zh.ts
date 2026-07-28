@@ -82,9 +82,10 @@ export const zh = {
   counts: {
     albums: "{{count}} 张专辑",
     artistsFollowing: "{{count}} 位关注",
-    comments: "{{count}} 条评论",
+    comments: "{{value}} 条评论",
     listeners: "{{count}} 位听众",
     playlists: "{{count}} 个歌单",
+    plays: "{{value}} 次播放",
     queued: "{{count}} 首待播",
     selected: "已选择 {{count}} 项",
     tracks: "{{count}} 首",
@@ -114,7 +115,6 @@ export const zh = {
     playNext: "下一首播放",
     profile: "个人主页",
     queue: "队列",
-    removeFromQueue: "从队列移除",
     removeFromLiked: "取消喜欢",
     search: "搜索",
     settings: "设置",
@@ -126,6 +126,7 @@ export const zh = {
     enableRepeatOne: "开启单曲循环",
     enableShuffle: "开启随机播放",
     noLyrics: "这首歌暂无歌词。",
+    notPlaying: "未在播放",
     producedBy: "制作：{{name}}",
     writtenBy: "作曲：{{name}}",
   },
@@ -142,7 +143,6 @@ export const zh = {
     preferences: "偏好设置",
     profileSub: "你",
     rankedByPlays: "按播放热度排序",
-    settings: "设置",
     yourDailyLanding: "你的每日入口",
   },
   forYou: {
@@ -174,6 +174,8 @@ export const zh = {
   charts: {
     title: "排行榜",
     subtitle: "按播放热度排序 · 每日刷新",
+    topChart: "热门榜单",
+    updated: "更新于{{when}}",
   },
   comments: {
     title: "热门评论",
@@ -192,7 +194,6 @@ export const zh = {
     title: "个人主页",
   },
   history: {
-    allTime: "全部时间",
     consumption: "聆听",
     empty: "还没有播放记录。",
     resume: "继续聆听",
@@ -201,17 +202,13 @@ export const zh = {
     sectionWeek: "本周",
     subtitle: "你最近播放过的一切 · {{count}} 首",
     title: "历史记录",
-    today: "今天",
-    week: "本周",
   },
   artist: {
     allAlbums: "全部专辑",
-    albumsCount: "{{count}} 张专辑",
     hot: "热门",
     listeners: "{{count}} 位听众",
     section: "艺人分区",
     similarArtist: "相似艺人",
-    tracksCount: "{{count}} 首",
   },
   detail: {
     sortTracks: "歌曲排序",
@@ -238,6 +235,8 @@ export const zh = {
     loading: "音乐视频加载中…",
     mv: "MV",
     noComments: "暂无评论。",
+    resolvingStream: "正在解析视频流…",
+    streamUnavailable: "视频地址不可用",
     title: "音乐视频",
   },
   settings: {

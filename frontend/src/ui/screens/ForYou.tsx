@@ -18,7 +18,12 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
-import { forYouCollectionRoute, forYouScreenModel } from "@/model/for-you";
+import {
+  FOR_YOU_DEFAULT_FILTER,
+  forYouCollectionRoute,
+  forYouScreenModel,
+  type ForYouFilter,
+} from "@/model/for-you";
 
 type ForYouScreenProps = {
   data: ScreenData;
@@ -45,21 +50,43 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { collMenu } = useScreenActions();
-  const [chip, setChip] = useState("All");
-  const model = useMemo(() => forYouScreenModel(data, daily), [daily, data]);
-  const { albums, artists, featured, filters, greeting, playlists, tiles } = model;
-  const filterLabels: Record<string, string> = {
-    All: t("common.all"),
-    Music: t("common.music"),
-    Mixes: t("common.mixes"),
-    Charts: t("common.charts"),
-  };
-  const greetingLabels: Record<string, string> = {
-    "Late night": t("forYou.lateNight"),
-    "Good morning": t("forYou.morning"),
-    "Good afternoon": t("forYou.afternoon"),
-    "Good evening": t("forYou.evening"),
-  };
+  const [chip, setChip] = useState(FOR_YOU_DEFAULT_FILTER);
+  const model = useMemo(
+    () =>
+      forYouScreenModel(
+        data,
+        daily,
+        {
+          name: t("forYou.dailyMix"),
+          owner: t("forYou.dailyMixOwner"),
+          description: t("forYou.dailyMixDescription"),
+        },
+        new Date(),
+      ),
+    [daily, data, t],
+  );
+  const { albums, artists, featured, filters, greetingKey, playlists, tiles } = model;
+  const header = (
+    <div className="mb-[30px] flex items-end justify-between">
+      <div>
+        <div className="mlabel mb-2" style={{ color: accent }}>
+          {t(greetingKey)}
+        </div>
+        <div className="text-[36px] font-extralight tracking-[0.01em]">{t("forYou.title")}</div>
+      </div>
+      <div className="flex gap-2.5">
+        {filters.map((filter: ForYouFilter) => (
+          <Button
+            key={filter.value}
+            className={"chip" + (chip === filter.value ? " on" : "")}
+            onClick={() => setChip(filter.value)}
+          >
+            {t(filter.labelKey)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
   // Stable so the memoized rail/tile cards don't re-render when the chip toggles.
   const openTile = useCallback(
@@ -71,27 +98,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     return (
       <ScreenScaffold background="#08080b">
         <PageColumn className="flex h-full flex-col pb-[50px] pt-[60px]">
-          <div className="mb-[30px] flex items-end justify-between">
-            <div>
-              <div className="mlabel mb-2" style={{ color: accent }}>
-                {greetingLabels[greeting] ?? greeting}
-              </div>
-              <div className="text-[36px] font-extralight tracking-[0.01em]">
-                {t("forYou.title")}
-              </div>
-            </div>
-            <div className="flex gap-2.5">
-              {filters.map((c) => (
-                <Button
-                  key={c}
-                  className={"chip" + (chip === c ? " on" : "")}
-                  onClick={() => setChip(c)}
-                >
-                  {filterLabels[c] ?? c}
-                </Button>
-              ))}
-            </div>
-          </div>
+          {header}
           <Empty className="flex min-h-[360px] items-center justify-center rounded-[22px] bg-white/[0.03] p-[50px] text-center text-[22px]">
             {t("forYou.empty")}
           </Empty>
@@ -107,25 +114,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     >
       <PageColumn className="pb-[50px] pt-[60px]">
         {/* greeting + chips */}
-        <div className="mb-[30px] flex items-end justify-between">
-          <div>
-            <div className="mlabel mb-2" style={{ color: accent }}>
-              {greetingLabels[greeting] ?? greeting}
-            </div>
-            <div className="text-[36px] font-extralight tracking-[0.01em]">{t("forYou.title")}</div>
-          </div>
-          <div className="flex gap-2.5">
-            {filters.map((c) => (
-              <Button
-                key={c}
-                className={"chip" + (chip === c ? " on" : "")}
-                onClick={() => setChip(c)}
-              >
-                {filterLabels[c] ?? c}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {header}
 
         <HeroBanner
           playlist={featured}

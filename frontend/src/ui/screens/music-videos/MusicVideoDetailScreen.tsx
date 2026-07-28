@@ -7,6 +7,7 @@ import { CardRail } from "@/components/layout/CardRail";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { SectionHead } from "@/components/layout/SectionHead";
+import { localize } from "@/i18n/text";
 import { Icon } from "@/infra/icons";
 import { musicVideoDetailModel } from "@/model/music-video-screen";
 
@@ -116,7 +117,9 @@ export function MusicVideoDetailScreen({
                 <Icon.play size={15} /> {t("common.play")}
               </Button>
               {commentLabel ? (
-                <span className="mlabel text-[10px] text-white/40">{commentLabel}</span>
+                <span className="mlabel text-[10px] text-white/40">
+                  {localize(t, commentLabel)}
+                </span>
               ) : null}
             </div>
           </div>

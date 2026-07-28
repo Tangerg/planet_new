@@ -4,7 +4,6 @@ import type { ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "./vibe
 import {
   artistAlbumListMeta,
   artistAlbumSubtitle,
-  artistAlbumTrackCount,
   artistScreenModel,
   artistSectionShowsViewToggle,
   artistStatLabels,
@@ -50,24 +49,34 @@ describe("artist screen model", () => {
   });
 
   it("derives stat labels while hiding absent album/listener facts", () => {
-    expect(artistStatLabels(artist(), [track("t1")], [])).toEqual(["1 Track"]);
+    expect(artistStatLabels(artist(), [track("t1")], [])).toEqual([
+      { key: "counts.tracks", values: { count: 1 } },
+    ]);
     expect(
       artistStatLabels(
         artist({ listeners: 1200, genres: ["Mandopop"] }),
         [track("t1"), track("t2")],
         [album("a1")],
       ),
-    ).toEqual(["2 Tracks", "1 Album", "1200 Listeners", "Mandopop"]);
+    ).toEqual([
+      { key: "counts.tracks", values: { count: 2 } },
+      { key: "counts.albums", values: { count: 1 } },
+      { key: "counts.listeners", values: { count: 1200 } },
+      { text: "Mandopop" },
+    ]);
   });
 
-  it("formats album subtitles and list meta without leaking undefined years", () => {
+  it("names album subtitles and list meta without leaking undefined years", () => {
     expect(artistAlbumSubtitle(album("a1", { year: 2024 }))).toBe("2024");
     expect(artistAlbumSubtitle(album("a2"))).toBe("");
-    expect(artistAlbumTrackCount(album("a3", { trackCount: 12 }))).toBe(12);
-    expect(artistAlbumListMeta(album("a4", { year: 2021, tracks: [track("t1")] }))).toBe(
-      "2021 · 1 track",
-    );
-    expect(artistAlbumListMeta(album("a5"))).toBe("0 tracks");
+    expect(artistAlbumListMeta(album("a4", { year: 2021, tracks: [track("t1")] }))).toEqual([
+      { text: "2021" },
+      { key: "counts.tracks", values: { count: 1 } },
+    ]);
+    expect(artistAlbumListMeta(album("a5"))).toEqual([
+      { text: "" },
+      { key: "counts.tracks", values: { count: 0 } },
+    ]);
   });
 
   it("recognizes whether the current playing track belongs to the artist", () => {
@@ -99,7 +108,11 @@ describe("artist screen model", () => {
       hasPlayableTracks: true,
       playingArtistTrack: true,
       showViewToggle: true,
-      statLabels: ["1 Track", "1 Album", "Pop"],
+      statLabels: [
+        { key: "counts.tracks", values: { count: 1 } },
+        { key: "counts.albums", values: { count: 1 } },
+        { text: "Pop" },
+      ],
       tracks,
       albums,
       similar,

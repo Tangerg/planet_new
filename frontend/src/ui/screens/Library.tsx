@@ -5,13 +5,14 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/vibe";
-import { collectionSub, collectionTrackCount } from "@/model/derive";
+import { collectionFlowItems, collectionMeta, collectionSub } from "@/model/derive";
 import {
   LIBRARY_INITIAL_FLOW_CENTER,
   libraryScreenModel,
   libraryTracksForCollection,
 } from "@/model/library";
 import { clampIndex } from "@shared/number";
+import { localize, localizeJoined } from "@/i18n/text";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -66,27 +67,12 @@ export function LibraryScreen({
     setFlowCenter(LIBRARY_INITIAL_FLOW_CENTER);
   }, [tab]); // recentre the flow per collection
   const model = useMemo(() => libraryScreenModel(data, tab, view), [data, tab, view]);
-  const { cardTab, collections, flowItems, flowMode, round, songColumns, tabs, tracks } = model;
-  const tabLabels: Record<string, string> = {
-    albums: t("common.albums"),
-    artists: t("common.artists"),
-    playlists: t("common.playlists"),
-    songs: t("common.songs"),
-  };
-  const collectionSubtitle = (collection: VibeCollection) => {
-    if (tab === "playlists") return t("common.playlist");
-    return collectionSub(collection, tab);
-  };
-  const collectionMetaLabel = (collection: VibeCollection) => {
-    const count = t("counts.tracks", { count: collectionTrackCount(collection) });
-    if (tab === "albums") return [collection.year, count].filter(Boolean).join(" · ");
-    if (tab === "artists") return "";
-    return count;
-  };
-  const localizedFlowItems = flowItems.map((item) => ({
-    ...item,
-    sub: collectionSubtitle(item.obj),
-  }));
+  const { cardTab, collections, flowMode, round, songColumns, tabs, tracks } = model;
+  const collectionSubtitle = (collection: VibeCollection) =>
+    localize(t, collectionSub(collection, tab));
+  const collectionMetaLabel = (collection: VibeCollection) =>
+    localizeJoined(t, collectionMeta(collection, tab));
+  const flowItems = collectionFlowItems(collections, collectionSubtitle);
   const openOf = (o: VibeCollection) =>
     model.collectionRoute === "album"
       ? openAlbum(o)
@@ -131,7 +117,7 @@ export function LibraryScreen({
               itemClassName="tab"
               value={tab}
               onValueChange={onTab}
-              items={tabs.map((it) => ({ ...it, label: tabLabels[it.value] ?? it.label }))}
+              items={tabs.map((it) => ({ value: it.value, label: localize(t, it.label) }))}
             />
             {cardTab && (
               <ViewToggle
@@ -153,7 +139,7 @@ export function LibraryScreen({
             {cardTab && view === "flow" && (
               <div className="-mx-12 min-h-0 flex-1">
                 <CoverFlow
-                  items={localizedFlowItems}
+                  items={flowItems}
                   round={round}
                   center={clampIndex(flowCenter, flowItems.length)}
                   setCenter={setFlowCenter}

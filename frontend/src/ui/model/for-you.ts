@@ -1,51 +1,63 @@
+import type { MessageKey } from "@/i18n/text";
+
 import type { ScreenData, VibeCollection, VibeTrack } from "./vibe";
 
-export const FOR_YOU_FILTERS = ["All", "Music", "Mixes", "Charts"] as const;
+export type ForYouFilter = Readonly<{ value: string; labelKey: MessageKey }>;
+
+export const FOR_YOU_FILTERS: readonly ForYouFilter[] = [
+  { value: "all", labelKey: "common.all" },
+  { value: "music", labelKey: "common.music" },
+  { value: "mixes", labelKey: "common.mixes" },
+  { value: "charts", labelKey: "common.charts" },
+];
+
+export const FOR_YOU_DEFAULT_FILTER = FOR_YOU_FILTERS[0].value;
 
 export type ForYouCollectionRoute = "album" | "playlist";
+
+/** The synthetic Daily Mix is app-authored, so its text is translated by the
+ *  caller and handed in — a collection flows on into detail screens and morph
+ *  targets, which read plain display strings. */
+export type DailyMixText = Readonly<{ name: string; owner: string; description: string }>;
 
 export type ForYouScreenModel = {
   albums: VibeCollection[];
   artists: ScreenData["artists"];
   dailyMix?: VibeCollection;
   featured?: VibeCollection;
-  filters: readonly string[];
-  greeting: string;
+  filters: readonly ForYouFilter[];
+  greetingKey: MessageKey;
   playlists: VibeCollection[];
   tiles: VibeCollection[];
 };
 
-export function timeOfDayGreeting(date = new Date()): string {
+export function timeOfDayGreetingKey(date: Date): MessageKey {
   const hour = date.getHours();
-  if (hour < 5) return "Late night";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 5) return "forYou.lateNight";
+  if (hour < 12) return "forYou.morning";
+  if (hour < 18) return "forYou.afternoon";
+  return "forYou.evening";
 }
 
-export function dailyMixCollection(daily: readonly VibeTrack[]): VibeCollection | undefined {
+export function dailyMixCollection(
+  daily: readonly VibeTrack[],
+  text: DailyMixText,
+): VibeCollection | undefined {
   const [first] = daily;
   if (!first) return undefined;
   return {
     id: "daily-mix",
-    name: "Daily Mix",
+    name: text.name,
     kind: "Playlist",
-    owner: "For You",
+    owner: text.owner,
     coverSeed: first.coverSeed,
     gradient: first.gradient,
     image: first.image,
     images: first.images,
-    description: "Songs picked for you today — refreshed every morning.",
+    description: text.description,
     tracks: daily.slice(),
     fetchDetail: false,
   };
-}
-
-export function featuredForYouCollection(
-  data: Pick<ScreenData, "playlists">,
-  daily: readonly VibeTrack[],
-): VibeCollection | undefined {
-  return dailyMixCollection(daily) ?? data.playlists[1] ?? data.playlists[0];
 }
 
 export function forYouTiles(data: Pick<ScreenData, "playlists" | "albums">): VibeCollection[] {
@@ -59,16 +71,17 @@ export function forYouCollectionRoute(collection: VibeCollection): ForYouCollect
 export function forYouScreenModel(
   data: ScreenData,
   daily: readonly VibeTrack[],
-  now = new Date(),
+  dailyMixText: DailyMixText,
+  now: Date,
 ): ForYouScreenModel {
-  const dailyMix = dailyMixCollection(daily);
+  const dailyMix = dailyMixCollection(daily, dailyMixText);
   return {
     albums: data.albums,
     artists: data.artists,
     dailyMix,
     featured: dailyMix ?? data.playlists[1] ?? data.playlists[0],
     filters: FOR_YOU_FILTERS,
-    greeting: timeOfDayGreeting(now),
+    greetingKey: timeOfDayGreetingKey(now),
     playlists: data.playlists,
     tiles: forYouTiles(data),
   };

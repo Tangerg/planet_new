@@ -1,10 +1,11 @@
+import type { MessageKey } from "@/i18n/text";
+
 import { groupPlayHistory } from "./play-history";
 import type { VibeTrack } from "./vibe";
 
-export type HistorySectionLabel = "Today" | "This week" | "All-time";
-
 export type HistorySection = {
-  label: HistorySectionLabel;
+  /** Section heading; a bare key because a section never interpolates. */
+  labelKey: MessageKey;
   items: VibeTrack[];
 };
 
@@ -22,9 +23,9 @@ export function historyScreenModel(
 ): HistoryScreenModel {
   const groups = groupPlayHistory(session, week, all);
   const allSections: HistorySection[] = [
-    { label: "Today", items: groups.today },
-    { label: "This week", items: groups.week },
-    { label: "All-time", items: groups.earlier },
+    { labelKey: "history.sectionToday", items: groups.today },
+    { labelKey: "history.sectionWeek", items: groups.week },
+    { labelKey: "history.sectionAllTime", items: groups.earlier },
   ];
   const sections = allSections.filter((section) => section.items.length > 0);
 

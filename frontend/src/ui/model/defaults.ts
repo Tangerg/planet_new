@@ -11,16 +11,20 @@ export const DEFAULT_ACCENT: string = ACCENT_OPTIONS[0];
 /** Glass blur radius (px) applied to `--glass-blur`. */
 export const DEFAULT_GLASS_BLUR = 30;
 
-/** Shown in the player bar / screens before playback starts (defined fields, not undefined). */
-export const PLACEHOLDER_TRACK: VibeTrack = {
-  id: "",
-  title: "Not playing",
-  name: "Not playing",
-  artist: "",
-  coverSeed: 0,
-  durSec: 0,
-  duration: "0:00",
-};
+/** Shown in the player bar / screens before playback starts (defined fields, not
+ *  undefined). The idle title is user-facing, so the caller passes it in
+ *  translated rather than baking one language into a module constant. */
+export function placeholderTrack(title: string): VibeTrack {
+  return {
+    id: "",
+    title,
+    name: title,
+    artist: "",
+    coverSeed: 0,
+    durSec: 0,
+    duration: "0:00",
+  };
+}
 
 /** Seed chips on the Search screen (tap to fill the query). */
 export const SEARCH_SUGGESTIONS = ["周杰伦", "陈奕迅", "薛之谦", "林俊杰", "邓紫棋", "毛不易"];

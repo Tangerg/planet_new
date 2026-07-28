@@ -72,9 +72,10 @@ export const en = {
   counts: {
     albums: "{{count}} albums",
     artistsFollowing: "{{count}} following",
-    comments: "{{count}} comments",
+    comments: "{{value}} comments",
     listeners: "{{count}} listeners",
     playlists: "{{count}} playlists",
+    plays: "{{value}} plays",
     queued: "{{count}} tracks queued",
     selected: "{{count}} selected",
     tracks: "{{count}} tracks",
@@ -104,7 +105,6 @@ export const en = {
     playNext: "Play Next",
     profile: "Profile",
     queue: "Queue",
-    removeFromQueue: "Remove from Queue",
     removeFromLiked: "Remove from Liked",
     search: "Search",
     settings: "Settings",
@@ -116,6 +116,7 @@ export const en = {
     enableRepeatOne: "Enable repeat one",
     enableShuffle: "Enable shuffle",
     noLyrics: "No lyrics for this track.",
+    notPlaying: "Not playing",
     producedBy: "Produced by {{name}}",
     writtenBy: "Written by {{name}}",
   },
@@ -132,7 +133,6 @@ export const en = {
     preferences: "Preferences",
     profileSub: "You",
     rankedByPlays: "Ranked by plays",
-    settings: "Settings",
     yourDailyLanding: "Your daily landing",
   },
   forYou: {
@@ -164,6 +164,8 @@ export const en = {
   charts: {
     title: "Charts",
     subtitle: "Ranked by plays · refreshed daily",
+    topChart: "Top chart",
+    updated: "Updated {{when}}",
   },
   comments: {
     title: "Hot Comments",
@@ -182,7 +184,6 @@ export const en = {
     title: "Profile",
   },
   history: {
-    allTime: "All-time",
     consumption: "Consumption",
     empty: "Nothing played yet.",
     resume: "Resume listening",
@@ -191,17 +192,13 @@ export const en = {
     sectionWeek: "This week",
     subtitle: "Everything you've played recently · {{count}} tracks",
     title: "History",
-    today: "Today",
-    week: "This week",
   },
   artist: {
     allAlbums: "All Albums",
-    albumsCount: "{{count}} albums",
     hot: "Hot",
     listeners: "{{count}} listeners",
     section: "Artist section",
     similarArtist: "Similar Artist",
-    tracksCount: "{{count}} tracks",
   },
   detail: {
     sortTracks: "Sort tracks",
@@ -228,6 +225,8 @@ export const en = {
     loading: "Loading music videos…",
     mv: "MV",
     noComments: "No comments yet.",
+    resolvingStream: "Resolving video stream…",
+    streamUnavailable: "Video URL unavailable",
     title: "Music Videos",
   },
   settings: {

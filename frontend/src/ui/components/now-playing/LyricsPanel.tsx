@@ -10,6 +10,7 @@
 // so the tick only re-lays the list when the active line actually changes.
 // ============================================================
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { activeLyricIndex, type Lyric } from "@contexts/playback";
 
@@ -19,13 +20,14 @@ import { LyricLines } from "@/components/now-playing/LyricLines";
 
 type Props = {
   lyrics: readonly Lyric[];
-  noLyricsText?: string;
   accent: string;
 };
 
-export function LyricsPanel({ lyrics, noLyricsText, accent }: Props) {
+export function LyricsPanel({ lyrics, accent }: Props) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { positionSec } = usePlaybackProgress();
+  const noLyricsText = t("player.noLyrics");
   const lines = useMemo(() => lyricLinesOrFallback(lyrics, noLyricsText), [lyrics, noLyricsText]);
   // Recomputed each tick, but the value is stable between line changes — so the
   // memoized LyricLines below bails until the active line actually advances.

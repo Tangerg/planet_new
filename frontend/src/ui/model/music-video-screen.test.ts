@@ -6,7 +6,6 @@ import type { VibeComment, VibeMusicVideo } from "./vibe";
 import {
   musicVideoCommentLabel,
   musicVideoDetailModel,
-  musicVideoMetaLabel,
   musicVideoMetaPieces,
   musicVideoQualityLabel,
   musicVideosScreenModel,
@@ -66,17 +65,25 @@ describe("music video screen model", () => {
     expect(musicVideoDetailModel(current, [current, video("b")], policy)).toMatchObject({
       artist: { id: "artist" },
       canPlay: true,
-      commentLabel: "1.2K comments",
+      commentLabel: { key: "counts.comments", values: { value: "1.2K" } },
       rail: [{ id: "b" }],
     });
     expect(musicVideoCommentLabel(0)).toBeUndefined();
   });
 
-  it("builds compact MV metadata labels", () => {
+  it("names compact MV metadata parts", () => {
     expect(
       musicVideoMetaPieces(video("mv", { duration: "04:20", playCount: 15320, quality: 1080 })),
-    ).toEqual(["1080P", "04:20", "15.3K plays"]);
-    expect(musicVideoMetaLabel(video("mv", { duration: "", playCount: 0 }))).toBe("MV");
+    ).toEqual([
+      { text: "1080P" },
+      { text: "04:20" },
+      { key: "counts.plays", values: { value: "15.3K" } },
+    ]);
+    // No play count and no duration: only the quality fallback survives the join.
+    expect(musicVideoMetaPieces(video("mv", { duration: "", playCount: 0 }))).toEqual([
+      { text: "MV" },
+      { text: "" },
+    ]);
   });
 
   it("derives theater playback and comment model", () => {

@@ -1,9 +1,6 @@
-import {
-  collectionFlowItems,
-  collectionTrackCount,
-  collectionTrackCountLabel,
-  type FlowItem,
-} from "./derive";
+import type { LocalizedText } from "@/i18n/text";
+
+import { collectionFlowItems, collectionTrackCount, type FlowItem } from "./derive";
 import {
   sameVibeTrack,
   type ArtistTarget,
@@ -13,10 +10,10 @@ import {
 } from "./vibe";
 
 export const ARTIST_SECTION_TABS = [
-  { value: "top", label: "Hot" },
-  { value: "albums", label: "All Albums" },
-  { value: "similar", label: "Similar Artist" },
-] satisfies { value: string; label: string }[];
+  { value: "top", label: { key: "artist.hot" } },
+  { value: "albums", label: { key: "artist.allAlbums" } },
+  { value: "similar", label: { key: "artist.similarArtist" } },
+] satisfies { value: string; label: LocalizedText }[];
 
 export type ArtistScreenModel = {
   albumFlowItems: FlowItem<VibeCollection>[];
@@ -24,7 +21,7 @@ export type ArtistScreenModel = {
   hasPlayableTracks: boolean;
   playingArtistTrack: boolean;
   showViewToggle: boolean;
-  statLabels: string[];
+  statLabels: LocalizedText[];
   tabs: typeof ARTIST_SECTION_TABS;
   tracks: readonly VibeTrack[];
   albums: readonly VibeCollection[];
@@ -35,44 +32,35 @@ export function artistSectionShowsViewToggle(tab: string): boolean {
   return tab !== "similar";
 }
 
-export function artistTrackCountLabel(count: number): string {
-  return `${count} ${count === 1 ? "Track" : "Tracks"}`;
-}
-
-export function artistAlbumCountLabel(count: number): string | undefined {
-  if (count <= 0) return undefined;
-  return `${count} ${count === 1 ? "Album" : "Albums"}`;
-}
-
-export function artistListenerLabel(artist: Pick<ArtistTarget, "listeners">): string | undefined {
-  return artist.listeners ? `${artist.listeners} Listeners` : undefined;
-}
-
+/** The hero stat pills, in order. Zero albums / unknown listeners drop out
+ *  rather than showing a "0" pill; genres are provider content, not messages. */
 export function artistStatLabels(
   artist: Pick<ArtistTarget, "genres" | "listeners">,
   tracks: readonly VibeTrack[],
   albums: readonly VibeCollection[],
-): string[] {
+): LocalizedText[] {
   return [
-    artistTrackCountLabel(tracks.length),
-    artistAlbumCountLabel(albums.length),
-    artistListenerLabel(artist),
-    ...(artist.genres ?? []),
-  ].filter((label): label is string => Boolean(label));
+    { key: "counts.tracks", values: { count: tracks.length } } as LocalizedText,
+    ...(albums.length > 0
+      ? [{ key: "counts.albums", values: { count: albums.length } } as LocalizedText]
+      : []),
+    ...(artist.listeners
+      ? [{ key: "counts.listeners", values: { count: artist.listeners } } as LocalizedText]
+      : []),
+    ...(artist.genres ?? []).map((genre): LocalizedText => ({ text: genre })),
+  ];
 }
 
 export function artistAlbumSubtitle(album: Pick<VibeCollection, "year">): string {
   return String(album.year ?? "");
 }
 
-export function artistAlbumTrackCount(
-  album: Pick<VibeCollection, "trackCount" | "tracks">,
-): number {
-  return collectionTrackCount(album);
-}
-
-export function artistAlbumListMeta(album: VibeCollection): string {
-  return [album.year, collectionTrackCountLabel(album)].filter(Boolean).join(" · ");
+/** Album row meta on the artist page: release year then track count. */
+export function artistAlbumListMeta(album: VibeCollection): LocalizedText[] {
+  return [
+    { text: album.year ? String(album.year) : "" },
+    { key: "counts.tracks", values: { count: collectionTrackCount(album) } },
+  ];
 }
 
 export function artistAlbumFlowItems(albums: VibeCollection[]): FlowItem<VibeCollection>[] {

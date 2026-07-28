@@ -16,6 +16,7 @@ import { UpNextSheet } from "@/components/now-playing/UpNextSheet";
 import { useTranslation } from "react-i18next";
 import type { Lyric } from "@contexts/playback";
 import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
+import { localizeJoined } from "@/i18n/text";
 import { nowPlayingTrackModel } from "@/model/now-playing";
 
 type Props = {
@@ -70,10 +71,8 @@ export const NowPlaying = React.memo(function NowPlaying({
     touchHandlers,
   } = useNowPlayingModel({ initialMode, onNext, onPrev });
 
-  const trackModel = nowPlayingTrackModel(track, {
-    producedBy: (name) => t("player.producedBy", { name }),
-    writtenBy: (name) => t("player.writtenBy", { name }),
-  });
+  const trackModel = nowPlayingTrackModel(track);
+  const creditsLabel = localizeJoined(t, trackModel.credits);
   const [a, b] = artPair(trackModel.coverSeed, trackModel.gradient);
   const NP_EASE = "cubic-bezier(.16,1,.3,1)";
   const NP_PANEL_TRANSITION = `transform .42s ${NP_EASE}, opacity .28s ease`;
@@ -154,10 +153,8 @@ export const NowPlaying = React.memo(function NowPlaying({
               onOpenArtist={onOpenArtist}
             />
           </Marquee>
-          {trackModel.creditsLabel && (
-            <div className="mlabel mt-[7px] text-[10px] text-white/40">
-              {trackModel.creditsLabel}
-            </div>
+          {creditsLabel && (
+            <div className="mlabel mt-[7px] text-[10px] text-white/40">{creditsLabel}</div>
           )}
         </div>
       </Art>
@@ -255,7 +252,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               <CommentList comments={comments} />
             </div>
           ) : (
-            <LyricsPanel lyrics={lyrics} noLyricsText={t("player.noLyrics")} accent={accent} />
+            <LyricsPanel lyrics={lyrics} accent={accent} />
           )}
         </NpSwap>
       </div>

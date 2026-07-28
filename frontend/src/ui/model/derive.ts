@@ -5,6 +5,9 @@
 // unit-testable, separate from rendering.
 // ============================================================
 import type { Image } from "@contexts/catalog";
+
+import type { LocalizedText } from "@/i18n/text";
+
 import type { VibeTrack, VibeCollection } from "./vibe";
 
 // ── CoverFlow items ──────────────────────────────────────────────────
@@ -37,7 +40,7 @@ export function trackFlowItems(tracks: VibeTrack[]): FlowItem<VibeTrack>[] {
   }));
 }
 
-/** Collections → flow cards; `sub` derives the subtitle (year, kind, …). */
+/** Collections → flow cards; the caller supplies the already-resolved subtitle. */
 export function collectionFlowItems(
   items: VibeCollection[],
   sub: (c: VibeCollection) => string,
@@ -56,33 +59,23 @@ export function collectionFlowItems(
 
 // ── Library collection labels ────────────────────────────────────────
 
-/** Row subtitle for a library collection, per active tab. */
-export function collectionSub(c: VibeCollection, tab: string): string {
-  if (tab === "albums") return c.artist ?? "";
-  if (tab === "artists") return "";
-  return c.kind || "Playlist";
-}
-
-export function trackCountLabel(count: number): string {
-  return `${count} ${count === 1 ? "track" : "tracks"}`;
+/** Row subtitle for a library collection, per active tab. Artists carry their
+ *  name in the title already, so their subtitle stays empty. */
+export function collectionSub(c: VibeCollection, tab: string): LocalizedText {
+  if (tab === "albums") return { text: c.artist ?? "" };
+  if (tab === "artists") return { text: "" };
+  return { key: "common.playlist" };
 }
 
 export function collectionTrackCount(c: Pick<VibeCollection, "trackCount" | "tracks">): number {
   return c.trackCount ?? c.tracks?.length ?? 0;
 }
 
-export function collectionTrackCountLabel(
-  c: Pick<VibeCollection, "trackCount" | "tracks">,
-): string {
-  return trackCountLabel(collectionTrackCount(c));
-}
-
 /** Row meta (right-aligned count/year) for a library collection, per tab. */
-export function collectionMeta(c: VibeCollection, tab: string): string {
-  const count = collectionTrackCountLabel(c);
-  if (tab === "albums") return [c.year, count].filter(Boolean).join(" · ");
-  if (tab === "artists") return "";
-  return count;
+export function collectionMeta(c: VibeCollection, tab: string): LocalizedText[] {
+  if (tab === "artists") return [];
+  const count: LocalizedText = { key: "counts.tracks", values: { count: collectionTrackCount(c) } };
+  return tab === "albums" ? [{ text: c.year ? String(c.year) : "" }, count] : [count];
 }
 
 // ── Track sorting (Detail) ───────────────────────────────────────────
