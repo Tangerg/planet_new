@@ -291,6 +291,23 @@ func TestUnavailableWhenCatalogNil(t *testing.T) {
 	}
 }
 
+// A missing reader/picker is a degraded backend, not "this track has no lyrics"
+// or an anonymous failure: both must project as unavailable at the wire.
+func TestUnavailableWhenPortIsMissing(t *testing.T) {
+	lyricless := NewService(&fakeCatalog{path: "/m/song.flac"}, fakeScanner{}, fakePicker{}, nil, fixedClock{})
+	if _, err := lyricless.Lyric(context.Background(), "t1"); !errors.Is(err, ErrUnavailable) {
+		t.Errorf("Lyric error = %v, want ErrUnavailable", err)
+	}
+
+	pickerless := NewService(&fakeCatalog{}, fakeScanner{}, nil, fakeLyrics{}, fixedClock{})
+	if _, err := pickerless.PickFolder(context.Background()); !errors.Is(err, ErrUnavailable) {
+		t.Errorf("PickFolder error = %v, want ErrUnavailable", err)
+	}
+	if _, err := pickerless.PickAndScan(context.Background()); !errors.Is(err, ErrUnavailable) {
+		t.Errorf("PickAndScan error = %v, want ErrUnavailable", err)
+	}
+}
+
 func TestScanUnavailableWhenRequiredDependencyIsMissing(t *testing.T) {
 	tests := []struct {
 		name    string

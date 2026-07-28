@@ -8,7 +8,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/Tangerg/planet_new/backend/domain"
@@ -87,12 +86,24 @@ func (s *Service) scanAvailable() error {
 	return nil
 }
 
+// lyricAvailable reports the degraded backend separately from a track that
+// simply has no sidecar: a missing reader is infrastructure, not a domain fact.
+func (s *Service) lyricAvailable() error {
+	if err := s.available(); err != nil {
+		return err
+	}
+	if s.lyrics == nil {
+		return ErrUnavailable
+	}
+	return nil
+}
+
 // ── scanning ─────────────────────────────────────────────────────────────────
 
 // PickFolder opens the native chooser; "" means the user cancelled.
 func (s *Service) PickFolder(ctx context.Context) (string, error) {
-	if s.picker == nil {
-		return "", errors.New("no folder picker")
+	if s == nil || s.picker == nil {
+		return "", ErrUnavailable
 	}
 	return s.picker.Pick(ctx)
 }
@@ -241,14 +252,11 @@ func (s *Service) Search(ctx context.Context, query string) (domain.SearchResult
 
 // Lyric returns the raw sidecar lyric text (LRC) for a track, "" when it has
 // none. A missing track is represented by an empty path from the catalog;
-// infrastructure failures and cancellation remain errors so callers do not
-// mistake a failed lookup for a valid "no lyrics" result.
+// infrastructure failures, a degraded backend and cancellation remain errors so
+// callers do not mistake a failed lookup for a valid "no lyrics" result.
 func (s *Service) Lyric(ctx context.Context, id domain.TrackID) (string, error) {
-	if err := s.available(); err != nil {
+	if err := s.lyricAvailable(); err != nil {
 		return "", err
-	}
-	if s.lyrics == nil {
-		return "", nil
 	}
 	path, err := s.catalog.TrackPath(ctx, id)
 	if err != nil {
