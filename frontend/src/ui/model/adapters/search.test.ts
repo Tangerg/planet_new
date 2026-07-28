@@ -63,13 +63,13 @@ describe("search projection boundary", () => {
       expect.objectContaining({ id: "ar1", name: "Singer", image: "artist.jpg" }),
     );
     expect(result.albums[0]).toEqual(
-      expect.objectContaining({ id: "al1", name: "Album", kind: "Album", image: "album.jpg" }),
+      expect.objectContaining({ id: "al1", name: "Album", kind: "album", image: "album.jpg" }),
     );
     expect(result.playlists[0]).toEqual(
       expect.objectContaining({
         id: "p1",
         name: "Playlist",
-        kind: "Playlist",
+        kind: "playlist",
         image: "playlist.jpg",
       }),
     );

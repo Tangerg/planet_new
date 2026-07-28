@@ -7,7 +7,7 @@ export function toVibePlaylist(playlist: PlaylistSnapshot): VibeCollection {
   return {
     id: playlist.id,
     name: playlist.name,
-    kind: "Playlist",
+    kind: "playlist",
     owner: Playlist.ownerName(playlist) ?? "Sonance",
     coverSeed: seedOf(playlist.id),
     gradient: undefined,
@@ -27,7 +27,7 @@ export function toVibeAlbum(album: AlbumSnapshot): VibeCollection {
   return {
     id: album.id,
     name: album.name,
-    kind: "Album",
+    kind: "album",
     artist: artistName,
     artistId: Album.primaryArtist(album)?.id,
     owner: artistName || "Sonance",

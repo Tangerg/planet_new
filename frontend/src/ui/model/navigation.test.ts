@@ -126,8 +126,8 @@ describe("navigation model", () => {
     const worlds = buildWorlds(
       {
         catalog: catalog({
-          playlists: [{ id: "p", name: "P", kind: "Playlist", coverSeed: 1, tracks: [] }],
-          albums: [{ id: "a", name: "A", kind: "Album", coverSeed: 1, tracks: [] }],
+          playlists: [{ id: "p", name: "P", kind: "playlist", coverSeed: 1, tracks: [] }],
+          albums: [{ id: "a", name: "A", kind: "album", coverSeed: 1, tracks: [] }],
           artists: [{ id: "ar", name: "Ar", coverSeed: 1 }],
         }),
         availability: availability({ toplist: true }),

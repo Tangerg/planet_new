@@ -6,7 +6,7 @@ import type { VibeCollection, VibeTrack } from "./vibe";
 const collection = (overrides: Partial<VibeCollection> = {}): VibeCollection => ({
   id: "c",
   name: "Collection",
-  kind: "Playlist",
+  kind: "playlist",
   coverSeed: 1,
   tracks: [],
   ...overrides,

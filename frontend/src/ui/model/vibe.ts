@@ -1,8 +1,9 @@
-import type { Image } from "@contexts/catalog";
-import type { TrackSnapshot } from "@contexts/catalog";
+import type { Image, TrackSnapshot } from "@contexts/catalog";
 import { TrackKey, type ProviderId, type TrackKeyValue } from "@contexts/contracts";
 
-/** Display shape for a track, shared by mock and real data alike. */
+import type { MessageKey } from "@/i18n/text";
+
+/** Display shape for a track. */
 export type VibeTrack = {
   /** Source namespace for the provider-local `id`. Required before a view-only
    * track can cross back into the domain/playback boundary. */
@@ -37,9 +38,6 @@ export type VibeTrack = {
   /** Audio-quality badge, e.g. "SQ" / "HQ". */
   quality?: string;
   credits?: { music?: string; producer?: string };
-  /** Chart-only: explicit rank + week-over-week delta (mock charts). */
-  _rank?: number;
-  _delta?: number;
   /** The domain track this view was projected from. Carried so a "play" gesture
    *  can hand the kernel the full entity without re-fetching (the queue stores
    *  domain tracks and re-projects them for Now Playing). It may be absent on
@@ -66,11 +64,31 @@ export function sameVibeTrack(
   return leftKey !== undefined && leftKey === vibeTrackKey(right);
 }
 
+/**
+ * What a collection is. A machine tag, not a label: the screens translate it,
+ * and Detail keys its ranked-chart layout off it. There is deliberately no
+ * second "variant" tag — the earlier pair drifted apart, leaving chart detail
+ * silently unranked because navigation set `kind` while Detail read `variant`.
+ */
+export type CollectionKind = "playlist" | "album" | "chart" | "artist";
+
+const COLLECTION_KIND_KEYS = {
+  playlist: "common.playlist",
+  album: "common.album",
+  chart: "common.chart",
+  artist: "common.artist",
+} as const satisfies Record<CollectionKind, MessageKey>;
+
+/** The message naming a collection kind, for hero/subtitle labels. */
+export function collectionKindMessageKey(kind: CollectionKind | undefined): MessageKey {
+  return COLLECTION_KIND_KEYS[kind ?? "playlist"];
+}
+
 /** Display shape for a collection (playlist / album / chart). */
 export type VibeCollection = {
   id: string;
   name: string;
-  kind: string;
+  kind: CollectionKind;
   owner?: string;
   artist?: string;
   artistId?: string;
@@ -88,11 +106,9 @@ export type VibeCollection = {
   updatedAt?: string;
   /** Chart title alias (some screens read `title` instead of `name`). */
   title?: string;
-  /** Detail variant tag — "chart" switches the track list to ranked rows. */
-  variant?: string;
   /** Whether opening this collection should fetch full detail from the provider.
    *  Default (undefined) = fetch; explicit `false` = tracks already loaded
-   *  (mock / synthetic collections like Daily Mix, Liked Songs). */
+   *  (synthetic collections like Daily Mix or Liked Songs). */
   fetchDetail?: boolean;
 };
 
@@ -154,11 +170,10 @@ export type CardItem = {
 };
 
 export type OpenTarget = CardItem & {
-  kind?: string;
+  kind?: CollectionKind;
   owner?: string;
   description?: string;
   year?: number;
-  variant?: string;
   tracks?: VibeTrack[];
   fetchDetail?: boolean;
 };

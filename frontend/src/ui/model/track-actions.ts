@@ -79,7 +79,7 @@ export function syntheticLikedSongsCollection(
   return {
     id: "liked",
     name: "Liked Songs",
-    kind: "Playlist",
+    kind: "playlist",
     owner: "You",
     coverSeed: 0,
     gradient: ["#2a0420", "#ff4fa3"],
@@ -101,5 +101,5 @@ export function likedSongsOpenTarget({
   userPlaylists: readonly VibeCollection[];
 }): OpenTarget {
   const real = loggedIn ? userPlaylists[0] : undefined;
-  return real ? { ...real, kind: "Playlist" } : syntheticLikedSongsCollection(catalog, liked);
+  return real ? { ...real, kind: "playlist" } : syntheticLikedSongsCollection(catalog, liked);
 }

@@ -1,18 +1,13 @@
 // ============================================================
 // TrackRow — the dense track list row (art + meta + inline like + duration),
-// with optional chart rank/trend and multi-select. The shared list-row used by
+// with optional chart rank and multi-select. The shared list-row used by
 // Playlist/Album detail, Queue, History, Search and Library songs.
 // ============================================================
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "@/model/likes";
-import {
-  trackRowModel,
-  type TrackRowBadge,
-  type TrackRowLeading,
-  type TrackRowTrend,
-} from "@/model/track-row";
+import { trackRowModel, type TrackRowBadge, type TrackRowLeading } from "@/model/track-row";
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -33,7 +28,6 @@ type TrackRowProps = {
   accent: string;
   dark?: boolean;
   rank?: number;
-  delta?: number;
   selected?: boolean;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
   onOpenArtist?: (artist: ArtistRef) => void;
@@ -77,43 +71,6 @@ function TrackLeading({
       return (
         <span className="mlabel text-[12px]" style={{ color: muted }}>
           {leading.value}
-        </span>
-      );
-  }
-}
-
-function TrackTrend({
-  trend,
-  accent,
-  muted,
-}: {
-  trend: TrackRowTrend;
-  accent: string;
-  muted: string;
-}) {
-  switch (trend.kind) {
-    case "new":
-      return (
-        <span className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: accent }}>
-          NEW
-        </span>
-      );
-    case "up":
-      return (
-        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#1ed98a" }}>
-          ▲<span className="text-[9px]">{trend.value}</span>
-        </span>
-      );
-    case "down":
-      return (
-        <span className="inline-flex items-center gap-px text-[11px]" style={{ color: "#ff6b6b" }}>
-          ▼<span className="text-[9px]">{trend.value}</span>
-        </span>
-      );
-    case "same":
-      return (
-        <span className="text-[12px]" style={{ color: muted }}>
-          –
         </span>
       );
   }
@@ -172,7 +129,6 @@ export const TrackRow = React.memo(function TrackRow({
   accent,
   dark = true,
   rank,
-  delta,
   selected,
   onSelect,
   onOpenArtist,
@@ -190,7 +146,6 @@ export const TrackRow = React.memo(function TrackRow({
     hover,
     index,
     rank,
-    delta,
     policy,
   });
   const col = dark ? "#fff" : "#16161a";
@@ -278,11 +233,6 @@ export const TrackRow = React.memo(function TrackRow({
           />
         </div>
       </div>
-      {model.trend && (
-        <span className="w-[38px] flex-none text-center">
-          <TrackTrend trend={model.trend} accent={accent} muted={sub} />
-        </span>
-      )}
       <Button
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();

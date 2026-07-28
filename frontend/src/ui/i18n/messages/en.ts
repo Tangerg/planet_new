@@ -12,6 +12,7 @@ export const en = {
     back: "Back",
     browse: "Browse",
     category: "Category",
+    chart: "Chart",
     charts: "Charts",
     clear: "Clear",
     close: "Close",

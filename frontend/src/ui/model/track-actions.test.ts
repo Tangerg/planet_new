@@ -34,7 +34,7 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): VibeTrack => ({
 const playlist = (id: string): VibeCollection => ({
   id,
   name: id,
-  kind: "Playlist",
+  kind: "playlist",
   coverSeed: 1,
   tracks: [],
 });
@@ -119,7 +119,7 @@ describe("track action model", () => {
     expect(liked).toMatchObject({
       id: "liked",
       name: "Liked Songs",
-      kind: "Playlist",
+      kind: "playlist",
       owner: "You",
       fetchDetail: false,
       tracks: [{ id: "b" }],
@@ -134,7 +134,7 @@ describe("track action model", () => {
         loggedIn: true,
         userPlaylists: [playlist("real")],
       }),
-    ).toMatchObject({ id: "real", kind: "Playlist" });
+    ).toMatchObject({ id: "real", kind: "playlist" });
 
     expect(
       likedSongsOpenTarget({

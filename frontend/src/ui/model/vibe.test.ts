@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { ProviderId } from "@contexts/contracts";
-import { sameVibeTrack, seedOf, vibeTrackKey } from "./vibe";
+import {
+  collectionKindMessageKey,
+  sameVibeTrack,
+  seedOf,
+  vibeTrackKey,
+  type CollectionKind,
+} from "./vibe";
 
 const netease = ProviderId.of("netease");
 const qq = ProviderId.of("qq");
@@ -51,5 +57,21 @@ describe("sameVibeTrack", () => {
   it("never matches keyless placeholders, not even against each other", () => {
     expect(sameVibeTrack({ id: "1" }, { id: "1" })).toBe(false);
     expect(sameVibeTrack(null, null)).toBe(false);
+  });
+});
+
+describe("collectionKindMessageKey", () => {
+  it("names a message for every collection kind", () => {
+    const kinds: CollectionKind[] = ["playlist", "album", "chart", "artist"];
+    expect(kinds.map(collectionKindMessageKey)).toEqual([
+      "common.playlist",
+      "common.album",
+      "common.chart",
+      "common.artist",
+    ]);
+  });
+
+  it("labels an untagged collection as a playlist", () => {
+    expect(collectionKindMessageKey(undefined)).toBe("common.playlist");
   });
 });

@@ -6,7 +6,7 @@ import type { DetailTarget, VibeMusicVideo } from "./vibe";
 const detail: DetailTarget = {
   id: "detail-1",
   name: "Detail",
-  kind: "Playlist",
+  kind: "playlist",
   tracks: [],
   coverSeed: 1,
   gradient: ["#111", "#eee"],

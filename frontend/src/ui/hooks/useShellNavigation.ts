@@ -94,11 +94,11 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     [media, queryClient],
   );
   const albumDetail = useCallback(
-    (al: VibeCollection) => openDetail({ ...al, kind: "Album" }),
+    (al: VibeCollection) => openDetail({ ...al, kind: "album" }),
     [openDetail],
   );
   const openChart = useCallback(
-    (c: VibeCollection) => openDetail({ ...c, kind: "Chart", fetchDetail: true }),
+    (c: VibeCollection) => openDetail({ ...c, kind: "chart", fetchDetail: true }),
     [openDetail],
   );
   const openArtist = useCallback(

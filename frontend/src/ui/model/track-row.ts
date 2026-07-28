@@ -9,12 +9,6 @@ export type TrackRowLeading =
   | { kind: "play" }
   | { kind: "index"; value: number };
 
-export type TrackRowTrend =
-  | { kind: "new" }
-  | { kind: "up"; value: number }
-  | { kind: "down"; value: number }
-  | { kind: "same" };
-
 export type TrackRowBadge =
   | { kind: "version"; label: string }
   | { kind: "subscription"; label: "VIP" }
@@ -26,7 +20,6 @@ export type TrackRowModel = {
   chart: boolean;
   leading: TrackRowLeading;
   badges: TrackRowBadge[];
-  trend?: TrackRowTrend;
 };
 
 export function trackRowModel({
@@ -36,7 +29,6 @@ export function trackRowModel({
   hover,
   index,
   rank,
-  delta,
   policy,
 }: {
   track: VibeTrack;
@@ -45,7 +37,6 @@ export function trackRowModel({
   hover: boolean;
   index: number;
   rank?: number;
-  delta?: number;
   policy?: PlaybackAvailabilityPolicy;
 }): TrackRowModel {
   const isCurrent = sameVibeTrack(current, track);
@@ -66,7 +57,6 @@ export function trackRowModel({
       rank,
     }),
     badges: trackRowBadges(track, unavailable),
-    trend: chart ? trackRowTrend(delta) : undefined,
   };
 }
 
@@ -105,11 +95,4 @@ function trackRowBadges(track: VibeTrack, unavailable: boolean): TrackRowBadge[]
     badges.push({ kind: "unavailable", label: "Unavailable" });
   }
   return badges;
-}
-
-function trackRowTrend(delta: number | undefined): TrackRowTrend {
-  if (delta == null) return { kind: "new" };
-  if (delta > 0) return { kind: "up", value: delta };
-  if (delta < 0) return { kind: "down", value: -delta };
-  return { kind: "same" };
 }

@@ -42,7 +42,7 @@ export function libraryCollectionRoute(tab: string): LibraryCollectionRoute {
 }
 
 function artistAsCollection(artist: VibeArtist): VibeCollection {
-  return { ...artist, kind: "Artist", tracks: [] };
+  return { ...artist, kind: "artist", tracks: [] };
 }
 
 export function libraryCollections(data: ScreenData, tab: string): VibeCollection[] {

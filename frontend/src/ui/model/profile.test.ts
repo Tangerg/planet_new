@@ -14,7 +14,7 @@ import {
 const playlist = (id: string, overrides: Partial<VibeCollection> = {}): VibeCollection => ({
   id,
   name: id,
-  kind: "Playlist",
+  kind: "playlist",
   coverSeed: 1,
   tracks: [],
   ...overrides,

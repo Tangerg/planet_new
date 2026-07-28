@@ -22,6 +22,7 @@ export const zh = {
     back: "返回",
     browse: "浏览",
     category: "分类",
+    chart: "榜单",
     charts: "排行榜",
     clear: "清除",
     close: "关闭",

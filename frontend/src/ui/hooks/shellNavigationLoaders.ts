@@ -32,11 +32,11 @@ export function fetchDetailTarget(
     .fetchQuery({
       queryKey: queryKeys.detail(media.providerId, kind, summary.id),
       queryFn: async () => {
-        if (kind === "Album") {
+        if (kind === "album") {
           const detail = queryDataOrNull(await media.albumDetail(summary.id));
           return detail ? toVibeAlbum(detail) : null;
         }
-        if (kind === "Chart") {
+        if (kind === "chart") {
           const detail = queryDataOrNull(await media.toplistDetail(summary.id));
           return detail ? toVibePlaylist(detail) : null;
         }

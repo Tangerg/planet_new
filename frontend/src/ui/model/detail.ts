@@ -12,6 +12,7 @@ import { toVibeMusicVideo } from "@/model/adapters/music-video";
 import { toVibeTracks } from "@/model/adapters/track";
 import type {
   ArtistTarget,
+  CollectionKind,
   DetailTarget,
   OpenTarget,
   VibeCollection,
@@ -19,7 +20,8 @@ import type {
   VibeTrack,
 } from "@/model/vibe";
 
-export type DetailKind = "Album" | "Chart" | "Playlist";
+/** The collection kinds Detail can actually load; `artist` has its own screen. */
+export type DetailKind = Extract<CollectionKind, "album" | "chart" | "playlist">;
 
 export type CollectionDetailReader = {
   albumDetail(id: string): Promise<AlbumDetailSnapshot>;
@@ -48,9 +50,9 @@ export function detailHeroTitleSize(name: string | undefined): number {
 }
 
 export function detailKindOf(target: Pick<OpenTarget, "kind">): DetailKind {
-  if (target.kind === "Album") return "Album";
-  if (target.kind === "Chart") return "Chart";
-  return "Playlist";
+  if (target.kind === "album") return "album";
+  if (target.kind === "chart") return "chart";
+  return "playlist";
 }
 
 export function normalizeDetailTarget(input: OpenTarget): DetailTarget {
@@ -113,8 +115,8 @@ export async function loadDetailTarget(
   target: DetailTarget,
 ): Promise<VibeCollection> {
   const kind = detailKindOf(target);
-  if (kind === "Album") return toVibeAlbum(await reader.albumDetail(target.id));
-  if (kind === "Chart") return toVibePlaylist(await reader.toplistDetail(target.id));
+  if (kind === "album") return toVibeAlbum(await reader.albumDetail(target.id));
+  if (kind === "chart") return toVibePlaylist(await reader.toplistDetail(target.id));
   return toVibePlaylist(await reader.playlistDetail(target.id));
 }
 

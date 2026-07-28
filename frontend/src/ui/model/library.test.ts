@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ScreenData, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
+import type { CollectionKind, ScreenData, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
 import {
   LIBRARY_INITIAL_FLOW_CENTER,
   libraryCollections,
@@ -20,7 +20,11 @@ const track = (id: string, artistId?: string): VibeTrack => ({
   duration: "0:10",
 });
 
-const collection = (id: string, kind = "Playlist", tracks: VibeTrack[] = []): VibeCollection => ({
+const collection = (
+  id: string,
+  kind: CollectionKind = "playlist",
+  tracks: VibeTrack[] = [],
+): VibeCollection => ({
   id,
   name: id,
   kind,
@@ -36,8 +40,8 @@ const artist = (id: string): VibeArtist => ({
 });
 
 const screenData = (overrides: Partial<ScreenData> = {}): ScreenData => ({
-  playlists: [collection("p1", "Playlist", [track("p-track")])],
-  albums: [collection("al1", "Album", [track("al-track")])],
+  playlists: [collection("p1", "playlist", [track("p-track")])],
+  albums: [collection("al1", "album", [track("al-track")])],
   artists: [artist("ar1"), artist("ar2")],
   allTracks: [track("t1", "ar1"), track("t2", "ar2"), track("t3", "ar1")],
   ...overrides,
@@ -57,7 +61,7 @@ describe("library screen model", () => {
     expect(projected).toMatchObject({
       id: "ar1",
       name: "ar1",
-      kind: "Artist",
+      kind: "artist",
       image: "ar1.jpg",
       tracks: [],
     });

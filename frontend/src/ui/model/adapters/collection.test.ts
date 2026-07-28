@@ -20,7 +20,7 @@ describe("collection projection boundary", () => {
       expect.objectContaining({
         id: "p1",
         name: "Daily",
-        kind: "Playlist",
+        kind: "playlist",
         owner: "Alice",
         image: "cover.jpg",
         trackCount: 12,

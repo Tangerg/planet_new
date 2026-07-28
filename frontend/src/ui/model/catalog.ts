@@ -19,11 +19,11 @@ export function toVibeChart(chart: Chart): VibeCollection {
     id: chart.id,
     title: chart.title,
     name: chart.title,
-    kind: "Chart",
+    kind: "chart",
     image: chart.image,
     coverSeed: seedOf(chart.id),
     sub: chart.period,
-    updatedAt: chart.period ?? "today",
+    updatedAt: chart.period,
     tracks: [],
   };
 }

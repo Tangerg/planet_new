@@ -16,7 +16,7 @@ const track = (id: string): VibeTrack => ({
 const playlist = (id: string): VibeCollection => ({
   id,
   name: id,
-  kind: "Playlist",
+  kind: "playlist",
   coverSeed: 1,
   tracks: [track(`${id}-track`)],
 });

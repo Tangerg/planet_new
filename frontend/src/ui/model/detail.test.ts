@@ -44,7 +44,7 @@ const summary = (overrides: Partial<DetailTarget> = {}): DetailTarget => ({
   name: "Summary",
   coverSeed: 10,
   image: "summary.jpg",
-  kind: "Playlist",
+  kind: "playlist",
   tracks: [],
   ...overrides,
 });
@@ -62,9 +62,11 @@ describe("detail read-model helpers", () => {
 
   test("normalizes loose open targets into concrete detail targets", () => {
     expect(normalizeDetailTarget({ id: "1", name: "Any", coverSeed: 1 }).tracks).toEqual([]);
-    expect(detailKindOf({ kind: "Album" })).toBe("Album");
-    expect(detailKindOf({ kind: "Chart" })).toBe("Chart");
-    expect(detailKindOf({ kind: "Whatever" })).toBe("Playlist");
+    expect(detailKindOf({ kind: "album" })).toBe("album");
+    expect(detailKindOf({ kind: "chart" })).toBe("chart");
+    // `artist` has its own screen, so Detail treats it like a plain collection.
+    expect(detailKindOf({ kind: "artist" })).toBe("playlist");
+    expect(detailKindOf({})).toBe("playlist");
   });
 
   test("decides whether a collection summary needs provider detail", () => {
@@ -140,9 +142,9 @@ describe("detail read-model helpers", () => {
       },
     };
 
-    await loadDetailTarget(reader, summary({ id: "a", kind: "Album" }));
-    await loadDetailTarget(reader, summary({ id: "c", kind: "Chart" }));
-    await loadDetailTarget(reader, summary({ id: "p", kind: "Playlist" }));
+    await loadDetailTarget(reader, summary({ id: "a", kind: "album" }));
+    await loadDetailTarget(reader, summary({ id: "c", kind: "chart" }));
+    await loadDetailTarget(reader, summary({ id: "p", kind: "playlist" }));
     expect(calls).toEqual(["album:a", "chart:c", "playlist:p"]);
   });
 
@@ -150,7 +152,7 @@ describe("detail read-model helpers", () => {
     const full: VibeCollection = {
       id: "playlist-1",
       name: "",
-      kind: "Playlist",
+      kind: "playlist",
       coverSeed: 22,
       image: "",
       tracks: [track("t")],

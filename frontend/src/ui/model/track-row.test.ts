@@ -89,7 +89,7 @@ describe("track row model", () => {
     ).toEqual([]);
   });
 
-  it("uses chart rank and trend when the row belongs to a chart", () => {
+  it("shows the chart rank instead of the list index when the row is ranked", () => {
     expect(
       trackRowModel({
         track: track(),
@@ -98,22 +98,10 @@ describe("track row model", () => {
         hover: true,
         index: 4,
         rank: 2,
-        delta: -7,
       }),
     ).toMatchObject({
       chart: true,
       leading: { kind: "rank", value: 2, active: true },
-      trend: { kind: "down", value: 7 },
     });
-
-    expect(
-      trackRowModel({
-        track: track(),
-        playing: false,
-        hover: false,
-        index: 4,
-        rank: 2,
-      }).trend,
-    ).toEqual({ kind: "new" });
   });
 });

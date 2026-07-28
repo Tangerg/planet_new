@@ -19,6 +19,7 @@ import { PageColumn } from "@/components/layout/PageColumn";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { useDetailScreenModel } from "@/hooks/useDetailScreenModel";
 import { detailHeroTitleSize } from "@/model/detail";
+import { collectionKindMessageKey } from "@/model/vibe";
 
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
@@ -128,7 +129,7 @@ export function PlaylistDetailScreen({
               className="flex-none"
             />
             <div className="min-w-0 flex-1">
-              <span className="mlabel text-white/70">{p.kind || t("common.playlist")}</span>
+              <span className="mlabel text-white/70">{t(collectionKindMessageKey(p.kind))}</span>
               <TextReveal
                 lines={2}
                 full={<span style={{ fontSize: 20, fontWeight: 300 }}>{p.name}</span>}
@@ -220,8 +221,7 @@ export function PlaylistDetailScreen({
                 flowCenter={flowCenter}
                 setFlowCenter={setFlowCenter}
                 flowHeight={520}
-                rankFor={(t, i) => (p.variant === "chart" ? (t._rank ?? i + 1) : undefined)}
-                deltaFor={(t) => (p.variant === "chart" ? t._delta : undefined)}
+                rankFor={(_, i) => (p.kind === "chart" ? i + 1 : undefined)}
                 selected={sel}
                 onSelect={toggleSel}
               />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ScreenData, VibeCollection, VibeTrack } from "./vibe";
+import type { CollectionKind, ScreenData, VibeCollection, VibeTrack } from "./vibe";
 import {
   dailyMixCollection,
   forYouCollectionRoute,
@@ -29,7 +29,7 @@ const track = (id: string): VibeTrack => ({
 
 const collection = (
   id: string,
-  kind = "Playlist",
+  kind: CollectionKind = "playlist",
   overrides: Partial<VibeCollection> = {},
 ): VibeCollection => ({
   id,
@@ -44,7 +44,7 @@ const NOW = new Date("2026-01-01T21:00:00");
 
 const screenData = (overrides: Partial<ScreenData> = {}): ScreenData => ({
   playlists: [collection("p1"), collection("p2")],
-  albums: [collection("a1", "Album", { artist: "Artist" })],
+  albums: [collection("a1", "album", { artist: "Artist" })],
   artists: [{ id: "ar1", name: "Artist", coverSeed: 3 }],
   allTracks: [],
   ...overrides,
@@ -62,7 +62,7 @@ describe("for you screen model", () => {
     expect(dailyMixCollection([track("t1")], DAILY_MIX_TEXT)).toMatchObject({
       id: "daily-mix",
       name: "Daily Mix",
-      kind: "Playlist",
+      kind: "playlist",
       owner: "For You",
       coverSeed: 11,
       image: "t1.jpg",
@@ -84,7 +84,7 @@ describe("for you screen model", () => {
   it("limits quick tiles to playlists followed by albums", () => {
     const data = screenData({
       playlists: Array.from({ length: 6 }, (_, index) => collection(`p${index}`)),
-      albums: Array.from({ length: 6 }, (_, index) => collection(`a${index}`, "Album")),
+      albums: Array.from({ length: 6 }, (_, index) => collection(`a${index}`, "album")),
     });
 
     expect(forYouTiles(data).map((item) => item.id)).toEqual([
@@ -100,8 +100,8 @@ describe("for you screen model", () => {
   });
 
   it("routes albums and playlists to their matching detail screens", () => {
-    expect(forYouCollectionRoute(collection("a1", "Album", { artist: "Artist" }))).toBe("album");
-    expect(forYouCollectionRoute(collection("p1", "Playlist"))).toBe("playlist");
+    expect(forYouCollectionRoute(collection("a1", "album", { artist: "Artist" }))).toBe("album");
+    expect(forYouCollectionRoute(collection("p1", "playlist"))).toBe("playlist");
   });
 
   it("collects the full home model for the screen", () => {

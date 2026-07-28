@@ -1,6 +1,6 @@
 import type { ProviderId } from "@contexts/contracts";
 
-type DetailQueryKind = "Album" | "Chart" | "Playlist";
+type DetailQueryKind = "album" | "chart" | "playlist";
 
 export const queryKeys = {
   accountRoot: () => ["account"] as const,

@@ -23,8 +23,8 @@ describe("queryKeys", () => {
     const netease = ProviderId.of("netease");
     const qqmusic = ProviderId.of("qqmusic");
 
-    expect(queryKeys.detail(netease, "Album", "42")).not.toEqual(
-      queryKeys.detail(qqmusic, "Album", "42"),
+    expect(queryKeys.detail(netease, "album", "42")).not.toEqual(
+      queryKeys.detail(qqmusic, "album", "42"),
     );
     expect(queryKeys.artist(netease, "42")).not.toEqual(queryKeys.artist(qqmusic, "42"));
     expect(queryKeys.musicVideo(netease, "42")).not.toEqual(queryKeys.musicVideo(qqmusic, "42"));

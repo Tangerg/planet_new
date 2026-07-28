@@ -40,8 +40,8 @@ describe("catalog UI model", () => {
       ],
     });
 
-    expect(data.playlists[0]).toMatchObject({ id: "p1", name: "Daily", kind: "Playlist" });
-    expect(data.albums[0]).toMatchObject({ id: "a1", name: "Album", kind: "Album" });
+    expect(data.playlists[0]).toMatchObject({ id: "p1", name: "Daily", kind: "playlist" });
+    expect(data.albums[0]).toMatchObject({ id: "a1", name: "Album", kind: "album" });
     expect(data.artists[0]).toMatchObject({ id: "ar1", name: "Artist" });
     expect(data.allTracks[0]).toMatchObject({ id: "t1", name: "Track", artist: "Singer" });
   });
@@ -59,7 +59,7 @@ describe("catalog UI model", () => {
       id: "chart-1",
       title: "Hot Songs",
       name: "Hot Songs",
-      kind: "Chart",
+      kind: "chart",
       image: "https://example.com/chart.jpg",
       sub: "weekly",
       updatedAt: "weekly",

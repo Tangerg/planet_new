@@ -28,7 +28,7 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): VibeTrack => ({
 const album = (id: string, overrides: Partial<VibeCollection> = {}): VibeCollection => ({
   id,
   name: id,
-  kind: "Album",
+  kind: "album",
   coverSeed: 2,
   tracks: [],
   ...overrides,

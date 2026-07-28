@@ -48,7 +48,7 @@ export function dailyMixCollection(
   return {
     id: "daily-mix",
     name: text.name,
-    kind: "Playlist",
+    kind: "playlist",
     owner: text.owner,
     coverSeed: first.coverSeed,
     gradient: first.gradient,
@@ -65,7 +65,7 @@ export function forYouTiles(data: Pick<ScreenData, "playlists" | "albums">): Vib
 }
 
 export function forYouCollectionRoute(collection: VibeCollection): ForYouCollectionRoute {
-  return collection.artist && collection.kind === "Album" ? "album" : "playlist";
+  return collection.artist && collection.kind === "album" ? "album" : "playlist";
 }
 
 export function forYouScreenModel(

@@ -32,7 +32,6 @@ export function TrackCollectionView({
   setFlowCenter,
   flowHeight,
   rankFor,
-  deltaFor,
   selected,
   onSelect,
 }: {
@@ -52,7 +51,6 @@ export function TrackCollectionView({
   setFlowCenter: (n: number | ((c: number) => number)) => void;
   flowHeight: number;
   rankFor?: (track: VibeTrack, i: number) => number | undefined;
-  deltaFor?: (track: VibeTrack, i: number) => number | undefined;
   selected?: Set<string>;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
 }) {
@@ -70,7 +68,6 @@ export function TrackCollectionView({
               track={t}
               index={i + 1}
               rank={rankFor?.(t, i)}
-              delta={deltaFor?.(t, i)}
               onPlay={onPlay}
               current={current}
               selected={selected?.has(t.id)}
