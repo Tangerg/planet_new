@@ -3,7 +3,13 @@
 // ============================================================
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
+import type {
+  ArtistRef,
+  LibrarySectionTab,
+  ScreenData,
+  VibeCollection,
+  VibeTrack,
+} from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { LiftCard } from "@/components/lift";
@@ -33,7 +39,7 @@ type ForYouScreenProps = {
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
   openArtist: (artist: ArtistRef) => void;
-  openLibrary: (tab: string) => void;
+  openLibrary: (tab: LibrarySectionTab) => void;
   accent: string;
 };
 

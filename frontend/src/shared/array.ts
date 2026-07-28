@@ -9,3 +9,20 @@ export function shuffleArray<T>(arr: Array<T> | ReadonlyArray<T>, random: () => 
   }
   return result;
 }
+
+/**
+ * Non-empty, trimmed values in first-encounter order, without duplicates.
+ * Used to turn a set of entities into the id list an upstream lookup takes:
+ * blank and repeated ids would either fail or waste a request.
+ */
+export function uniqueTrimmed(values: Iterable<string | undefined>): string[] {
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    unique.push(trimmed);
+  }
+  return unique;
+}

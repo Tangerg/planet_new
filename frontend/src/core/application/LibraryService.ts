@@ -1,5 +1,5 @@
 import type { Playlist, TrackSnapshot } from "@domain";
-import type { UserLibrarySourcePort } from "@domain/ports/userLibrary";
+import type { UserLibrarySourcePort } from "@domain/ports/user-library";
 
 /**
  * Application service for browsing the logged-in user's saved library.

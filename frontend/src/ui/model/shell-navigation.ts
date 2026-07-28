@@ -1,4 +1,11 @@
-import type { ArtistTarget, DetailTarget, VibeMusicVideo, VibeTrack } from "@/model/vibe";
+import type {
+  ArtistTarget,
+  CollectionViewMode,
+  DetailTarget,
+  LibrarySectionTab,
+  VibeMusicVideo,
+  VibeTrack,
+} from "@/model/vibe";
 
 /** One frame of navigation state — enough to rebuild any screen on "back". */
 export type NavSnapshot<TLastTile> = {
@@ -7,8 +14,8 @@ export type NavSnapshot<TLastTile> = {
   artistObj: ArtistTarget;
   musicVideoObj: VibeMusicVideo | null;
   musicVideoRelated: VibeMusicVideo[];
-  libraryTab: string;
-  libraryView: string;
+  libraryTab: LibrarySectionTab;
+  libraryView: CollectionViewMode;
   searchQuery: string;
   playContext: VibeTrack[];
   lastTile: TLastTile | null;

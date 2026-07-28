@@ -4,7 +4,14 @@
 // ============================================================
 import React, { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "@/model/vibe";
+import type {
+  ArtistRef,
+  ArtistTarget,
+  CollectionViewMode,
+  VibeArtist,
+  VibeCollection,
+  VibeTrack,
+} from "@/model/vibe";
 import { artistAlbumListMeta, artistAlbumSubtitle, artistScreenModel } from "@/model/artist-screen";
 import { clampIndex } from "@shared/number";
 import { localize, localizeJoined } from "@/i18n/text";
@@ -58,7 +65,7 @@ export function ArtistScreen({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("top");
-  const [view, setView] = useState("list");
+  const [view, setView] = useState<CollectionViewMode>("list");
   const [flowCenter, setFlowCenter] = useState(0);
   useEffect(() => {
     setFlowCenter(0);

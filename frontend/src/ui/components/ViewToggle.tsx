@@ -2,11 +2,12 @@ import { useTranslation } from "react-i18next";
 
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { Icon } from "@/infra/icons";
+import type { CollectionViewMode } from "@/model/vibe";
 import "./ViewToggle.css";
 
 type ViewToggleProps = {
-  value: string;
-  onChange: (v: string) => void;
+  value: CollectionViewMode;
+  onChange: (v: CollectionViewMode) => void;
   style?: React.CSSProperties;
 };
 

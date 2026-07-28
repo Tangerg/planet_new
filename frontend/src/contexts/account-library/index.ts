@@ -4,4 +4,4 @@ export type {
   ActiveUserLibrarySource,
   UserLibrary,
   UserLibrarySourcePort,
-} from "@domain/ports/userLibrary";
+} from "@domain/ports/user-library";

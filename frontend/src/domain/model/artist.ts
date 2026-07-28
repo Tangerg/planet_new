@@ -1,3 +1,5 @@
+import { uniqueTrimmed } from "@shared/array";
+
 import { type Image, pickImageUrl } from "./image";
 import type { TrackSnapshot } from "./track";
 import type { AlbumSummary } from "./album";
@@ -64,21 +66,13 @@ export const Artist = {
 
   /**
    * Provider lookup ids from a seed set, de-duplicated in encounter order.
-   * Useful for fan-out reads such as "find videos for these artists".
+   * Useful for fan-out reads such as "find videos for these artists", where
+   * `limit` caps how many upstream requests the fan-out may make.
    */
   uniqueIds(
     artists: readonly Partial<ArtistLookupReference>[],
     limit = Number.POSITIVE_INFINITY,
   ): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const artist of artists) {
-      const id = artist.id?.trim();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      ids.push(id);
-      if (ids.length >= limit) break;
-    }
-    return ids;
+    return uniqueTrimmed(artists.map((artist) => artist.id)).slice(0, limit);
   },
 };

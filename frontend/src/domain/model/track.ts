@@ -3,6 +3,7 @@ import type { AlbumReference } from "./album";
 import { ArtistCredit } from "./artist-credit";
 import { pickImageUrl } from "./image";
 import { PlaybackAvailability, type PlaybackAvailabilityPolicy } from "./playback-availability";
+import { uniqueTrimmed } from "@shared/array";
 import { formatDuration, Minute, Second } from "@shared/time";
 import type { ProviderId } from "./provider-id";
 
@@ -141,28 +142,12 @@ export const Track = {
 
   /** Provider lookup ids from a track set, de-duplicated in encounter order. */
   uniqueIds(tracks: readonly Partial<Track>[]): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const track of tracks) {
-      const id = track.id?.trim();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      ids.push(id);
-    }
-    return ids;
+    return uniqueTrimmed(tracks.map((track) => track.id));
   },
 
   /** Playback lookup keys from a track set, de-duplicated in encounter order. */
   uniquePlaybackIds(tracks: readonly Partial<Track>[]): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const track of tracks) {
-      const id = track.playbackId?.trim();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      ids.push(id);
-    }
-    return ids;
+    return uniqueTrimmed(tracks.map((track) => track.playbackId));
   },
 
   /** Cover art comes from the owning album. */

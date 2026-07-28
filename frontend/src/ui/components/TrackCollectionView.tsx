@@ -2,7 +2,7 @@ import type React from "react";
 
 import { clampIndex } from "@shared/number";
 
-import type { ArtistRef, VibeTrack } from "@/model/vibe";
+import type { ArtistRef, CollectionViewMode, VibeTrack } from "@/model/vibe";
 import { trackFlowItems } from "@/model/derive";
 import { CoverFlow } from "@/components/CoverFlow";
 import { TrackRow } from "@/components/cards/TrackRow";
@@ -35,7 +35,7 @@ export function TrackCollectionView({
   selected,
   onSelect,
 }: {
-  view: string; // list | grid | flow
+  view: CollectionViewMode;
   /** Grid + flow source, in natural order. */
   tracks: VibeTrack[];
   /** List source (Detail passes its sorted rows); defaults to `tracks` in order. */

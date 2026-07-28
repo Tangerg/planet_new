@@ -84,6 +84,14 @@ export function collectionKindMessageKey(kind: CollectionKind | undefined): Mess
   return COLLECTION_KIND_KEYS[kind ?? "playlist"];
 }
 
+/** How a collection is laid out — the three modes `ViewToggle` offers. */
+export const COLLECTION_VIEW_MODES = ["list", "grid", "flow"] as const;
+export type CollectionViewMode = (typeof COLLECTION_VIEW_MODES)[number];
+
+/** Which slice of the library is on screen. */
+export const LIBRARY_SECTION_TAB_VALUES = ["playlists", "albums", "artists", "songs"] as const;
+export type LibrarySectionTab = (typeof LIBRARY_SECTION_TAB_VALUES)[number];
+
 /** Display shape for a collection (playlist / album / chart). */
 export type VibeCollection = {
   id: string;

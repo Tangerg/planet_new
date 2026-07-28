@@ -1,8 +1,16 @@
 import type { LocalizedText } from "@/i18n/text";
 
-import type { ScreenData, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
+import type {
+  CollectionViewMode,
+  LibrarySectionTab,
+  ScreenData,
+  VibeArtist,
+  VibeCollection,
+  VibeTrack,
+} from "./vibe";
 
-export type LibraryCardTab = "playlists" | "albums" | "artists";
+/** The tabs backed by collection cards; `songs` renders a flat track list. */
+export type LibraryCardTab = Exclude<LibrarySectionTab, "songs">;
 export type LibraryCollectionRoute = "playlist" | "album" | "artist";
 
 export const LIBRARY_SECTION_TABS = [
@@ -10,7 +18,7 @@ export const LIBRARY_SECTION_TABS = [
   { value: "albums", label: { key: "common.albums" } },
   { value: "artists", label: { key: "common.artists" } },
   { value: "songs", label: { key: "common.songs" } },
-] satisfies { value: string; label: LocalizedText }[];
+] satisfies { value: LibrarySectionTab; label: LocalizedText }[];
 
 export const LIBRARY_INITIAL_FLOW_CENTER = 2;
 
@@ -31,11 +39,11 @@ export type LibraryScreenModel = {
   collectionRoute: LibraryCollectionRoute;
 };
 
-export function isLibraryCardTab(tab: string): tab is LibraryCardTab {
+export function isLibraryCardTab(tab: LibrarySectionTab): tab is LibraryCardTab {
   return tab === "playlists" || tab === "albums" || tab === "artists";
 }
 
-export function libraryCollectionRoute(tab: string): LibraryCollectionRoute {
+export function libraryCollectionRoute(tab: LibrarySectionTab): LibraryCollectionRoute {
   if (tab === "albums") return "album";
   if (tab === "artists") return "artist";
   return "playlist";
@@ -45,14 +53,14 @@ function artistAsCollection(artist: VibeArtist): VibeCollection {
   return { ...artist, kind: "artist", tracks: [] };
 }
 
-export function libraryCollections(data: ScreenData, tab: string): VibeCollection[] {
+export function libraryCollections(data: ScreenData, tab: LibrarySectionTab): VibeCollection[] {
   if (tab === "albums") return data.albums;
   if (tab === "artists") return data.artists.map(artistAsCollection);
   return data.playlists;
 }
 
 export function libraryTracksForCollection(
-  tab: string,
+  tab: LibrarySectionTab,
   tracks: readonly VibeTrack[],
   collection: VibeCollection,
 ): VibeTrack[] {
@@ -71,8 +79,8 @@ export function librarySongColumns(tracks: readonly VibeTrack[]): LibrarySongCol
 
 export function libraryScreenModel(
   data: ScreenData,
-  tab: string,
-  view: string,
+  tab: LibrarySectionTab,
+  view: CollectionViewMode,
 ): LibraryScreenModel {
   const cardTab = isLibraryCardTab(tab);
   const collections = cardTab ? libraryCollections(data, tab) : [];

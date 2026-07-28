@@ -3,22 +3,23 @@ import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import React from "react";
 import "./ToggleGroup.css";
 
-export type ToggleItem = {
-  value: string;
+export type ToggleItem<TValue extends string = string> = {
+  value: TValue;
   label: React.ReactNode;
   /** Accessible name for icon-only items. */
   "aria-label"?: string;
 };
 
-export type ToggleGroupProps = {
-  value: string;
-  onValueChange: (value: string) => void;
-  items: ToggleItem[];
+export type ToggleGroupProps<TValue extends string = string> = {
+  value: TValue;
+  onValueChange: (value: TValue) => void;
+  items: ToggleItem<TValue>[];
   className?: string;
   /** Class applied to every item (e.g. `tab`); visuals key off `data-pressed`. */
   itemClassName?: string;
   style?: React.CSSProperties;
   ariaLabel?: string;
+  ref?: React.Ref<HTMLDivElement>;
 };
 
 /**
@@ -28,22 +29,31 @@ export type ToggleGroupProps = {
  * Visuals stay in vibe.css (`.tab`, `.viewtoggle`, `.seg`) and key off Base UI's
  * `data-pressed` (Radix used `data-state="on"`), so the look is unchanged.
  *
- * Base UI models the value as an array even in single-select mode; we adapt to a
- * single string and swallow the empty result when the active item is re-pressed,
- * so a selection is always kept (these are navigation selectors, not optional
- * toggles).
+ * Base UI models the value as an untyped array even in single-select mode. The
+ * group is generic over its value union and narrows by looking the reported
+ * value up in `items`, so callers with a closed union (view mode, library tab)
+ * keep their type without casting at the call site. An unrecognized value —
+ * including the empty result Base UI reports when the active item is re-pressed
+ * — is swallowed, so a selection is always kept: these are navigation
+ * selectors, not optional toggles.
  */
-export const ToggleGroup = React.forwardRef<HTMLDivElement, ToggleGroupProps>(function ToggleGroup(
-  { value, onValueChange, items, className, itemClassName, style, ariaLabel },
+export function ToggleGroup<TValue extends string>({
+  value,
+  onValueChange,
+  items,
+  className,
+  itemClassName,
+  style,
+  ariaLabel,
   ref,
-) {
+}: ToggleGroupProps<TValue>) {
   return (
     <BaseToggleGroup
       ref={ref}
       value={[value]}
       onValueChange={(groupValue) => {
-        const next = groupValue[0];
-        if (typeof next === "string") onValueChange(next);
+        const selected = items.find((item) => item.value === groupValue[0]);
+        if (selected) onValueChange(selected.value);
       }}
       className={className}
       style={style}
@@ -61,4 +71,4 @@ export const ToggleGroup = React.forwardRef<HTMLDivElement, ToggleGroupProps>(fu
       ))}
     </BaseToggleGroup>
   );
-});
+}

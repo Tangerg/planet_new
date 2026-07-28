@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { MediaService } from "@contexts/catalog";
 
-import type { ScreenData, VibeTrack } from "@/model/vibe";
+import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 import { buildWorlds } from "@/model/navigation";
 
 type Deps = {
@@ -13,7 +13,7 @@ type Deps = {
   queueLength: number;
   goto: (view: string) => void;
   openSearch: () => void;
-  openLibrary: (tab: string) => void;
+  openLibrary: (tab: LibrarySectionTab) => void;
   openLikedSongs: () => void;
 };
 

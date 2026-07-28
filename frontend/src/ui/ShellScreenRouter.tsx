@@ -2,7 +2,9 @@ import type React from "react";
 
 import type {
   ArtistTarget,
+  CollectionViewMode,
   DetailTarget,
+  LibrarySectionTab,
   ScreenData,
   SearchResults,
   VibeCollection,
@@ -60,7 +62,7 @@ type NavigationBundle = {
   albumDetail: (target: VibeCollection) => void;
   openChart: (target: VibeCollection) => void;
   openArtist: (target: ArtistTarget) => void;
-  openLibrary: (tab: string, view?: string) => void;
+  openLibrary: (tab: LibrarySectionTab, view?: CollectionViewMode) => void;
   openMusicVideo: (video: VibeMusicVideo) => void;
   openMusicVideoTheater: (video: VibeMusicVideo) => void;
   openStage: () => void;
@@ -83,10 +85,10 @@ type CatalogBundle = {
 
 type LibraryBundle = {
   libraryData: ScreenData;
-  libraryTab: string;
-  libraryView: string;
-  setLibraryTab: (tab: string) => void;
-  setLibraryView: (view: string) => void;
+  libraryTab: LibrarySectionTab;
+  libraryView: CollectionViewMode;
+  setLibraryTab: (tab: LibrarySectionTab) => void;
+  setLibraryView: (view: CollectionViewMode) => void;
   liked: Set<string>;
   isLiked: boolean;
   toggleLike: (track: VibeTrack) => void;

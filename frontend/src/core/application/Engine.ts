@@ -6,7 +6,7 @@ import type {
   PlaybackResolverRegistry,
   ProviderId,
 } from "@domain";
-import type { UserLibrarySourcePort } from "@domain/ports/userLibrary";
+import type { UserLibrarySourcePort } from "@domain/ports/user-library";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { AudioAnalysisService } from "./AudioAnalysisService";
 import { EngagementService } from "./EngagementService";

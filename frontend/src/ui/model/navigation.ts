@@ -15,7 +15,7 @@ import { clampIndex } from "@shared/number";
 import type { CatalogAvailability } from "@contexts/catalog";
 
 import type { LocalizedText } from "@/i18n/text";
-import type { ScreenData, VibeTrack } from "@/model/vibe";
+import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 
 /** One XMB sub-item (a launcher tile under a category). Display text is named,
  *  not formatted: this projection is pure, so the XMB screen resolves it. */
@@ -54,7 +54,7 @@ export type NavActions = {
   /** Switch to a bare view (the within-launcher destinations). */
   goto: (view: string) => void;
   openSearch: () => void;
-  openLibrary: (tab: string) => void;
+  openLibrary: (tab: LibrarySectionTab) => void;
   openLikedSongs: () => void;
 };
 

@@ -4,7 +4,14 @@
 // ============================================================
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, ScreenData, VibeTrack, VibeCollection } from "@/model/vibe";
+import type {
+  ArtistRef,
+  CollectionViewMode,
+  LibrarySectionTab,
+  ScreenData,
+  VibeCollection,
+  VibeTrack,
+} from "@/model/vibe";
 import { collectionFlowItems, collectionMeta, collectionSub } from "@/model/derive";
 import {
   LIBRARY_INITIAL_FLOW_CENTER,
@@ -38,10 +45,10 @@ type LibraryScreenProps = {
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
   // Controlled by Shell so the active tab/view survives a back-navigation round-trip.
-  tab: string;
-  view: string;
-  onTab: (t: string) => void;
-  onView: (v: string) => void;
+  tab: LibrarySectionTab;
+  view: CollectionViewMode;
+  onTab: (t: LibrarySectionTab) => void;
+  onView: (v: CollectionViewMode) => void;
 };
 
 export function LibraryScreen({

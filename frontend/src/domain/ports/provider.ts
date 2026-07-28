@@ -2,7 +2,7 @@ import type { Lyric } from "../model/lyric";
 import type { IdentityGateway } from "./auth";
 import type { CatalogSource } from "./catalog";
 import type { PlaybackResolver } from "./playback";
-import type { UserLibrary } from "./userLibrary";
+import type { UserLibrary } from "./user-library";
 import type { EngagementPorts } from "./engagement";
 
 export { ProviderId } from "../model/provider-id";

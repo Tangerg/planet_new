@@ -7,7 +7,7 @@ export * from "./ports/catalog";
 export * from "./ports/playback";
 export * from "./ports/auth";
 export * from "./ports/credentials";
-export * from "./ports/userLibrary";
+export * from "./ports/user-library";
 export * from "./ports/engagement";
 export * from "./model/account";
 export * from "./model/entity-key";

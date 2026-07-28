@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import type { VibeTrack } from "@/model/vibe";
+import type { CollectionViewMode, VibeTrack } from "@/model/vibe";
 import { sortTracks, type SortMode } from "@/model/derive";
 import {
   detailSelectedTracks,
@@ -28,7 +28,7 @@ export function useDetailScreenModel(
   onShufflePlay: (tracks: VibeTrack[]) => void,
 ) {
   const { enqueue } = useScreenActions();
-  const [view, setView] = useState("list"); // list | grid | flow
+  const [view, setView] = useState<CollectionViewMode>("list");
   const [sort, setSort] = useState<SortMode>("order");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const lastSel = useRef<string | null>(null);

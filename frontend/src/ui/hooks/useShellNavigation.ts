@@ -25,7 +25,9 @@ import { warnReadFailure } from "@shared/debug";
 import { useMorphTransition, type MorphLastTile } from "@/infra/morph";
 import {
   type ArtistTarget,
+  type CollectionViewMode,
   type DetailTarget,
+  type LibrarySectionTab,
   type OpenTarget,
   type VibeCollection,
   type VibeMusicVideo,
@@ -48,8 +50,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   const [musicVideoObj, setMusicVideoObj] = useState<VibeMusicVideo | null>(null);
   const [musicVideoRelated, setMusicVideoRelated] = useState<VibeMusicVideo[]>([]);
   const [searchQuery, setSeedQuery] = useState("");
-  const [libraryTab, setLibraryTab] = useState("playlists");
-  const [libraryView, setLibraryView] = useState("grid");
+  const [libraryTab, setLibraryTab] = useState<LibrarySectionTab>("playlists");
+  const [libraryView, setLibraryView] = useState<CollectionViewMode>("grid");
 
   /* ---- back-stack: each forward hop remembers the screen it left, so "back"
      pops one level instead of always collapsing to the XMB launcher. The
@@ -150,7 +152,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     },
     [fetchMusicVideo, musicVideoObj],
   );
-  const openLib = useCallback((tab: string, vw?: string) => {
+  const openLib = useCallback((tab: LibrarySectionTab, vw?: CollectionViewMode) => {
     navSession.current.beginForward(navSnapRef.current);
     setLibraryTab(tab);
     setLibraryView(vw || "grid");
