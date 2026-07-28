@@ -1,6 +1,6 @@
 import { Plugin, defineCapability } from "../../kernel";
 import type { Track } from "@domain/model/track";
-import { PlayQueue as PlayQueueModel, type RandomSource } from "@domain/model/play-queue";
+import { PlayQueue, type RandomSource } from "@domain/model/play-queue";
 import { RepeatMode, nextRepeatMode } from "@domain/model/repeat";
 
 declare module "../../kernel/event" {
@@ -13,7 +13,7 @@ declare module "../../kernel/event" {
 }
 
 /** Queue commands: set/select/add/add-next/remove/clear/next/previous/shuffle/repeat. */
-export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
+export const PLAY_QUEUE = defineCapability<PlayQueueRuntime>("play-queue");
 
 /**
  * Owns the play-queue aggregate (the rules) + the repeat mode, and the runtime
@@ -22,18 +22,18 @@ export const PLAY_QUEUE = defineCapability<PlayQueue>("play-queue");
  * thing it subscribes to is the internal `playback:track-ended` choreography event
  * (raised by the playback/audio plugin) to auto-advance.
  */
-export class PlayQueue extends Plugin {
+export class PlayQueueRuntime extends Plugin {
   public static readonly id = "play-queue";
-  private readonly queue: PlayQueueModel;
+  private readonly queue: PlayQueue;
   private repeat = RepeatMode.OFF;
 
   constructor(random: RandomSource) {
     super();
-    this.queue = new PlayQueueModel(random);
+    this.queue = new PlayQueue(random);
   }
 
   get id(): string {
-    return PlayQueue.id;
+    return PlayQueueRuntime.id;
   }
 
   protected onInit(): void {

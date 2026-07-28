@@ -27,7 +27,7 @@ export const TRANSPORT = defineCapability<AudioOutputPort>("transport");
  * element's native `ended` into the `playback:track-ended` choreography event
  * the queue plugin auto-advances on.
  */
-export class Playback extends Plugin implements AudioOutputPort {
+export class AudioPlaybackAdapter extends Plugin implements AudioOutputPort {
   public static readonly id = "playback";
   /** Invalidates a pending audio.play() continuation after pause/stop/dispose. */
   private playGeneration = 0;
@@ -37,7 +37,7 @@ export class Playback extends Plugin implements AudioOutputPort {
   private recovered = false;
 
   get id(): string {
-    return Playback.id;
+    return AudioPlaybackAdapter.id;
   }
 
   protected onInit(): void {
@@ -93,8 +93,8 @@ export class Playback extends Plugin implements AudioOutputPort {
   private onCurrentChanged = (track: Track | undefined): void => {
     this.current = track;
     this.recovered = false;
-    // No playable URL (cleared queue, mock provider, or a Spotify track with no
-    // preview): stop and bail — the track metadata was already broadcast.
+    // No playable URL (cleared queue, a source with no playback port, or a
+    // Spotify track with no preview): stop and bail — the metadata already went out.
     if (!track?.playUrl) {
       this.stop();
       return;

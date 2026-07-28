@@ -8,7 +8,7 @@ import type { PlanetEventMap } from "../../kernel/event";
 import { CapabilityRegistry } from "../../kernel/capability";
 import type { PluginContext } from "../../kernel/context";
 import "../playback"; // pulls the "playback:track-ended" event-type augmentation
-import { PLAY_QUEUE, PlayQueue } from "./index";
+import { PLAY_QUEUE, PlayQueueRuntime } from "./index";
 
 const TEST_PROVIDER_ID = ProviderId.of("test");
 
@@ -23,12 +23,12 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
 function mount() {
   const hooks = new EventEmitter<PlanetEventMap>();
   const registry = new CapabilityRegistry();
-  const plugin = new PlayQueue({ next: () => 0.5 });
+  const plugin = new PlayQueueRuntime({ next: () => 0.5 });
   plugin.init({ hooks, registry } as unknown as PluginContext);
   return { plugin, hooks, registry };
 }
 
-describe("PlayQueue plugin event flow", () => {
+describe("PlayQueueRuntime plugin event flow", () => {
   it("provides the PLAY_QUEUE capability once mounted", () => {
     const { plugin, registry } = mount();
     expect(registry.resolve(PLAY_QUEUE)).toBe(plugin);

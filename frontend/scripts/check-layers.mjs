@@ -47,6 +47,62 @@ const FORBIDDEN = {
 // allowed despite the rule. Empty today.
 const ALLOWED_EDGES = new Set([]);
 
+// Per bounded context: the internal module paths that UI/app must reach through
+// `@contexts/<name>` instead. One row per context — the `@core`-root symbol
+// re-export escape is caught once, generically, by CONTEXT_CONTRACT_SYMBOLS.
+const CONTEXT_SURFACES = [
+  {
+    context: "Playback",
+    internals: [
+      "@domain/ports/playback",
+      "@domain/model/(?:play-queue|playback-intent|playback-availability|repeat|volume)",
+      "@core/application/PlaybackService",
+      "@core/plugin/(?:playback|playqueue|progress|volume)",
+    ],
+  },
+  {
+    context: "Catalog",
+    internals: [
+      "@domain/ports/catalog",
+      "@domain/model/(?:album|artist|playlist|music-video|personalized|search|chart)",
+      "@core/application/MediaService",
+    ],
+  },
+  {
+    context: "Identity",
+    internals: [
+      "@domain/ports/(?:auth|credentials)",
+      "@domain/model/(?:account|auth)",
+      "@core/application/IdentityService",
+    ],
+  },
+  {
+    context: "Engagement",
+    internals: [
+      "@domain/ports/engagement",
+      "@domain/model/comment",
+      "@core/application/EngagementService",
+    ],
+  },
+];
+
+// Context contracts that must never be pulled from the `@core` root barrel.
+const CONTEXT_CONTRACT_SYMBOLS = [
+  "MediaService",
+  "PlaybackService",
+  "IdentityService",
+  "EngagementService",
+  "LibraryService",
+  "QueryResult",
+  "ProviderId",
+  "TrackKey",
+];
+
+/** True when the source imports from any of the given module specifiers. */
+function importsAnyOf(source, specifiers) {
+  return new RegExp(`from\\s+["'](?:${specifiers.join("|")})["']`).test(source);
+}
+
 const graphFile = join(tmpdir(), "planet-check-layers-madge.json");
 let raw = "";
 try {
@@ -114,6 +170,15 @@ for (const [file, deps] of Object.entries(graph)) {
   if (/from\s+["']@contexts\/[^/"']+\//.test(source)) {
     architectureViolations.push(`${file}: bypasses a bounded-context public index`);
   }
+  // `@contexts/*` publishes domain/core internals to the layers ABOVE. An inner
+  // file importing it would route back through its own public surface, so the
+  // barrel would look like a dependency of the code it re-exports.
+  if (
+    (file.startsWith("domain/") || file.startsWith("core/")) &&
+    /from\s+["']@contexts\//.test(source)
+  ) {
+    architectureViolations.push(`${file}: inner layer imports its own @contexts surface`);
+  }
   if (
     /from\s+["']@wailsjs\//.test(source) &&
     !file.startsWith("providers/local/") &&
@@ -147,49 +212,17 @@ for (const [file, deps] of Object.entries(graph)) {
       architectureViolations.push(`${file}: bypasses a bounded-context public contract`);
     }
     if (
-      /import\s+(?:type\s+)?\{[^}]*\b(?:MediaService|PlaybackService|IdentityService|EngagementService|LibraryService|QueryResult|ProviderId|TrackKey)\b[^}]*\}\s+from\s+["']@core["']/s.test(
-        source,
-      )
+      new RegExp(
+        `import\\s+(?:type\\s+)?\\{[^}]*\\b(?:${CONTEXT_CONTRACT_SYMBOLS.join("|")})\\b[^}]*\\}\\s+from\\s+["']@core["']`,
+        "s",
+      ).test(source)
     ) {
       architectureViolations.push(`${file}: imports a context contract from the @core root`);
     }
-    if (
-      /from\s+["']@domain\/(?:ports\/playback|model\/(?:play-queue|playback-intent|playback-availability|repeat|volume))["']/.test(
-        source,
-      ) ||
-      /from\s+["']@core\/(?:application\/PlaybackService|plugin\/(?:playback|playqueue|progress|volume))["']/.test(
-        source,
-      ) ||
-      /import\s+(?:type\s+)?\{[^}]*\bPlaybackService\b[^}]*\}\s+from\s+["']@core["']/s.test(source)
-    ) {
-      architectureViolations.push(`${file}: bypasses the Playback Context public API`);
-    }
-    if (
-      /from\s+["']@core\/application\/MediaService["']/.test(source) ||
-      /import\s+(?:type\s+)?\{[^}]*\bMediaService\b[^}]*\}\s+from\s+["']@core["']/s.test(source) ||
-      /from\s+["']@domain\/(?:ports\/catalog|model\/(?:album|artist|playlist|music-video|personalized|search|chart))["']/.test(
-        source,
-      )
-    ) {
-      architectureViolations.push(`${file}: bypasses the Catalog Context public API`);
-    }
-    if (
-      /from\s+["']@core\/application\/IdentityService["']/.test(source) ||
-      /import\s+(?:type\s+)?\{[^}]*\bIdentityService\b[^}]*\}\s+from\s+["']@core["']/s.test(
-        source,
-      ) ||
-      /from\s+["']@domain\/(?:ports\/(?:auth|credentials)|model\/(?:account|auth))["']/.test(source)
-    ) {
-      architectureViolations.push(`${file}: bypasses the Identity Context public API`);
-    }
-    if (
-      /from\s+["']@core\/application\/EngagementService["']/.test(source) ||
-      /import\s+(?:type\s+)?\{[^}]*\bEngagementService\b[^}]*\}\s+from\s+["']@core["']/s.test(
-        source,
-      ) ||
-      /from\s+["']@domain\/(?:ports\/engagement|model\/comment)["']/.test(source)
-    ) {
-      architectureViolations.push(`${file}: bypasses the Engagement public API`);
+    for (const { context, internals } of CONTEXT_SURFACES) {
+      if (importsAnyOf(source, internals)) {
+        architectureViolations.push(`${file}: bypasses the ${context} Context public API`);
+      }
     }
     if (
       file !== "ui/infra/localLibrary.ts" &&

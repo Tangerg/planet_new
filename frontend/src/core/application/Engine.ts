@@ -8,12 +8,12 @@ import type {
 } from "@domain";
 import type { UserLibrarySourcePort } from "@domain/ports/userLibrary";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
-import { PlaybackService } from "./PlaybackService";
-import { MediaService } from "@contexts/catalog";
-import { IdentityService } from "@contexts/identity";
-import { LibraryService } from "./LibraryService";
 import { AudioAnalysisService } from "./AudioAnalysisService";
-import { EngagementService } from "@contexts/engagement";
+import { EngagementService } from "./EngagementService";
+import { IdentityService } from "./IdentityService";
+import { LibraryService } from "./LibraryService";
+import { MediaService } from "./MediaService";
+import { PlaybackService } from "./PlaybackService";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
@@ -26,6 +26,9 @@ import { EngagementService } from "@contexts/engagement";
  * getter that re-reads the active provider from the ProviderRegistry, so a
  * runtime provider switch needs no service rewiring. Dependency direction:
  * core/application → kernel + plugin + domain; never React, never `@providers`.
+ * Sibling use cases are imported relatively: `@contexts/*` is the surface the
+ * layers ABOVE consume, and routing back through it would make this file look
+ * like an outside consumer of its own layer.
  */
 export class Engine {
   readonly playback: PlaybackService;
@@ -53,7 +56,7 @@ export class Engine {
       },
     };
     this.playback = new PlaybackService(planet, playbackResolvers);
-    this.media = new MediaService(() => getSource());
+    this.media = new MediaService(getSource);
     const identitySources: IdentitySourcePort = {
       active: () => {
         const provider = getSource();
@@ -76,7 +79,7 @@ export class Engine {
     };
     this.identity = new IdentityService(identitySources, credentials);
     this.library = new LibraryService(librarySources);
-    this.engagement = new EngagementService(() => getSource());
+    this.engagement = new EngagementService(getSource);
     this.audio = new AudioAnalysisService(planet);
   }
 

@@ -1,6 +1,6 @@
 import { Plugin } from "../../kernel/plugin";
 import { defineCapability } from "../../kernel";
-import type { Progress as ProgressModel, FormattedDuration } from "@domain/model/duration";
+import type { FormattedDuration, Progress } from "@domain/model/duration";
 import { InfinityDuration } from "@domain/model/duration";
 import { formatDuration, Minute, Second } from "@shared/time";
 import { clamp } from "@shared/math";
@@ -8,21 +8,21 @@ import { clamp } from "@shared/math";
 declare module "../../kernel/event" {
   interface PlanetEventMap {
     "progress:duration-changed": FormattedDuration;
-    "progress:position-changed": ProgressModel;
+    "progress:position-changed": Progress;
   }
 }
 
 /** Playback position: seek. */
-export const PROGRESS = defineCapability<Progress>("progress");
+export const PROGRESS = defineCapability<ProgressRuntime>("progress");
 
-export class Progress extends Plugin {
+export class ProgressRuntime extends Plugin {
   public static readonly id = "progress";
 
   /** Last whole-second emitted — position updates throttle to ~1/sec at the source. */
   private lastSecond = -1;
 
   get id(): string {
-    return Progress.id;
+    return ProgressRuntime.id;
   }
 
   protected onDispose(): void {
@@ -38,7 +38,7 @@ export class Progress extends Plugin {
     this.onTimeUpdate();
   }
 
-  get current(): ProgressModel {
+  get current(): Progress {
     const duration = this.context.audioElement.currentTime;
     const total = this.context.audioElement.duration;
     const percent = Number.isFinite(total) && total > 0 ? Math.floor((duration / total) * 100) : 0;

@@ -10,7 +10,7 @@ import type { PluginContext } from "../../kernel/context";
 import type { PlanetEventMap } from "../../kernel/event";
 import { PROVIDER_REGISTRY } from "../provider-registry";
 import { PLAY_QUEUE } from "../playqueue";
-import { Playback, PlayState, TRANSPORT } from "./index";
+import { AudioPlaybackAdapter, PlayState, TRANSPORT } from "./index";
 
 const PROVIDER = ProviderId.of("test");
 
@@ -54,7 +54,7 @@ function mount(opts?: { resolve?: PlaybackResolver["resolve"]; next?: () => void
   if (opts?.resolve) registry.provide(PROVIDER_REGISTRY, makeRegistry(opts.resolve) as never);
   if (opts?.next) registry.provide(PLAY_QUEUE, { next: opts.next } as never);
   const audioElement = makeAudioElement();
-  const plugin = new Playback();
+  const plugin = new AudioPlaybackAdapter();
   plugin.init({ hooks, registry, audioElement } as unknown as PluginContext);
   return { plugin, hooks, registry, audioElement };
 }
@@ -70,7 +70,7 @@ function listener(audioElement: HTMLAudioElement, event: string): () => void {
 /** Flush the async re-resolve chain. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-describe("Playback plugin", () => {
+describe("AudioPlaybackAdapter plugin", () => {
   it("provides the TRANSPORT capability once mounted", () => {
     const { plugin, registry } = mount();
     expect(registry.resolve(TRANSPORT)).toBe(plugin);

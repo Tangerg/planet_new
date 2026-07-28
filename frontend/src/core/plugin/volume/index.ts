@@ -1,5 +1,5 @@
 import { Plugin, defineCapability } from "../../kernel";
-import { Volume as VolumeModel } from "@domain/model/volume";
+import { Volume } from "@domain/model/volume";
 
 declare module "../../kernel/event" {
   interface PlanetEventMap {
@@ -8,7 +8,7 @@ declare module "../../kernel/event" {
 }
 
 /** Volume control: setVolume / toggleMute. */
-export const VOLUME_CONTROL = defineCapability<Volume>("volume");
+export const VOLUME_CONTROL = defineCapability<VolumeRuntime>("volume");
 
 /**
  * Owns the volume value object and mirrors it onto the <audio> element.
@@ -16,18 +16,18 @@ export const VOLUME_CONTROL = defineCapability<Volume>("volume");
  * the resulting level is broadcast as `volume_changed`. The value object holds
  * the mute/restore rule, so this plugin stays a thin mirror.
  */
-export class Volume extends Plugin {
+export class VolumeRuntime extends Plugin {
   public static readonly id = "volume";
   // audioElement.volume is 0..1; the value object works on the 0..100 scale.
-  private volume = VolumeModel.of(0);
+  private volume = Volume.of(0);
 
   get id(): string {
-    return Volume.id;
+    return VolumeRuntime.id;
   }
 
   protected onInit(): void {
     this.context.registry.provide(VOLUME_CONTROL, this);
-    this.volume = VolumeModel.of(Math.round(this.context.audioElement.volume * 100));
+    this.volume = Volume.of(Math.round(this.context.audioElement.volume * 100));
     // The element defaults to full volume but doesn't broadcast it; seed the UI.
     this.emit();
   }
@@ -42,7 +42,7 @@ export class Volume extends Plugin {
     this.apply(this.volume.toggleMute());
   }
 
-  private apply(next: VolumeModel): void {
+  private apply(next: Volume): void {
     this.volume = next;
     this.context.audioElement.volume = next.level / 100;
     this.emit();
