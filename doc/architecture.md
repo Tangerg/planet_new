@@ -2,7 +2,7 @@
 
 Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗口配置和 Wails bridge；业务逻辑、播放编排、数据源接入和界面状态主要在前端完成。例外是**本地音乐库**：文件夹扫描、SQLite 元数据、音频流服务在 Go 侧（`backend/` 包，与 `frontend/` 对称），经 Wails 桥接暴露给前端的 `LocalMusic` provider。根目录只保留 `main.go`（入口 + `backend.New()` 组装）。
 
-本文只描述当前代码事实，最后核对日期为 2026-07-11。演进目标与执行进度见 `doc/ddd-clean-architecture-roadmap.md`，更细的前端工作约定见 `frontend/CLAUDE.md`。
+本文只描述当前代码事实，最后核对日期为 2026-07-29。演进目标与执行进度见 `doc/ddd-clean-architecture-roadmap.md`，更细的前端工作约定见 `frontend/CLAUDE.md`。
 
 ---
 
@@ -236,6 +236,12 @@ Screens are pure presentation and receive `VibeTrack` view models. Playing one h
 
 **Collection detail hint — `fetchDetail`.**
 `VibeCollection.fetchDetail` answers "should opening this collection fetch full detail from the provider?" Default (undefined) = fetch; explicit `false` = tracks are already loaded (synthetic collections like Daily Mix / Liked Songs; a chart sets it `true`). It is the only meaning of that flag — the earlier dual-purpose `_real` name (a domain carrier on tracks vs. a boolean hint on collections) was split into `source` and `fetchDetail`.
+
+**Display text is named, not formatted (`LocalizedText`).**
+`ui/model/*` is pure projection with no hook context, so it cannot call `t()`. It therefore names the message — `{ key, values? }` from `ui/i18n/text.ts`, with `MessageKey` type-checked against the English pack — or carries `{ text }` for content that is already user-authored (a track title, an artist name). The render edge resolves it with `localize` / `localizeJoined`. This is the only sanctioned direction: a model must not emit English for a component to translate back, and a component must not re-derive a label the model already chose. Both repair patterns existed (an English→key lookup table in the context menu, a re-derive-by-key switch over the XMB tree) and both made the model's own output dead code that a language change could not reach.
+
+**Collection kind is one closed tag.**
+`VibeCollection.kind: CollectionKind` (`playlist | album | chart | artist`) is the single answer to "what is this collection": Detail keys ranked chart rows off it, `detailKindOf` picks the detail read from it, and `collectionKindMessageKey` turns it into a label. It is a machine tag, never rendered raw. A second parallel tag once existed (`variant`) and silently drifted out of sync with `kind`, disabling chart ranking entirely — do not reintroduce one.
 
 **Provider read failure — explicit application result.**
 `MediaService` returns an application `QueryResult`: `success(data)` (including valid empty data), `unsupported`, `notFound`, `failed(error)`, or `partial(data, errors)` for useful multi-request results. The UI adapter maps unsupported/not-found to each view's chosen empty state, uses partial data, and throws failed results into React Query/error handling. Result wrappers stop at this application/UI boundary; domain entities and provider ports continue to use ordinary domain values.

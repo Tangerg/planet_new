@@ -78,6 +78,8 @@
 - **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
 - **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。**不维护任何 mock 目录 / mock provider**(早期的 `providers/Mock.ts` 与 `ui/model/mock.ts` 均已删)。想要有数据的 dev 体验就起真实后端(NCM / QQ);等 provider 有了对应 capability 再接真。
+- **显示文案只有一处来源**:用户可见文案一律进 `ui/i18n/messages/*`;纯模型层(`ui/model/*`)**产出 message key(`LocalizedText`),不产出英文串**,由组件端 `localize()` 解析。**绝不允许**「模型给英文 → 组件再查表翻回 key」或「模型给 label → 组件按 key 重算一遍」这两种补丁形态(两者都曾存在,都让模型输出变成切语言够不到的死代码)。
+- **同一事实只留一个 tag**:`kind` / `view` / `tab` 这类判别标签用**收敛的字面量联合**(见 `CollectionKind` / `CollectionViewMode` / `LibrarySectionTab`),不要用裸 `string`,更不要为同一事实并存两个 tag —— `kind` 与 `variant` 曾并存并漂移,直接让榜单排名整体失效。
 - **加文档先问**:不主动建 `*.md`,除非用户明确要。
 
 ---
