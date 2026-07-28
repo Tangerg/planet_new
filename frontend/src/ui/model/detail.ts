@@ -23,10 +23,13 @@ import type {
 /** The collection kinds Detail can actually load; `artist` has its own screen. */
 export type DetailKind = Extract<CollectionKind, "album" | "chart" | "playlist">;
 
+/** Detail reads for the three collection kinds. `null` means the source has no
+ *  such collection (or cannot serve it), which the caller renders as an empty
+ *  detail rather than a failure. */
 export type CollectionDetailReader = {
-  albumDetail(id: string): Promise<AlbumDetailSnapshot>;
-  playlistDetail(id: string): Promise<PlaylistDetailSnapshot>;
-  toplistDetail(id: string): Promise<PlaylistDetailSnapshot>;
+  albumDetail(id: string): Promise<AlbumDetailSnapshot | null>;
+  playlistDetail(id: string): Promise<PlaylistDetailSnapshot | null>;
+  toplistDetail(id: string): Promise<PlaylistDetailSnapshot | null>;
 };
 
 export type ArtistDetailReader = {
@@ -110,14 +113,20 @@ export function firstDetailSelectedTrack<T extends Pick<VibeTrack, "id">>(
   return tracks.find((track) => selected.has(track.id));
 }
 
+/** The one place a collection kind picks its detail read and projection. */
 export async function loadDetailTarget(
   reader: CollectionDetailReader,
   target: DetailTarget,
-): Promise<VibeCollection> {
+): Promise<VibeCollection | null> {
   const kind = detailKindOf(target);
-  if (kind === "album") return toVibeAlbum(await reader.albumDetail(target.id));
-  if (kind === "chart") return toVibePlaylist(await reader.toplistDetail(target.id));
-  return toVibePlaylist(await reader.playlistDetail(target.id));
+  if (kind === "album") {
+    const album = await reader.albumDetail(target.id);
+    return album && toVibeAlbum(album);
+  }
+  const playlist = await (kind === "chart"
+    ? reader.toplistDetail(target.id)
+    : reader.playlistDetail(target.id));
+  return playlist && toVibePlaylist(playlist);
 }
 
 export function mergeDetailTarget(summary: DetailTarget, full: VibeCollection): DetailTarget {

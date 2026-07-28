@@ -6,6 +6,7 @@ import type { ArtistTarget, DetailTarget, VibeMusicVideo } from "@/model/vibe";
 import {
   detailKindOf,
   loadArtistTarget,
+  loadDetailTarget,
   loadMusicVideoDetail,
   mergeDetailTarget,
   mergeMusicVideoDetail,
@@ -15,7 +16,6 @@ import {
 } from "@/model/detail";
 import { queryKeys } from "@/model/queryKeys";
 import { queryDataOrNull } from "@/model/application-query";
-import { toVibeAlbum, toVibePlaylist } from "@/model/adapters/collection";
 
 type NavigationLoaderDeps = {
   media: MediaService;
@@ -31,18 +31,15 @@ export function fetchDetailTarget(
   return queryClient
     .fetchQuery({
       queryKey: queryKeys.detail(media.providerId, kind, summary.id),
-      queryFn: async () => {
-        if (kind === "album") {
-          const detail = queryDataOrNull(await media.albumDetail(summary.id));
-          return detail ? toVibeAlbum(detail) : null;
-        }
-        if (kind === "chart") {
-          const detail = queryDataOrNull(await media.toplistDetail(summary.id));
-          return detail ? toVibePlaylist(detail) : null;
-        }
-        const detail = queryDataOrNull(await media.playlistDetail(summary.id));
-        return detail ? toVibePlaylist(detail) : null;
-      },
+      queryFn: () =>
+        loadDetailTarget(
+          {
+            albumDetail: async (id) => queryDataOrNull(await media.albumDetail(id)),
+            playlistDetail: async (id) => queryDataOrNull(await media.playlistDetail(id)),
+            toplistDetail: async (id) => queryDataOrNull(await media.toplistDetail(id)),
+          },
+          summary,
+        ),
     })
     .then((full) => (full ? mergeDetailTarget(summary, full) : null));
 }

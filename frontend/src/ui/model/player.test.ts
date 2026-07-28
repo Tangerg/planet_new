@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   clampVolume,
-  likedShortcutTarget,
   nextVolumeLevel,
   repeatTooltip,
   volumeFromSliderValue,
@@ -31,11 +30,6 @@ describe("player model", () => {
     expect(volumeSliderValue(140)).toBe(1);
     expect(volumeFromSliderValue(0.365)).toBe(37);
     expect(volumeFromSliderValue(undefined)).toBe(0);
-  });
-
-  it("only exposes a liked shortcut target when a track is current", () => {
-    expect(likedShortcutTarget(undefined)).toBeNull();
-    expect(likedShortcutTarget("track")).toBe("track");
   });
 
   it("names the next repeat action", () => {

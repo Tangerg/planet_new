@@ -1,5 +1,7 @@
 import { Volume } from "@contexts/playback";
 
+import type { MessageKey } from "@/i18n/text";
+
 export type VolumeLevel = "muted" | "low" | "high";
 
 export const VOLUME_STEP = 5;
@@ -29,11 +31,7 @@ export function volumeFromSliderValue(value: number | undefined): number {
   return clampVolume((value ?? 0) * 100);
 }
 
-export function likedShortcutTarget(currentId: string | undefined): string | null {
-  return currentId || null;
-}
-
-export function repeatTooltip(repeat: boolean, repeatOne: boolean): string {
+export function repeatTooltip(repeat: boolean, repeatOne: boolean): MessageKey {
   if (!repeat) return "player.enableRepeat";
   return repeatOne ? "player.disableRepeat" : "player.enableRepeatOne";
 }

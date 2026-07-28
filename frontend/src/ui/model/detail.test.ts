@@ -148,6 +148,18 @@ describe("detail read-model helpers", () => {
     expect(calls).toEqual(["album:a", "chart:c", "playlist:p"]);
   });
 
+  test("reports nothing to show when the source has no such collection", async () => {
+    const missing = {
+      albumDetail: async () => null,
+      playlistDetail: async () => null,
+      toplistDetail: async () => null,
+    };
+
+    expect(await loadDetailTarget(missing, summary({ id: "a", kind: "album" }))).toBeNull();
+    expect(await loadDetailTarget(missing, summary({ id: "c", kind: "chart" }))).toBeNull();
+    expect(await loadDetailTarget(missing, summary({ id: "p", kind: "playlist" }))).toBeNull();
+  });
+
   test("merges provider detail with stable summary identity fallbacks", () => {
     const full: VibeCollection = {
       id: "playlist-1",
