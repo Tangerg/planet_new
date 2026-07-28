@@ -27,6 +27,11 @@ export function composePlanet(options: PlanetComposition): Planet {
   return new Planet({
     audio: options.audio,
     plugins: [
+      // First: the store bridge is a pure observer of kernel facts, so it has to
+      // be subscribed before any plugin's own init broadcasts one. VolumeRuntime
+      // seeds the output level during init — install the bridge later and that
+      // seed is simply lost, leaving the UI on a made-up default.
+      new PlayQueueStoreBridge(),
       ...options.providers,
       new AudioPlaybackAdapter(),
       new PlayQueueRuntime(options.random),
@@ -35,7 +40,6 @@ export function composePlanet(options: PlanetComposition): Planet {
       new AudioEngine(options.resolveAnalysisSource),
       new ProviderRegistry(options.activeProviderId),
       new Lyrics(),
-      new PlayQueueStoreBridge(),
       ...(options.additionalPlugins ?? []),
     ],
   });

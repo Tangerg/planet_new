@@ -1,7 +1,13 @@
 import { create } from "zustand";
 
 import type { TrackSnapshot as Track } from "@contexts/catalog";
-import { PlayState, type FormattedDuration, type Lyric, type Progress } from "@contexts/playback";
+import {
+  PlayState,
+  RepeatMode,
+  type FormattedDuration,
+  type Lyric,
+  type Progress,
+} from "@contexts/playback";
 
 import { withSelectors } from "./selector";
 
@@ -22,18 +28,20 @@ export interface PlayQueueState {
   progress: Progress;
   /** Lyrics of the current track (kernel-owned, via the Lyric plugin). */
   lyric: readonly Lyric[];
+  /** Shuffle mode, owned by the play-queue aggregate. */
+  shuffle: boolean;
+  /** Repeat mode, owned by the play-queue aggregate. */
+  repeat: RepeatMode;
+  /** Output level 0..100, owned by the Volume value object. */
+  volume: number;
 }
 
-export interface PlayQueueActions {
-  setTracks: (tracks: readonly Track[]) => void;
-  setTrack: (track: Track | undefined) => void;
-  setPlayState: (s: PlayState) => void;
-  setDuration: (d: FormattedDuration) => void;
-  setProgress: (p: Progress) => void;
-  setLyric: (l: readonly Lyric[]) => void;
-}
-
-export type PlayQueueStore = PlayQueueState & PlayQueueActions;
+/**
+ * The store is written by `PlayQueueStoreBridge` only — it is a pinned
+ * projection of kernel events, not a place the UI mutates. So there are no
+ * setter actions on it; commands go through PlaybackService.
+ */
+export type PlayQueueStore = PlayQueueState;
 
 const INITIAL_STATE: PlayQueueState = {
   tracks: [],
@@ -42,20 +50,15 @@ const INITIAL_STATE: PlayQueueState = {
   duration: { duration: 0, durationFormatted: "00:00" },
   progress: { duration: 0, durationFormatted: "00:00", percent: 0 },
   lyric: [],
+  shuffle: false,
+  repeat: RepeatMode.OFF,
+  volume: 0,
 };
 
 /* -------------------------------------------------------------------------- */
 /*  Store                                                                       */
 /* -------------------------------------------------------------------------- */
 
-const baseStore = create<PlayQueueStore>((set) => ({
-  ...INITIAL_STATE,
-  setTracks: (tracks) => set((s) => ({ ...s, tracks })),
-  setTrack: (track) => set((s) => ({ ...s, track })),
-  setPlayState: (playState) => set((s) => ({ ...s, playState })),
-  setDuration: (duration) => set((s) => ({ ...s, duration })),
-  setProgress: (progress) => set((s) => ({ ...s, progress })),
-  setLyric: (lyric) => set((s) => ({ ...s, lyric })),
-}));
+const baseStore = create<PlayQueueStore>(() => ({ ...INITIAL_STATE }));
 
 export const usePlayQueueStore = withSelectors(baseStore);

@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Plugin, type AudioRuntimePort } from "@core";
 import { AUDIO_ANALYSER, MUSIC_SOURCE, PROVIDER_REGISTRY } from "@core/plugin";
-import { PLAY_QUEUE, PROGRESS, TRANSPORT, VOLUME_CONTROL } from "@contexts/playback";
+import { PLAY_QUEUE, PROGRESS, RepeatMode, TRANSPORT, VOLUME_CONTROL } from "@contexts/playback";
 import { LocalMusic } from "@providers";
+import { usePlayQueueStore } from "@/store/playqueue";
 import { composePlanet } from "./composePlanet";
 
 class FakeAudioElement extends EventTarget {
@@ -28,6 +29,30 @@ function audioRuntime() {
 }
 
 describe("application Planet composition", () => {
+  it("pins kernel-seeded playback state into the store before React can subscribe", () => {
+    const audio = audioRuntime();
+    audio.audioElement.volume = 0.4;
+    const provider = new LocalMusic();
+    const planet = composePlanet({
+      providers: [provider],
+      activeProviderId: provider.providerId,
+      audio: audio.runtime,
+      random: { next: () => 0.5 },
+      resolveAnalysisSource: async (url) => url,
+    });
+
+    // The Volume plugin broadcasts the element's real level during init; without
+    // the bridge pinning it, the UI would show its own hardcoded default instead.
+    expect(usePlayQueueStore.getState().volume).toBe(40);
+
+    planet.resolve(PLAY_QUEUE)?.toggleShuffle();
+    planet.resolve(PLAY_QUEUE)?.cycleRepeat();
+    expect(usePlayQueueStore.getState().shuffle).toBe(true);
+    expect(usePlayQueueStore.getState().repeat).not.toBe(RepeatMode.OFF);
+
+    planet.dispose();
+  });
+
   it("assembles the real provider/playback graph and revokes every capability on dispose", () => {
     const audio = audioRuntime();
     const provider = new LocalMusic();

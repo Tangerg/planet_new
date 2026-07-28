@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
-import { PlayState, RepeatMode } from "@contexts/playback";
+import { PlayState } from "@contexts/playback";
 
-import { useEngine } from "@/hooks/useEngine";
 import { usePlaybackService } from "@/hooks/usePlaybackService";
 import { usePlayQueueStore } from "@/store/playqueue";
 import type { VibeTrack } from "@/model/vibe";
@@ -20,12 +19,10 @@ import {
  * Bridge between the vibe UI and PlaybackService.
  *
  * Reads are projected from the domain queue into VibeTrack display shapes;
- * writes go back through PlaybackService with domain Tracks. Kernel events are
- * mirrored here because shuffle/repeat/volume are live playback state, not
- * catalog data.
+ * writes go back through PlaybackService with domain Tracks. Every read comes
+ * from the pinned store, so a component mounting mid-session sees current state.
  */
 export function useVibePlayback() {
-  const engine = useEngine();
   const playbackService = usePlaybackService();
 
   const domainTrack = usePlayQueueStore.use.track();
@@ -37,21 +34,9 @@ export function useVibePlayback() {
   const tracks = useMemo(() => playbackQueueView(domainTracks), [domainTracks]);
   const upNext = useMemo(() => upNextView(domainTracks, domainTrack), [domainTracks, domainTrack]);
 
-  const [shuffle, setShuffleState] = useState(false);
-  const [repeat, setRepeatState] = useState<RepeatMode>(RepeatMode.OFF);
-  const [volume, setVolumeState] = useState(100);
-
-  useEffect(() => {
-    const { events } = engine;
-    events.on("queue:shuffle-changed", setShuffleState);
-    events.on("queue:repeat-changed", setRepeatState);
-    events.on("volume:changed", setVolumeState);
-    return () => {
-      events.off("queue:shuffle-changed", setShuffleState);
-      events.off("queue:repeat-changed", setRepeatState);
-      events.off("volume:changed", setVolumeState);
-    };
-  }, [engine]);
+  const shuffle = usePlayQueueStore.use.shuffle();
+  const repeat = usePlayQueueStore.use.repeat();
+  const volume = usePlayQueueStore.use.volume();
 
   const play = useCallback(
     async (list: VibeTrack[], track: VibeTrack) => {
