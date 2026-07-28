@@ -19,6 +19,7 @@ import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { useDetailScreenModel } from "@/hooks/useDetailScreenModel";
 import { detailHeroTitleSize } from "@/model/detail";
 import { collectionKindMessageKey } from "@/model/vibe";
+import { localizeJoined } from "@/i18n/text";
 
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
@@ -160,7 +161,10 @@ export function PlaylistDetailScreen({
                 </TextReveal>
               )}
               <div className="mlabel mt-[14px] truncate text-white/50">
-                {p.owner} · {t("counts.tracks", { count: total })}
+                {localizeJoined(t, [
+                  { text: p.owner ?? "" },
+                  { key: "counts.tracks", values: { count: total } },
+                ])}
               </div>
               <div className="mt-[26px] flex gap-[14px]">
                 <Button

@@ -28,6 +28,14 @@ describe("collection projection boundary", () => {
     ]);
   });
 
+  it("leaves an unknown owner unattributed rather than crediting the app", () => {
+    expect(
+      toVibePlaylists([
+        { providerId: ProviderId.of("test"), id: "p2", name: "Anon", images: [], tracks: [] },
+      ]),
+    ).toEqual([expect.objectContaining({ id: "p2", owner: undefined })]);
+  });
+
   it("uses an empty collection list for missing data", () => {
     expect(toVibePlaylists()).toEqual([]);
   });

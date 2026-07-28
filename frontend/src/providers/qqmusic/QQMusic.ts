@@ -247,7 +247,6 @@ export class QQMusic extends Provider {
       description: "",
       images: [],
       tracks,
-      owner: { displayName: "Sonance" },
       totalTracks: tracks.length,
     };
   }
