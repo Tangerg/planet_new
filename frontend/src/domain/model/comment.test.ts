@@ -25,10 +25,4 @@ describe("Comment", () => {
       comment("1"),
     ]);
   });
-
-  test("labels the posted-at as a compact relative time", () => {
-    const now = 10 * 24 * 60 * 60 * 1000; // 10 days after epoch
-    expect(Comment.timeLabel({ time: now - 2 * 60 * 60 * 1000 }, now)).toBe("2h ago");
-    expect(Comment.timeLabel({ time: now - 3 * 24 * 60 * 60 * 1000 }, now)).toBe("3d ago");
-  });
 });

@@ -23,6 +23,8 @@ describe("comment projection boundary", () => {
         avatar: [{ url: "avatar.jpg" }],
         content: "Still glowing",
         likedCount: 9,
+        // Carried as the raw instant: only the renderer knows what "now" is.
+        postedAt: 1_700_000_000_000,
       }),
     ]);
   });

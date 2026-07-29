@@ -198,8 +198,8 @@ export type VibeComment = {
   avatar?: Image[];
   content: string;
   likedCount: number;
-  /** Pre-formatted relative time (e.g. "3d ago"). */
-  timeLabel: string;
+  /** Posted-at, unix milliseconds — the list ages it against the current clock. */
+  postedAt: number;
 };
 
 export type ScreenData = {

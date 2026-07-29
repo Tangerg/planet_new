@@ -1,5 +1,16 @@
 import { expect, test } from "vitest";
-import { formatDuration, Hour, Minute, parseTimestamp, Second } from "./time";
+import { formatDuration, Hour, Minute, parseTimestamp, relativeTime, Second } from "./time";
+
+test("relativeTime buckets an age without wording it", () => {
+  const now = 400 * 24 * Hour;
+  expect(relativeTime(now - 30 * Second, now)).toEqual({ unit: "now" });
+  expect(relativeTime(now + Hour, now)).toEqual({ unit: "now" }); // clock skew reads as now
+  expect(relativeTime(now - 5 * Minute, now)).toEqual({ unit: "minute", value: 5 });
+  expect(relativeTime(now - 2 * Hour, now)).toEqual({ unit: "hour", value: 2 });
+  expect(relativeTime(now - 3 * 24 * Hour, now)).toEqual({ unit: "day", value: 3 });
+  const old = now - 90 * 24 * Hour;
+  expect(relativeTime(old, now)).toEqual({ unit: "date", at: old });
+});
 
 test("parseTimestamp reads the fraction by its digit count, not as milliseconds", () => {
   expect(parseTimestamp("01", "23")).toBe(83 * Second);

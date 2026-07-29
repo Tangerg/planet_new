@@ -89,6 +89,12 @@ export const zh = {
     selected: "已选择 {{count}} 项",
     tracks: "{{count}} 首",
   },
+  time: {
+    daysAgo: "{{count}} 天前",
+    hoursAgo: "{{count}} 小时前",
+    justNow: "刚刚",
+    minutesAgo: "{{count}} 分钟前",
+  },
   a11y: {
     closeComments: "关闭评论",
     closeMv: "关闭 MV",

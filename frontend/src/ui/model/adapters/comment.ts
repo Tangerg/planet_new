@@ -1,4 +1,4 @@
-import { Comment, type CommentSnapshot } from "@contexts/engagement";
+import type { CommentSnapshot } from "@contexts/engagement";
 
 import type { VibeComment } from "@/model/vibe";
 
@@ -9,7 +9,7 @@ export function toVibeComment(comment: CommentSnapshot): VibeComment {
     avatar: comment.user.avatar,
     content: comment.content,
     likedCount: comment.likedCount,
-    timeLabel: Comment.timeLabel(comment),
+    postedAt: comment.time,
   };
 }
 

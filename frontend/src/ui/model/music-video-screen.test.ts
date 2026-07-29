@@ -31,7 +31,7 @@ const comment = (id: string): VibeComment => ({
   name: id,
   content: id,
   likedCount: 0,
-  timeLabel: "now",
+  postedAt: 0,
 });
 
 describe("music video screen model", () => {

@@ -79,6 +79,12 @@ export const en = {
     selected: "{{count}} selected",
     tracks: "{{count}} tracks",
   },
+  time: {
+    daysAgo: "{{count}}d ago",
+    hoursAgo: "{{count}}h ago",
+    justNow: "just now",
+    minutesAgo: "{{count}}m ago",
+  },
   a11y: {
     closeComments: "Close comments",
     closeMv: "Close MV",

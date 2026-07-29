@@ -7,17 +7,27 @@ export const Hour: Duration = 60 * Minute;
 const Day: Duration = 24 * Hour;
 
 /**
- * A compact "time ago" label for a past timestamp (e.g. a comment's posted-at).
- * `now` is injected (defaulting to the wall clock) so the function stays pure
- * and testable. Falls back to a locale date once older than ~a month.
+ * How long ago a past timestamp was, bucketed the way a compact "time ago"
+ * label needs it. Classified, never formatted: the wording and the locale are
+ * the presentation layer's to choose.
  */
-export function relativeTime(at: Duration, now: Duration = Date.now()): string {
+export type RelativeTime =
+  | Readonly<{ unit: "now" }>
+  | Readonly<{ unit: "minute" | "hour" | "day"; value: number }>
+  /** Older than ~a month — too far back to count, so name the calendar day. */
+  | Readonly<{ unit: "date"; at: Duration }>;
+
+/**
+ * Bucket how long ago `at` was. `now` is injected (defaulting to the wall
+ * clock) so the classification stays pure and testable.
+ */
+export function relativeTime(at: Duration, now: Duration = Date.now()): RelativeTime {
   const diff = Math.max(0, now - at);
-  if (diff < Minute) return "just now";
-  if (diff < Hour) return `${Math.floor(diff / Minute)}m ago`;
-  if (diff < Day) return `${Math.floor(diff / Hour)}h ago`;
-  if (diff < 30 * Day) return `${Math.floor(diff / Day)}d ago`;
-  return new Date(at).toLocaleDateString();
+  if (diff < Minute) return { unit: "now" };
+  if (diff < Hour) return { unit: "minute", value: Math.floor(diff / Minute) };
+  if (diff < Day) return { unit: "hour", value: Math.floor(diff / Hour) };
+  if (diff < 30 * Day) return { unit: "day", value: Math.floor(diff / Day) };
+  return { unit: "date", at };
 }
 
 /**
