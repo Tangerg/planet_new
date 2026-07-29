@@ -21,6 +21,7 @@ import "./Shell.css";
 import { useMediaService } from "@/hooks/useMediaService";
 
 import { artBg } from "@/components/primitives";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { useLikes } from "@/hooks/useLikes";
 import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { MorphStage, MorphProvider } from "@/infra/morph";
@@ -95,8 +96,9 @@ export default function Shell() {
     daily,
   } = useShellLibraryData();
 
-  /* ---- likes / settings / history ---- */
-  const { liked, toggleLike, isLiked, settings, setSettings } = useLikes(playback.current);
+  /* ---- likes / preferences / history ---- */
+  const { liked, toggleLike, isLiked } = useLikes(playback.current);
+  const { settings, setSettings } = useAppSettings();
   const history = usePlayHistory(playback.current);
   const settingsNowPlayingMode: NowPlayingMode = settings.npMode === "LYRICS" ? "lyrics" : "cover";
   /* ---- navigation + shared-element transition machine (extracted hook) ----

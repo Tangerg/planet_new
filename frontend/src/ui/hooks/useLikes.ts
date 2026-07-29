@@ -1,14 +1,12 @@
 /**
- * Likes and settings state. Likes are account-backed when the user is logged in
- * to a provider that exposes the Engagement likes gateway (the like set loads from the
- * account and toggles sync back, optimistically); otherwise they stay local UI
- * state. On first login the anonymous session's local likes are merged into the
- * account. Settings remain local.
+ * Likes state. Account-backed when the user is logged in to a provider that
+ * exposes the Engagement likes gateway (the like set loads from the account and
+ * toggles sync back, optimistically); otherwise they stay local UI state. On
+ * first login the anonymous session's local likes are merged into the account.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { DEFAULT_SETTINGS, type Settings } from "@/model/defaults";
 import { useAuth } from "@/hooks/useAuth";
 import { useEngagementService } from "@/hooks/useEngagementService";
 import { queryKeys } from "@/model/queryKeys";
@@ -33,7 +31,6 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   const synced = likesAreAccountBacked(loggedIn, engagement.availability.likes);
 
   const [localLiked, setLocalLiked] = useState<Set<string>>(new Set());
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   const { data: accountIds } = useQuery({
     queryKey: queryKeys.likedIds(engagement.providerId),
@@ -95,5 +92,5 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
   const currentTrackKey = vibeTrackKey(currentTrack);
   const isLiked = !!(currentTrackKey && liked.has(currentTrackKey));
 
-  return { liked, toggleLike, isLiked, settings, setSettings };
+  return { liked, toggleLike, isLiked };
 }
