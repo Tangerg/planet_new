@@ -337,16 +337,54 @@ func safeDialContext(dialer *net.Dialer) func(context.Context, string, string) (
 		if err != nil {
 			return nil, err
 		}
-		if len(addresses) == 0 {
-			return nil, errors.New("stream target resolved to no addresses")
+		if err := denyNonPublic(addresses); err != nil {
+			return nil, err
 		}
-		for _, addr := range addresses {
-			if isDeniedAddress(addr) {
-				return nil, fmt.Errorf("stream target resolved to denied address %s", addr)
-			}
-		}
-		return dialer.DialContext(ctx, network, net.JoinHostPort(addresses[0].Unmap().String(), port))
+		return dialEachInOrder(ctx, dialer.DialContext, network, addresses, port)
 	}
+}
+
+// denyNonPublic fails the whole dial when any resolved address is not publicly
+// routable. All of them, not just the one we would pick: a rebinding answer
+// must not become reachable by falling through to a sibling record.
+func denyNonPublic(addresses []netip.Addr) error {
+	if len(addresses) == 0 {
+		return errors.New("stream target resolved to no addresses")
+	}
+	for _, addr := range addresses {
+		if isDeniedAddress(addr) {
+			return fmt.Errorf("stream target resolved to denied address %s", addr)
+		}
+	}
+	return nil
+}
+
+// dialEachInOrder walks the resolved addresses the way net.Dialer would for a
+// hostname. Vetting the DNS answer means resolving it ourselves, which hands
+// the dialer a literal and so costs us its built-in fallback — without redoing
+// it here, a host whose preferred record is unreachable (an AAAA on an
+// IPv4-only network, the common case) could never connect.
+func dialEachInOrder(
+	ctx context.Context,
+	dial func(context.Context, string, string) (net.Conn, error),
+	network string,
+	addresses []netip.Addr,
+	port string,
+) (net.Conn, error) {
+	var firstErr error
+	for _, addr := range addresses {
+		conn, err := dial(ctx, network, net.JoinHostPort(addr.Unmap().String(), port))
+		if err == nil {
+			return conn, nil
+		}
+		if firstErr == nil {
+			firstErr = err
+		}
+		if ctx.Err() != nil {
+			break
+		}
+	}
+	return nil, firstErr
 }
 
 func copyHeaders(dst, src http.Header, names []string) {

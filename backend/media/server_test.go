@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -280,6 +282,66 @@ func TestSafeDialRejectsPrivateDNSResults(t *testing.T) {
 	}
 	if err == nil {
 		t.Fatal("safe dial unexpectedly allowed localhost")
+	}
+}
+
+func TestSafeDialFallsBackToTheNextResolvedAddress(t *testing.T) {
+	// An AAAA-first host on an IPv4-only network: the preferred record is dead,
+	// so the dial has to move on to the A record instead of giving up.
+	addresses := []netip.Addr{
+		netip.MustParseAddr("2001:db8::1"),
+		netip.MustParseAddr("203.0.113.7"),
+	}
+	var tried []string
+	dial := func(_ context.Context, _, address string) (net.Conn, error) {
+		tried = append(tried, address)
+		if strings.HasPrefix(address, "[") {
+			return nil, errors.New("network is unreachable")
+		}
+		client, server := net.Pipe()
+		t.Cleanup(func() { _ = server.Close() })
+		return client, nil
+	}
+
+	conn, err := dialEachInOrder(context.Background(), dial, "tcp", addresses, "443")
+	if err != nil {
+		t.Fatalf("dialEachInOrder = %v, want the reachable address", err)
+	}
+	_ = conn.Close()
+	want := []string{"[2001:db8::1]:443", "203.0.113.7:443"}
+	if !slices.Equal(tried, want) {
+		t.Fatalf("dialed %v, want %v", tried, want)
+	}
+}
+
+func TestSafeDialReportsTheFirstFailureWhenNoAddressAnswers(t *testing.T) {
+	first := errors.New("network is unreachable")
+	dial := func(_ context.Context, _, address string) (net.Conn, error) {
+		if strings.HasPrefix(address, "[") {
+			return nil, first
+		}
+		return nil, errors.New("connection refused")
+	}
+
+	_, err := dialEachInOrder(context.Background(), dial, "tcp",
+		[]netip.Addr{netip.MustParseAddr("2001:db8::1"), netip.MustParseAddr("203.0.113.7")}, "443")
+	if !errors.Is(err, first) {
+		t.Fatalf("dialEachInOrder = %v, want the first failure %v", err, first)
+	}
+}
+
+func TestSafeDialDeniesAnAnswerWithAnyPrivateAddress(t *testing.T) {
+	// One rebinding record poisons the whole answer; a public sibling must not
+	// make the target reachable.
+	err := denyNonPublic([]netip.Addr{
+		netip.MustParseAddr("203.0.113.7"),
+		netip.MustParseAddr("127.0.0.1"),
+	})
+	if err == nil {
+		t.Fatal("denyNonPublic allowed an answer containing a loopback address")
+	}
+	if err := denyNonPublic(nil); err == nil {
+		t.Fatal("denyNonPublic allowed an empty answer")
 	}
 }
 
