@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   likesAreAccountBacked,
-  likeSyncMergePlan,
+  likesToMerge,
   likedSetForSource,
   optimisticLikeUpdate,
   toggleLikedId,
   toggleLocalLiked,
-  withoutLikedSource,
+  withoutLikedIds,
   willLikeId,
 } from "./likes";
 import { ProviderId } from "@domain/model/provider-id";
@@ -66,58 +66,36 @@ describe("likes model", () => {
     expect([...added]).toEqual([a, b]);
   });
 
-  it("plans one anonymous-like merge per synced login session", () => {
+  it("owes the account this provider's anonymous likes, once per login session", () => {
     const localLiked = new Set([
       TrackKey.of(TEST_PROVIDER_ID, "a"),
       TrackKey.of(OTHER_PROVIDER_ID, "b"),
     ]);
+    const plan = (over: { alreadyMerged?: boolean; synced?: boolean }) =>
+      likesToMerge({
+        providerId: TEST_PROVIDER_ID,
+        localLiked,
+        alreadyMerged: false,
+        synced: true,
+        ...over,
+      });
 
-    expect(
-      likeSyncMergePlan({
-        providerId: TEST_PROVIDER_ID,
-        localLiked,
-        mergedThisSession: false,
-        synced: false,
-      }),
-    ).toEqual({
-      idsToSync: [],
-      mergedThisSession: false,
-    });
-    expect(
-      likeSyncMergePlan({
-        providerId: TEST_PROVIDER_ID,
-        localLiked,
-        mergedThisSession: false,
-        synced: true,
-      }),
-    ).toEqual({
-      idsToSync: ["a"],
-      mergedThisSession: true,
-    });
-    expect(
-      likeSyncMergePlan({
-        providerId: TEST_PROVIDER_ID,
-        localLiked,
-        mergedThisSession: true,
-        synced: true,
-      }),
-    ).toEqual({
-      idsToSync: [],
-      mergedThisSession: true,
-    });
-    expect(
-      likeSyncMergePlan({
-        providerId: TEST_PROVIDER_ID,
-        localLiked: new Set(),
-        mergedThisSession: false,
-        synced: true,
-      }),
-    ).toEqual({
-      idsToSync: [],
-      mergedThisSession: true,
-    });
-    expect([...withoutLikedSource(localLiked, TEST_PROVIDER_ID)]).toEqual([
-      TrackKey.of(OTHER_PROVIDER_ID, "b"),
+    expect(plan({})).toEqual(["a"]); // another source's like is not this account's
+    expect(plan({ synced: false })).toEqual([]);
+    expect(plan({ alreadyMerged: true })).toEqual([]);
+  });
+
+  it("retires only the likes the account accepted, so a failed push keeps its like", () => {
+    const localLiked = new Set([
+      TrackKey.of(TEST_PROVIDER_ID, "landed"),
+      TrackKey.of(TEST_PROVIDER_ID, "rejected"),
+      TrackKey.of(OTHER_PROVIDER_ID, "landed"),
     ]);
+
+    expect([...withoutLikedIds(localLiked, TEST_PROVIDER_ID, ["landed"])]).toEqual([
+      TrackKey.of(TEST_PROVIDER_ID, "rejected"),
+      TrackKey.of(OTHER_PROVIDER_ID, "landed"),
+    ]);
+    expect([...withoutLikedIds(localLiked, TEST_PROVIDER_ID, [])]).toEqual([...localLiked]);
   });
 });

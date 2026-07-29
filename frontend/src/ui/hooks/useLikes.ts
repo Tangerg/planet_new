@@ -12,11 +12,11 @@ import { useEngagementService } from "@/hooks/useEngagementService";
 import { queryKeys } from "@/model/queryKeys";
 import {
   likesAreAccountBacked,
-  likeSyncMergePlan,
+  likesToMerge,
   likedSetForSource,
   optimisticLikeUpdate,
   toggleLocalLiked,
-  withoutLikedSource,
+  withoutLikedIds,
 } from "@/model/likes";
 import { vibeTrackKey, type VibeTrack } from "@/model/vibe";
 import { warnWriteFailure } from "@shared/debug";
@@ -64,28 +64,44 @@ export function useLikes(currentTrack: VibeTrack | undefined) {
     [synced, qc, engagement],
   );
 
-  // First login: fold the anonymous session's local likes into the account
-  // (push each, then clear local so the synced set becomes the source of truth).
-  // Guarded by a ref so it runs once per login transition, never in a loop.
+  // First login: fold the anonymous session's local likes into the account.
+  // A like stops being local only once the account has actually taken it —
+  // while synced, local likes for this provider are hidden behind the account
+  // set, so dropping an unsynced one would erase it. The ref marks the carry
+  // done for this login so a settled session does no repeat work.
   const mergedSourceRef = useRef<ProviderId | null>(null);
   useEffect(() => {
-    const plan = likeSyncMergePlan({
-      providerId: engagement.providerId,
+    const { providerId } = engagement;
+    if (!synced) {
+      mergedSourceRef.current = null; // a later login carries whatever was liked meanwhile
+      return;
+    }
+    const owed = likesToMerge({
+      providerId,
       localLiked,
-      mergedThisSession: mergedSourceRef.current === engagement.providerId,
+      alreadyMerged: mergedSourceRef.current === providerId,
       synced,
     });
-    mergedSourceRef.current = plan.mergedThisSession ? engagement.providerId : null;
-    if (plan.idsToSync.length === 0) return;
+    if (owed.length === 0) {
+      mergedSourceRef.current = providerId;
+      return;
+    }
     void Promise.all(
-      plan.idsToSync.map((id) =>
-        engagement.setLiked(id, true).catch((error) => {
-          warnWriteFailure(`${engagement.providerId}.setLiked(${id})`, error);
-        }),
-      ),
-    ).then(() => {
-      setLocalLiked((previous) => withoutLikedSource(previous, engagement.providerId));
-      void qc.invalidateQueries({ queryKey: queryKeys.likedIds(engagement.providerId) });
+      owed.map(async (id) => {
+        try {
+          await engagement.setLiked(id, true);
+          return id;
+        } catch (error) {
+          warnWriteFailure(`${providerId}.setLiked(${id})`, error);
+          return undefined;
+        }
+      }),
+    ).then((results) => {
+      const carried = results.filter((id) => id !== undefined);
+      if (carried.length === owed.length) mergedSourceRef.current = providerId;
+      if (carried.length === 0) return; // nothing landed: keep the likes, retry on the next change
+      setLocalLiked((previous) => withoutLikedIds(previous, providerId, carried));
+      void qc.invalidateQueries({ queryKey: queryKeys.likedIds(providerId) });
     });
   }, [synced, localLiked, engagement, qc]);
 

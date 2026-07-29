@@ -3,11 +3,6 @@ export type OptimisticLikeUpdate = {
   willLike: boolean;
 };
 
-export type LikeSyncMergePlan = {
-  idsToSync: string[];
-  mergedThisSession: boolean;
-};
-
 export function likesAreAccountBacked(loggedIn: boolean, likesSupported: boolean): boolean {
   return loggedIn && likesSupported;
 }
@@ -66,33 +61,39 @@ export function toggleLocalLiked(prev: ReadonlySet<string>, id: string): Set<str
   return next;
 }
 
-export function likeSyncMergePlan({
+/**
+ * The anonymous likes still owed to the account, as provider-local ids. Empty
+ * while logged out, or once this login session has already carried them over.
+ */
+export function likesToMerge({
   providerId,
   localLiked,
-  mergedThisSession,
+  alreadyMerged,
   synced,
 }: {
   providerId: ProviderId;
   localLiked: ReadonlySet<string>;
-  mergedThisSession: boolean;
+  alreadyMerged: boolean;
   synced: boolean;
-}): LikeSyncMergePlan {
-  if (!synced) return { idsToSync: [], mergedThisSession: false };
-  if (mergedThisSession) return { idsToSync: [], mergedThisSession: true };
-  return {
-    idsToSync: [...localLiked]
-      .map((key) => TrackKey.parse(key))
-      .filter((parts) => parts.providerId === providerId)
-      .map((parts) => parts.localId),
-    mergedThisSession: true,
-  };
+}): string[] {
+  if (!synced || alreadyMerged) return [];
+  return [...localLiked]
+    .map((key) => TrackKey.parse(key))
+    .filter((parts) => parts.providerId === providerId)
+    .map((parts) => parts.localId);
 }
 
-export function withoutLikedSource(
+/**
+ * Drop exactly the given provider-local ids from the local like set — the ones
+ * the account has taken over. Likes whose push failed have to stay.
+ */
+export function withoutLikedIds(
   liked: ReadonlySet<string>,
   providerId: ProviderId,
+  localIds: readonly string[],
 ): Set<string> {
-  return new Set([...liked].filter((key) => TrackKey.parse(key).providerId !== providerId));
+  const merged = new Set<string>(localIds.map((localId) => TrackKey.of(providerId, localId)));
+  return new Set([...liked].filter((key) => !merged.has(key)));
 }
 import { TrackKey, type ProviderId } from "@contexts/contracts";
 import { vibeTrackKey, type VibeTrack } from "./vibe";
