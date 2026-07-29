@@ -80,7 +80,7 @@ describe("local mapper — toTrack", () => {
 });
 
 describe("local mapper — toAlbum", () => {
-  it("maps an album and encodes the year as a local-midnight release date", () => {
+  it("maps an album and dates it by the tagged year", () => {
     const album = toAlbum(mkAlbum());
     expect(album).toMatchObject({
       providerId: "local",
@@ -90,8 +90,7 @@ describe("local mapper — toAlbum", () => {
     });
     expect(album.artists).toEqual([{ providerId: "local", id: "ar1", name: "Artist" }]);
     expect(album.images).toEqual([{ url: "http://127.0.0.1:52341/cover/al1" }]);
-    // Local midnight (no Z) so Album.year()'s Date parse never drifts a year across zones.
-    expect(album.releaseDate).toBe("2001-01-01T00:00:00");
+    expect(album.releaseDate).toBe("2001-01-01");
   });
 
   it("leaves the release date and track count unset when the tags had none", () => {

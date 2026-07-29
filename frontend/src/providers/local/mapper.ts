@@ -16,11 +16,9 @@ function artistRef(id: string, name: string): ArtistLink[] {
   return name ? [{ providerId: LOCAL_PROVIDER_ID, id, name }] : [];
 }
 
-/** Parse a numeric year, kept undefined when the tag had none. Encoded as a
- *  local-midnight datetime so `Album.year()`'s Date parse never drifts a year
- *  across time zones (a bare "YYYY" would be read as UTC). */
+/** The tagged year as a calendar date, kept undefined when the tag had none. */
 function releaseDate(year: number): string | undefined {
-  return year > 0 ? `${year}-01-01T00:00:00` : undefined;
+  return year > 0 ? `${year}-01-01` : undefined;
 }
 
 export function toTrack(t: LocalTrack): Track {

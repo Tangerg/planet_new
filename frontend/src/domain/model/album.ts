@@ -6,7 +6,8 @@ import type { ProviderId } from "./provider-id";
 
 /**
  * Album, aligned with the Spotify Album object (camelCase).
- * `releaseDate` is an ISO string (e.g. "2009-11-02").
+ * `releaseDate` is an ISO calendar date at whatever precision the source knows:
+ * "2009", "2009-11" or "2009-11-02" (Spotify varies it by release_date_precision).
  */
 export type Album = {
   /** Stable source identity; `id` below is local to this provider. */
@@ -50,9 +51,15 @@ export const Album = {
     return ArtistCredit.names(Album.artistCredits(a));
   },
 
-  /** Release year derived from `releaseDate`, or undefined when unknown. */
+  /**
+   * Release year, read off the leading year of `releaseDate`. Read as text,
+   * never through a Date: a calendar date names a day, not an instant, so
+   * resolving one to a moment makes the year depend on where the reader is —
+   * "2024-01-01" parses as UTC midnight and reports 2023 anywhere west of it.
+   */
   year(a: AlbumSnapshot): number | undefined {
-    return a.releaseDate ? new Date(a.releaseDate).getFullYear() : undefined;
+    const year = Number.parseInt(a.releaseDate ?? "", 10);
+    return year > 0 ? year : undefined;
   },
 
   trackCount(a: AlbumSnapshot): number {
