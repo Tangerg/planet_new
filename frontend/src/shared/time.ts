@@ -1,6 +1,6 @@
 export type Duration = number;
 
-export const Millisecond: Duration = 1;
+const Millisecond: Duration = 1;
 export const Second: Duration = 1000 * Millisecond;
 export const Minute: Duration = 60 * Second;
 export const Hour: Duration = 60 * Minute;
@@ -43,12 +43,15 @@ export function formatDuration(duration: Duration, units: Duration[]): string {
  * Parse a timestamp into milliseconds.
  * @param minStr - minutes part
  * @param secStr - seconds part
- * @param msStr - optional milliseconds part
+ * @param fractionStr - optional fractional-second digits *as written*: the digit
+ *   count sets the scale, so ".5" is 500ms and ".05" is 50ms. One field carries
+ *   hundredths or thousandths depending on who wrote the tag, so it can only be
+ *   read as a fraction — never as a millisecond count.
  * @returns the time in milliseconds
  */
-export function parseTimestamp(minStr: string, secStr: string, msStr?: string): Duration {
+export function parseTimestamp(minStr: string, secStr: string, fractionStr?: string): Duration {
   const min = parseInt(minStr, 10);
   const sec = parseInt(secStr, 10);
-  const ms = msStr ? parseInt(msStr, 10) : 0;
-  return min * Minute + sec * Second + ms * Millisecond;
+  const fraction = fractionStr ? parseInt(fractionStr, 10) / 10 ** fractionStr.length : 0;
+  return min * Minute + sec * Second + Math.round(fraction * Second);
 }

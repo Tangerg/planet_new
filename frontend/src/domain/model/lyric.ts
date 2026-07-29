@@ -8,9 +8,12 @@ export type Lyric = {
 } & FormattedDuration;
 
 /** Matches an LRC timestamp tag. Accepted forms:
- * 1. standard:  [mm:ss.mmm] lyric   e.g. [01:23.456]
- * 2. variant a: [mm:ss] lyric        e.g. [01:23]
- * 3. variant b: [mm:ss:mmm] lyric    (the dot before ms replaced by a colon) e.g. [01:23:456]
+ * 1. standard:  [mm:ss.ff] lyric    hundredths, e.g. [01:23.45]
+ * 2. extended:  [mm:ss.fff] lyric   thousandths, e.g. [01:23.456]
+ * 3. variant a: [mm:ss] lyric       no fraction, e.g. [01:23]
+ * 4. variant b: [mm:ss:fff] lyric   (the dot before the fraction replaced by a colon)
+ * Forms 1 and 2 share one capture group: it is a fraction of a second, and only
+ * its digit count says which. parseTimestamp scales it accordingly.
  */
 const lrcTimestampPattern = /\[(\d{2,}):(\d{2})(?:[.:](\d{1,3}))?]/;
 

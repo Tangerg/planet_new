@@ -68,6 +68,12 @@ test("lyric_format2", () => {
   expect(result).toEqual([]);
 });
 
+test("reads hundredth-precision tags at the same scale as thousandth ones", () => {
+  // The two-digit form is what QQ Music emits; both spell 12.57s.
+  expect(parseLyrics("[00:12.57]line")[0].duration).toBe(12_570);
+  expect(parseLyrics("[00:12.570]line")[0].duration).toBe(12_570);
+});
+
 describe("activeLyricIndex", () => {
   const lines: Lyric[] = [
     { content: "A", duration: 0 },

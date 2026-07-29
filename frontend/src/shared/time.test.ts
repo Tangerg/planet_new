@@ -1,5 +1,16 @@
 import { expect, test } from "vitest";
-import { formatDuration, Hour, Minute, Second } from "./time";
+import { formatDuration, Hour, Minute, parseTimestamp, Second } from "./time";
+
+test("parseTimestamp reads the fraction by its digit count, not as milliseconds", () => {
+  expect(parseTimestamp("01", "23")).toBe(83 * Second);
+  // The same half-second written at three precisions.
+  expect(parseTimestamp("00", "12", "5")).toBe(12_500);
+  expect(parseTimestamp("00", "12", "50")).toBe(12_500);
+  expect(parseTimestamp("00", "12", "500")).toBe(12_500);
+  // Hundredths that would read as a near-zero millisecond count.
+  expect(parseTimestamp("00", "12", "57")).toBe(12_570);
+  expect(parseTimestamp("00", "12", "05")).toBe(12_050);
+});
 
 test("formatDuration", () => {
   expect(formatDuration(-1 * Second, [Hour, Minute, Second])).toBe("00:00:00");
