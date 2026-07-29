@@ -33,15 +33,15 @@ export const Playlist = {
     return { providerId, id, name, images: [], tracks: [], totalTracks: 0 };
   },
 
-  ownerName(p: Partial<Playlist>): string | undefined {
+  ownerName(p: PlaylistSnapshot): string | undefined {
     return p.owner?.displayName;
   },
 
-  trackCount(p: Partial<Playlist>): number {
+  trackCount(p: PlaylistSnapshot): number {
     return p.totalTracks ?? p.tracks?.length ?? 0;
   },
 
-  coverUrl(p: Partial<Playlist>, prefer: "large" | "small" = "large"): string {
+  coverUrl(p: PlaylistSnapshot, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(p.images, prefer);
   },
 };

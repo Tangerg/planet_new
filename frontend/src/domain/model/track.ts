@@ -58,7 +58,7 @@ export type ProviderTrackPlayUrls = {
   urls: readonly TrackPlayUrl[];
 };
 
-function creditedArtists(t: Partial<Track>): ArtistLink[] {
+function creditedArtists(t: TrackSnapshot): ArtistLink[] {
   const artists = t.artists?.filter((artist) => artist?.name?.trim()) ?? [];
   if (artists.length) return artists;
   return t.album?.artists?.filter((artist) => artist?.name?.trim()) ?? [];
@@ -67,43 +67,43 @@ function creditedArtists(t: Partial<Track>): ArtistLink[] {
 /**
  * Track behavior. Co-located with the type so display/business derivations
  * live in the domain rather than being re-implemented in each UI consumer.
- * Helpers accept partial projection input so placeholders and defensive display
- * code can derive safe values. Provider and application boundaries still use
- * explicit TrackSnapshot contracts.
+ * Helpers take a whole TrackSnapshot: a projection is only ever derived from a
+ * track a mapper produced, so widening to Partial would only invite callers to
+ * hand the domain half-built objects.
  */
 export const Track = {
   /** The credited lead artist, falling back to album credit when a list payload omits track artists. */
-  primaryArtist(t: Partial<Track>): ArtistLink | undefined {
+  primaryArtist(t: TrackSnapshot): ArtistLink | undefined {
     return creditedArtists(t)[0];
   },
 
   /** Artist credits as value objects, preserving unnamed ids out of display flow. */
-  artistCredits(t: Partial<Track>): ArtistCredit[] {
+  artistCredits(t: TrackSnapshot): ArtistCredit[] {
     return ArtistCredit.from(t.artists, t.album?.artists);
   },
 
   /** Credited artists as a display string; falls back to the album's artists. */
-  artistNames(t: Partial<Track>): string {
+  artistNames(t: TrackSnapshot): string {
     return ArtistCredit.names(Track.artistCredits(t));
   },
 
-  durationSeconds(t: Partial<Track>): number {
+  durationSeconds(t: TrackSnapshot): number {
     return Math.floor((t.durationMs ?? 0) / Second);
   },
 
-  durationFormatted(t: Partial<Track>): string {
+  durationFormatted(t: TrackSnapshot): string {
     return formatDuration(t.durationMs ?? 0, [Minute, Second]);
   },
 
   playbackAvailability(
-    t: Partial<Track>,
+    t: TrackSnapshot,
     policy?: PlaybackAvailabilityPolicy,
   ): PlaybackAvailability {
     return PlaybackAvailability.fromTrack(t, policy);
   },
 
   /** Can start now or after provider URL resolution, depending on policy. */
-  isPlayable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
+  isPlayable(t: TrackSnapshot, policy?: PlaybackAvailabilityPolicy): boolean {
     return Track.playbackAvailability(t, policy).canStart;
   },
 
@@ -113,7 +113,7 @@ export const Track = {
    * playback capability at all reports false so its rows stay interactive
    * as a dev source, rather than every row showing "unavailable".
    */
-  isUnavailable(t: Partial<Track>, policy?: PlaybackAvailabilityPolicy): boolean {
+  isUnavailable(t: TrackSnapshot, policy?: PlaybackAvailabilityPolicy): boolean {
     if (t.available === false) return true; // not licensed → always dimmed
     const canPlayAnything = Boolean(
       policy?.canResolveFullPlayback || policy?.canUsePreviewPlayback,
@@ -141,17 +141,17 @@ export const Track = {
   },
 
   /** Provider lookup ids from a track set, de-duplicated in encounter order. */
-  uniqueIds(tracks: readonly Partial<Track>[]): string[] {
+  uniqueIds(tracks: readonly TrackSnapshot[]): string[] {
     return uniqueTrimmed(tracks.map((track) => track.id));
   },
 
   /** Playback lookup keys from a track set, de-duplicated in encounter order. */
-  uniquePlaybackIds(tracks: readonly Partial<Track>[]): string[] {
+  uniquePlaybackIds(tracks: readonly TrackSnapshot[]): string[] {
     return uniqueTrimmed(tracks.map((track) => track.playbackId));
   },
 
   /** Cover art comes from the owning album. */
-  coverUrl(t: Partial<Track>, prefer: "large" | "small" = "large"): string {
+  coverUrl(t: TrackSnapshot, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(t.album?.images, prefer);
   },
 };

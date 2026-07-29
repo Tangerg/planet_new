@@ -7,10 +7,10 @@ export function toVibeTrack(real: TrackSnapshot, i?: number): VibeTrack {
   const credited = Track.artistCredits(real);
   return {
     providerId: real.providerId,
-    id: String(real.id ?? ""),
+    id: real.id,
     index: real.index ?? i,
-    title: real.name ?? "",
-    name: real.name ?? "",
+    title: real.name,
+    name: real.name,
     artist: Track.artistNames(real),
     artistId: Track.primaryArtist(real)?.id,
     artists: toArtistRefs(credited),

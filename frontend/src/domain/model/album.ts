@@ -38,28 +38,28 @@ export type AlbumDetailSnapshot = AlbumSummary & {
 
 /** Album behavior; see `Track` for the companion-object rationale. */
 export const Album = {
-  primaryArtist(a: Partial<Album>): ArtistLink | undefined {
+  primaryArtist(a: AlbumSnapshot): ArtistLink | undefined {
     return a.artists?.find((artist) => artist?.name?.trim());
   },
 
-  artistCredits(a: Partial<Album>): ArtistCredit[] {
+  artistCredits(a: AlbumSnapshot): ArtistCredit[] {
     return ArtistCredit.from(a.artists);
   },
 
-  artistNames(a: Partial<Album>): string {
+  artistNames(a: AlbumSnapshot): string {
     return ArtistCredit.names(Album.artistCredits(a));
   },
 
   /** Release year derived from `releaseDate`, or undefined when unknown. */
-  year(a: Partial<Album>): number | undefined {
+  year(a: AlbumSnapshot): number | undefined {
     return a.releaseDate ? new Date(a.releaseDate).getFullYear() : undefined;
   },
 
-  trackCount(a: Partial<Album>): number {
+  trackCount(a: AlbumSnapshot): number {
     return a.totalTracks ?? a.tracks?.length ?? 0;
   },
 
-  coverUrl(a: Partial<Album>, prefer: "large" | "small" = "large"): string {
+  coverUrl(a: AlbumSnapshot, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(a.images, prefer);
   },
 };

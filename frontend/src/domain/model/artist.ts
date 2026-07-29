@@ -55,12 +55,12 @@ export type ArtistDetailSnapshot = ArtistSummary & {
 
 /** Artist behavior; see `Track` for the companion-object rationale. */
 export const Artist = {
-  coverUrl(a: Partial<Artist>, prefer: "large" | "small" = "large"): string {
+  coverUrl(a: ArtistSnapshot, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(a.images, prefer);
   },
 
   /** Top tracks (filled by `artistDetail`), never undefined. */
-  hotTracks(a: Partial<Artist>): TrackSnapshot[] {
+  hotTracks(a: ArtistSnapshot): TrackSnapshot[] {
     return a.topTracks ?? [];
   },
 
@@ -69,10 +69,7 @@ export const Artist = {
    * Useful for fan-out reads such as "find videos for these artists", where
    * `limit` caps how many upstream requests the fan-out may make.
    */
-  uniqueIds(
-    artists: readonly Partial<ArtistLookupReference>[],
-    limit = Number.POSITIVE_INFINITY,
-  ): string[] {
+  uniqueIds(artists: readonly ArtistLookupReference[], limit = Number.POSITIVE_INFINITY): string[] {
     return uniqueTrimmed(artists.map((artist) => artist.id)).slice(0, limit);
   },
 };

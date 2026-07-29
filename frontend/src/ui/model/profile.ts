@@ -52,7 +52,7 @@ export function profileSocialCounts(
 }
 
 /** Account-level membership mark: only for a real connected account with a paid tier
- *  (never on the anonymous demo profile). Distinct from a track's per-song VIP badge. */
+ *  (never on an anonymous profile). Distinct from a track's per-song VIP badge. */
 export function profileMembership(
   account: AccountSnapshot | null | undefined,
   loggedIn: boolean,

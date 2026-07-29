@@ -1,17 +1,30 @@
 import { describe, expect, test } from "vitest";
-import { MusicVideo } from "./music-video";
+import { MusicVideo, type MusicVideoSnapshot } from "./music-video";
 import { ProviderId } from "./provider-id";
 
 const TEST_PROVIDER_ID = ProviderId.of("test");
 
+/** A whole music video, since the companion takes whole videos.
+ *  `playbackAvailability` keeps its narrow candidate input — it deliberately
+ *  answers for a row that may not have been resolved yet. */
+const video = (overrides: Partial<MusicVideoSnapshot> = {}): MusicVideoSnapshot => ({
+  providerId: TEST_PROVIDER_ID,
+  id: "mv",
+  name: "Video",
+  images: [],
+  artists: [],
+  durationMs: 0,
+  ...overrides,
+});
+
 describe("MusicVideo", () => {
   test("exposes artist credit behavior", () => {
-    const mv = {
+    const mv = video({
       artists: [
         { providerId: TEST_PROVIDER_ID, id: "artist-1", name: "Lin Junjie" },
         { providerId: TEST_PROVIDER_ID, id: "artist-2", name: "Faye Wong" },
       ],
-    };
+    });
 
     expect(MusicVideo.primaryArtist(mv)?.id).toBe("artist-1");
     expect(MusicVideo.artistNames(mv)).toBe("Lin Junjie, Faye Wong");
@@ -22,8 +35,8 @@ describe("MusicVideo", () => {
   });
 
   test("formats streaming playback metadata", () => {
-    expect(MusicVideo.durationSeconds({ durationMs: 245_000 })).toBe(245);
-    expect(MusicVideo.durationFormatted({ durationMs: 245_000 })).toBe("04:05");
+    expect(MusicVideo.durationSeconds(video({ durationMs: 245_000 }))).toBe(245);
+    expect(MusicVideo.durationFormatted(video({ durationMs: 245_000 }))).toBe("04:05");
     expect(MusicVideo.isPlayable({ playUrl: "https://example.com/video.mp4" })).toBe(true);
     expect(MusicVideo.isPlayable({})).toBe(false);
   });

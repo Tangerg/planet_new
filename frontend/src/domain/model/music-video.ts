@@ -71,27 +71,27 @@ export type MusicVideoPlaybackCandidate = Partial<
 >;
 
 export const MusicVideo = {
-  coverUrl(mv: Partial<MusicVideo>, prefer: "large" | "small" = "large"): string {
+  coverUrl(mv: MusicVideoSnapshot, prefer: "large" | "small" = "large"): string {
     return pickImageUrl(mv.images, prefer);
   },
 
-  primaryArtist(mv: Partial<MusicVideo>): ArtistLink | undefined {
+  primaryArtist(mv: MusicVideoSnapshot): ArtistLink | undefined {
     return mv.artists?.find((artist) => artist?.name?.trim());
   },
 
-  artistCredits(mv: Partial<MusicVideo>): ArtistCredit[] {
+  artistCredits(mv: MusicVideoSnapshot): ArtistCredit[] {
     return ArtistCredit.from(mv.artists);
   },
 
-  artistNames(mv: Partial<MusicVideo>): string {
+  artistNames(mv: MusicVideoSnapshot): string {
     return ArtistCredit.names(MusicVideo.artistCredits(mv));
   },
 
-  durationSeconds(mv: Partial<MusicVideo>): number {
+  durationSeconds(mv: MusicVideoSnapshot): number {
     return Math.floor((mv.durationMs ?? 0) / Second);
   },
 
-  durationFormatted(mv: Partial<MusicVideo>): string {
+  durationFormatted(mv: MusicVideoSnapshot): string {
     return formatDuration(mv.durationMs ?? 0, [Minute, Second]);
   },
 
