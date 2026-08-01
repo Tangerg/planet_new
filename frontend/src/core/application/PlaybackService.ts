@@ -2,12 +2,56 @@ import type { Capability, Planet } from "../kernel";
 import type { PlaybackResolverRegistry, ProviderId } from "@domain";
 import { PlaybackIntent } from "@domain/model/playback-intent";
 import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
-import type { ProviderTrackPlayUrls, Track } from "@domain/model/track";
+import type { ProviderTrackPlayUrls, Track, TrackPlayUrl } from "@domain/model/track";
 import { TRANSPORT } from "../plugin/playback";
 import { PLAY_QUEUE } from "../plugin/playqueue";
 import { VOLUME_CONTROL } from "../plugin/volume";
 import { PROGRESS } from "../plugin/progress";
 import { warnReadFailure } from "@shared/debug";
+
+/** A provider declared playback resolution but faulted while executing it. */
+export class PlaybackResolutionError extends Error {
+  constructor(
+    readonly providerId: ProviderId,
+    readonly source: string,
+    options: { cause: unknown },
+  ) {
+    super(`${source}.resolvePlayback failed`, options);
+    this.name = "PlaybackResolutionError";
+  }
+}
+
+/** Per-source result of preparing one playback intent. A successful provider
+ * call can still be partial or unresolved; neither is conflated with a fault. */
+export type PlaybackResolutionOutcome =
+  | Readonly<{ status: "notRequired"; providerId: ProviderId }>
+  | Readonly<{ status: "sourceUnavailable"; providerId: ProviderId }>
+  | Readonly<{
+      status: "failed";
+      providerId: ProviderId;
+      error: PlaybackResolutionError;
+    }>
+  | Readonly<{
+      status: "resolved" | "partial" | "unresolved";
+      providerId: ProviderId;
+      requested: number;
+      resolved: number;
+    }>;
+
+/** Observable result of a command that attempts to start playback. */
+export type PlaybackStartOutcome =
+  | Readonly<{
+      status: "started" | "superseded";
+      resolutions: readonly PlaybackResolutionOutcome[];
+    }>
+  | Readonly<{ status: "empty"; resolutions: readonly [] }>;
+
+type ProviderResolution = Readonly<{
+  playUrls: ProviderTrackPlayUrls;
+  outcome: PlaybackResolutionOutcome;
+}>;
+
+type CompletedResolutionStatus = "resolved" | "partial" | "unresolved";
 
 /**
  * The playback command API — the single door the UI calls for every playback
@@ -42,17 +86,19 @@ export class PlaybackService {
    * the provider first; tracks are cloned so the caller's domain objects are
    * never mutated.
    */
-  async play(tracks: Track[], track: Track): Promise<void> {
+  async play(tracks: Track[], track: Track): Promise<PlaybackStartOutcome> {
     const gen = ++this.playGeneration;
     const intent = PlaybackIntent.from(tracks, track);
     const resolutions = await Promise.all(
       intent.providerIds.map((providerId) => this.resolveUrls(intent, providerId)),
     );
+    const outcomes = resolutions.map(({ outcome }) => outcome);
     // A newer play() superseded this one while awaiting — drop the stale result.
-    if (gen !== this.playGeneration) return;
+    if (gen !== this.playGeneration) return { status: "superseded", resolutions: outcomes };
 
-    const resolved = intent.withResolvedUrls(resolutions);
+    const resolved = intent.withResolvedUrls(resolutions.map(({ playUrls }) => playUrls));
     this.queue.playNow(resolved.tracks, resolved.current);
+    return { status: "started", resolutions: outcomes };
   }
 
   /**
@@ -67,32 +113,53 @@ export class PlaybackService {
   private async resolveUrls(
     intent: PlaybackIntent,
     providerId: ProviderId,
-  ): Promise<ProviderTrackPlayUrls> {
+  ): Promise<ProviderResolution> {
     const resolver = this.resolvers.get(providerId);
     if (!resolver) {
       warnReadFailure(
         `playback provider ${providerId}`,
         new Error("The track source is no longer registered."),
       );
-      return { providerId, urls: [] };
+      return {
+        playUrls: { providerId, urls: [] },
+        outcome: { status: "sourceUnavailable", providerId },
+      };
     }
     const playbackIds = intent.playbackIdsToResolve(providerId, resolver.policy);
-    if (!playbackIds.length) return { providerId, urls: [] };
+    if (!playbackIds.length) {
+      return {
+        playUrls: { providerId, urls: [] },
+        outcome: { status: "notRequired", providerId },
+      };
+    }
     try {
-      return { providerId, urls: await resolver.resolve(playbackIds) };
-    } catch (error) {
+      const urls = await resolver.resolve(playbackIds);
+      const resolved = resolvedURLCount(playbackIds, urls);
+      const status = completedResolutionStatus(playbackIds.length, resolved);
+      return {
+        playUrls: { providerId, urls },
+        outcome: { status, providerId, requested: playbackIds.length, resolved },
+      };
+    } catch (cause) {
       // A declared playback capability failed. Keep the queue transition
       // resilient, but make the adapter fault observable.
-      warnReadFailure(`${resolver.diagnosticName}.resolvePlayback`, error);
-      return { providerId, urls: [] };
+      warnReadFailure(`${resolver.diagnosticName}.resolvePlayback`, cause);
+      return {
+        playUrls: { providerId, urls: [] },
+        outcome: {
+          status: "failed",
+          providerId,
+          error: new PlaybackResolutionError(providerId, resolver.diagnosticName, { cause }),
+        },
+      };
     }
   }
 
   /** Start this list in shuffle mode. The queue owns the actual shuffled order. */
-  async shufflePlay(tracks: Track[]): Promise<void> {
-    if (tracks.length === 0) return;
+  async shufflePlay(tracks: Track[]): Promise<PlaybackStartOutcome> {
+    if (tracks.length === 0) return { status: "empty", resolutions: [] };
     this.queue.setShuffle(true);
-    await this.play(tracks, tracks[0]);
+    return this.play(tracks, tracks[0]);
   }
 
   selectTrack(track: Track): void {
@@ -200,4 +267,19 @@ export class PlaybackService {
   private get progress() {
     return this.require(PROGRESS);
   }
+}
+
+function resolvedURLCount(requestedIDs: readonly string[], urls: readonly TrackPlayUrl[]): number {
+  const requested = new Set(requestedIDs);
+  return new Set(
+    urls
+      .filter(({ playbackId, playUrl }) => requested.has(playbackId) && Boolean(playUrl.trim()))
+      .map(({ playbackId }) => playbackId),
+  ).size;
+}
+
+function completedResolutionStatus(requested: number, resolved: number): CompletedResolutionStatus {
+  if (resolved === requested) return "resolved";
+  if (resolved === 0) return "unresolved";
+  return "partial";
 }

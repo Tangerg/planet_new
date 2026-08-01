@@ -1,5 +1,10 @@
 /** Playback Context public API. */
-export { PlaybackService } from "@core/application/PlaybackService";
+export {
+  PlaybackResolutionError,
+  PlaybackService,
+  type PlaybackResolutionOutcome,
+  type PlaybackStartOutcome,
+} from "@core/application/PlaybackService";
 export type { AudioOutputPort, PlaybackResolver } from "@domain/ports/playback";
 export { PlayQueue, type RandomSource } from "@domain/model/play-queue";
 export { PlaybackIntent } from "@domain/model/playback-intent";

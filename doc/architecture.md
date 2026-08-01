@@ -246,6 +246,9 @@ Screens are pure presentation and receive `VibeTrack` view models. Playing one h
 **Provider read failure — explicit application result.**
 `MediaService` returns an application `QueryResult`: `success(data)` (including valid empty data), `unsupported`, `notFound`, `failed(error)`, or `partial(data, errors)` for useful multi-request results. The UI adapter maps unsupported/not-found to each view's chosen empty state, uses partial data, and throws failed results into React Query/error handling. Result wrappers stop at this application/UI boundary; domain entities and provider ports continue to use ordinary domain values.
 
+**Playback preparation — explicit command outcome.**
+`PlaybackService.play` keeps the resilient queue transition but no longer collapses every preparation path into `void`. It reports whether the command `started`, was `superseded` by a newer intent, or was an `empty` shuffle request. Each owning source reports `notRequired`, `resolved`, `partial`, `unresolved`, `sourceUnavailable`, or `failed`; failure retains its cause in `PlaybackResolutionError`. These are application outcomes, not domain entity fields or broadcast events. A provider read fault can therefore remain observable without turning recoverable URL resolution into a rejected playback command.
+
 **Track identity vs playback key.**
 Cross-source identity is `TrackKey = (ProviderId, Track.id)` and is used for queue matching, history, likes, navigation identity and cache isolation. Stream URL resolution uses `Track.playbackId` within that provider instead. `id` and `playbackId` are often the same (NCM / Spotify), but not guaranteed: QQ chart rows may expose a numeric `songId` while playback resolution needs `songmid`. A track without `playbackId` is not provider-resolvable even if it has an `id`; this keeps list UI from promising playback that the provider cannot actually start.
 

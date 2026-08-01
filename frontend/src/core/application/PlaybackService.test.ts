@@ -5,7 +5,7 @@ import type { Track, TrackPlayUrl } from "@domain/model/track";
 
 import type { Planet } from "../kernel";
 import { PLAY_QUEUE } from "../plugin/playqueue";
-import { PlaybackService } from "./PlaybackService";
+import { PlaybackResolutionError, PlaybackService } from "./PlaybackService";
 
 type Deferred<T> = { promise: Promise<T>; resolve: (value: T) => void };
 function defer<T>(): Deferred<T> {
@@ -80,19 +80,88 @@ describe("PlaybackService.play", () => {
 
   it("still switches track when play-URL resolution fails (resilient fallback)", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cause = new Error("resolve failed");
     const { service, playNow } = makeService({
       resolve: async () => {
-        throw new Error("resolve failed");
+        throw cause;
       },
     });
 
-    await service.play([track("a"), track("b")], track("a"));
+    const outcome = await service.play([track("a"), track("b")], track("a"));
 
     expect(playNow).toHaveBeenCalledTimes(1);
     const [tracks, current] = playNow.mock.calls[0];
     expect(current?.id).toBe("a");
     expect(tracks).toHaveLength(2);
     expect(warn).toHaveBeenCalledTimes(1); // the failure is observable, not swallowed
+    expect(outcome).toMatchObject({
+      status: "started",
+      resolutions: [{ status: "failed", providerId: TEST_PROVIDER_ID }],
+    });
+    if (outcome.status !== "started" || outcome.resolutions[0]?.status !== "failed") {
+      throw new Error("expected a failed provider resolution");
+    }
+    expect(outcome.resolutions[0].error).toBeInstanceOf(PlaybackResolutionError);
+    expect(outcome.resolutions[0].error.cause).toBe(cause);
+    warn.mockRestore();
+  });
+
+  it("reports complete, partial and unresolved provider reads without conflating them", async () => {
+    const complete = makeService({
+      resolve: async (ids) =>
+        ids.map((playbackId) => ({ playbackId, playUrl: `test://${playbackId}` })),
+    });
+    await expect(
+      complete.service.play([track("a"), track("b")], track("a")),
+    ).resolves.toMatchObject({
+      status: "started",
+      resolutions: [{ status: "resolved", requested: 2, resolved: 2 }],
+    });
+
+    const partial = makeService({
+      resolve: async () => [
+        { playbackId: "a", playUrl: "test://a" },
+        { playbackId: "a", playUrl: "test://a-duplicate" },
+        { playbackId: "b", playUrl: "" },
+        { playbackId: "not-requested", playUrl: "test://other" },
+      ],
+    });
+    await expect(partial.service.play([track("a"), track("b")], track("a"))).resolves.toMatchObject(
+      {
+        status: "started",
+        resolutions: [{ status: "partial", requested: 2, resolved: 1 }],
+      },
+    );
+
+    const unresolved = makeService({
+      resolve: async () => [{ playbackId: "not-requested", playUrl: "test://other" }],
+    });
+    await expect(
+      unresolved.service.play([track("a"), track("b")], track("a")),
+    ).resolves.toMatchObject({
+      status: "started",
+      resolutions: [{ status: "unresolved", requested: 2, resolved: 0 }],
+    });
+  });
+
+  it("reports when resolution was unnecessary or its owning source disappeared", async () => {
+    const resolve = vi.fn<PlaybackResolver["resolve"]>(async () => []);
+    const ready = { ...track("ready"), playUrl: "test://ready" };
+    const available = makeService({ resolve });
+    await expect(available.service.play([ready], ready)).resolves.toMatchObject({
+      status: "started",
+      resolutions: [{ status: "notRequired", providerId: TEST_PROVIDER_ID }],
+    });
+    expect(resolve).not.toHaveBeenCalled();
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const missingProviderId = ProviderId.of("missing");
+    const missing = track("gone", missingProviderId);
+    await expect(available.service.play([missing], missing)).resolves.toMatchObject({
+      status: "started",
+      resolutions: [{ status: "sourceUnavailable", providerId: missingProviderId }],
+    });
+    expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
   });
 
@@ -108,13 +177,13 @@ describe("PlaybackService.play", () => {
 
     // The newer play resolves first and wins.
     deferreds[1].resolve([]);
-    await newer;
+    await expect(newer).resolves.toMatchObject({ status: "started" });
     expect(playNow).toHaveBeenCalledTimes(1);
     expect(playNow.mock.calls[0][1]?.id).toBe("b");
 
     // The older, now-stale resolution lands late and must be discarded.
     deferreds[0].resolve([]);
-    await older;
+    await expect(older).resolves.toMatchObject({ status: "superseded" });
     expect(playNow).toHaveBeenCalledTimes(1);
   });
 
@@ -130,7 +199,7 @@ describe("PlaybackService.play", () => {
     const newPlay = service.play([track("same", otherId)], track("same", otherId));
 
     otherPending.resolve([{ playbackId: "same", playUrl: "other://same" }]);
-    await newPlay;
+    await expect(newPlay).resolves.toMatchObject({ status: "started" });
     expect(playNow).toHaveBeenCalledTimes(1);
     expect(playNow.mock.calls[0][1]).toMatchObject({
       providerId: otherId,
@@ -138,7 +207,7 @@ describe("PlaybackService.play", () => {
     });
 
     activePending.resolve([{ playbackId: "same", playUrl: "test://stale" }]);
-    await oldPlay;
+    await expect(oldPlay).resolves.toMatchObject({ status: "superseded" });
     expect(playNow).toHaveBeenCalledTimes(1);
   });
 
@@ -154,7 +223,7 @@ describe("PlaybackService.play", () => {
     expect(clear).toHaveBeenCalledTimes(1);
 
     pending.resolve([]);
-    await playing;
+    await expect(playing).resolves.toMatchObject({ status: "superseded" });
 
     expect(playNow).not.toHaveBeenCalled();
   });
@@ -205,11 +274,13 @@ describe("PlaybackService.play", () => {
   it("shufflePlay turns shuffle on before starting; an empty list is a no-op", async () => {
     const { service, playNow, setShuffle } = makeService({});
 
-    await service.shufflePlay([]);
+    await expect(service.shufflePlay([])).resolves.toEqual({ status: "empty", resolutions: [] });
     expect(setShuffle).not.toHaveBeenCalled();
     expect(playNow).not.toHaveBeenCalled();
 
-    await service.shufflePlay([track("a"), track("b")]);
+    await expect(service.shufflePlay([track("a"), track("b")])).resolves.toMatchObject({
+      status: "started",
+    });
     expect(setShuffle).toHaveBeenCalledWith(true);
     expect(playNow).toHaveBeenCalledTimes(1);
   });

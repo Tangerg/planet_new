@@ -103,7 +103,11 @@ describe("core application flow", () => {
     const firstHome = await engine.media.personalized();
     expect(firstHome).toMatchObject({ status: "success" });
     const browsedTracks = firstHome.status === "success" ? (firstHome.data.tracks ?? []) : [];
-    await engine.playback.play([...browsedTracks], browsedTracks[0]);
+    const playback = await engine.playback.play([...browsedTracks], browsedTracks[0]);
+    expect(playback).toMatchObject({
+      status: "started",
+      resolutions: [{ status: "resolved", requested: 2, resolved: 2 }],
+    });
     expect(first.resolveCalls).toEqual([["one", "two"]]);
     expect(audioElement.src).toBe("https://audio.test/scenario-first/one");
 
