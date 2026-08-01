@@ -189,3 +189,112 @@ func TestTrackPathTreatsMissingTrackAsEmptyResult(t *testing.T) {
 		t.Fatalf("TrackPath = (%q, %v), want empty path without error", path, err)
 	}
 }
+
+func TestReadsRejectCorruptPersistedEntityIDs(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(context.Context, *Catalog) error
+		read   func(context.Context, *Catalog) error
+	}{
+		{
+			name: "track id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE tracks SET id = 'broken' WHERE rowid = (SELECT rowid FROM tracks LIMIT 1)`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.AllTracks(ctx)
+				return err
+			},
+		},
+		{
+			name: "track album id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				var albumID string
+				if err := c.db.QueryRowContext(ctx, `SELECT id FROM albums LIMIT 1`).Scan(&albumID); err != nil {
+					return err
+				}
+				if _, err := c.db.ExecContext(ctx, `UPDATE albums SET id = 'broken' WHERE id = ?`, albumID); err != nil {
+					return err
+				}
+				_, err := c.db.ExecContext(ctx, `UPDATE tracks SET album_id = 'broken' WHERE album_id = ?`, albumID)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.AllTracks(ctx)
+				return err
+			},
+		},
+		{
+			name: "track artist id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE tracks SET artist_id = 'broken'`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.AllTracks(ctx)
+				return err
+			},
+		},
+		{
+			name: "album id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE albums SET id = 'broken' WHERE rowid = (SELECT rowid FROM albums LIMIT 1)`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.Albums(ctx)
+				return err
+			},
+		},
+		{
+			name: "album artist id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE albums SET artist_id = 'broken'`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.Albums(ctx)
+				return err
+			},
+		},
+		{
+			name: "artist id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE artists SET id = 'broken' WHERE rowid = (SELECT rowid FROM artists LIMIT 1)`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.Artists(ctx)
+				return err
+			},
+		},
+		{
+			name: "artist cover album id",
+			mutate: func(ctx context.Context, c *Catalog) error {
+				_, err := c.db.ExecContext(ctx, `UPDATE albums SET id = 'broken' WHERE rowid = (SELECT rowid FROM albums WHERE cover_ext <> '' LIMIT 1)`)
+				return err
+			},
+			read: func(ctx context.Context, c *Catalog) error {
+				_, err := c.Artists(ctx)
+				return err
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := t.Context()
+			c := newTestCatalog(t)
+			if _, _, err := c.Save(ctx, "/music", completeScan(sampleMetas), 100); err != nil {
+				t.Fatal(err)
+			}
+			if err := test.mutate(ctx, c); err != nil {
+				t.Fatal(err)
+			}
+			if err := test.read(ctx, c); !errors.Is(err, domain.ErrInvalidID) {
+				t.Fatalf("read error = %v, want domain.ErrInvalidID", err)
+			}
+		})
+	}
+}

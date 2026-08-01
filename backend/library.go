@@ -122,7 +122,11 @@ func (l *Library) Artists() ([]Artist, error) {
 }
 
 func (l *Library) AlbumDetail(id string) (AlbumDetailResult, error) {
-	detail, err := l.service.AlbumDetail(l.requestContext(), domain.AlbumID(id))
+	albumID, err := domain.ParseAlbumID(id)
+	if err != nil {
+		return AlbumDetailResult{}, projectError("localLibrary.albumDetail", err)
+	}
+	detail, err := l.service.AlbumDetail(l.requestContext(), albumID)
 	if err != nil {
 		return AlbumDetailResult{}, projectError("localLibrary.albumDetail", err)
 	}
@@ -143,7 +147,11 @@ func albumDetailResult(detail *application.AlbumDetail, urls mediaURLs) AlbumDet
 }
 
 func (l *Library) ArtistDetail(id string) (ArtistDetailResult, error) {
-	detail, err := l.service.ArtistDetail(l.requestContext(), domain.ArtistID(id))
+	artistID, err := domain.ParseArtistID(id)
+	if err != nil {
+		return ArtistDetailResult{}, projectError("localLibrary.artistDetail", err)
+	}
+	detail, err := l.service.ArtistDetail(l.requestContext(), artistID)
 	if err != nil {
 		return ArtistDetailResult{}, projectError("localLibrary.artistDetail", err)
 	}
@@ -170,7 +178,11 @@ func artistDetailResult(detail *application.ArtistDetail, urls mediaURLs) Artist
 func (l *Library) Tracks(ids []string) ([]Track, error) {
 	tids := make([]domain.TrackID, len(ids))
 	for i, id := range ids {
-		tids[i] = domain.TrackID(id)
+		parsed, err := domain.ParseTrackID(id)
+		if err != nil {
+			return []Track{}, projectError("localLibrary.tracks", err)
+		}
+		tids[i] = parsed
 	}
 	tracks, err := l.service.Tracks(l.requestContext(), tids)
 	return l.urls.tracks(tracks), projectError("localLibrary.tracks", err)
@@ -201,6 +213,10 @@ func (l *Library) StreamURL(raw string) string {
 // Lyric returns a track's raw sidecar lyric text (LRC), "" when it has none. The
 // frontend parses the LRC into timed lines, so no wire DTO is needed.
 func (l *Library) Lyric(id string) (string, error) {
-	lyric, err := l.service.Lyric(l.requestContext(), domain.TrackID(id))
+	trackID, err := domain.ParseTrackID(id)
+	if err != nil {
+		return "", projectError("localLibrary.lyric", err)
+	}
+	lyric, err := l.service.Lyric(l.requestContext(), trackID)
 	return lyric, projectError("localLibrary.lyric", err)
 }

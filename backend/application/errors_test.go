@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 func TestClassifyPreservesCauseAndStableCode(t *testing.T) {
@@ -26,5 +28,16 @@ func TestClassifyNormalizesCancellationAndUnavailable(t *testing.T) {
 	}
 	if !errors.Is(Classify("library.home", ErrUnavailable), ErrUnavailable) {
 		t.Fatal("classified unavailable error must retain sentinel identity")
+	}
+}
+
+func TestClassifyMapsDomainValidationWithoutLosingItsCause(t *testing.T) {
+	_, cause := domain.ParseTrackID("not-an-id")
+	got := Classify("library.track", cause)
+	if got.Code != ErrorInvalidArgument || got.Operation != "library.track" {
+		t.Fatalf("validation classification = %+v, want invalidArgument", got)
+	}
+	if !errors.Is(got, domain.ErrInvalidID) {
+		t.Fatal("classified validation error must retain the domain cause")
 	}
 }

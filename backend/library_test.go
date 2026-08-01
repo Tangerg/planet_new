@@ -26,6 +26,43 @@ func TestLibraryProjectsUnavailableAsStableWireError(t *testing.T) {
 	}
 }
 
+func TestLibraryRejectsMalformedEntityIDsAtTheWireBoundary(t *testing.T) {
+	service := application.NewService(nil, nil, nil, nil, wallClock{})
+	library := newLibrary(service, mediaURLs{})
+	tests := []struct {
+		name      string
+		operation string
+		call      func() error
+	}{
+		{name: "album", operation: "localLibrary.albumDetail", call: func() error {
+			_, err := library.AlbumDetail("album")
+			return err
+		}},
+		{name: "artist", operation: "localLibrary.artistDetail", call: func() error {
+			_, err := library.ArtistDetail("artist")
+			return err
+		}},
+		{name: "tracks", operation: "localLibrary.tracks", call: func() error {
+			_, err := library.Tracks([]string{"0123456789abcdef", "broken"})
+			return err
+		}},
+		{name: "lyric", operation: "localLibrary.lyric", call: func() error {
+			_, err := library.Lyric("track")
+			return err
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.call()
+			want := `PLANET_ERROR:{"code":"invalidArgument","operation":"` + test.operation + `"}`
+			if err == nil || err.Error() != want {
+				t.Fatalf("wire validation error = %v, want %s", err, want)
+			}
+		})
+	}
+}
+
 func TestScanResultProjectsExplicitOutcomeStatus(t *testing.T) {
 	cases := []struct {
 		name   string

@@ -19,7 +19,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -34,10 +33,6 @@ type Source interface {
 	TrackPath(context.Context, domain.TrackID) (string, error)
 	AlbumCoverExt(context.Context, domain.AlbumID) (string, error)
 }
-
-// idPattern guards path params: ids are 16 hex chars, so anything else is
-// rejected before it can touch the filesystem (no traversal).
-var idPattern = regexp.MustCompile(`^[0-9a-f]{16}$`)
 
 // Server owns the loopback listener and serves /media/<id>, /cover/<albumId>,
 // plus an authenticated /stream byte-proxy that turns a public remote provider
@@ -163,12 +158,12 @@ func isOwnMediaURL(raw, base string) bool {
 }
 
 func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/media/"):]
-	if !idPattern.MatchString(id) {
+	id, err := domain.ParseTrackID(r.URL.Path[len("/media/"):])
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	path, err := s.source.TrackPath(r.Context(), domain.TrackID(id))
+	path, err := s.source.TrackPath(r.Context(), id)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -189,17 +184,17 @@ func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveCover(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/cover/"):]
-	if !idPattern.MatchString(id) {
+	id, err := domain.ParseAlbumID(r.URL.Path[len("/cover/"):])
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	ext, err := s.source.AlbumCoverExt(r.Context(), domain.AlbumID(id))
+	ext, err := s.source.AlbumCoverExt(r.Context(), id)
 	if err != nil || ext == "" {
 		http.NotFound(w, r)
 		return
 	}
-	http.ServeFile(w, r, filepath.Join(s.coversDir, id+"."+ext))
+	http.ServeFile(w, r, filepath.Join(s.coversDir, id.String()+"."+ext))
 }
 
 // serveStream is a CORS byte-proxy for a remote audio URL: it forwards the

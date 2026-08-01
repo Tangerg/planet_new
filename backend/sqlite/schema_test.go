@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const legacyArtistID = "0123456789abcdef"
+
 func openRaw(t *testing.T, path string) *sql.DB {
 	t.Helper()
 	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(0)")
@@ -40,7 +42,7 @@ func TestVersionOneDatabaseUpgradesWithoutLosingDataAndReopensIdempotently(t *te
 	if _, err := db.ExecContext(testContext, schemaV1); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.ExecContext(testContext, `INSERT INTO artists(id, name) VALUES('artist', 'Legacy Artist')`); err != nil {
+	if _, err := db.ExecContext(testContext, `INSERT INTO artists(id, name) VALUES(?, 'Legacy Artist')`, legacyArtistID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.ExecContext(testContext, `PRAGMA user_version = 1`); err != nil {
@@ -81,7 +83,7 @@ func TestUnversionedLegacySchemaIsAdoptedAndValidated(t *testing.T) {
 	if _, err := db.ExecContext(testContext, schemaV1+schemaV2); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.ExecContext(testContext, `INSERT INTO artists(id, name) VALUES('legacy', 'Unversioned')`); err != nil {
+	if _, err := db.ExecContext(testContext, `INSERT INTO artists(id, name) VALUES(?, 'Unversioned')`, legacyArtistID); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Close(); err != nil {
@@ -97,7 +99,7 @@ func TestUnversionedLegacySchemaIsAdoptedAndValidated(t *testing.T) {
 		t.Fatalf("adopted schema version = %d, want %d", got, currentSchemaVersion)
 	}
 	artists, err := catalog.Artists(testContext)
-	if err != nil || len(artists) != 1 || artists[0].ID != "legacy" {
+	if err != nil || len(artists) != 1 || artists[0].ID.String() != legacyArtistID {
 		t.Fatalf("legacy data after adoption = %+v, %v", artists, err)
 	}
 }

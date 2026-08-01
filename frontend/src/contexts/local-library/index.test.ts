@@ -38,6 +38,12 @@ describe("Local Library Context public API", () => {
         ),
       ),
     ).rejects.toMatchObject({ code: "cancelled", operation: "localLibrary.scan" });
+
+    expect(
+      toLocalLibraryError(
+        new Error('PLANET_ERROR:{"code":"invalidArgument","operation":"localLibrary.albumDetail"}'),
+      ),
+    ).toMatchObject({ code: "invalidArgument", operation: "localLibrary.albumDetail" });
   });
 
   it("fails closed when a bridge error is malformed", () => {

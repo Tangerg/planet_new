@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/Tangerg/planet_new/backend/domain"
 )
@@ -29,9 +30,15 @@ func scanTracks(rows *sql.Rows) (_ []domain.Track, err error) {
 			&t.TrackNo, &t.DiscNo, &durationMs, &t.Year, &t.Genre, &coverExt, &t.AddedAt); err != nil {
 			return nil, err
 		}
-		t.ID = domain.TrackID(id)
-		t.AlbumID = domain.AlbumID(alID)
-		t.ArtistID = domain.ArtistID(arID)
+		if t.ID, err = domain.ParseTrackID(id); err != nil {
+			return nil, fmt.Errorf("decode track row id: %w", err)
+		}
+		if t.AlbumID, err = domain.ParseAlbumID(alID); err != nil {
+			return nil, fmt.Errorf("decode track row album id: %w", err)
+		}
+		if t.ArtistID, err = domain.ParseArtistID(arID); err != nil {
+			return nil, fmt.Errorf("decode track row artist id: %w", err)
+		}
 		t.Duration = domain.Duration(durationMs)
 		if coverExt != "" {
 			t.Cover = domain.Cover{Album: t.AlbumID}
@@ -125,8 +132,12 @@ func scanAlbums(rows *sql.Rows) (_ []domain.Album, err error) {
 		if err := rows.Scan(&id, &a.Name, &arID, &a.Artist, &a.Year, &coverExt, &a.AddedAt, &a.TrackCount); err != nil {
 			return nil, err
 		}
-		a.ID = domain.AlbumID(id)
-		a.ArtistID = domain.ArtistID(arID)
+		if a.ID, err = domain.ParseAlbumID(id); err != nil {
+			return nil, fmt.Errorf("decode album row id: %w", err)
+		}
+		if a.ArtistID, err = domain.ParseArtistID(arID); err != nil {
+			return nil, fmt.Errorf("decode album row artist id: %w", err)
+		}
 		if coverExt != "" {
 			a.Cover = domain.Cover{Album: a.ID}
 		}
@@ -183,9 +194,15 @@ func scanArtists(rows *sql.Rows) (_ []domain.Artist, err error) {
 		if err := rows.Scan(&id, &a.Name, &a.AlbumCount, &a.TrackCount, &coverAlbum); err != nil {
 			return nil, err
 		}
-		a.ID = domain.ArtistID(id)
+		if a.ID, err = domain.ParseArtistID(id); err != nil {
+			return nil, fmt.Errorf("decode artist row id: %w", err)
+		}
 		if coverAlbum.Valid && coverAlbum.String != "" {
-			a.Cover = domain.Cover{Album: domain.AlbumID(coverAlbum.String)}
+			coverID, parseErr := domain.ParseAlbumID(coverAlbum.String)
+			if parseErr != nil {
+				return nil, fmt.Errorf("decode artist row cover album id: %w", parseErr)
+			}
+			a.Cover = domain.Cover{Album: coverID}
 		}
 		out = append(out, a)
 	}

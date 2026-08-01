@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/Tangerg/planet_new/backend/domain"
 )
 
 // ErrorCode is the stable application failure taxonomy shared with interface
@@ -12,11 +14,12 @@ import (
 type ErrorCode string
 
 const (
-	ErrorUnavailable ErrorCode = "unavailable"
-	ErrorNotFound    ErrorCode = "notFound"
-	ErrorIncomplete  ErrorCode = "incomplete"
-	ErrorCancelled   ErrorCode = "cancelled"
-	ErrorFailed      ErrorCode = "failed"
+	ErrorInvalidArgument ErrorCode = "invalidArgument"
+	ErrorUnavailable     ErrorCode = "unavailable"
+	ErrorNotFound        ErrorCode = "notFound"
+	ErrorIncomplete      ErrorCode = "incomplete"
+	ErrorCancelled       ErrorCode = "cancelled"
+	ErrorFailed          ErrorCode = "failed"
 )
 
 // Error preserves an internal cause while exposing only a stable code and
@@ -63,7 +66,10 @@ func Classify(operation string, err error) *Error {
 		return &Error{Code: existing.Code, Operation: operation, Cause: existing.Cause}
 	}
 	code := ErrorFailed
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	switch {
+	case errors.Is(err, domain.ErrInvalidID):
+		code = ErrorInvalidArgument
+	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		code = ErrorCancelled
 	}
 	return &Error{Code: code, Operation: operation, Cause: err}

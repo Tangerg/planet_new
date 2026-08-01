@@ -1,5 +1,6 @@
 /** Cross-language application contract for the Go-owned Local Library Context. */
 export const LocalLibraryErrorCode = {
+  invalidArgument: "invalidArgument",
   unavailable: "unavailable",
   notFound: "notFound",
   incomplete: "incomplete",
