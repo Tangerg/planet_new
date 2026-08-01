@@ -32,7 +32,7 @@ export function sourceOptions(sources: readonly ProviderId[]): SourceOption[] {
 }
 
 export function initialSettingsSource(
-  activeProviderId: ProviderId | undefined,
+  activeProviderId: ProviderId | null | undefined,
   sources: readonly ProviderId[],
 ): string {
   return activeProviderId ?? sources[0] ?? "";

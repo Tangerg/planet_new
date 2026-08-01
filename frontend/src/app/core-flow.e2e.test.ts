@@ -111,7 +111,7 @@ describe("core application flow", () => {
     expect(first.resolveCalls).toEqual([["one", "two"]]);
     expect(audioElement.src).toBe("https://audio.test/scenario-first/one");
 
-    expect(engine.providers.setActive(secondId)).toBe(true);
+    expect(engine.sources.select(secondId)).toBe(true);
     const secondHome = await engine.media.personalized();
     expect(secondHome.status === "success" ? secondHome.data.tracks?.[0]?.providerId : null).toBe(
       secondId,
@@ -124,6 +124,6 @@ describe("core application flow", () => {
     engine.dispose();
     expect(disposeAudio).toHaveBeenCalledTimes(1);
     expect(audioElement.pause).toHaveBeenCalled();
-    expect(() => engine.providers).toThrow("ProviderRegistry plugin is not registered");
+    expect(() => engine.sources.activeId).toThrow("ProviderRegistry plugin is not registered");
   });
 });

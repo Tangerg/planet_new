@@ -181,7 +181,7 @@ This split is deliberate: commands like `playback.play()` return through service
 - `engine.engagement` owns provider-backed Likes, Comments and PlayRecord use cases; session-only history remains a UI projection.
 - `engine.library` reads logged-in user library features when supported.
 - `engine.events` exposes kernel state events for store bridges and UI hooks.
-- `engine.providers` exposes provider listing and active-provider switching.
+- `engine.sources` exposes only source ids, the active id and the selection command; concrete provider capabilities stay inside Engine/plugin composition.
 
 This keeps React from resolving plugins directly or importing concrete providers.
 

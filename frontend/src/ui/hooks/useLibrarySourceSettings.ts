@@ -22,7 +22,7 @@ export type LibrarySourceSettingsModel = {
   scan: SettingsScanState;
   status: LocalizedText;
   source: string;
-  sources: ProviderId[];
+  sources: readonly ProviderId[];
   switchSource: (providerId: string) => void;
 };
 
@@ -34,22 +34,18 @@ export type LibrarySourceSettingsModel = {
 export function useLibrarySourceSettings(): LibrarySourceSettingsModel {
   const engine = useEngine();
   const queryClient = useQueryClient();
-  const sources = engine.providers.providers.map((provider) => provider.providerId);
-  const [source, setSource] = useState(
-    initialSettingsSource(engine.providers.active?.providerId, sources),
-  );
+  const sources = engine.sources.ids;
+  const [source, setSource] = useState(initialSettingsSource(engine.sources.activeId, sources));
   const [scan, setScan] = useState<SettingsScanState>({ phase: "idle" });
 
   const switchSource = useCallback(
     (value: string) => {
       const providerId = ProviderId.of(value);
-      if (!engine.providers.providers.some((provider) => provider.providerId === providerId))
-        return;
-      engine.providers.setActive(providerId);
+      if (!engine.sources.select(providerId)) return;
       setSource(providerId);
       void queryClient.invalidateQueries();
     },
-    [engine.providers, queryClient],
+    [engine.sources, queryClient],
   );
 
   const addFolder = useCallback(async () => {

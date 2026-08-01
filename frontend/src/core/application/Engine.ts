@@ -14,12 +14,13 @@ import { IdentityService } from "./IdentityService";
 import { LibraryService } from "./LibraryService";
 import { MediaService } from "./MediaService";
 import { PlaybackService } from "./PlaybackService";
+import { SourceSelectionService } from "./SourceSelectionService";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
  * holds. It hides the plugin container: the view subscribes to state via
  * `events`, issues commands/use-cases via `playback` / `media`, lists/switches
- * sources via `providers`, and manages the kernel lifecycle via `dispose` — it
+ * sources via `sources`, and manages the kernel lifecycle via `dispose` — it
  * never resolves plugins or reaches into Planet internals.
  *
  * Provider resolution lives here (not in the UI): both services are bound to a
@@ -37,13 +38,15 @@ export class Engine {
   readonly library: LibraryService;
   readonly engagement: EngagementService;
   readonly audio: AudioAnalysisService;
+  readonly sources: SourceSelectionService;
 
   constructor(
     private readonly planet: Planet,
     credentials: CredentialStore,
   ) {
+    this.sources = new SourceSelectionService(() => this.providerRegistry());
     const getSource = (): MusicSource => {
-      const provider = this.providers.active;
+      const provider = this.providerRegistry().active;
       if (!provider) {
         throw new Error("No music provider is registered on the Planet.");
       }
@@ -52,7 +55,7 @@ export class Engine {
     const playbackResolvers: PlaybackResolverRegistry = {
       active: () => getSource().playback,
       get: (providerId: ProviderId) => {
-        return this.providers.get(providerId)?.playback ?? null;
+        return this.providerRegistry().get(providerId)?.playback ?? null;
       },
     };
     this.playback = new PlaybackService(planet, playbackResolvers);
@@ -88,8 +91,7 @@ export class Engine {
     return this.planet.hooks;
   }
 
-  /** The provider registry — list the registered sources / switch the active one. */
-  get providers(): ProviderRegistryPort {
+  private providerRegistry(): ProviderRegistryPort {
     const registry = this.planet.resolve(PROVIDER_REGISTRY);
     if (!registry) {
       throw new Error("ProviderRegistry plugin is not registered on the Planet.");

@@ -33,6 +33,7 @@ describe("settings screen model", () => {
       "qqmusic",
     );
     expect(initialSettingsSource(undefined, [ProviderId.of("netease")])).toBe("netease");
+    expect(initialSettingsSource(null, [ProviderId.of("netease")])).toBe("netease");
     expect(initialSettingsSource(undefined, [])).toBe("");
   });
 
