@@ -85,11 +85,11 @@ describe("IdentityService capability port", () => {
 });
 
 describe("LibraryService capability port", () => {
-  it("rejects a source that registered no user-library port", () => {
+  it("distinguishes an unsupported library from successful empty data", async () => {
     const service = new LibraryService(librarySources(null));
 
     expect(service.supported).toBe(false);
-    expect(() => service.userPlaylists()).toThrow("has no user library");
+    await expect(service.userPlaylists()).resolves.toEqual({ status: "unsupported" });
   });
 
   it("uses the registered user-library port", async () => {
@@ -100,8 +100,31 @@ describe("LibraryService capability port", () => {
     };
     const service = new LibraryService(librarySources(library));
 
-    await expect(service.userPlaylists()).resolves.toEqual([]);
+    await expect(service.userPlaylists()).resolves.toEqual({ status: "success", data: [] });
     expect(userPlaylists).toHaveBeenCalledTimes(1);
     expect(service.supported).toBe(true);
+  });
+
+  it("projects provider failures without losing their cause", async () => {
+    const cause = new Error("offline");
+    const service = new LibraryService(
+      librarySources({
+        userPlaylists: async () => {
+          throw cause;
+        },
+        dailyRecommendations: async () => {
+          throw cause;
+        },
+      }),
+    );
+
+    await expect(service.userPlaylists()).resolves.toMatchObject({
+      status: "failed",
+      error: { source: "test", operation: "userPlaylists", cause },
+    });
+    await expect(service.dailyRecommendations()).resolves.toMatchObject({
+      status: "failed",
+      error: { source: "test", operation: "dailyRecommendations", cause },
+    });
   });
 });

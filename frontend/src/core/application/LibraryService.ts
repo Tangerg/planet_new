@@ -1,5 +1,10 @@
 import type { Playlist, TrackSnapshot } from "@domain";
-import type { UserLibrarySourcePort } from "@domain/ports/user-library";
+import type {
+  ActiveUserLibrarySource,
+  UserLibrary,
+  UserLibrarySourcePort,
+} from "@domain/ports/user-library";
+import { QueryFailedError, QueryResult, type QueryResult as Result } from "./QueryResult";
 
 /**
  * Application service for browsing the logged-in user's saved library.
@@ -15,19 +20,26 @@ export class LibraryService {
     return this.sources.active().library !== null;
   }
 
-  private lib() {
+  userPlaylists(): Promise<Result<Playlist[]>> {
     const source = this.sources.active();
-    if (!source.library) {
-      throw new Error(`Provider ${source.diagnosticName} has no user library.`);
+    return this.read(source, "userPlaylists", (library) => library.userPlaylists());
+  }
+
+  dailyRecommendations(): Promise<Result<TrackSnapshot[]>> {
+    const source = this.sources.active();
+    return this.read(source, "dailyRecommendations", (library) => library.dailyRecommendations());
+  }
+
+  private async read<T>(
+    source: ActiveUserLibrarySource,
+    operation: string,
+    read: (library: UserLibrary) => Promise<T>,
+  ): Promise<Result<T>> {
+    if (!source.library) return QueryResult.unsupported();
+    try {
+      return QueryResult.success(await read(source.library));
+    } catch (cause) {
+      return QueryResult.failed(new QueryFailedError(source.diagnosticName, operation, { cause }));
     }
-    return source.library;
-  }
-
-  userPlaylists(): Promise<Playlist[]> {
-    return this.lib().userPlaylists();
-  }
-
-  dailyRecommendations(): Promise<TrackSnapshot[]> {
-    return this.lib().dailyRecommendations();
   }
 }
