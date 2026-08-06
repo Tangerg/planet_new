@@ -17,6 +17,10 @@ import type {
   SpotifyTrack,
 } from "./types";
 import { SPOTIFY_PROVIDER_ID, SPOTIFY_PROVIDER_NAME } from "./identity";
+import { mapConcurrent } from "@shared/async";
+
+/** In-flight request ceiling for a batch fan-out (Spotify rate-limits per app). */
+const SPOTIFY_REQUEST_CONCURRENCY = 4;
 
 /**
  * Spotify Web API provider.
@@ -244,23 +248,25 @@ export class Spotify extends Provider {
 
   async playUrls(playbackIds: string[]): Promise<TrackPlayUrl[]> {
     if (playbackIds.length === 0) return [];
-    const out: TrackPlayUrl[] = [];
-    // /tracks accepts at most 50 ids per call.
+    // /tracks accepts at most 50 ids per call. The batches are independent, so
+    // they overlap instead of queueing behind each other — this runs for a whole
+    // queue, and one round trip per 50 tracks added up before playback started.
+    const batches: string[][] = [];
     for (let i = 0; i < playbackIds.length; i += 50) {
-      const batch = playbackIds.slice(i, i + 50);
-      const res = await this.api
+      batches.push(playbackIds.slice(i, i + 50));
+    }
+    const pages = await mapConcurrent(batches, SPOTIFY_REQUEST_CONCURRENCY, (batch) =>
+      this.api
         .get("tracks", {
           searchParams: this.withMarket({ ids: batch.join(",") }),
         })
-        .json<{ tracks: Array<SpotifyTrack | null> }>();
-      for (const tr of res.tracks) {
-        if (!tr) continue;
-        if (tr.preview_url) {
-          out.push({ playbackId: tr.id, playUrl: tr.preview_url });
-        }
-      }
-    }
-    return out;
+        .json<{ tracks: Array<SpotifyTrack | null> }>(),
+    );
+    return pages.flatMap((res) =>
+      res.tracks.flatMap((tr) =>
+        tr?.preview_url ? [{ playbackId: tr.id, playUrl: tr.preview_url }] : [],
+      ),
+    );
   }
 
   async personalized(): Promise<Personalized> {

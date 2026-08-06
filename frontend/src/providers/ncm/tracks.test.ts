@@ -35,11 +35,28 @@ describe("fetchNcmPlaylistTracks", () => {
     expect(offsetsOf(calls, "playlist/track/all")).toEqual([0, 500, 1000]);
   });
 
-  test("stops early once the known total is reached", async () => {
+  test("requests exactly one page when the known total fits in one", async () => {
     const { http, calls } = fakeKy({ "playlist/track/all": { songs: songs(500) } });
     const result = await fetchNcmPlaylistTracks(http, "p1", 500);
     expect(result).toHaveLength(500);
     expect(offsetsOf(calls, "playlist/track/all")).toEqual([0]);
+  });
+
+  // A known total means the page count is known, so the pages are fanned out
+  // instead of probed one after another. Order must still follow the playlist.
+  test("fans out every page the known total implies, in playlist order", async () => {
+    const { http, calls } = fakeKy({
+      "playlist/track/all": (sp: Record<string, unknown>) => {
+        const offset = Number(sp.offset);
+        return { songs: songs(offset < 1000 ? 500 : 200, offset) };
+      },
+    });
+    const result = await fetchNcmPlaylistTracks(http, "p1", 1200);
+    expect(result).toHaveLength(1200);
+    expect(result[0].id).toBe(0);
+    expect(result[500].id).toBe(500);
+    expect(result[1199].id).toBe(1199);
+    expect(offsetsOf(calls, "playlist/track/all")).toEqual([0, 500, 1000]);
   });
 });
 

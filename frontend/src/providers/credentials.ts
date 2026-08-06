@@ -1,5 +1,6 @@
 import { AuthSession, type CredentialStore } from "@contexts/identity";
 import type { ProviderId } from "@contexts/contracts";
+import { warnWriteFailure } from "@shared/debug";
 
 const keyOf = (providerId: ProviderId) => `planet.auth.${providerId}`;
 
@@ -27,11 +28,23 @@ export class LocalCredentialStore implements CredentialStore {
     }
   }
 
+  // Persisting is best-effort: storage throws when it is full or disabled, and a
+  // sign-in that actually succeeded must not fail because the session could not
+  // be written down. The session stays live for this run; it just won't survive
+  // a restart.
   set(providerId: ProviderId, session: AuthSession): void {
-    localStorage.setItem(keyOf(providerId), JSON.stringify(session));
+    try {
+      localStorage.setItem(keyOf(providerId), JSON.stringify(session));
+    } catch (error) {
+      warnWriteFailure(`credentials.set(${providerId})`, error);
+    }
   }
 
   clear(providerId: ProviderId): void {
-    localStorage.removeItem(keyOf(providerId));
+    try {
+      localStorage.removeItem(keyOf(providerId));
+    } catch (error) {
+      warnWriteFailure(`credentials.clear(${providerId})`, error);
+    }
   }
 }

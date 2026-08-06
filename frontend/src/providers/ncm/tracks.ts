@@ -3,6 +3,7 @@ import type { KyInstance } from "ky";
 import { mergeTranslations, parseLyrics, type Lyric } from "@domain/model/lyric";
 import type { TrackPlayUrl, TrackSnapshot } from "@domain/model/track";
 
+import { mapConcurrent, pageOffsets } from "@shared/async";
 import { httpsUrl } from "@shared/url";
 
 import { mapNcmTrack } from "./mapper";
@@ -16,23 +17,49 @@ import type {
 
 const PLAYLIST_TRACK_PAGE_SIZE = 500;
 const TRACK_DETAIL_BATCH_SIZE = 100;
+/** In-flight request ceiling for a page/batch fan-out against one API host. */
+const REQUEST_CONCURRENCY = 6;
 
+function playlistTrackPage(
+  http: KyInstance,
+  id: string,
+  offset: number,
+): Promise<NcmPlaylistTracksResponse> {
+  return http
+    .get("playlist/track/all", {
+      searchParams: { id, limit: PLAYLIST_TRACK_PAGE_SIZE, offset },
+    })
+    .json<NcmPlaylistTracksResponse>();
+}
+
+/**
+ * A playlist's full tracklist. Pages are independent, so when the caller knows
+ * the track count they all go out together — this is the detail screen's fill,
+ * and a 2000-track playlist used to cost four SEQUENTIAL round trips before the
+ * first track appeared.
+ *
+ * Without a count there is no way to know how many pages exist, so it falls back
+ * to probing one page at a time until a short page ends the list.
+ */
 export async function fetchNcmPlaylistTracks(
   http: KyInstance,
   id: string,
   total?: number,
 ): Promise<NcmTrack[]> {
+  if (total && total > 0) {
+    const pages = await mapConcurrent(
+      pageOffsets(total, PLAYLIST_TRACK_PAGE_SIZE),
+      REQUEST_CONCURRENCY,
+      (offset) => playlistTrackPage(http, id, offset),
+    );
+    return pages.flatMap((page) => page.songs ?? []);
+  }
+
   const tracks: NcmTrack[] = [];
   for (let offset = 0; ; offset += PLAYLIST_TRACK_PAGE_SIZE) {
-    const res = await http
-      .get("playlist/track/all", {
-        searchParams: { id, limit: PLAYLIST_TRACK_PAGE_SIZE, offset },
-      })
-      .json<NcmPlaylistTracksResponse>();
-    const songs = res.songs ?? [];
+    const songs = (await playlistTrackPage(http, id, offset)).songs ?? [];
     tracks.push(...songs);
     if (songs.length < PLAYLIST_TRACK_PAGE_SIZE) break;
-    if (total && tracks.length >= total) break;
   }
   return tracks;
 }
@@ -44,6 +71,15 @@ export async function fetchNcmLyrics(http: KyInstance, id: string): Promise<Lyri
   return mergeTranslations(main, translated);
 }
 
+/**
+ * Track metadata for a set of ids. Batches are independent, so they go out
+ * together rather than one after another — resolving a several-hundred-track
+ * queue was that many sequential round trips.
+ *
+ * Partial failure is tolerated on purpose (a missing batch loses those rows, not
+ * the screen); only an all-batches-failed result throws. The batch task
+ * therefore catches for itself instead of letting the fan-out reject.
+ */
 export async function fetchNcmTrackDetails(
   http: KyInstance,
   ids: readonly string[],
@@ -51,27 +87,39 @@ export async function fetchNcmTrackDetails(
   const uniqueIds = [...new Set(ids.map(String).filter(Boolean))];
   if (uniqueIds.length === 0) return [];
 
+  const batches: string[][] = [];
+  for (let i = 0; i < uniqueIds.length; i += TRACK_DETAIL_BATCH_SIZE) {
+    batches.push(uniqueIds.slice(i, i + TRACK_DETAIL_BATCH_SIZE));
+  }
+
+  const outcomes = await mapConcurrent(
+    batches,
+    REQUEST_CONCURRENCY,
+    async (batch): Promise<{ songs: NcmSongDetailResponse["songs"] } | { error: unknown }> => {
+      try {
+        const res = await http
+          .get("song/detail", { searchParams: { ids: batch.join(",") } })
+          .json<NcmSongDetailResponse>();
+        return { songs: res.songs };
+      } catch (error) {
+        return { error };
+      }
+    },
+  );
+
   const byId = new Map<string, TrackSnapshot>();
   const failures: unknown[] = [];
-  let successfulBatches = 0;
-  for (let i = 0; i < uniqueIds.length; i += TRACK_DETAIL_BATCH_SIZE) {
-    const batch = uniqueIds.slice(i, i + TRACK_DETAIL_BATCH_SIZE);
-    let res: NcmSongDetailResponse;
-    try {
-      res = await http
-        .get("song/detail", { searchParams: { ids: batch.join(",") } })
-        .json<NcmSongDetailResponse>();
-      successfulBatches += 1;
-    } catch (error) {
-      failures.push(error);
+  for (const outcome of outcomes) {
+    if ("error" in outcome) {
+      failures.push(outcome.error);
       continue;
     }
-    for (const raw of res.songs ?? []) {
+    for (const raw of outcome.songs ?? []) {
       const track = mapNcmTrack(raw);
       if (track.id) byId.set(track.id, track);
     }
   }
-  if (successfulBatches === 0) {
+  if (failures.length === batches.length) {
     throw new AggregateError(failures, "NCM track detail batches failed");
   }
 
