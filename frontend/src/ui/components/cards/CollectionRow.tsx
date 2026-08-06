@@ -3,7 +3,7 @@
 // the high-density alternative to the card grid. Opening flies the morph from
 // the small cover (`.clrt`).
 // ============================================================
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
 import type { CardActivation } from "@/components/cards/activation";
@@ -30,7 +30,6 @@ function CollectionRowInner<T extends CardItem>({
   playable = true,
 }: CollectionRowProps<T>) {
   const { t } = useTranslation();
-  const [hover, setHover] = useState(false);
   const open = useMorphOpen();
   const { collMenu } = useScreenActions();
   const activate = (e: React.MouseEvent | React.KeyboardEvent) =>
@@ -48,14 +47,7 @@ function CollectionRowInner<T extends CardItem>({
   };
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- mouse-only row hit-area; cover/text below remain keyboard-accessible, and making the row role="button" would semantically nest the play button.
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={activate}
-      onContextMenu={(e) => collMenu(e, item)}
-      className="flex cursor-pointer items-center gap-4 rounded-[8px] px-[14px] py-[9px] transition-[background] duration-150"
-      style={{ background: hover ? "rgba(255,255,255,.06)" : "transparent" }}
-    >
+    <div onClick={activate} onContextMenu={(e) => collMenu(e, item)} className="crow">
       <div className="relative flex-none">
         <PressTarget label={item.name} onActivate={activateFromTarget}>
           <Art
@@ -67,16 +59,20 @@ function CollectionRowInner<T extends CardItem>({
             style={{ width: 48, height: 48, borderRadius: round ? "50%" : 0 }}
           />
         </PressTarget>
-        {/* artists (round) are people, not playable — no cover play fab */}
-        {onPlay && !round && playable && hover && (
+        {/* artists (round) are people, not playable — no cover play fab.
+            Mounted unconditionally and revealed by the row's :hover rule; gating
+            it on a hover STATE re-rendered the row on every cursor crossing. It
+            covers the artwork, so it stays pointer-transparent until revealed —
+            otherwise it would swallow the clicks meant to open the collection. */}
+        {onPlay && !round && playable && (
           <Button
             onClick={(e) => {
               e.stopPropagation();
               onPlay(item);
             }}
             aria-label={t("a11y.playItem", { name: item.name })}
-            className="absolute inset-0 grid place-items-center text-white"
-            style={{ background: "rgba(0,0,0,.42)", borderRadius: round ? "50%" : 0 }}
+            className="crow-play absolute inset-0 grid place-items-center text-white"
+            style={{ borderRadius: round ? "50%" : 0 }}
           >
             <Icon.play size={18} />
           </Button>

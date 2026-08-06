@@ -29,7 +29,6 @@ export function PlayerScrubber({
   const dur = effectiveMediaDuration(durationSec, fallbackDurationSec);
   const [scrub, setScrub] = useState<number | null>(null);
   const [scrubHover, setScrubHover] = useState<{ x: number; positionSec: number } | null>(null);
-  const [hover, setHover] = useState(false);
   const scrubTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pos = mediaPlaybackPosition(positionSec, dur, scrub);
 
@@ -64,11 +63,12 @@ export function PlayerScrubber({
             }),
           );
         }}
-        onPointerEnter={() => setHover(true)}
-        onPointerLeave={() => {
-          setHover(false);
-          setScrubHover(null);
-        }}
+        onPointerLeave={() => setScrubHover(null)}
+        // `.pscrub` owns the thumb's hover reveal in CSS. This component
+        // subscribes to the playback clock, so it already re-renders several
+        // times a second — adding a hover state would have made merely resting
+        // the cursor on the bar re-render it twice more.
+        className={scrub === null ? "pscrub" : "pscrub is-scrubbing"}
         style={{
           position: "relative",
           flex: 1,
@@ -98,17 +98,16 @@ export function PlayerScrubber({
             },
           },
           thumb: {
+            // Spotify-style: a small, clean white dot (no coloured glow ring) that
+            // only appears on hover or while scrubbing; hidden otherwise (.pscrub).
+            className: "pscrub-thumb",
             style: {
               display: "block",
               width: 10,
               height: 10,
               borderRadius: "50%",
               background: "#fff",
-              // Spotify-style: a small, clean white dot (no coloured glow ring) that
-              // only appears on hover or while scrubbing; hidden otherwise.
               boxShadow: "0 1px 3px rgba(0,0,0,.35)",
-              opacity: hover || scrub !== null ? 1 : 0,
-              transition: "opacity .14s ease",
             },
           },
         }}

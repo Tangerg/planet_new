@@ -17,3 +17,15 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   transition: background 0.24s ease;
 }
+
+/* Scrubber thumb: hidden at rest, revealed on hover or while scrubbing. In CSS
+   rather than a hover state because the scrubber re-renders with the playback
+   clock — resting the cursor on it must not add renders to that. */
+.pscrub-thumb {
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+.pscrub:hover .pscrub-thumb,
+.pscrub.is-scrubbing .pscrub-thumb {
+  opacity: 1;
+}

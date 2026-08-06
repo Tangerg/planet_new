@@ -34,31 +34,29 @@ describe("track row model", () => {
         track: track(),
         current: track(),
         playing: true,
-        hover: false,
         index: 3,
       }).leading,
     ).toEqual({ kind: "equalizer" });
   });
 
-  it("uses the hover play affordance only when the row is playable", () => {
-    expect(
-      trackRowModel({
-        track: track(),
-        playing: false,
-        hover: true,
-        index: 3,
-      }).leading,
-    ).toEqual({ kind: "play" });
+  it("numbers every other row, leaving the play affordance to the row's :hover", () => {
+    expect(trackRowModel({ track: track(), playing: false, index: 3 }).leading).toEqual({
+      kind: "index",
+      value: 3,
+    });
+  });
 
+  it("marks an unresolvable row unavailable so the row can withhold its affordances", () => {
     expect(
       trackRowModel({
         track: track({ source: source() }),
         playing: false,
-        hover: true,
         index: 3,
         policy: { canResolveFullPlayback: true },
-      }).leading,
-    ).toEqual({ kind: "index", value: 3 });
+      }),
+    ).toMatchObject({ unavailable: true, leading: { kind: "index", value: 3 } });
+
+    expect(trackRowModel({ track: track(), playing: false, index: 3 }).unavailable).toBe(false);
   });
 
   it("derives row badges from track facts and availability", () => {
@@ -70,7 +68,6 @@ describe("track row model", () => {
           source: source({ available: false }),
         }),
         playing: false,
-        hover: false,
         index: 1,
       }).badges,
     ).toEqual([
@@ -83,7 +80,6 @@ describe("track row model", () => {
       trackRowModel({
         track: track({ version: "studio" }),
         playing: false,
-        hover: false,
         index: 1,
       }).badges,
     ).toEqual([]);
@@ -95,7 +91,6 @@ describe("track row model", () => {
         track: track(),
         current: track(),
         playing: false,
-        hover: true,
         index: 4,
         rank: 2,
       }),

@@ -9,6 +9,7 @@ import { PlayerTrackIdentity } from "@/components/player-bar/PlayerTrackIdentity
 import { TrackCard } from "@/components/cards/TrackCard";
 import { TrackRow } from "@/components/cards/TrackRow";
 import type { CardItem, VibeTrack } from "@/model/vibe";
+import { ProviderId } from "@domain/model/provider-id";
 
 const mocks = vi.hoisted(() => ({
   morphOpen: vi.fn<(_event: unknown, options: { run?: () => void }) => void>(),
@@ -175,7 +176,6 @@ describe("interactive component boundaries", () => {
     const { container } = render(
       <CollectionRow item={item} sub="PLAYLIST" onOpen={onOpen} onPlay={onPlay} />,
     );
-    fireEvent.mouseEnter(container.firstElementChild!);
 
     fireEvent.click(screen.getByRole("button", { name: "Play Collection" }));
     expect(onPlay).toHaveBeenCalledTimes(1);
@@ -216,5 +216,59 @@ describe("interactive component boundaries", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Play Song" })[0]);
     expect(onPlay).toHaveBeenCalledWith(track);
+  });
+
+  // Hover affordances are CSS (`.trow` in cards.css), so the row must ship the
+  // hooks CSS needs — both leading glyphs mounted and the availability class on
+  // the root. jsdom can't evaluate `:hover`, so this guards the contract rather
+  // than the paint: if someone reintroduces a hover STATE, the play glyph stops
+  // being rendered up-front and this fails.
+  it("mounts both leading glyphs so the row's play affordance needs no state", () => {
+    const { container } = render(
+      <TrackRow
+        track={track}
+        index={7}
+        onPlay={vi.fn<(track: VibeTrack) => void>()}
+        playing={false}
+        liked={new Set()}
+        toggleLike={vi.fn<(track: VibeTrack) => void>()}
+        accent="#18f58a"
+      />,
+    );
+
+    const row = container.firstElementChild!;
+    expect(row).toHaveClass("trow");
+    expect(row).not.toHaveClass("is-unavailable");
+    expect(row.querySelector(".trow-index")).toHaveTextContent("7");
+    expect(row.querySelector(".trow-play")).not.toBeNull();
+  });
+
+  it("withholds the play glyph from a row that cannot be played", () => {
+    const { container } = render(
+      <TrackRow
+        track={{
+          ...track,
+          source: {
+            providerId: ProviderId.of("test"),
+            id: "track-1",
+            name: "Song",
+            durationMs: 180_000,
+            artists: [],
+            available: false,
+          },
+        }}
+        index={7}
+        onPlay={vi.fn<(track: VibeTrack) => void>()}
+        playing={false}
+        liked={new Set()}
+        toggleLike={vi.fn<(track: VibeTrack) => void>()}
+        accent="#18f58a"
+      />,
+    );
+
+    const row = container.firstElementChild!;
+    expect(row).toHaveClass("is-unavailable");
+    expect(row.querySelector(".trow-index")).toHaveTextContent("7");
+    expect(row.querySelector(".trow-play")).toBeNull();
   });
 });

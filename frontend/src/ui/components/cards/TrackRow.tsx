@@ -3,7 +3,7 @@
 // with optional chart rank and multi-select. The shared list-row used by
 // Playlist/Album detail, Queue, History, Search and Library songs.
 // ============================================================
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "@/model/likes";
@@ -16,6 +16,7 @@ import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { useScreenActions } from "@/hooks/screenActions";
 import { usePlaybackPolicy } from "@/hooks/usePlaybackPolicy";
 import { writeTrackDragData } from "@/model/track-actions";
+import { cn } from "@/lib/cn";
 
 type TrackRowProps = {
   track: VibeTrack;
@@ -43,11 +44,14 @@ function TrackLeading({
   accent,
   color,
   muted,
+  playable,
 }: {
   leading: TrackRowLeading;
   accent: string;
   color: string;
   muted: string;
+  /** A numbered playable row swaps its index for a play glyph under the cursor. */
+  playable: boolean;
 }) {
   switch (leading.kind) {
     case "rank":
@@ -61,17 +65,20 @@ function TrackLeading({
       );
     case "equalizer":
       return <Equalizer playing color={accent} size={14} />;
-    case "play":
-      return (
-        <span style={{ color }}>
-          <Icon.play size={15} />
-        </span>
-      );
     case "index":
       return (
-        <span className="mlabel text-[12px]" style={{ color: muted }}>
-          {leading.value}
-        </span>
+        <>
+          <span className="trow-index mlabel text-[12px]" style={{ color: muted }}>
+            {leading.value}
+          </span>
+          {/* Both glyphs are mounted and CSS swaps them on :hover — the cursor
+              must not be a React state change on a list leaf. */}
+          {playable && (
+            <span className="trow-play" style={{ color }}>
+              <Icon.play size={15} />
+            </span>
+          )}
+        </>
       );
   }
 }
@@ -118,6 +125,10 @@ function TrackBadges({
 // of the whole visible set — the difference between a jittery and a 60fps scroll.
 // All call sites pass stable references (onPlay/toggleLike/current/liked/accent)
 // or primitives (index/rank/selected), so the default shallow compare bails.
+//
+// Hover is CSS (`.trow` in cards.css), NOT state: dragging the cursor down a
+// list would otherwise render two rows per row crossed, each re-running the row
+// model — the one thing the memo above cannot save us from.
 export const TrackRow = React.memo(function TrackRow({
   track,
   index,
@@ -138,16 +149,7 @@ export const TrackRow = React.memo(function TrackRow({
   const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
   const policy = usePlaybackPolicy();
-  const [hover, setHover] = useState(false);
-  const model = trackRowModel({
-    track,
-    current,
-    playing,
-    hover,
-    index,
-    rank,
-    policy,
-  });
+  const model = trackRowModel({ track, current, playing, index, rank, policy });
   const col = dark ? "#fff" : "#16161a";
   const sub = dark ? "rgba(255,255,255,.5)" : "rgba(10,10,12,.5)";
   const isLiked = isVibeTrackLiked(liked, track);
@@ -165,8 +167,6 @@ export const TrackRow = React.memo(function TrackRow({
   };
   return (
     <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       draggable={!model.unavailable}
       onDragStart={(e: React.DragEvent) => {
         writeTrackDragData(e.dataTransfer, track);
@@ -175,19 +175,13 @@ export const TrackRow = React.memo(function TrackRow({
       onContextMenu={(e: React.MouseEvent) =>
         trackMenu(e, track, onMenuPlay ? { onPlay: onMenuPlay } : undefined)
       }
-      className="flex items-center gap-4 px-[14px] py-[11px] transition-[background] duration-150"
-      style={{
-        cursor: model.unavailable ? "default" : "pointer",
-        opacity: model.unavailable ? 0.42 : 1,
-        background: selected
-          ? `${accent}22`
-          : hover && !model.unavailable
-            ? dark
-              ? "rgba(255,255,255,.06)"
-              : "rgba(0,0,0,.04)"
-            : "transparent",
-        boxShadow: selected ? `inset 2px 0 0 ${accent}` : "none",
-      }}
+      className={cn("trow", !dark && "on-light", model.unavailable && "is-unavailable")}
+      // Only the SELECTED surface is inline. That's a data fact, not a pointer
+      // state, and an inline background outranks any rule — which is exactly the
+      // precedence we want (selection reads through hover).
+      style={
+        selected ? { background: `${accent}22`, boxShadow: `inset 2px 0 0 ${accent}` } : undefined
+      }
     >
       <PressTarget
         label={t("a11y.playItem", { name: track.title })}
@@ -196,7 +190,13 @@ export const TrackRow = React.memo(function TrackRow({
         className="flex flex-none items-center gap-4"
       >
         <div className="flex-none text-center" style={{ width: model.chart ? 30 : 22 }}>
-          <TrackLeading leading={model.leading} accent={accent} color={col} muted={sub} />
+          <TrackLeading
+            leading={model.leading}
+            accent={accent}
+            color={col}
+            muted={sub}
+            playable={!model.unavailable}
+          />
         </div>
         <Art
           seed={track.coverSeed}
@@ -239,8 +239,10 @@ export const TrackRow = React.memo(function TrackRow({
           toggleLike(track);
         }}
         aria-label={t("a11y.like")}
-        className="p-1"
-        style={{ color: isLiked ? accent : hover ? col : "transparent" }}
+        className="trow-like p-1"
+        // Liked is a fact, so it colours inline; the unliked transparent→visible
+        // reveal is the row's :hover rule.
+        style={isLiked ? { color: accent } : undefined}
       >
         <Icon.heart size={17} filled={isLiked} />
       </Button>
@@ -254,8 +256,7 @@ export const TrackRow = React.memo(function TrackRow({
             onRemoveFromQueue(track);
           }}
           aria-label={t("queue.remove")}
-          className="p-1"
-          style={{ color: hover ? "#ff6b6b" : "transparent" }}
+          className="trow-remove p-1"
         >
           <Icon.close size={16} />
         </Button>

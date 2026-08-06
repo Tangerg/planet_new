@@ -3,10 +3,16 @@ import type { PlaybackAvailabilityPolicy } from "@contexts/playback";
 
 import { sameVibeTrack, type VibeTrack } from "./vibe";
 
+/**
+ * What the row shows in its leading slot. Pointer hover is deliberately NOT an
+ * input here: "a numbered playable row offers play under the cursor" is a
+ * presentation rule, so the row renders both glyphs and CSS swaps them. Feeding
+ * hover into the model made every mouse enter/leave a React render of a list
+ * leaf — the model's job is to project track FACTS, not cursor position.
+ */
 export type TrackRowLeading =
   | { kind: "rank"; value: number; active: boolean }
   | { kind: "equalizer" }
-  | { kind: "play" }
   | { kind: "index"; value: number };
 
 export type TrackRowBadge =
@@ -26,7 +32,6 @@ export function trackRowModel({
   track,
   current,
   playing,
-  hover,
   index,
   rank,
   policy,
@@ -34,7 +39,6 @@ export function trackRowModel({
   track: VibeTrack;
   current?: VibeTrack;
   playing: boolean;
-  hover: boolean;
   index: number;
   rank?: number;
   policy?: PlaybackAvailabilityPolicy;
@@ -47,15 +51,7 @@ export function trackRowModel({
     current: isCurrent,
     unavailable,
     chart,
-    leading: trackRowLeading({
-      chart,
-      current: isCurrent,
-      playing,
-      hover,
-      unavailable,
-      index,
-      rank,
-    }),
+    leading: trackRowLeading({ chart, current: isCurrent, playing, index, rank }),
     badges: trackRowBadges(track, unavailable),
   };
 }
@@ -64,22 +60,17 @@ function trackRowLeading({
   chart,
   current,
   playing,
-  hover,
-  unavailable,
   index,
   rank,
 }: {
   chart: boolean;
   current: boolean;
   playing: boolean;
-  hover: boolean;
-  unavailable: boolean;
   index: number;
   rank?: number;
 }): TrackRowLeading {
   if (chart) return { kind: "rank", value: rank ?? index, active: current };
   if (current && playing) return { kind: "equalizer" };
-  if (hover && !unavailable) return { kind: "play" };
   return { kind: "index", value: index };
 }
 

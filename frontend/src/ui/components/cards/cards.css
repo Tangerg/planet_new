@@ -122,3 +122,90 @@
 .tile .tfab:active {
   transform: translateY(0.5px) scale(0.96);
 }
+
+/* ============================================================
+   List rows (TrackRow / CollectionRow / ArtistLink).
+   Hover lives HERE, never in React state: these are the leaves of windowed
+   lists, so a cursor crossing a 20-row list as state would be 40 renders of a
+   memoized row (each re-running the row model). CSS costs zero renders, and the
+   per-surface colours ride in as custom properties.
+   ============================================================ */
+
+/* track row — dense list row (detail / queue / history / search / library) */
+.trow {
+  --trow-fg: #fff;
+  --trow-hover-bg: rgba(255, 255, 255, 0.06);
+  @apply flex cursor-pointer items-center gap-4 px-[14px] py-[11px];
+  background: transparent;
+  transition: background 0.15s;
+}
+/* rows on a light surface (the frosted player-bar sheets) */
+.trow.on-light {
+  --trow-fg: #16161a;
+  --trow-hover-bg: rgba(0, 0, 0, 0.04);
+}
+/* an unplayable row takes no hover affordance at all */
+.trow.is-unavailable {
+  @apply cursor-default opacity-[0.42];
+}
+.trow:not(.is-unavailable):hover {
+  background: var(--trow-hover-bg);
+}
+
+/* leading slot: a numbered playable row swaps its index for a play glyph under
+   the cursor. Both are mounted; only visibility moves. */
+.trow-play {
+  display: none;
+}
+.trow:not(.is-unavailable):hover .trow-index {
+  display: none;
+}
+.trow:not(.is-unavailable):hover .trow-play {
+  display: inline-flex;
+}
+
+/* trailing actions: invisible until the row is hovered. `color: transparent`
+   (not opacity/visibility) keeps them focusable and in the layout, so the row
+   never reflows on hover and keyboard users can still reach them. A liked heart
+   sets its own colour inline and so is always visible. */
+.trow-like,
+.trow-remove {
+  color: transparent;
+  transition: color 0.15s;
+}
+.trow:hover .trow-like {
+  color: var(--trow-fg);
+}
+.trow:hover .trow-remove {
+  color: #ff6b6b;
+}
+
+/* collection row — the compact list alternative to the card grid */
+.crow {
+  @apply flex cursor-pointer items-center gap-4 rounded-[8px] px-[14px] py-[9px];
+  background: transparent;
+  transition: background 0.15s;
+}
+.crow:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+/* play overlay on the cover: pointer-transparent until revealed, so it can't
+   swallow the click that opens the collection. */
+.crow-play {
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.crow:hover .crow-play {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* inline artist link — rest/hover colours supplied per surface by the component */
+.alink {
+  color: var(--alink-rest);
+}
+.alink:hover {
+  color: var(--alink-hover);
+}

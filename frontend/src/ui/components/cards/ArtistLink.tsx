@@ -10,6 +10,12 @@ import { artistCreditLine } from "@/model/artist-credit";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
 
+/** Inline style carrying the link's rest/hover colour custom properties. */
+type ArtistLinkStyle = React.CSSProperties & {
+  "--alink-rest"?: string;
+  "--alink-hover"?: string;
+};
+
 type ArtistLinkProps = {
   /** Display name. */
   name?: string;
@@ -18,7 +24,7 @@ type ArtistLinkProps = {
   /** Resting colour (varies per surface); hover goes to `accent`. */
   color: string;
   onOpenArtist?: (artist: ArtistRef) => void;
-  style?: React.CSSProperties;
+  style?: ArtistLinkStyle;
 };
 
 export function ArtistLink({
@@ -36,16 +42,14 @@ export function ArtistLink({
   };
   return (
     <Button
-      className="p-0 text-left transition-colors duration-200"
-      style={{ font: "inherit", color, ...style }}
+      // Rest/hover colours ride in as custom properties so the swap is a `:hover`
+      // rule. Writing `currentTarget.style.color` from mouse handlers (as this
+      // did) fights React: any re-render while the cursor is on the link — a
+      // playback tick, a like — restores the rest colour under the pointer.
+      className="alink p-0 text-left transition-colors duration-200"
+      style={{ font: "inherit", "--alink-rest": color, "--alink-hover": accent, ...style }}
       onClick={open}
       onKeyDown={activateOnKey(open)}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = accent;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = color;
-      }}
     >
       {name}
     </Button>
