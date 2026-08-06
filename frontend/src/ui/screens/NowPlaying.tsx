@@ -39,17 +39,23 @@ type Props = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
+// Hoisted so the defaults are stable references: a `= []` default is a fresh
+// array per render, which would fail this component's own memo comparison the
+// moment a caller omits the prop.
+const NO_COMMENTS: VibeComment[] = [];
+const NO_QUEUE: VibeTrack[] = [];
+
 export const NowPlaying = React.memo(function NowPlaying({
   track,
   accent,
   liked,
   toggleLike,
   lyrics,
-  comments = [],
+  comments = NO_COMMENTS,
   onClose,
   onOpenStage,
   initialMode = "cover",
-  queue = [],
+  queue = NO_QUEUE,
   onPlay,
   onNext,
   onPrev,

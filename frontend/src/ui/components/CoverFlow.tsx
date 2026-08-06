@@ -9,7 +9,7 @@
 // (CoverCard + coverTransform geometry), the meta caption, the progress dots, and
 // the expanded tracklist Sheet. Keyboard / wheel / drag driving is useCoverFlowInput.
 // ============================================================
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 
@@ -70,12 +70,19 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
   // behaviour is gated off for round covers (clicks fall through to onOpen).
   const expandable = round ? undefined : tracksFor;
 
+  // Flipping to another cover collapses its tracklist. Adjusted during render
+  // rather than in an effect: at flick speed an effect renders + commits the new
+  // cover with the previous one's sheet still open, then re-renders to close it —
+  // two commits per step, on the most animation-sensitive surface in the app.
+  //
   // The page background is NOT repainted per centered cover: rapidly recolouring
   // the whole backdrop on every flip is distracting and a photosensitivity risk.
   // The screen's own hero gradient (Detail/Library) stays put instead.
-  useEffect(() => {
+  const [expandedFor, setExpandedFor] = useState(center);
+  if (expandedFor !== center) {
+    setExpandedFor(center);
     setExpanded(false);
-  }, [center]);
+  }
 
   const sheetTracks = expanded && expandable && cur ? expandable(cur.obj) || [] : [];
 

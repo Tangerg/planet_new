@@ -7,6 +7,7 @@ export type SwitchProps = {
   onCheckedChange: (checked: boolean) => void;
   "aria-label"?: string;
   id?: string;
+  ref?: React.Ref<React.ComponentRef<typeof BaseSwitch.Root>>;
 };
 
 /**
@@ -16,18 +17,16 @@ export type SwitchProps = {
  * `data-state="checked"`). The wrapper's public API is unchanged, so consumers
  * stay untouched — that's what makes the swap incremental.
  */
-export const Switch = React.forwardRef<React.ComponentRef<typeof BaseSwitch.Root>, SwitchProps>(
-  function Switch({ checked, onCheckedChange, ...rest }, ref) {
-    return (
-      <BaseSwitch.Root
-        ref={ref}
-        className="vswitch"
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        {...rest}
-      >
-        <BaseSwitch.Thumb className="vswitch-thumb" />
-      </BaseSwitch.Root>
-    );
-  },
-);
+export function Switch({ ref, checked, onCheckedChange, ...rest }: SwitchProps) {
+  return (
+    <BaseSwitch.Root
+      ref={ref}
+      className="vswitch"
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      {...rest}
+    >
+      <BaseSwitch.Thumb className="vswitch-thumb" />
+    </BaseSwitch.Root>
+  );
+}

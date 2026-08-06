@@ -2,7 +2,9 @@ import React from "react";
 import { cn } from "@/lib/cn";
 import "./Button.css";
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: React.Ref<HTMLButtonElement>;
+};
 
 /**
  * Base button: the reset + keyboard `:focus-visible` ring + tactile `:active`
@@ -16,9 +18,6 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
  * the button — so no Slot is needed. (If Button-as-`<a>` is ever wanted, compose
  * it back via Base UI's `useRender`.)
  */
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, type, ...rest },
-  ref,
-) {
+export function Button({ ref, className, type, ...rest }: ButtonProps) {
   return <button ref={ref} className={cn("btn", className)} type={type ?? "button"} {...rest} />;
-});
+}

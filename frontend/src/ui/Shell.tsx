@@ -13,7 +13,7 @@
 //   - useContextMenu       right-click menu
 //   - buildWorlds          the XMB navigation IA tree (@/model/navigation)
 // ============================================================
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import "./Shell.css";
@@ -43,7 +43,7 @@ import { useShellXmbModel } from "@/hooks/useShellXmbModel";
 const LazyContextMenu = React.lazy(() =>
   import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
 );
-import { ShellScreenRouter } from "@/ShellScreenRouter";
+import { ShellScreenRouter, warmDeferredScreens } from "@/ShellScreenRouter";
 import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_GLASS_BLUR } from "@/model/defaults";
 import type { NowPlayingMode } from "@/model/now-playing";
 
@@ -58,6 +58,10 @@ export default function Shell() {
     document.documentElement.style.setProperty("--accent", accent);
     document.documentElement.style.setProperty("--glass-blur", glass + "px");
   }, [accent, glass]);
+
+  // Pull the code-split screens in once the app has settled, so the split costs
+  // nothing at first navigation while still keeping them off the startup path.
+  useEffect(warmDeferredScreens, []);
 
   /* ---- XMB launcher cursor (highlighted column/row): transient screen state
      Shell holds so it survives the XMB's mount/unmount; not part of the
@@ -135,15 +139,32 @@ export default function Shell() {
     startForward,
     morph,
   } = useShellNavigation(media, queryClient);
-  const openNowPlaying = (mode: NowPlayingMode = settingsNowPlayingMode) => {
-    setNowPlayingInitialMode(mode);
-    navigate("np");
-  };
-  const gotoLauncherView = (target: string) => {
-    if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
-    setView(target);
-  };
-  const openStage = () => navigate("stage");
+  /* ---- navigation intents handed to memoized children (the dock, the XMB
+     tree, the window chrome). Stable identities on purpose: an inline arrow
+     here re-runs buildWorlds on every Shell render and defeats React.memo on
+     PlayerBar / XMB, which is most of what the memo was there to prevent. ---- */
+  const openNowPlaying = useCallback(
+    (mode: NowPlayingMode) => {
+      setNowPlayingInitialMode(mode);
+      navigate("np");
+    },
+    [navigate],
+  );
+  const openNowPlayingCover = useCallback(() => openNowPlaying("cover"), [openNowPlaying]);
+  const openNowPlayingLyrics = useCallback(() => openNowPlaying("lyrics"), [openNowPlaying]);
+  const gotoLauncherView = useCallback(
+    (target: string) => {
+      if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
+      setView(target);
+    },
+    [settingsNowPlayingMode, setView],
+  );
+  const openStage = useCallback(() => navigate("stage"), [navigate]);
+  const openQueue = useCallback(() => navigate("queue"), [navigate]);
+  const openComments = useCallback(() => navigate("comments"), [navigate]);
+  const openProfile = useCallback(() => navigate("profile"), [navigate]);
+  const openSettings = useCallback(() => navigate("settings"), [navigate]);
+  const openLibraryPlaylists = useCallback(() => openLib("playlists"), [openLib]);
   const npView = view === "np";
   const mvTheaterView = view === "mv-theater";
   const stageView = view === "stage";
@@ -178,11 +199,16 @@ export default function Shell() {
     goBack,
     goHome,
     openSearch,
-    openLibrary: () => openLib("playlists"),
-    openQueue: () => navigate("queue"),
-    openProfile: () => navigate("profile"),
-    openSettings: () => navigate("settings"),
+    openLibrary: openLibraryPlaylists,
+    openQueue,
+    openProfile,
+    openSettings,
   });
+  // The dock's like button acts on whatever is playing; keeping it out of the
+  // JSX means the memoized PlayerBar only sees a new handler when the track does.
+  const toggleCurrentLike = useCallback(() => {
+    if (current) toggleLike(current);
+  }, [current, toggleLike]);
 
   /* ---- global keyboard shortcuts (extracted hook) ---- */
   useGlobalShortcuts({
@@ -319,7 +345,7 @@ export default function Shell() {
                 playing={playing}
                 canOpenNowPlaying={!!playback.current}
                 onBack={goBack}
-                onNowPlaying={() => openNowPlaying("cover")}
+                onNowPlaying={openNowPlayingCover}
                 onMenu={openAppMenu}
               />
 
@@ -337,7 +363,7 @@ export default function Shell() {
                 playing={playing}
                 onTogglePlay={onTogglePlay}
                 liked={isLiked}
-                toggleLike={() => current && toggleLike(current)}
+                toggleLike={toggleCurrentLike}
                 accent={accent}
                 shuffle={shuffle}
                 onToggleShuffle={onToggleShuffle}
@@ -350,11 +376,11 @@ export default function Shell() {
                 volume={playback.volume}
                 onVolume={playback.setVolume}
                 onToggleMute={playback.toggleMute}
-                onOpenNowPlaying={() => openNowPlaying("cover")}
+                onOpenNowPlaying={openNowPlayingCover}
                 onOpenStage={openStage}
-                onOpenQueue={() => navigate("queue")}
-                onOpenComments={() => navigate("comments")}
-                onOpenLyrics={() => openNowPlaying("lyrics")}
+                onOpenQueue={openQueue}
+                onOpenComments={openComments}
+                onOpenLyrics={openNowPlayingLyrics}
                 onOpenArtist={openArtist}
               />
             </div>

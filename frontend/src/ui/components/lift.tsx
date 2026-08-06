@@ -22,20 +22,33 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 // so the float reads as a gentle pop, not a balloon. z-index can't tween, so the
 // raised stacking is held through the WHOLE leave glide, then dropped (else the
 // shrinking card sinks behind its neighbours mid-exit).
-const liftVariants = (scale: number, liftY: number): Variants => ({
-  rest: {
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.26, ease: EASE },
-    transitionEnd: { zIndex: 0 },
-  },
-  hover: {
-    y: liftY,
-    scale,
-    zIndex: 5,
-    transition: { duration: 0.24, ease: EASE },
-  },
-});
+// Cached per (scale, liftY) pair: every card in a grid/rail shares one of a
+// handful of tunings, and handing Motion a fresh `variants` object on each render
+// makes it re-resolve the whole variant tree for every visible card on every
+// windowing tick. There are only ever a few distinct pairs, so the cache is tiny.
+const LIFT_VARIANTS = new Map<string, Variants>();
+
+function liftVariants(scale: number, liftY: number): Variants {
+  const key = `${scale}:${liftY}`;
+  const cached = LIFT_VARIANTS.get(key);
+  if (cached) return cached;
+  const variants: Variants = {
+    rest: {
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.26, ease: EASE },
+      transitionEnd: { zIndex: 0 },
+    },
+    hover: {
+      y: liftY,
+      scale,
+      zIndex: 5,
+      transition: { duration: 0.24, ease: EASE },
+    },
+  };
+  LIFT_VARIANTS.set(key, variants);
+  return variants;
+}
 
 // fab rises from below as the card lifts (slight delay so it trails). Inherits
 // the rest/hover label from the LiftCard parent via Motion variant propagation.
@@ -66,10 +79,7 @@ type MotionButtonProps = Omit<
 >;
 
 /** Play fab inside a LiftCard — rises from below on the card's hover. */
-export const RiseFab = React.forwardRef<HTMLButtonElement, MotionButtonProps>(function RiseFab(
-  { style, ...props },
-  ref,
-) {
+export function RiseFab({ ref, style, ...props }: MotionButtonProps) {
   return (
     <MotionButton
       ref={ref}
@@ -83,7 +93,7 @@ export const RiseFab = React.forwardRef<HTMLButtonElement, MotionButtonProps>(fu
       style={{ ...style, transition: "none" }}
     />
   );
-});
+}
 
 /** The lift on a real <button> (chart banners, genre tiles) — no fab to rise. */
 export function LiftButton({

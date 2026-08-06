@@ -33,6 +33,47 @@ type HistoryScreenProps = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
+// Module scope on purpose: declared inside HistoryScreen this would be a NEW
+// component type on every render, so React would unmount and remount every group
+// — throwing away each memoized TrackRow's DOM and hover state on any parent
+// update (a track change, a like toggle).
+type HistoryGroupProps = Pick<
+  HistoryScreenProps,
+  "onPlay" | "current" | "playing" | "liked" | "toggleLike" | "accent" | "onOpenArtist"
+> & { section: HistorySection };
+
+function HistoryGroup({
+  section,
+  onPlay,
+  current,
+  playing,
+  liked,
+  toggleLike,
+  accent,
+  onOpenArtist,
+}: HistoryGroupProps) {
+  const { t } = useTranslation();
+  return (
+    <div className="mb-9">
+      <SectionHead title={t(section.labelKey)} style={{ marginBottom: 6 }} />
+      {section.items.map((track, i) => (
+        <TrackRow
+          key={section.labelKey + track.id + i}
+          track={track}
+          index={i + 1}
+          onPlay={onPlay}
+          current={current}
+          playing={playing}
+          liked={liked}
+          toggleLike={toggleLike}
+          accent={accent}
+          onOpenArtist={onOpenArtist}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function HistoryScreen({
   session,
   week: weekRecord,
@@ -48,25 +89,6 @@ export function HistoryScreen({
   const { t } = useTranslation();
   const model = historyScreenModel(session, weekRecord, all);
   const { hero, total } = model;
-  const Group = ({ section }: { section: HistorySection }) => (
-    <div className="mb-9">
-      <SectionHead title={t(section.labelKey)} style={{ marginBottom: 6 }} />
-      {section.items.map((t, i) => (
-        <TrackRow
-          key={section.labelKey + t.id + i}
-          track={t}
-          index={i + 1}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          accent={accent}
-          onOpenArtist={onOpenArtist}
-        />
-      ))}
-    </div>
-  );
 
   return (
     <FadeIn className="relative h-full bg-[#0a0a0d]">
@@ -105,7 +127,17 @@ export function HistoryScreen({
           </div>
           {/* grouped lists */}
           {model.sections.map((section) => (
-            <Group key={section.labelKey} section={section} />
+            <HistoryGroup
+              key={section.labelKey}
+              section={section}
+              onPlay={onPlay}
+              current={current}
+              playing={playing}
+              liked={liked}
+              toggleLike={toggleLike}
+              accent={accent}
+              onOpenArtist={onOpenArtist}
+            />
           ))}
           {model.isEmpty && <Empty className="p-[50px]">{t("history.empty")}</Empty>}
         </PageColumn>

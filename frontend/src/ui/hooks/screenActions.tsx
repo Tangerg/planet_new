@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, use } from "react";
 
 import type { CardItem, VibeTrack } from "@/model/vibe";
 
@@ -43,5 +43,5 @@ export function ScreenActionsProvider({
 
 /** Read screen actions inside any card/row (no prop-drilling, no globals). */
 export function useScreenActions(): ScreenActions {
-  return useContext(ScreenActionsContext);
+  return use(ScreenActionsContext);
 }

@@ -84,7 +84,15 @@ export function Marquee({ children, className, speed = 40 }: MarqueeProps) {
       onPointerLeave={() => setPaused(false)}
     >
       <motion.div
-        style={{ x, display: "inline-flex", whiteSpace: "nowrap", willChange: "transform" }}
+        style={{
+          x,
+          display: "inline-flex",
+          whiteSpace: "nowrap",
+          // Only hint a layer while the loop is actually running. A short title
+          // never scrolls, and every player-bar/now-playing title holding a
+          // permanent compositor layer is pure GPU memory for no motion.
+          willChange: overflow && !reduce ? "transform" : undefined,
+        }}
       >
         <span ref={copyRef} style={{ flex: "0 0 auto" }}>
           {children}

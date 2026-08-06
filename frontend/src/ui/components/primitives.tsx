@@ -11,6 +11,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { pickImageUrl, type Image } from "@contexts/catalog";
 import "./primitives.css";
 
+const EQUALIZER_BARS = [0, 1, 2, 3];
+
 /* animated equalizer mark (top-right tool in references) */
 export function Equalizer({
   playing = true,
@@ -21,10 +23,9 @@ export function Equalizer({
   color?: string;
   size?: number;
 }) {
-  const bars = [0, 1, 2, 3];
   return (
     <span className="inline-flex items-end gap-0.5" style={{ height: size, width: size }}>
-      {bars.map((i) => (
+      {EQUALIZER_BARS.map((i) => (
         // Full-height bar scaled from the bottom — scaleY is GPU-composited, so it
         // doesn't thrash layout the way the old `height` keyframe did.
         <motion.span

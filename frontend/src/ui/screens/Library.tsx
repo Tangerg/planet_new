@@ -2,7 +2,7 @@
 // Library — your collections, as grid · list · cover-flow, plus a songs tab.
 // Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
 // ============================================================
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   ArtistRef,
@@ -70,33 +70,63 @@ export function LibraryScreen({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [flowCenter, setFlowCenter] = useState(LIBRARY_INITIAL_FLOW_CENTER);
-  useEffect(() => {
+  // Recentre the flow per collection. Adjusted during render rather than in an
+  // effect: an effect would paint one frame of the new tab still centered on the
+  // old index (often out of range) before correcting it.
+  const [flowTab, setFlowTab] = useState(tab);
+  if (flowTab !== tab) {
+    setFlowTab(tab);
     setFlowCenter(LIBRARY_INITIAL_FLOW_CENTER);
-  }, [tab]); // recentre the flow per collection
+  }
   const model = useMemo(() => libraryScreenModel(data, tab, view), [data, tab, view]);
   const { cardTab, collections, flowMode, round, songColumns, tabs, tracks } = model;
-  const collectionSubtitle = (collection: VibeCollection) =>
-    localize(t, collectionSub(collection, tab));
-  const collectionMetaLabel = (collection: VibeCollection) =>
-    localizeJoined(t, collectionMeta(collection, tab));
-  const flowItems = collectionFlowItems(collections, collectionSubtitle);
-  const openOf = (o: VibeCollection) =>
-    model.collectionRoute === "album"
-      ? openAlbum(o)
-      : model.collectionRoute === "artist"
-        ? openArtist(o)
-        : openPlaylist(o);
+  // Every callback below lands on the memoized MediaCard / CollectionRow, whose
+  // whole point is that the windowed grid/list re-invokes renderItem for all
+  // visible cells on each scroll tick. A fresh closure per render would fail the
+  // shallow compare and re-render the entire visible set — so they are stable.
+  const collectionSubtitle = useCallback(
+    (collection: VibeCollection) => localize(t, collectionSub(collection, tab)),
+    [t, tab],
+  );
+  const collectionMetaLabel = useCallback(
+    (collection: VibeCollection) => localizeJoined(t, collectionMeta(collection, tab)),
+    [t, tab],
+  );
+  const flowItems = useMemo(
+    () => collectionFlowItems(collections, collectionSubtitle),
+    [collections, collectionSubtitle],
+  );
+  const openOf = useCallback(
+    (o: VibeCollection) =>
+      model.collectionRoute === "album"
+        ? openAlbum(o)
+        : model.collectionRoute === "artist"
+          ? openArtist(o)
+          : openPlaylist(o),
+    [model.collectionRoute, openAlbum, openArtist, openPlaylist],
+  );
   // Library resolves a collection's tracks per active tab (they're lazy on the
   // object), so it can't use the shared collection.tracks-based useCollectionPlayback
   // — it plays over the resolved list instead.
-  const tracksOf = (o: VibeCollection) => libraryTracksForCollection(tab, tracks, o);
-  const firstPlayable = (o: VibeCollection) =>
-    firstPlayableCollectionTrack({ tracks: tracksOf(o) });
-  const playCollection = (collection: VibeCollection) => {
-    const track = firstPlayable(collection);
-    if (track) onPlay(track);
-  };
-  const canPlayCollection = (collection: VibeCollection) => Boolean(firstPlayable(collection));
+  const tracksOf = useCallback(
+    (o: VibeCollection) => libraryTracksForCollection(tab, tracks, o),
+    [tab, tracks],
+  );
+  const firstPlayable = useCallback(
+    (o: VibeCollection) => firstPlayableCollectionTrack({ tracks: tracksOf(o) }),
+    [tracksOf],
+  );
+  const playCollection = useCallback(
+    (collection: VibeCollection) => {
+      const track = firstPlayable(collection);
+      if (track) onPlay(track);
+    },
+    [firstPlayable, onPlay],
+  );
+  const canPlayCollection = useCallback(
+    (collection: VibeCollection) => Boolean(firstPlayable(collection)),
+    [firstPlayable],
+  );
 
   return (
     <FadeIn

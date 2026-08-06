@@ -1,4 +1,9 @@
-import { VisualizerCanvas, wavesEffect } from "@/infra/visualizer";
+// Imported from the effect module directly, NOT the `@/infra/visualizer` barrel:
+// the barrel pulls the effects registry, which pulls the WebGL cloud effect (with
+// its shaders). This bar is mounted for the whole session, so a barrel import
+// would drag the stage-only cloud into the startup chunk.
+import { VisualizerCanvas } from "@/infra/visualizer/VisualizerCanvas";
+import { wavesEffect } from "@/infra/visualizer/effects/waves";
 
 type BreathingLightProps = {
   playing: boolean;

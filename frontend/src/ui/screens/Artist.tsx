@@ -2,7 +2,7 @@
 // Artist — atmospheric circular header + Top tracks · Albums · Similar, each as
 // list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
 // ============================================================
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   ArtistRef,
@@ -67,9 +67,13 @@ export function ArtistScreen({
   const [tab, setTab] = useState("top");
   const [view, setView] = useState<CollectionViewMode>("list");
   const [flowCenter, setFlowCenter] = useState(0);
-  useEffect(() => {
+  // Recentre the flow per tab during render, not in an effect — an effect would
+  // paint one frame of the new tab still centered on the old index first.
+  const [flowTab, setFlowTab] = useState(tab);
+  if (flowTab !== tab) {
+    setFlowTab(tab);
     setFlowCenter(0);
-  }, [tab]);
+  }
   const b = artPair(artist.coverSeed, artist.gradient)[1];
   const [followed, setFollowed] = useState(true);
   const model = artistScreenModel({ artist, tracks, albums, similar, tab, current, playing });

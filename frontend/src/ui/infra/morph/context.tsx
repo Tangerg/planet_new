@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, use } from "react";
 
 /**
  * Trigger a shared-element morph from a start rect into the destination Hero.
@@ -33,7 +33,7 @@ export function MorphProvider({ morph, children }: { morph: MorphFn; children: R
 
 /** Read the morph trigger inside any screen/card (no prop-drilling, no globals). */
 export function useMorph(): MorphFn {
-  return useContext(MorphContext);
+  return use(MorphContext);
 }
 
 // ---------------------------------------------------------------------------
@@ -58,5 +58,5 @@ export function MorphFrozen({ children }: { children: React.ReactNode }) {
 
 /** True when rendered on the outgoing `t-from` layer — skip entrance animation. */
 export function useMorphFrozen(): boolean {
-  return useContext(FrozenContext);
+  return use(FrozenContext);
 }

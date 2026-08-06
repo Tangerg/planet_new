@@ -32,6 +32,7 @@ export type SliderProps = Omit<
     thumb?: { className?: string; style?: React.CSSProperties };
   };
   thumbLabel?: string;
+  ref?: React.Ref<HTMLDivElement>;
 };
 
 /**
@@ -41,25 +42,23 @@ export type SliderProps = Omit<
  * lays out exactly as before, and callers still own the visuals via `parts`.
  * The Thumb auto-positions; keyboard control, ARIA, and robust drag come free.
  */
-export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(function Slider(
-  {
-    value,
-    onValueChange,
-    onValueCommit,
-    min,
-    max,
-    step,
-    orientation = "horizontal",
-    disabled,
-    parts,
-    thumbLabel,
-    children,
-    className,
-    style,
-    ...rest
-  },
+export function Slider({
   ref,
-) {
+  value,
+  onValueChange,
+  onValueCommit,
+  min,
+  max,
+  step,
+  orientation = "horizontal",
+  disabled,
+  parts,
+  thumbLabel,
+  children,
+  className,
+  style,
+  ...rest
+}: SliderProps) {
   // Control is the extra Base UI layer between Root and Track; make it a
   // transparent, orientation-aware flex box so the Track fills like it did
   // directly under the Radix Root.
@@ -96,4 +95,4 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(function Sli
       {children}
     </BaseSlider.Root>
   );
-});
+}
