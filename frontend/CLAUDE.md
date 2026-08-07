@@ -4,7 +4,7 @@
 > - `@shared`(`src/shared`)框架无关纯工具 —— 零依赖,最内。
 > - `@domain`(`src/domain`)领域层:实体/值对象(`model/`)+ 端口契约(`ports/`,如 MusicProvider 能力)—— 只依赖 `@shared`。
 > - `@core`(`src/core`)应用/运行时:planet 内核(插件系统/事件总线/manager)+ 播放插件(control/playqueue/progress/volume/lyric/analyser)—— 依赖 domain。
-> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 网络适配器 + 本地库 Local(经 `@wailsjs` 生成桥接 Go `backend/` 包:整洁架构 domain/application/sqlite/scan/media,扫盘 / SQLite / 回环媒体流)+ mappers,实现 domain 端口 —— 依赖 core+domain。
+> - `@providers`(`src/providers`)基础设施:QQ/Netease/Spotify 网络适配器 + 本地库 Local(经 `@bindings`(Wails v3 生成)桥接 Go `backend/` 包:整洁架构 domain/application/sqlite/scan/media,扫盘 / SQLite / 回环媒体流)+ mappers,实现 domain 端口 —— 依赖 core+domain。
 > - `@/`(`src/ui`)表现层:逐字移植自示例 **Sonance Vibe**(XMB 启动器 + 共享元素切换)的播放器界面。
 > - `src/app`(组合根 `planet.ts`)+ `src/main.tsx`(入口)在最外,装配具体 provider + 插件进内核。
 >
@@ -49,7 +49,7 @@
 
 ## 2 · 技术栈(选择已定,别轻易换 —— 反向不变量见 §5)
 
-- **UI**:React 19 + TypeScript。**桌面壳**:Wails v2(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `window.runtime`)。
+- **UI**:React 19 + TypeScript。**桌面壳**:Wails v3(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `@wailsio/runtime` 的 `Application`/`Window`,统一收在 `ui/infra/wails.ts`)。Go 侧绑定用 **Service**(`application.NewService`)而非 v2 的 `Bind`,构建由根 `Taskfile.yml` 编排。
 - **样式**:`vibe.css`(class-based,逐字移植,设计系统主体)+ **Tailwind v4(无 Preflight,工具类补充)**。**不引 CSS-in-JS / 大型 UI Kit**;动态值(accent / 渐变 / 计算量)留内联 style,静态/重复模式可用 Tailwind 工具类(如 `truncate`)。
 - **交互件**:优先 **Base UI**(`@base-ui/react`,headless)替换手写;新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
@@ -87,7 +87,7 @@
 ## 5 · 强反向不变量(已知错的方向,别再提)
 
 - ❌ **重新引入 TanStack Router / 任何「一屏一路由」**:会破坏共享元素 morph(新旧屏需在同一常驻容器共存测量),这正是当初去掉路由的原因。
-- ❌ **机械全量把 `vibe.css` / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Base UI 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails dev` 里核对**,不盲目大面积重写。
+- ❌ **机械全量把 `vibe.css` / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Base UI 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails3 dev` 里核对**,不盲目大面积重写。
 - ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `MusicProvider` 抽象 + mapper + React Query。
 - ❌ **在 UI 里复制播放态**(本地 `useState` 存 current / queue / progress):唯一源是内核 store + hooks。
 - ❌ **加回原生窗口标题栏 / 系统红绿灯**:窗口无边框,装饰由页面 `.win` + 伪装红绿灯承担。
@@ -97,6 +97,7 @@
 
 ## 6 · 工作流
 
-- **开发**:在仓库根 `wails dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 NCM API(`VITE_NETEASE_HOST`,默认 provider)/ QQ API(`~/Desktop/qq-music-api` 跑 `yarn dev`,:3200);后端没起时 provider 取数失败,相关屏显示诚实空态(无 mock 兜底,起真实后端才有数据)。
+- **开发**:在仓库根 `wails3 dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 NCM API(`VITE_NETEASE_HOST`,默认 provider)/ QQ API(`~/Desktop/qq-music-api` 跑 `yarn dev`,:3200);后端没起时 provider 取数失败,相关屏显示诚实空态(无 mock 兜底,起真实后端才有数据)。
+- **Go↔JS 绑定**:`frontend/bindings/` 由 `wails3 generate bindings` 生成并**入库**(前端门禁因此不需要 Go 工具链)。改了 `backend` 的绑定方法签名或 wire DTO,**必须**跑 `make bindings` 并把结果一起提交,否则前端拿到的是过期契约。别手改生成物。
 - **质量门禁**:仓库根目录统一跑 `make check`(Go vet/race + 前端聚合检查 + production build)。只验证前端时在 `frontend/` 跑 `yarn run check`;必须带 `run`,因为 `yarn check` 是 Yarn Classic 自带命令。前端聚合包含 typecheck / lint / format / test / knip / layer / circular。全绿才往下走。会漂的数字直接跑命令查,不硬编码。**husky + lint-staged 预提交**会对暂存的 `.ts/.tsx` 跑 prettier + oxlint `--deny-warnings` —— 所以**碰任何一屏(哪怕只改一行)都会触发该文件全量 lint**,需连带消化它的告警;vibe 屏(尤以 `Shell.tsx` morph 引擎、`XMB.tsx` 方向键导航)仍有成片 jsx-a11y / exhaustive-deps 旧债,逐屏迁移时一并清(exhaustive-deps 用带说明的局部 disable,不盲改依赖)。
 - **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。

@@ -1,7 +1,7 @@
 // Package media streams local audio + cover art to the webview over a loopback
 // HTTP server. A standalone net/http server (rather than the Wails asset
 // handler) is deliberate: http.ServeContent gives real HTTP Range / seek
-// support, and the same absolute URL works in `wails dev` and a production
+// support, and the same absolute URL works in `wails3 dev` and a production
 // build, sidestepping the asset handler's media/range divergences.
 package media
 

@@ -10,8 +10,11 @@
 
 - **Go** 1.25+(确保 `go` 在 `PATH`,通常需 `/usr/local/go/bin` 与 `~/go/bin`)
 - **Node** 22+ 与 **Yarn**(classic 1.x)
-- **Wails CLI** v2.12（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）
+- **Wails CLI v3**（`go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.4`，命令名是 `wails3`）
 - 一个**数据源后端**(见下)；只使用本地音乐时不需要
+
+> Wails v3 用 `Taskfile.yml` 编排构建(go-task 已内置在 `wails3` 里，无需单独安装 `task`)，
+> 构建步骤都是可读可改的任务，不再是 CLI 黑盒。
 
 ---
 
@@ -63,15 +66,14 @@ VITE_NETEASE_HOST=http://localhost:3300
 
 ### 3. 启动应用(前后端一起)
 
-在**仓库根目录**跑 `wails dev` —— 它会自动起 Vite(前端 HMR)+ Go(桌面壳),并生成 Go↔JS 绑定:
+在**仓库根目录**跑 `wails3 dev` —— 它会自动起 Vite(前端 HMR)+ Go(桌面壳),并生成 Go↔JS 绑定:
 
 ```bash
 export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
-wails dev
+wails3 dev
 ```
 
-- 桌面窗口会自动打开。
-- 想在浏览器里调试并调用 Go 方法:打开 http://localhost:34115 。
+- 桌面窗口会自动打开;Vite 开发服务器跑在 `:9245`(可用 `WAILS_VITE_PORT` 改)。
 - 后端数据服务没起时,相关页面会显示诚实空态(不会崩);想要有数据的体验就启动 provider 后端，或切到 `VITE_PROVIDER=local` 扫描本地音乐。
 
 #### 只跑前端(可选)
@@ -79,17 +81,26 @@ wails dev
 ```bash
 cd frontend
 yarn install
-yarn dev          # Vite 开发服务器 :5173
+yarn dev          # Vite 开发服务器 :9245
 ```
 
-> 注意:单跑 `yarn dev` 不会启动 Go 壳与原生窗口(无边框窗口 / 红绿灯等桌面能力缺失),日常开发请用根目录的 `wails dev`。
+> 注意:单跑 `yarn dev` 不会启动 Go 壳与原生窗口(无边框窗口 / 红绿灯等桌面能力缺失),
+> 本地音乐库也会诚实报告 “桥不可用”。日常开发请用根目录的 `wails3 dev`。
 
 ---
 
 ## 构建
 
 ```bash
-wails build       # 产出可分发的 PLANET 应用(build/bin/)
+wails3 build      # 产出裸二进制(bin/PLANET)
+wails3 package    # 产出可分发的 PLANET.app(bin/PLANET.app)
+```
+
+Go↔JS 绑定(`frontend/bindings/`)由 `wails3 generate bindings` 生成并**入库**,
+这样前端门禁不依赖 Go 工具链。改动 `backend` 的绑定方法或 DTO 后,记得跑:
+
+```bash
+make bindings     # == wails3 task bindings
 ```
 
 ---

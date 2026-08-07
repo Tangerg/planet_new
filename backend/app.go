@@ -18,7 +18,13 @@ import (
 	"github.com/Tangerg/planet_new/backend/media"
 	"github.com/Tangerg/planet_new/backend/scan"
 	"github.com/Tangerg/planet_new/backend/sqlite"
+
+	wails "github.com/wailsapp/wails/v3/pkg/application"
 )
+
+// shutdownTimeout bounds the teardown Wails blocks on. The framework's shutdown
+// hook takes no context, so the deadline is set here rather than by the caller.
+const shutdownTimeout = 5 * time.Second
 
 // The SQLite catalog also satisfies the media server's Source port.
 var _ media.Source = (*sqlite.Catalog)(nil)
@@ -96,12 +102,11 @@ func New() *App {
 	}
 }
 
-// Startup captures the Wails runtime context for the native folder dialog.
-func (a *App) Startup(ctx context.Context) { a.library.attach(ctx) }
-
-// Shutdown is wired to Wails OnShutdown. The real work is kept in shutdown so
-// package tests can assert errors while the framework callback remains func(ctx).
-func (a *App) Shutdown(ctx context.Context) {
+// Shutdown is wired to Wails' OnShutdown hook. The real work is kept in shutdown
+// so package tests can assert errors while the framework callback stays func().
+func (a *App) Shutdown() {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
 	if err := a.shutdown(ctx); err != nil {
 		fmt.Println("[backend] shutdown failed:", err)
 	}
@@ -123,9 +128,10 @@ func (a *App) shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Bind is the set of instances exposed to the frontend over the JS bridge. Only
-// the Library adapter is bound (the App/picker are internal wiring).
-func (a *App) Bind() []any { return []any{a.library} }
+// Services is the set of instances exposed to the frontend over the JS bridge.
+// Only the Library adapter is registered (the App/picker are internal wiring);
+// it takes its request context from Wails via ServiceStartup.
+func (a *App) Services() []wails.Service { return []wails.Service{wails.NewService(a.library)} }
 
 func defaultDataDir() (string, error) {
 	base, err := os.UserConfigDir()

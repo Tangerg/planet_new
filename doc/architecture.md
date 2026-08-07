@@ -2,13 +2,13 @@
 
 Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗口配置和 Wails bridge；业务逻辑、播放编排、数据源接入和界面状态主要在前端完成。例外是**本地音乐库**：文件夹扫描、SQLite 元数据、音频流服务在 Go 侧（`backend/` 包，与 `frontend/` 对称），经 Wails 桥接暴露给前端的 `LocalMusic` provider。根目录只保留 `main.go`（入口 + `backend.New()` 组装）。
 
-本文只描述当前代码事实，最后核对日期为 2026-07-29。演进目标与执行进度见 `doc/ddd-clean-architecture-roadmap.md`，更细的前端工作约定见 `frontend/CLAUDE.md`。
+本文只描述当前代码事实，最后核对日期为 2026-08-07。演进目标与执行进度见 `doc/ddd-clean-architecture-roadmap.md`，更细的前端工作约定见 `frontend/CLAUDE.md`。
 
 ---
 
 ## 1. 项目定位
 
-- 桌面壳：Wails v2 + Go，入口 `main.go`（根目录唯一 `.go`），后端在 `backend/`（组合根 `backend.App` + 音乐库适配器）。
+- 桌面壳：Wails v3 + Go，入口 `main.go`（根目录唯一 `.go`），后端在 `backend/`（组合根 `backend.App` + 音乐库适配器，以 `application.Service` 形式注册给 Wails）。
 - 前端：React 19 + TypeScript + Vite + Tailwind v4。
 - 数据：所有外部音乐数据经按上下文拆分的 Catalog/Playback/Identity/Account Library/Engagement 端口进入，具体实现位于 `frontend/src/providers`。
 - 播放：浏览器侧 `<audio>` + Web Audio；领域和应用层只依赖端口，浏览器资源由 `infrastructure/audio` 创建并注入 Kernel。
@@ -51,10 +51,11 @@ planet_new/
 │    domain/                       framework-free entities, value objects, ports
 │    application/                  use-case service (orchestration, FolderPicker port)
 │    sqlite/ scan/ media/          port implementations (repo, scanner, loopback server)
-│    app.go / library.go / dto.go  composition root + Wails-bound adapter + wire DTOs
-├─ build/                        Wails packaging assets (incl. darwin ATS plist)
+│    app.go / library.go / dto.go  composition root + Wails service adapter + wire DTOs
+├─ build/                        Wails packaging assets + per-platform Taskfiles (incl. darwin ATS plist)
 ├─ doc/                          Project docs
-├─ go.mod / wails.json           Go and Wails config
+├─ Taskfile.yml                  Wails v3 build orchestration (go-task; `wails3 build/package/dev`)
+├─ go.mod / build/config.yml     Go module and application metadata
 └─ frontend/
    ├─ package.json               Frontend scripts and dependencies
    ├─ vite.config.ts             Vite, Tailwind, aliases, test config
@@ -68,7 +69,7 @@ planet_new/
    │  ├─ ui/                     React interface
    │  ├─ app/                    Composition root
    │  └─ main.tsx                React entry
-   └─ wailsjs/                   Wails generated JS bridge
+   └─ bindings/                  Wails generated TS bridge (`wails3 generate bindings`)
 ```
 
 ---
@@ -142,11 +143,11 @@ Concrete providers:
 
 Provider construction starts in `frontend/src/app/planet.ts`; the real plugin graph is assembled by `frontend/src/app/composePlanet.ts`. NCM, QQ Music and Local are always mounted, while Spotify is mounted only when credentials exist. `ProviderRegistry` chooses the active source by stable `ProviderId` (`netease`, `qqmusic`, `spotify`, `local`). Runtime switching goes through the registry, not through UI imports of concrete adapters. Provider `name` is diagnostic/display metadata only; credentials, React Query caches and plugin ids use `ProviderId`, so localization or renaming cannot mix source state.
 
-**On-device library (Go `backend` package).** The Go side mirrors the frontend's clean-architecture layering, one package per layer with the dependency rule pointing inward: `domain` (framework-free entities, value objects `TrackID`/`Duration`/`Cover`, scan-completeness rules, tag normalization, and ports) ← `application` (framework-free scan/read use cases, depending only on ports including `FolderPicker`, `Clock`, scanner and catalog) ← `sqlite` (repository), `scan` (filesystem + tag reader), `media` (loopback server) as port implementations ← the `backend` package itself (composition root `App` + Wails-bound `Library` adapter).
+**On-device library (Go `backend` package).** The Go side mirrors the frontend's clean-architecture layering, one package per layer with the dependency rule pointing inward: `domain` (framework-free entities, value objects `TrackID`/`Duration`/`Cover`, scan-completeness rules, tag normalization, and ports) ← `application` (framework-free scan/read use cases, depending only on ports including `FolderPicker`, `Clock`, scanner and catalog) ← `sqlite` (repository), `scan` (filesystem + tag reader), `media` (loopback server) as port implementations ← the `backend` package itself (composition root `App` + the `Library` adapter registered as a Wails service).
 
-Detail lookups cross Wails as explicit `found` / `notFound` results; scans cross as `cancelled` / `partial` / `complete`, while a missing desktop bridge is `unavailable` in the frontend contract. Errors retain their Go cause internally but cross Wails only as stable `code + operation` data (`invalidArgument`, `notFound`, `unavailable`, `incomplete`, `cancelled`, `failed`). Local entity ids are parsed through one domain rule at every trust boundary: malformed Wails arguments fail as `invalidArgument`, corrupt SQLite rows fail hydration, and invalid media paths are rejected before catalog access. Wails lifecycle context is propagated through application, scanner, SQLite and outbound HTTP work. An incomplete filesystem observation may upsert readable tracks but can never prune unseen rows; only a complete `ScanSnapshot` has deletion authority. Scan writes are transactional and cancellation rolls back the transaction.
+Detail lookups cross Wails as explicit `found` / `notFound` results; scans cross as `cancelled` / `partial` / `complete`, while a missing desktop bridge is `unavailable` in the frontend contract. Errors retain their Go cause internally but cross Wails only as stable `code + operation` data (`invalidArgument`, `notFound`, `unavailable`, `incomplete`, `cancelled`, `failed`). Local entity ids are parsed through one domain rule at every trust boundary: malformed Wails arguments fail as `invalidArgument`, corrupt SQLite rows fail hydration, and invalid media paths are rejected before catalog access. The application-lifetime context Wails hands to `Library.ServiceStartup` is propagated through application, scanner, SQLite and outbound HTTP work. An incomplete filesystem observation may upsert readable tracks but can never prune unseen rows; only a complete `ScanSnapshot` has deletion authority. Scan writes are transactional and cancellation rolls back the transaction.
 
-SQLite startup applies ordered, transactional migrations tracked by `PRAGMA user_version`; it validates the expected table shape after migration and rejects databases created by a newer application version. `App` owns the SQLite catalog and HTTP server, rolls back partially initialized infrastructure, and closes resources in reverse order through Wails `OnShutdown`. Audio + cover art are streamed by the loopback server (`http.ServeContent`, so Range/seek work); each local track gets an absolute `http://127.0.0.1:<port>/media/<id>` URL. Remote URLs used only by the Web Audio analysis probe go through an authenticated `/stream` proxy with private-network blocking, guarded DNS dialing, redirect limits, and connection/header timeouts. A standalone server is used because the Wails asset handler diverges on media/range requests between dev and platforms. macOS needs the loopback ATS exception in `build/darwin/Info*.plist`. The `LocalMusic` provider reaches the Go service through the guarded Wails adapter, maps generated neutral wire DTOs into domain entities, and receives already-resolved local playback URLs. Settings triggers scans through the native folder-dialog adapter.
+SQLite startup applies ordered, transactional migrations tracked by `PRAGMA user_version`; it validates the expected table shape after migration and rejects databases created by a newer application version. `App` owns the SQLite catalog and HTTP server, rolls back partially initialized infrastructure, and closes resources in reverse order through the Wails `OnShutdown` hook. Audio + cover art are streamed by the loopback server (`http.ServeContent`, so Range/seek work); each local track gets an absolute `http://127.0.0.1:<port>/media/<id>` URL. Remote URLs used only by the Web Audio analysis probe go through an authenticated `/stream` proxy with private-network blocking, guarded DNS dialing, redirect limits, and connection/header timeouts. A standalone server is used because the Wails asset handler diverges on media/range requests between dev and platforms. macOS needs the loopback ATS exception in `build/darwin/Info*.plist`. The `LocalMusic` provider reaches the Go service through the guarded Wails adapter, maps generated neutral wire DTOs into domain entities, and receives already-resolved local playback URLs. Settings triggers scans through the native folder-dialog adapter.
 
 ---
 
@@ -278,6 +279,6 @@ yarn check:layers
 
 The repository-wide gate is `make check`. It builds the production bundle before compiling the root Go package (which embeds `frontend/dist`), runs Go vet/race and `govulncheck` with the patch toolchain declared by `go.mod`, and then runs the frontend aggregate checks. The standalone Go targets have the same frontend-build prerequisite, so a clean checkout and a developer tree use the same dependency graph. For frontend-only work use `yarn run check`; bare `yarn check` is a Yarn Classic built-in and must not be used as the project gate.
 
-Vitest enforces separate coverage thresholds for domain, application, Local provider, Local Library contract and Web Audio adapter code; a global average cannot hide a critical-layer gap. Architecture checks reject outward dependencies, cross-context deep imports, old context paths/Provider APIs, direct Wails access outside approved adapters, browser audio construction in core, and ambient clock/random access in domain/application. Core E2E coverage exercises a real two-source Engine graph (browse → play → switch source → continue old queue → dispose) and a real local WAV flow (Scanner → Application → SQLite → Wails read → shutdown).
+Vitest enforces separate coverage thresholds for domain, application, Local provider, Local Library contract and Web Audio adapter code; a global average cannot hide a critical-layer gap. Architecture checks reject outward dependencies, cross-context deep imports, old context paths/Provider APIs, direct access to the generated Wails bindings or the Wails runtime outside their approved adapters, browser audio construction in core, and ambient clock/random access in domain/application. Core E2E coverage exercises a real two-source Engine graph (browse → play → switch source → continue old queue → dispose) and a real local WAV flow (Scanner → Application → SQLite → Wails read → shutdown).
 
 CI uses the same `make check` entrypoint on macOS for pushes to `main` and pull requests. Remote-run evidence and the current closure status are recorded separately in the roadmap.

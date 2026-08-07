@@ -1,15 +1,15 @@
 {
 	"fixed": {
-		"file_version": "{{.Info.ProductVersion}}"
+		"file_version": "0.1.0"
 	},
 	"info": {
 		"0000": {
-			"ProductVersion": "{{.Info.ProductVersion}}",
-			"CompanyName": "{{.Info.CompanyName}}",
-			"FileDescription": "{{.Info.ProductName}}",
-			"LegalCopyright": "{{.Info.Copyright}}",
-			"ProductName": "{{.Info.ProductName}}",
-			"Comments": "{{.Info.Comments}}"
+			"ProductVersion": "0.1.0",
+			"CompanyName": "tangerg",
+			"FileDescription": "沉浸式桌面音乐播放器",
+			"LegalCopyright": "(c) 2026, tangerg",
+			"ProductName": "PLANET",
+			"Comments": "PLANET — 本地音乐库 + 在线音源的桌面播放器"
 		}
 	}
 }

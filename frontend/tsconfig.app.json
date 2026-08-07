@@ -51,8 +51,15 @@
       "@providers": ["./src/providers/index.ts"],
       "@providers/*": ["./src/providers/*"],
       "@/*": ["./src/ui/*"],
-      "@wailsjs/*": ["./wailsjs/*"]
+      "@bindings/*": ["./bindings/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "test-setup.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "bindings/**/*.ts",
+    "bindings/**/*.d.ts",
+    "test-setup.ts",
+    "vite.config.ts"
+  ]
 }

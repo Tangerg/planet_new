@@ -63,9 +63,9 @@ export async function localLibraryCall<T>(call: Promise<T>): Promise<T> {
   }
 }
 
-export const LocalLibraryLookupStatus = { found: "found", notFound: "notFound" } as const;
-export type LocalLibraryLookupStatus =
-  (typeof LocalLibraryLookupStatus)[keyof typeof LocalLibraryLookupStatus];
+/** Scan outcomes as the UI consumes them. Unlike the Go-side lookup/scan enums
+ *  (which the bindings publish directly to their one adapter), this vocabulary
+ *  adds `unavailable` — a shell fact with no counterpart on the wire. */
 export const LocalLibraryScanStatus = {
   cancelled: "cancelled",
   partial: "partial",

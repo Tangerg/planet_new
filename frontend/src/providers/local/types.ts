@@ -1,11 +1,11 @@
-import type { backend } from "@wailsjs/go/models";
+import type { Album, Artist, Track } from "@bindings/github.com/Tangerg/planet_new/backend";
 
 /**
  * Raw entity DTOs from the Go `library` service, aliased so the mapper (the only
- * consumer) references the wailsjs-generated types from one place. Composite
+ * consumer) references the Wails-generated types from one place. Composite
  * responses (AlbumDetail / Home / SearchResult / ScanResult) are consumed via
  * their bridge functions' inferred return types, so they need no alias here.
  */
-export type LocalTrack = backend.Track;
-export type LocalAlbum = backend.Album;
-export type LocalArtist = backend.Artist;
+export type LocalTrack = Track;
+export type LocalAlbum = Album;
+export type LocalArtist = Artist;

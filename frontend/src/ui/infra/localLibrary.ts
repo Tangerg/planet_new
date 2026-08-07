@@ -1,4 +1,4 @@
-import * as Library from "@wailsjs/go/backend/Library";
+import { Library, ScanStatus } from "@bindings/github.com/Tangerg/planet_new/backend";
 import {
   localLibraryCall,
   LocalLibraryScanStatus,
@@ -7,7 +7,7 @@ import {
   type LocalLibraryScanResult,
 } from "@contexts/local-library";
 import { ProviderId } from "@contexts/contracts";
-import { wailsGoBridgeReady } from "./wails";
+import { isDesktopShell } from "./wails";
 
 /**
  * Desktop-shell adapter for the on-device music library — the Settings screen's
@@ -26,7 +26,7 @@ export const LOCAL_PROVIDER_ID = ProviderId.of("local");
  * to an explicit outcome, including cancellation and bridge unavailability.
  */
 export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
-  if (!wailsGoBridgeReady()) return { status: LocalLibraryScanStatus.unavailable };
+  if (!isDesktopShell()) return { status: LocalLibraryScanStatus.unavailable };
   let result;
   try {
     result = await localLibraryCall(Library.PickAndScan());
@@ -36,17 +36,19 @@ export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
     if (projected.code === "unavailable") return { status: LocalLibraryScanStatus.unavailable };
     throw projected;
   }
-  if (result.status === LocalLibraryScanStatus.cancelled) {
+  if (result.status === ScanStatus.ScanCancelled) {
     return { status: LocalLibraryScanStatus.cancelled };
   }
-  if (
-    result.status !== LocalLibraryScanStatus.complete &&
-    result.status !== LocalLibraryScanStatus.partial
-  ) {
+  if (result.status !== ScanStatus.ScanComplete && result.status !== ScanStatus.ScanPartial) {
     throw new Error(`Unknown local-library scan status: ${result.status}`);
   }
   return {
-    status: result.status,
+    // The generated wire enum and the context's status share their string values,
+    // but they are separate contracts — translate rather than pass through.
+    status:
+      result.status === ScanStatus.ScanComplete
+        ? LocalLibraryScanStatus.complete
+        : LocalLibraryScanStatus.partial,
     folder: result.folder,
     scanned: result.scanned,
     added: result.added,
@@ -57,6 +59,6 @@ export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
 
 /** Resolve a CORS-clean loopback URL for analysis-only media reads. */
 export async function localLibraryStreamURL(url: string): Promise<string | undefined> {
-  if (!wailsGoBridgeReady()) return undefined;
+  if (!isDesktopShell()) return undefined;
   return (await Library.StreamURL(url)) || undefined;
 }

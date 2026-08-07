@@ -8,7 +8,7 @@ GO_PKGS := . ./backend/...
 GO_VERSION := $(shell awk '/^go / { print $$2; exit }' go.mod)
 GO := GOTOOLCHAIN=go$(GO_VERSION) go
 
-.PHONY: test test-race vet vuln frontend-check frontend-build check
+.PHONY: test test-race vet vuln frontend-check frontend-build bindings check
 
 # Run the backend test suite (SQLite catalog, scanner, media server, domain, app).
 test: frontend-build
@@ -33,6 +33,12 @@ frontend-check:
 # Production bundling is separate from typecheck and catches Vite/Rollup issues.
 frontend-build:
 	yarn --cwd frontend build
+
+# Re-derive frontend/bindings from the bound Go service. Those files are checked
+# in so the frontend gate needs no Go toolchain, which also means a change to the
+# Library adapter or its DTOs must be followed by this target (wails3 required).
+bindings:
+	wails3 task bindings
 
 # Root Go packages embed frontend/dist, so every compile-oriented Go target has
 # an explicit frontend-build prerequisite. This keeps clean checkouts honest and

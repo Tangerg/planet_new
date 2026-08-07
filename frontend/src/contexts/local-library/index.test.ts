@@ -6,11 +6,10 @@ import {
   localLibraryCall,
   toLocalLibraryError,
 } from ".";
-import type { LocalLibraryLookupStatus, LocalLibraryScanOutcome } from ".";
+import type { LocalLibraryScanOutcome } from ".";
 
 describe("Local Library Context public API", () => {
-  it("exposes explicit lookup and scan outcomes", () => {
-    expectTypeOf<LocalLibraryLookupStatus>().toEqualTypeOf<"found" | "notFound">();
+  it("exposes explicit scan outcomes", () => {
     expectTypeOf<LocalLibraryScanOutcome["status"]>().toEqualTypeOf<
       "cancelled" | "partial" | "complete" | "unavailable"
     >();

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as Library from "@wailsjs/go/backend/Library";
-import { backend } from "@wailsjs/go/models";
+import { Library, LookupStatus } from "@bindings/github.com/Tangerg/planet_new/backend";
 import { Planet, type AudioRuntimePort } from "@core";
 import { ProviderRegistry } from "@core/plugin";
 import { LocalMusic } from "./LocalMusic";
@@ -9,15 +8,28 @@ import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
 
 // The Go bridge is a generated module of async functions; mock each one the
 // provider calls so tests drive the catalog without a running Wails runtime.
-vi.mock("@wailsjs/go/backend/Library", () => ({
-  Home: vi.fn<typeof Library.Home>(),
-  AllTracks: vi.fn<typeof Library.AllTracks>(),
-  AlbumDetail: vi.fn<typeof Library.AlbumDetail>(),
-  ArtistDetail: vi.fn<typeof Library.ArtistDetail>(),
-  Tracks: vi.fn<typeof Library.Tracks>(),
-  Search: vi.fn<typeof Library.Search>(),
-  Lyric: vi.fn<typeof Library.Lyric>(),
+vi.mock("@bindings/github.com/Tangerg/planet_new/backend", async (importOriginal) => ({
+  // Keep the generated enums; only the bound calls are replaced.
+  ...(await importOriginal<object>()),
+  Library: {
+    Home: vi.fn<typeof Library.Home>(),
+    AllTracks: vi.fn<typeof Library.AllTracks>(),
+    AlbumDetail: vi.fn<typeof Library.AlbumDetail>(),
+    ArtistDetail: vi.fn<typeof Library.ArtistDetail>(),
+    Tracks: vi.fn<typeof Library.Tracks>(),
+    Search: vi.fn<typeof Library.Search>(),
+    Lyric: vi.fn<typeof Library.Lyric>(),
+  },
 }));
+
+/** Stand in for the Wails webview: the provider gates every read on it. */
+function enterDesktopShell(): void {
+  (window as unknown as { _wails: object })._wails = { environment: { OS: "darwin" } };
+}
+
+function leaveDesktopShell(): void {
+  delete (window as unknown as { _wails?: object })._wails;
+}
 
 function track(over: Partial<LocalTrack> = {}): LocalTrack {
   return {
@@ -66,14 +78,11 @@ describe("LocalMusic — bridge present", () => {
   let provider: LocalMusic;
 
   beforeEach(() => {
-    // bridgeReady() gates every method on the Wails-injected `window.go`.
-    (window as unknown as { go: object }).go = {};
+    enterDesktopShell();
     provider = new LocalMusic();
   });
 
-  afterEach(() => {
-    delete (window as unknown as { go?: object }).go;
-  });
+  afterEach(leaveDesktopShell);
 
   it("registers only the context ports it actually implements", () => {
     expect(provider.name).toBe("Local");
@@ -96,13 +105,11 @@ describe("LocalMusic — bridge present", () => {
   });
 
   it("projects Home into a synthetic 'all tracks' playlist plus recent rows", async () => {
-    vi.mocked(Library.Home).mockResolvedValue(
-      backend.Home.createFrom({
-        recentTracks: [track({ id: "t1" }), track({ id: "t2" })],
-        albums: [album({ trackCount: 2 }), album({ id: "al2", trackCount: 3 })],
-        artists: [artist()],
-      }),
-    );
+    vi.mocked(Library.Home).mockResolvedValue({
+      recentTracks: [track({ id: "t1" }), track({ id: "t2" })],
+      albums: [album({ trackCount: 2 }), album({ id: "al2", trackCount: 3 })],
+      artists: [artist()],
+    });
 
     const home = await provider.personalized();
     expect(home.playlists).toEqual([
@@ -114,9 +121,7 @@ describe("LocalMusic — bridge present", () => {
   });
 
   it("emits no synthetic playlist when the library is empty", async () => {
-    vi.mocked(Library.Home).mockResolvedValue(
-      backend.Home.createFrom({ recentTracks: [], albums: [], artists: [] }),
-    );
+    vi.mocked(Library.Home).mockResolvedValue({ recentTracks: [], albums: [], artists: [] });
     expect((await provider.personalized()).playlists).toEqual([]);
   });
 
@@ -135,50 +140,42 @@ describe("LocalMusic — bridge present", () => {
   });
 
   it("assembles an album with its tracks, and returns undefined when missing", async () => {
-    vi.mocked(Library.AlbumDetail).mockResolvedValueOnce(
-      backend.AlbumDetailResult.createFrom({
-        status: "found",
-        detail: {
-          album: album({ id: "al1", name: "Album" }),
-          tracks: [track()],
-        },
-      }),
-    );
+    vi.mocked(Library.AlbumDetail).mockResolvedValueOnce({
+      status: LookupStatus.LookupFound,
+      detail: {
+        album: album({ id: "al1", name: "Album" }),
+        tracks: [track()],
+      },
+    });
     const found = await provider.albumDetail("al1");
     expect(found).toMatchObject({ id: "al1", name: "Album" });
     expect(found?.tracks).toHaveLength(1);
 
-    vi.mocked(Library.AlbumDetail).mockResolvedValueOnce(
-      backend.AlbumDetailResult.createFrom({
-        status: "notFound",
-        detail: { album: album({ id: "" }), tracks: [] },
-      }),
-    );
+    vi.mocked(Library.AlbumDetail).mockResolvedValueOnce({
+      status: LookupStatus.LookupNotFound,
+      detail: { album: album({ id: "" }), tracks: [] },
+    });
     expect(await provider.albumDetail("nope")).toBeUndefined();
   });
 
   it("assembles an artist with top tracks + albums, and returns undefined when missing", async () => {
-    vi.mocked(Library.ArtistDetail).mockResolvedValueOnce(
-      backend.ArtistDetailResult.createFrom({
-        status: "found",
-        detail: {
-          artist: artist({ id: "ar1", name: "Artist" }),
-          albums: [album()],
-          tracks: [track(), track({ id: "t2" })],
-        },
-      }),
-    );
+    vi.mocked(Library.ArtistDetail).mockResolvedValueOnce({
+      status: LookupStatus.LookupFound,
+      detail: {
+        artist: artist({ id: "ar1", name: "Artist" }),
+        albums: [album()],
+        tracks: [track(), track({ id: "t2" })],
+      },
+    });
     const found = await provider.artistDetail("ar1");
     expect(found).toMatchObject({ id: "ar1", name: "Artist" });
     expect(found?.topTracks).toHaveLength(2);
     expect(found?.albums).toHaveLength(1);
 
-    vi.mocked(Library.ArtistDetail).mockResolvedValueOnce(
-      backend.ArtistDetailResult.createFrom({
-        status: "notFound",
-        detail: { artist: artist({ id: "" }), albums: [], tracks: [] },
-      }),
-    );
+    vi.mocked(Library.ArtistDetail).mockResolvedValueOnce({
+      status: LookupStatus.LookupNotFound,
+      detail: { artist: artist({ id: "" }), albums: [], tracks: [] },
+    });
     expect(await provider.artistDetail("nope")).toBeUndefined();
   });
 
@@ -202,13 +199,11 @@ describe("LocalMusic — bridge present", () => {
   });
 
   it("searches the catalog and never reports playlists", async () => {
-    vi.mocked(Library.Search).mockResolvedValue(
-      backend.SearchResult.createFrom({
-        tracks: [track()],
-        albums: [album()],
-        artists: [artist()],
-      }),
-    );
+    vi.mocked(Library.Search).mockResolvedValue({
+      tracks: [track()],
+      albums: [album()],
+      artists: [artist()],
+    });
     const result = await provider.search("song");
     expect(result.tracks).toHaveLength(1);
     expect(result.albums).toHaveLength(1);
@@ -242,7 +237,7 @@ describe("LocalMusic — unavailable bridge (plain browser)", () => {
   let provider: LocalMusic;
 
   beforeEach(() => {
-    delete (window as unknown as { go?: object }).go;
+    leaveDesktopShell();
     provider = new LocalMusic();
   });
 

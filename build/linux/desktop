@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=PLANET
+Comment=沉浸式桌面音乐播放器
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/PLANET %u
+Terminal=false
+Type=Application
+Icon=PLANET
+Categories=Utility;
+StartupWMClass=PLANET
+
+ 

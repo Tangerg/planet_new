@@ -7,6 +7,8 @@ import (
 
 	"github.com/Tangerg/planet_new/backend/application"
 	"github.com/Tangerg/planet_new/backend/domain"
+
+	wails "github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // Library is the Wails-bound adapter over the application service: it converts
@@ -18,6 +20,15 @@ type Library struct {
 	urls    mediaURLs
 	ctxMu   sync.RWMutex
 	ctx     context.Context
+}
+
+// ServiceStartup is Wails' service lifecycle hook. It hands over a context that
+// stays valid for the whole application run and is cancelled just before
+// shutdown — exactly the request context the use cases need — so the adapter
+// captures it here instead of having a framework context threaded in from main.
+func (l *Library) ServiceStartup(ctx context.Context, _ wails.ServiceOptions) error {
+	l.attach(ctx)
+	return nil
 }
 
 func (l *Library) attach(ctx context.Context) {

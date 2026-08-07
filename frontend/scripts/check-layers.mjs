@@ -179,12 +179,21 @@ for (const [file, deps] of Object.entries(graph)) {
   ) {
     architectureViolations.push(`${file}: inner layer imports its own @contexts surface`);
   }
+  // The generated Go bridge: only the two adapters that own the Local Library
+  // seam may reach it. Everything else goes through their public functions.
   if (
-    /from\s+["']@wailsjs\//.test(source) &&
+    /from\s+["']@bindings\//.test(source) &&
     !file.startsWith("providers/local/") &&
     file !== "ui/infra/localLibrary.ts"
   ) {
     architectureViolations.push(`${file}: Wails import is outside an approved platform adapter`);
+  }
+  // The desktop runtime (window controls, dialogs, events) is a shell concern —
+  // it belongs to the UI's shell shim alone. Whether a Wails webview is hosting
+  // the page is a host fact, so that predicate lives in `@shared/desktop` and
+  // must be reached through it rather than re-sniffed from the runtime package.
+  if (/from\s+["']@wailsio\/runtime["']/.test(source) && file !== "ui/infra/wails.ts") {
+    architectureViolations.push(`${file}: imports the Wails runtime outside the shell shim`);
   }
   if (
     file.startsWith("core/") &&
@@ -226,7 +235,7 @@ for (const [file, deps] of Object.entries(graph)) {
     }
     if (
       file !== "ui/infra/localLibrary.ts" &&
-      /from\s+["']@wailsjs\/go\/backend\/Library["']/.test(source)
+      /from\s+["']@bindings\/github\.com\/Tangerg\/planet_new\/backend["']/.test(source)
     ) {
       architectureViolations.push(`${file}: bypasses the Local Library Wails adapter`);
     }
