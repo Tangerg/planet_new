@@ -40,3 +40,35 @@ jobs:
 
       - name: Run repository verification
         run: make check
+
+  # `frontend/bindings` is generated from the bound Go service but checked in, so
+  # the frontend gate needs no Go toolchain. That trade costs a guard: without
+  # this job a changed method signature or wire DTO would leave the frontend
+  # compiling happily against a contract the backend no longer speaks.
+  bindings:
+    name: bindings in sync
+    runs-on: macos-latest # the generator type-checks the darwin/cgo build of pkg/application
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      # Derived from go.mod rather than hard-coded: on a beta line the generator
+      # and the runtime it generates against have to be the same release.
+      - name: Install the Wails CLI pinned by go.mod
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3)
+
+      - name: Regenerate bindings
+        run: wails3 generate bindings -ts -i -clean=true -silent
+
+      - name: Fail if the checked-in bindings drifted
+        run: |
+          git diff --exit-code -- frontend/bindings || {
+            echo "::error file=frontend/bindings::Generated bindings are stale. Run 'make bindings' and commit the result."
+            exit 1
+          }

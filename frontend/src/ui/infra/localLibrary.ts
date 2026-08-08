@@ -7,7 +7,7 @@ import {
   type LocalLibraryScanResult,
 } from "@contexts/local-library";
 import { ProviderId } from "@contexts/contracts";
-import { isDesktopShell } from "./wails";
+import { isDesktopShell } from "@shared/desktop";
 
 /**
  * Desktop-shell adapter for the on-device music library — the Settings screen's

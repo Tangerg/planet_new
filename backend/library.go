@@ -2,64 +2,66 @@ package backend
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/Tangerg/planet_new/backend/application"
 	"github.com/Tangerg/planet_new/backend/domain"
-
-	wails "github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // Library is the Wails-bound adapter over the application service: it converts
 // string ids at the JS boundary, delegates each use case to the service, and
 // projects domain entities to wire DTOs (adding loopback URLs). The bound method
 // signatures + DTO shapes are the frontend contract, so they stay stable.
+//
+// Every bound method takes a context as its first parameter. Wails recognises
+// that shape, so it stays out of the generated TypeScript and the frontend never
+// passes one: what arrives is a context scoped to that single call, which Wails
+// cancels when the caller abandons its promise.
 type Library struct {
 	service *application.Service
 	urls    mediaURLs
-	ctxMu   sync.RWMutex
-	ctx     context.Context
+	// lifetime ends when the composition root starts tearing infrastructure
+	// down; see callScope for why a per-call context alone is not enough.
+	lifetime context.Context
 }
 
-// ServiceStartup is Wails' service lifecycle hook. It hands over a context that
-// stays valid for the whole application run and is cancelled just before
-// shutdown — exactly the request context the use cases need — so the adapter
-// captures it here instead of having a framework context threaded in from main.
-func (l *Library) ServiceStartup(ctx context.Context, _ wails.ServiceOptions) error {
-	l.attach(ctx)
-	return nil
+func newLibrary(lifetime context.Context, service *application.Service, urls mediaURLs) *Library {
+	return &Library{service: service, urls: urls, lifetime: lifetime}
 }
 
-func (l *Library) attach(ctx context.Context) {
-	l.ctxMu.Lock()
-	defer l.ctxMu.Unlock()
-	l.ctx = ctx
-}
-
-func (l *Library) requestContext() context.Context {
-	l.ctxMu.RLock()
-	defer l.ctxMu.RUnlock()
-	if l.ctx == nil {
-		return context.Background()
+// callScope binds one bound-method call to both cancellations that can end it:
+// the frontend abandoning the call, and the application shutting down.
+//
+// The link to lifetime is not redundant. Wails deliberately roots each call's
+// context away from the application's, and it only cancels a window's in-flight
+// calls after the shutdown hooks have run — by which point the catalog is
+// already closing. Without this, a scan caught by a quit would be abandoned
+// mid-transaction instead of rolling back.
+func (l *Library) callScope(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(l.lifetime, cancel)
+	return ctx, func() {
+		stop()
+		cancel()
 	}
-	return l.ctx
-}
-
-func newLibrary(service *application.Service, urls mediaURLs) *Library {
-	return &Library{service: service, urls: urls}
 }
 
 // ── scanning ─────────────────────────────────────────────────────────────────
 
-func (l *Library) PickFolder() (string, error) {
-	folder, err := l.service.PickFolder(l.requestContext())
+func (l *Library) PickFolder(ctx context.Context) (string, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
+	folder, err := l.service.PickFolder(ctx)
 	return folder, projectError("localLibrary.pickFolder", err)
 }
 
-func (l *Library) PickAndScan() (ScanResult, error) {
+func (l *Library) PickAndScan(ctx context.Context) (ScanResult, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	start := time.Now()
-	report, err := l.service.PickAndScan(l.requestContext())
+	report, err := l.service.PickAndScan(ctx)
 	if err != nil {
 		if application.Classify("", err).Code == application.ErrorCancelled {
 			return ScanResult{Status: ScanCancelled}, nil
@@ -69,9 +71,12 @@ func (l *Library) PickAndScan() (ScanResult, error) {
 	return scanResult(report, start), nil
 }
 
-func (l *Library) ScanFolder(folder string) (ScanResult, error) {
+func (l *Library) ScanFolder(ctx context.Context, folder string) (ScanResult, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	start := time.Now()
-	report, err := l.service.ScanFolder(l.requestContext(), folder)
+	report, err := l.service.ScanFolder(ctx, folder)
 	if err != nil {
 		if application.Classify("", err).Code == application.ErrorCancelled {
 			return ScanResult{Status: ScanCancelled}, nil
@@ -100,14 +105,20 @@ func scanResult(r application.ScanReport, start time.Time) ScanResult {
 
 // ── reads ────────────────────────────────────────────────────────────────────
 
-func (l *Library) TrackCount() (int, error) {
-	count, err := l.service.Count(l.requestContext())
+func (l *Library) TrackCount(ctx context.Context) (int, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
+	count, err := l.service.Count(ctx)
 	return count, projectError("localLibrary.trackCount", err)
 }
 
-func (l *Library) Home() (Home, error) {
+func (l *Library) Home(ctx context.Context) (Home, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	home := Home{RecentTracks: []Track{}, Albums: []Album{}, Artists: []Artist{}}
-	data, err := l.service.Home(l.requestContext())
+	data, err := l.service.Home(ctx)
 	if err != nil {
 		return home, projectError("localLibrary.home", err)
 	}
@@ -117,27 +128,39 @@ func (l *Library) Home() (Home, error) {
 	return home, nil
 }
 
-func (l *Library) AllTracks() ([]Track, error) {
-	tracks, err := l.service.AllTracks(l.requestContext())
+func (l *Library) AllTracks(ctx context.Context) ([]Track, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
+	tracks, err := l.service.AllTracks(ctx)
 	return l.urls.tracks(tracks), projectError("localLibrary.allTracks", err)
 }
 
-func (l *Library) Albums() ([]Album, error) {
-	albums, err := l.service.Albums(l.requestContext())
+func (l *Library) Albums(ctx context.Context) ([]Album, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
+	albums, err := l.service.Albums(ctx)
 	return l.urls.albums(albums), projectError("localLibrary.albums", err)
 }
 
-func (l *Library) Artists() ([]Artist, error) {
-	artists, err := l.service.Artists(l.requestContext())
+func (l *Library) Artists(ctx context.Context) ([]Artist, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
+	artists, err := l.service.Artists(ctx)
 	return l.urls.artists(artists), projectError("localLibrary.artists", err)
 }
 
-func (l *Library) AlbumDetail(id string) (AlbumDetailResult, error) {
+func (l *Library) AlbumDetail(ctx context.Context, id string) (AlbumDetailResult, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	albumID, err := domain.ParseAlbumID(id)
 	if err != nil {
 		return AlbumDetailResult{}, projectError("localLibrary.albumDetail", err)
 	}
-	detail, err := l.service.AlbumDetail(l.requestContext(), albumID)
+	detail, err := l.service.AlbumDetail(ctx, albumID)
 	if err != nil {
 		return AlbumDetailResult{}, projectError("localLibrary.albumDetail", err)
 	}
@@ -157,12 +180,15 @@ func albumDetailResult(detail *application.AlbumDetail, urls mediaURLs) AlbumDet
 	}
 }
 
-func (l *Library) ArtistDetail(id string) (ArtistDetailResult, error) {
+func (l *Library) ArtistDetail(ctx context.Context, id string) (ArtistDetailResult, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	artistID, err := domain.ParseArtistID(id)
 	if err != nil {
 		return ArtistDetailResult{}, projectError("localLibrary.artistDetail", err)
 	}
-	detail, err := l.service.ArtistDetail(l.requestContext(), artistID)
+	detail, err := l.service.ArtistDetail(ctx, artistID)
 	if err != nil {
 		return ArtistDetailResult{}, projectError("localLibrary.artistDetail", err)
 	}
@@ -186,7 +212,10 @@ func artistDetailResult(detail *application.ArtistDetail, urls mediaURLs) Artist
 	}
 }
 
-func (l *Library) Tracks(ids []string) ([]Track, error) {
+func (l *Library) Tracks(ctx context.Context, ids []string) ([]Track, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	tids := make([]domain.TrackID, len(ids))
 	for i, id := range ids {
 		parsed, err := domain.ParseTrackID(id)
@@ -195,13 +224,16 @@ func (l *Library) Tracks(ids []string) ([]Track, error) {
 		}
 		tids[i] = parsed
 	}
-	tracks, err := l.service.Tracks(l.requestContext(), tids)
+	tracks, err := l.service.Tracks(ctx, tids)
 	return l.urls.tracks(tracks), projectError("localLibrary.tracks", err)
 }
 
-func (l *Library) Search(query string) (SearchResult, error) {
+func (l *Library) Search(ctx context.Context, query string) (SearchResult, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	empty := SearchResult{Tracks: []Track{}, Albums: []Album{}, Artists: []Artist{}}
-	result, err := l.service.Search(l.requestContext(), query)
+	result, err := l.service.Search(ctx, query)
 	if err != nil {
 		return empty, projectError("localLibrary.search", err)
 	}
@@ -223,11 +255,14 @@ func (l *Library) StreamURL(raw string) string {
 
 // Lyric returns a track's raw sidecar lyric text (LRC), "" when it has none. The
 // frontend parses the LRC into timed lines, so no wire DTO is needed.
-func (l *Library) Lyric(id string) (string, error) {
+func (l *Library) Lyric(ctx context.Context, id string) (string, error) {
+	ctx, done := l.callScope(ctx)
+	defer done()
+
 	trackID, err := domain.ParseTrackID(id)
 	if err != nil {
 		return "", projectError("localLibrary.lyric", err)
 	}
-	lyric, err := l.service.Lyric(l.requestContext(), trackID)
+	lyric, err := l.service.Lyric(ctx, trackID)
 	return lyric, projectError("localLibrary.lyric", err)
 }

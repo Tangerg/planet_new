@@ -5,12 +5,12 @@ import { isDesktopShell } from "@shared/desktop";
 /**
  * Window-chrome actions for the frameless shell. Wails v3 exposes them as runtime
  * methods instead of the `window.runtime` global v2 injected, so this module is
- * the UI's one place that talks to the desktop runtime: the same views also run
- * in a plain `vite dev` tab, where every action must degrade to a no-op.
+ * the UI's one place that talks to the desktop runtime.
+ *
+ * Each action is gated on the host being the desktop shell: the same views also
+ * run in a plain `vite dev` tab, where the runtime's HTTP transport would reject
+ * and leave an unhandled rejection behind rather than simply doing nothing.
  */
-
-/** Re-exported so shell components need only one desktop-shell import. */
-export { isDesktopShell };
 
 /** Quit the application (the faux red traffic light). */
 export function quitApp(): void {

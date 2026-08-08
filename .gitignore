@@ -9,9 +9,10 @@ skills-lock.json
 
 # —— 构建产物 —— #
 # Wails v3 输出到仓库根的 bin/,并把 go-task 的状态放在 .task/。
-bin
-.task
-build/darwin/icons.icns
+# 前置 / 锚定到仓库根,避免顺带忽略任何嵌套的同名目录。
+/bin
+/.task
+/build/darwin/icons.icns
 build/linux/appimage/build
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 frontend/dist

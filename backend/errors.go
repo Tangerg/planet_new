@@ -3,17 +3,27 @@ package backend
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/Tangerg/planet_new/backend/application"
 )
 
-// wireErrorPrefix marks a machine-readable Wails error. The payload deliberately
-// excludes the internal cause; frontend adapters parse only code + operation.
-const wireErrorPrefix = "PLANET_ERROR:"
-
-type wireErrorPayload struct {
+// wireError is the only error shape allowed to cross the JS bridge. It carries
+// the classified code + operation and deliberately drops the internal cause, so
+// SQLite text and filesystem paths never leave the process.
+//
+// The split between its two halves matters. Error() is for humans: Wails uses it
+// as the rejection's message, which is what ends up in logs and devtools. The
+// machine-readable payload travels separately, through the structured `cause`
+// channel — see marshalWireError. Frontend adapters read the payload; nothing
+// parses the message.
+type wireError struct {
 	Code      application.ErrorCode `json:"code"`
 	Operation string                `json:"operation"`
+}
+
+func (e *wireError) Error() string {
+	return fmt.Sprintf("local library %s failed (%s)", e.Operation, e.Code)
 }
 
 func projectError(operation string, err error) error {
@@ -21,11 +31,22 @@ func projectError(operation string, err error) error {
 		return nil
 	}
 	classified := application.Classify(operation, err)
-	payload, marshalErr := json.Marshal(wireErrorPayload{
-		Code: classified.Code, Operation: classified.Operation,
-	})
-	if marshalErr != nil {
-		return errors.New(wireErrorPrefix + `{"code":"failed","operation":"wire.error"}`)
+	return &wireError{Code: classified.Code, Operation: classified.Operation}
+}
+
+// marshalWireError is wired to the bound service's MarshalError hook: whatever
+// it returns becomes the `cause` of the promise rejection the frontend sees.
+// Returning nil for anything that is not a wireError falls back to Wails'
+// default marshalling, so an unclassified failure (a framework-level error, a
+// projection we forgot) cannot be mistaken for a stable application code.
+func marshalWireError(err error) []byte {
+	var wire *wireError
+	if !errors.As(err, &wire) {
+		return nil
 	}
-	return errors.New(wireErrorPrefix + string(payload))
+	payload, marshalErr := json.Marshal(wire)
+	if marshalErr != nil {
+		return nil
+	}
+	return payload
 }

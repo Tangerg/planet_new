@@ -66,17 +66,16 @@ func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	service := application.NewService(catalog, scan.New(coversDir), nil, scan.SidecarLyrics{}, e2eClock{})
-	library := newLibrary(service, mediaURLs{base: "http://127.0.0.1:9999"})
-	library.attach(ctx)
+	library := newLibrary(ctx, service, mediaURLs{base: "http://127.0.0.1:9999"})
 
-	result, err := library.ScanFolder(musicDir)
+	result, err := library.ScanFolder(ctx, musicDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.Status != ScanComplete || result.Scanned != 1 || result.Added != 1 || result.Total != 1 {
 		t.Fatalf("scan result = %+v, want complete 1/1/1", result)
 	}
-	home, err := library.Home()
+	home, err := library.Home(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +86,7 @@ func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 	if track.Title != "journey" || track.DurationMs != 1000 || track.PlayURL == "" {
 		t.Fatalf("projected track = %+v", track)
 	}
-	lyric, err := library.Lyric(track.ID)
+	lyric, err := library.Lyric(ctx, track.ID)
 	if err != nil || lyric != "[00:00.00]hello" {
 		t.Fatalf("lyric = %q, %v", lyric, err)
 	}
@@ -95,7 +94,7 @@ func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 	if err := catalog.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := library.Home(); err == nil {
+	if _, err := library.Home(ctx); err == nil {
 		t.Fatal("library remained readable after its catalog owner closed")
 	}
 }

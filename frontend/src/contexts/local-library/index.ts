@@ -10,8 +10,6 @@ export const LocalLibraryErrorCode = {
 export type LocalLibraryErrorCode =
   (typeof LocalLibraryErrorCode)[keyof typeof LocalLibraryErrorCode];
 
-const WIRE_ERROR_PREFIX = "PLANET_ERROR:";
-
 export class LocalLibraryError extends Error {
   constructor(
     readonly code: LocalLibraryErrorCode,
@@ -30,28 +28,31 @@ export class LocalLibraryUnavailableError extends LocalLibraryError {
   }
 }
 
-function isErrorCode(value: unknown): value is LocalLibraryErrorCode {
-  return Object.values(LocalLibraryErrorCode).includes(value as LocalLibraryErrorCode);
+/** The Go side's classified failure, as it arrives on a rejection's `cause`. */
+type WireErrorPayload = { code: LocalLibraryErrorCode; operation: string };
+
+function isWireErrorPayload(value: unknown): value is WireErrorPayload {
+  if (typeof value !== "object" || value === null) return false;
+  const { code, operation } = value as Record<string, unknown>;
+  return (
+    typeof operation === "string" &&
+    Object.values(LocalLibraryErrorCode).includes(code as LocalLibraryErrorCode)
+  );
 }
 
-/** Convert Wails' rejected Go error into the stable local-library error type. */
+/**
+ * Convert Wails' rejected Go error into the stable local-library error type.
+ *
+ * The classified `code + operation` rides on the rejection's `cause`, which is
+ * the channel the Go service's error marshaller writes to; the message stays
+ * human-readable and is never parsed. Anything without a well-formed payload —
+ * a framework failure, a transport error, a shape we do not recognise — fails
+ * closed as a generic failure rather than being guessed at.
+ */
 export function toLocalLibraryError(error: unknown): LocalLibraryError {
   if (error instanceof LocalLibraryError) return error;
-  const message = error instanceof Error ? error.message : String(error);
-  const prefixAt = message.indexOf(WIRE_ERROR_PREFIX);
-  if (prefixAt >= 0) {
-    try {
-      const payload = JSON.parse(message.slice(prefixAt + WIRE_ERROR_PREFIX.length)) as {
-        code?: unknown;
-        operation?: unknown;
-      };
-      if (isErrorCode(payload.code) && typeof payload.operation === "string") {
-        return new LocalLibraryError(payload.code, payload.operation);
-      }
-    } catch {
-      // Malformed bridge data is projected as a generic failure below.
-    }
-  }
+  const cause: unknown = error instanceof Error ? error.cause : undefined;
+  if (isWireErrorPayload(cause)) return new LocalLibraryError(cause.code, cause.operation);
   return new LocalLibraryError("failed", "bridge");
 }
 

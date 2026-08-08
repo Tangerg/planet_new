@@ -22,6 +22,11 @@ function scan(over: Partial<ScanResult> = {}): ScanResult {
   };
 }
 
+/** A rejection shaped the way Wails delivers a classified Go error. */
+function bridgeRejection(code: string, operation: string): Error {
+  return new Error(`local library ${operation} failed (${code})`, { cause: { code, operation } });
+}
+
 /** Stand in for the Wails webview: the adapter gates every call on it. */
 function enterDesktopShell(): void {
   (window as unknown as { _wails: object })._wails = { environment: { OS: "darwin" } };
@@ -66,15 +71,9 @@ describe("Local Library Wails adapter", () => {
   it("maps stable cancelled/unavailable bridge errors and preserves real failures", async () => {
     enterDesktopShell();
     vi.mocked(Library.PickAndScan)
-      .mockRejectedValueOnce(
-        new Error('PLANET_ERROR:{"code":"cancelled","operation":"localLibrary.pickAndScan"}'),
-      )
-      .mockRejectedValueOnce(
-        new Error('PLANET_ERROR:{"code":"unavailable","operation":"localLibrary.pickAndScan"}'),
-      )
-      .mockRejectedValueOnce(
-        new Error('PLANET_ERROR:{"code":"failed","operation":"localLibrary.pickAndScan"}'),
-      );
+      .mockRejectedValueOnce(bridgeRejection("cancelled", "localLibrary.pickAndScan"))
+      .mockRejectedValueOnce(bridgeRejection("unavailable", "localLibrary.pickAndScan"))
+      .mockRejectedValueOnce(bridgeRejection("failed", "localLibrary.pickAndScan"));
 
     await expect(scanLocalFolder()).resolves.toEqual({ status: "cancelled" });
     await expect(scanLocalFolder()).resolves.toEqual({ status: "unavailable" });

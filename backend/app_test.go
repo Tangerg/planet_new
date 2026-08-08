@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Tangerg/planet_new/backend/application"
 	"github.com/Tangerg/planet_new/backend/media"
 	"github.com/Tangerg/planet_new/backend/sqlite"
 )
@@ -63,5 +64,34 @@ func TestAppShutdownClosesMediaBeforeCatalogAndIsIdempotent(t *testing.T) {
 	if resp, err := client.Get(baseURL + "/media/0123456789abcdef"); err == nil {
 		resp.Body.Close()
 		t.Fatal("media listener still accepted requests after app shutdown")
+	}
+}
+
+// Shutdown has to reach work that is already running, not just close resources:
+// a scan caught by a quit must be cancelled so it rolls its transaction back
+// instead of writing into a catalog that is closing underneath it.
+func TestAppShutdownEndsTheWorkLifetimeBeforeClosingInfrastructure(t *testing.T) {
+	infra, err := openInfra(context.Background(), t.TempDir(), media.Start)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lifetime, stopWork := context.WithCancel(context.Background())
+	service := application.NewService(infra.catalog, infra.scanner, nil, nil, wallClock{})
+	library := newLibrary(lifetime, service, mediaURLs{})
+	app := &App{library: library, infra: infra, stopWork: stopWork}
+
+	inFlight, done := library.callScope(context.Background())
+	defer done()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := app.shutdown(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-inFlight.Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("shutdown closed infrastructure without cancelling in-flight bound calls")
 	}
 }

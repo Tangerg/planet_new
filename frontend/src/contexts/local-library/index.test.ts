@@ -8,6 +8,11 @@ import {
 } from ".";
 import type { LocalLibraryScanOutcome } from ".";
 
+/** A rejection shaped the way Wails delivers a classified Go error. */
+function bridgeRejection(code: string, operation: string): Error {
+  return new Error(`local library ${operation} failed (${code})`, { cause: { code, operation } });
+}
+
 describe("Local Library Context public API", () => {
   it("exposes explicit scan outcomes", () => {
     expectTypeOf<LocalLibraryScanOutcome["status"]>().toEqualTypeOf<
@@ -20,9 +25,7 @@ describe("Local Library Context public API", () => {
   });
 
   it("projects stable Wails errors without exposing backend cause text", async () => {
-    const error = toLocalLibraryError(
-      new Error('PLANET_ERROR:{"code":"unavailable","operation":"localLibrary.home"}'),
-    );
+    const error = toLocalLibraryError(bridgeRejection("unavailable", "localLibrary.home"));
     expect(error).toBeInstanceOf(LocalLibraryError);
     expect(error).toMatchObject({
       code: LocalLibraryErrorCode.unavailable,
@@ -31,24 +34,28 @@ describe("Local Library Context public API", () => {
     expect(error.message).not.toContain("sqlite");
 
     await expect(
-      localLibraryCall(
-        Promise.reject(
-          new Error('PLANET_ERROR:{"code":"cancelled","operation":"localLibrary.scan"}'),
-        ),
-      ),
+      localLibraryCall(Promise.reject(bridgeRejection("cancelled", "localLibrary.scan"))),
     ).rejects.toMatchObject({ code: "cancelled", operation: "localLibrary.scan" });
 
     expect(
-      toLocalLibraryError(
-        new Error('PLANET_ERROR:{"code":"invalidArgument","operation":"localLibrary.albumDetail"}'),
-      ),
+      toLocalLibraryError(bridgeRejection("invalidArgument", "localLibrary.albumDetail")),
     ).toMatchObject({ code: "invalidArgument", operation: "localLibrary.albumDetail" });
   });
 
-  it("fails closed when a bridge error is malformed", () => {
-    expect(toLocalLibraryError(new Error("raw sqlite failure"))).toMatchObject({
-      code: "failed",
-      operation: "bridge",
-    });
+  it("fails closed for anything that is not a classified payload", () => {
+    const failed = { code: "failed", operation: "bridge" };
+    // A transport failure: never reached Go, so it carries no cause at all.
+    expect(toLocalLibraryError(new Error("Failed to fetch"))).toMatchObject(failed);
+    // An unclassified Go error: Wails' default marshaller yields no payload.
+    expect(toLocalLibraryError(new Error("boom", { cause: {} }))).toMatchObject(failed);
+    // A code the frontend contract does not know must not be trusted through.
+    expect(
+      toLocalLibraryError(new Error("boom", { cause: { code: "teapot", operation: "x" } })),
+    ).toMatchObject(failed);
+    // Message text is never parsed, so a lookalike message proves nothing.
+    expect(
+      toLocalLibraryError(new Error('{"code":"unavailable","operation":"localLibrary.home"}')),
+    ).toMatchObject(failed);
+    expect(toLocalLibraryError("not an error at all")).toMatchObject(failed);
   });
 });

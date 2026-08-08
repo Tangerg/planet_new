@@ -98,6 +98,6 @@
 ## 6 · 工作流
 
 - **开发**:在仓库根 `wails3 dev`(自动起 vite + Go;需 `PATH` 含 `/usr/local/go/bin` 与 `~/go/bin`)。配套 NCM API(`VITE_NETEASE_HOST`,默认 provider)/ QQ API(`~/Desktop/qq-music-api` 跑 `yarn dev`,:3200);后端没起时 provider 取数失败,相关屏显示诚实空态(无 mock 兜底,起真实后端才有数据)。
-- **Go↔JS 绑定**:`frontend/bindings/` 由 `wails3 generate bindings` 生成并**入库**(前端门禁因此不需要 Go 工具链)。改了 `backend` 的绑定方法签名或 wire DTO,**必须**跑 `make bindings` 并把结果一起提交,否则前端拿到的是过期契约。别手改生成物。
+- **Go↔JS 绑定**:`frontend/bindings/` 由 `wails3 generate bindings` 生成并**入库**(前端门禁因此不需要 Go 工具链)。改了 `backend` 的绑定方法签名或 wire DTO,跑 `make bindings` 并把结果一起提交(CI 有 drift job 兜底,漏了会红)。别手改生成物。Go 侧绑定方法**第一个参数是 `context.Context`**——Wails 认这个形状、不会生成到 TS 里,前端调用签名不变;错误经 service 的 MarshalError 挂在 rejection 的 `cause` 上,前端读结构化 payload,**不解析 message 文本**。
 - **质量门禁**:仓库根目录统一跑 `make check`(Go vet/race + 前端聚合检查 + production build)。只验证前端时在 `frontend/` 跑 `yarn run check`;必须带 `run`,因为 `yarn check` 是 Yarn Classic 自带命令。前端聚合包含 typecheck / lint / format / test / knip / layer / circular。全绿才往下走。会漂的数字直接跑命令查,不硬编码。**husky + lint-staged 预提交**会对暂存的 `.ts/.tsx` 跑 prettier + oxlint `--deny-warnings` —— 所以**碰任何一屏(哪怕只改一行)都会触发该文件全量 lint**,需连带消化它的告警;vibe 屏(尤以 `Shell.tsx` morph 引擎、`XMB.tsx` 方向键导航)仍有成片 jsx-a11y / exhaustive-deps 旧债,逐屏迁移时一并清(exhaustive-deps 用带说明的局部 disable,不盲改依赖)。
 - **沟通约定**:中文回复(用户偏好),代码 / 注释保持英文;破坏性 / 结构性改动前先算爆炸半径(grep 消费方)+ 给方案 + 权衡,等确认再动;commit message 写清 _why_,commit trailer 用 `Co-Authored-By: Claude <当前实际模型名> <noreply@anthropic.com>`(署名以实际生成该 commit 的模型为准)。

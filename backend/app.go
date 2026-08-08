@@ -29,12 +29,16 @@ const shutdownTimeout = 5 * time.Second
 // The SQLite catalog also satisfies the media server's Source port.
 var _ media.Source = (*sqlite.Catalog)(nil)
 
-// App is the backend composition root: it owns the runtime-context lifecycle and
-// exposes the bound Library adapter to Wails.
+// App is the backend composition root: it owns the native resources and the
+// lifetime of the work that uses them, and exposes the bound Library adapter to
+// Wails.
 type App struct {
-	picker       *wailsFolderPicker
-	library      *Library
-	infra        *runtimeInfra
+	picker  *wailsFolderPicker
+	library *Library
+	infra   *runtimeInfra
+	// stopWork ends the lifetime handed to the Library, cancelling in-flight
+	// bound calls before their infrastructure is torn down underneath them.
+	stopWork     context.CancelFunc
 	shutdownMu   sync.Mutex
 	shutdownDone bool
 }
@@ -77,6 +81,7 @@ func (wallClock) Now() time.Time { return time.Now() }
 // library inert (empty results / graceful errors) rather than aborting startup.
 func New() *App {
 	picker := &wailsFolderPicker{}
+	lifetime, stopWork := context.WithCancel(context.Background())
 
 	dataDir, err := defaultDataDir()
 	var infra *runtimeInfra
@@ -96,9 +101,10 @@ func New() *App {
 	}
 
 	return &App{
-		picker:  picker,
-		library: newLibrary(service, mediaURLs{base: mediaBase, streamProxy: streamProxy}),
-		infra:   infra,
+		picker:   picker,
+		library:  newLibrary(lifetime, service, mediaURLs{base: mediaBase, streamProxy: streamProxy}),
+		infra:    infra,
+		stopWork: stopWork,
 	}
 }
 
@@ -121,6 +127,12 @@ func (a *App) shutdown(ctx context.Context) error {
 	if a.shutdownDone {
 		return nil
 	}
+	// Stop in-flight bound calls first. They hold the catalog and the media
+	// server, so tearing those down underneath a running scan would abandon its
+	// transaction instead of rolling it back.
+	if a.stopWork != nil {
+		a.stopWork()
+	}
 	if err := a.infra.shutdown(ctx); err != nil {
 		return err
 	}
@@ -129,9 +141,14 @@ func (a *App) shutdown(ctx context.Context) error {
 }
 
 // Services is the set of instances exposed to the frontend over the JS bridge.
-// Only the Library adapter is registered (the App/picker are internal wiring);
-// it takes its request context from Wails via ServiceStartup.
-func (a *App) Services() []wails.Service { return []wails.Service{wails.NewService(a.library)} }
+// Only the Library adapter is registered (the App/picker are internal wiring).
+// Its errors are marshalled by marshalWireError, which is what puts the stable
+// code + operation on the `cause` of the promise the frontend sees.
+func (a *App) Services() []wails.Service {
+	return []wails.Service{
+		wails.NewServiceWithOptions(a.library, wails.ServiceOptions{MarshalError: marshalWireError}),
+	}
+}
 
 func defaultDataDir() (string, error) {
 	base, err := os.UserConfigDir()

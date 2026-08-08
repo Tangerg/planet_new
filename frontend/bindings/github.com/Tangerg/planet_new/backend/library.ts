@@ -6,6 +6,11 @@
  * string ids at the JS boundary, delegates each use case to the service, and
  * projects domain entities to wire DTOs (adding loopback URLs). The bound method
  * signatures + DTO shapes are the frontend contract, so they stay stable.
+ * 
+ * Every bound method takes a context as its first parameter. Wails recognises
+ * that shape, so it stays out of the generated TypeScript and the frontend never
+ * passes one: what arrives is a context scoped to that single call, which Wails
+ * cancels when the caller abandons its promise.
  * @module
  */
 

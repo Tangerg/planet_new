@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -11,15 +12,15 @@ import (
 
 func TestLibraryProjectsUnavailableAsStableWireError(t *testing.T) {
 	service := application.NewService(nil, nil, nil, nil, wallClock{})
-	library := newLibrary(service, mediaURLs{})
+	library := newLibrary(context.Background(), service, mediaURLs{})
 
-	_, err := library.Home()
+	_, err := library.Home(context.Background())
 	if err == nil {
 		t.Fatal("Home unexpectedly succeeded with unavailable infrastructure")
 	}
-	want := `PLANET_ERROR:{"code":"unavailable","operation":"localLibrary.home"}`
-	if err.Error() != want {
-		t.Fatalf("Home wire error = %q, want %q", err, want)
+	want := `{"code":"unavailable","operation":"localLibrary.home"}`
+	if got := wirePayload(t, err); got != want {
+		t.Fatalf("Home wire payload = %s, want %s", got, want)
 	}
 	if strings.Contains(err.Error(), "sqlite") {
 		t.Fatal("Home wire error leaked infrastructure details")
@@ -28,26 +29,27 @@ func TestLibraryProjectsUnavailableAsStableWireError(t *testing.T) {
 
 func TestLibraryRejectsMalformedEntityIDsAtTheWireBoundary(t *testing.T) {
 	service := application.NewService(nil, nil, nil, nil, wallClock{})
-	library := newLibrary(service, mediaURLs{})
+	library := newLibrary(context.Background(), service, mediaURLs{})
+	ctx := context.Background()
 	tests := []struct {
 		name      string
 		operation string
 		call      func() error
 	}{
 		{name: "album", operation: "localLibrary.albumDetail", call: func() error {
-			_, err := library.AlbumDetail("album")
+			_, err := library.AlbumDetail(ctx, "album")
 			return err
 		}},
 		{name: "artist", operation: "localLibrary.artistDetail", call: func() error {
-			_, err := library.ArtistDetail("artist")
+			_, err := library.ArtistDetail(ctx, "artist")
 			return err
 		}},
 		{name: "tracks", operation: "localLibrary.tracks", call: func() error {
-			_, err := library.Tracks([]string{"0123456789abcdef", "broken"})
+			_, err := library.Tracks(ctx, []string{"0123456789abcdef", "broken"})
 			return err
 		}},
 		{name: "lyric", operation: "localLibrary.lyric", call: func() error {
-			_, err := library.Lyric("track")
+			_, err := library.Lyric(ctx, "track")
 			return err
 		}},
 	}
@@ -55,9 +57,12 @@ func TestLibraryRejectsMalformedEntityIDsAtTheWireBoundary(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.call()
-			want := `PLANET_ERROR:{"code":"invalidArgument","operation":"` + test.operation + `"}`
-			if err == nil || err.Error() != want {
-				t.Fatalf("wire validation error = %v, want %s", err, want)
+			if err == nil {
+				t.Fatal("malformed id was accepted at the wire boundary")
+			}
+			want := `{"code":"invalidArgument","operation":"` + test.operation + `"}`
+			if got := wirePayload(t, err); got != want {
+				t.Fatalf("wire validation payload = %s, want %s", got, want)
 			}
 		})
 	}
@@ -115,4 +120,41 @@ func TestDetailResultsProjectExplicitLookupStatus(t *testing.T) {
 	if foundArtist.Status != LookupFound || foundArtist.Detail.Artist.ID != "artist" || len(foundArtist.Detail.Albums) != 1 {
 		t.Fatalf("found artist result = %+v, want found detail", foundArtist)
 	}
+}
+
+// A bound call has two ways to end: the frontend abandoning it (Wails cancels
+// the per-call context) and the application shutting down. callScope must honour
+// both, because Wails roots per-call contexts away from the application's and
+// only cancels a window's calls after the shutdown hooks have already run.
+func TestCallScopeEndsWithEitherTheCallOrTheApplication(t *testing.T) {
+	awaitDone := func(t *testing.T, ctx context.Context, what string) {
+		t.Helper()
+		select {
+		case <-ctx.Done():
+		case <-time.After(2 * time.Second):
+			t.Fatalf("call scope outlived %s", what)
+		}
+	}
+
+	t.Run("application shutdown", func(t *testing.T) {
+		lifetime, stopWork := context.WithCancel(context.Background())
+		library := newLibrary(lifetime, application.NewService(nil, nil, nil, nil, wallClock{}), mediaURLs{})
+
+		scoped, done := library.callScope(context.Background())
+		defer done()
+
+		stopWork()
+		awaitDone(t, scoped, "the application lifetime")
+	})
+
+	t.Run("abandoned call", func(t *testing.T) {
+		library := newLibrary(context.Background(), application.NewService(nil, nil, nil, nil, wallClock{}), mediaURLs{})
+
+		call, abandon := context.WithCancel(context.Background())
+		scoped, done := library.callScope(call)
+		defer done()
+
+		abandon()
+		awaitDone(t, scoped, "its own call")
+	})
 }
