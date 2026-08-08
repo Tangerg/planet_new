@@ -14,10 +14,17 @@ import (
 type wailsFolderPicker struct{}
 
 func (p *wailsFolderPicker) Pick(_ context.Context) (string, error) {
-	// A cancelled dialog resolves to "" with no error — the use case reads that
-	// empty path as "user cancelled".
-	return wails.Get().Dialog.OpenFileWithOptions(&wails.OpenFileDialogOptions{
+	dialog := wails.Get().Dialog.OpenFileWithOptions(&wails.OpenFileDialogOptions{
 		Title:                "选择音乐文件夹",
 		CanChooseDirectories: true,
-	}).PromptForSingleSelection()
+	})
+	// Attaching makes the panel a sheet that drops from the window instead of a
+	// detached app-modal box — the presentation v2 gave us for free, and the only
+	// one that reads right against a frameless, chrome-less shell.
+	if window := wails.Get().Window.Current(); window != nil {
+		dialog = dialog.AttachToWindow(window)
+	}
+	// A cancelled dialog resolves to "" with no error — the use case reads that
+	// empty path as "user cancelled".
+	return dialog.PromptForSingleSelection()
 }

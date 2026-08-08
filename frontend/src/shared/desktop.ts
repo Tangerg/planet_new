@@ -29,6 +29,11 @@ const DESKTOP_PLATFORMS = new Set(["darwin", "windows", "linux"]);
  *  - The platform IPC handle is installed on the webview's configuration before
  *    the document loads, so it is the reliable signal during that early window.
  *    It is absent in a browser, which is exactly the case we want to detect.
+ *
+ * The handle only proves "some native webview", not "a desktop one" — a mobile
+ * webview would read as true until the config lands and corrects it. That gap is
+ * unreachable here: the app ships desktop-only (see the build targets), and the
+ * fallback exists precisely for the window where nothing better is knowable.
  */
 export function isDesktopShell(): boolean {
   if (typeof window === "undefined") return false;

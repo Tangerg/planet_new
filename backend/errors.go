@@ -22,8 +22,10 @@ type wireError struct {
 	Operation string                `json:"operation"`
 }
 
+// The operation is already namespaced (`localLibrary.home`), so it carries the
+// subsystem on its own — prefixing it again only stutters in the log line.
 func (e *wireError) Error() string {
-	return fmt.Sprintf("local library %s failed (%s)", e.Operation, e.Code)
+	return fmt.Sprintf("%s failed (%s)", e.Operation, e.Code)
 }
 
 func projectError(operation string, err error) error {

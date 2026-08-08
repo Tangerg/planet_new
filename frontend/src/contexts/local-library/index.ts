@@ -14,7 +14,9 @@ export class LocalLibraryError extends Error {
   constructor(
     readonly code: LocalLibraryErrorCode,
     readonly operation: string,
-    message = `Local library ${operation} failed (${code})`,
+    // The operation is already namespaced (`localLibrary.home`); prefixing the
+    // subsystem again only stutters. `bridge` names the shell-level failures.
+    message = `${operation} failed (${code})`,
   ) {
     super(message);
     this.name = "LocalLibraryError";

@@ -13,8 +13,9 @@ import (
 // projects domain entities to wire DTOs (adding loopback URLs). The bound method
 // signatures + DTO shapes are the frontend contract, so they stay stable.
 //
-// Every bound method takes a context as its first parameter. Wails recognises
-// that shape, so it stays out of the generated TypeScript and the frontend never
+// Every bound method that reaches a use case takes a context as its first
+// parameter (StreamURL does not: it only rewrites a URL). Wails recognises that
+// shape, so it stays out of the generated TypeScript and the frontend never
 // passes one: what arrives is a context scoped to that single call, which Wails
 // cancels when the caller abandons its promise.
 type Library struct {

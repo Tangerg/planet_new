@@ -16,8 +16,12 @@ func main() {
 	shell := backend.New()
 
 	app := application.New(application.Options{
-		Name:     "PLANET",
-		Services: shell.Services(),
+		Name: "PLANET",
+		// Shown in the About box of the menu v3 installs by default — which is
+		// also what keeps Cmd+Q/W and clipboard shortcuts alive in a window that
+		// has no chrome of its own.
+		Description: "沉浸式桌面音乐播放器",
+		Services:    shell.Services(),
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},

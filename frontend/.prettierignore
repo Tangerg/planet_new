@@ -1,7 +1,7 @@
-dist
-node_modules
-coverage
-.tanstack
-example
-bindings
+/dist
+/node_modules
+/coverage
+/.tanstack
+/example
+/bindings
 *.md
