@@ -1,4 +1,4 @@
-import { Application, Window } from "@wailsio/runtime";
+import { Window } from "@wailsio/runtime";
 
 import { isDesktopShell } from "@shared/desktop";
 
@@ -12,9 +12,16 @@ import { isDesktopShell } from "@shared/desktop";
  * and leave an unhandled rejection behind rather than simply doing nothing.
  */
 
-/** Quit the application (the faux red traffic light). */
-export function quitApp(): void {
-  if (isDesktopShell()) void Application.Quit();
+/**
+ * Close the current window (the faux red traffic light).
+ *
+ * Window-scoped, not `Application.Quit()`: a window control should act on its
+ * own window. It still ends the app today because this is the only window and
+ * every platform quits when the last one closes — but the day a second window
+ * exists, quitting the whole app from one window's close button would be wrong.
+ */
+export function closeWindow(): void {
+  if (isDesktopShell()) void Window.Close();
 }
 
 /** Minimise the current window (the faux yellow traffic light). */

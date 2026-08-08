@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 import { Equalizer } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
-import { minimiseWindow, quitApp, toggleMaximiseWindow } from "@/infra/wails";
+import { closeWindow, minimiseWindow, toggleMaximiseWindow } from "@/infra/wails";
 
 type Props = {
   showTools: boolean;
@@ -42,7 +42,7 @@ export function ShellWindowChrome({
       <div className="traffic" style={noDragStyle}>
         {(
           [
-            ["r", t("common.close"), quitApp],
+            ["r", t("common.close"), closeWindow],
             ["y", "Minimise", minimiseWindow],
             ["g", "Maximise", toggleMaximiseWindow],
           ] as const
