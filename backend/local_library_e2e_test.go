@@ -43,6 +43,12 @@ func mustWriteE2EBinary(buffer *bytes.Buffer, order binary.ByteOrder, value any)
 	}
 }
 
+// e2eFolderPicker stands in for the native dialog so the test can drive the real
+// bound entry point (PickAndScan) rather than a step of it.
+type e2eFolderPicker struct{ folder string }
+
+func (p e2eFolderPicker) Pick(context.Context) (string, error) { return p.folder, nil }
+
 func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 	ctx := context.Background()
 	root := t.TempDir()
@@ -65,10 +71,11 @@ func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	service := application.NewService(catalog, scan.New(coversDir), nil, scan.SidecarLyrics{}, e2eClock{})
+	picker := e2eFolderPicker{folder: musicDir}
+	service := application.NewService(catalog, scan.New(coversDir), picker, scan.SidecarLyrics{}, e2eClock{})
 	library := newLibrary(ctx, service, mediaURLs{base: "http://127.0.0.1:9999"})
 
-	result, err := library.ScanFolder(ctx, musicDir)
+	result, err := library.PickAndScan(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

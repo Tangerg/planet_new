@@ -27,20 +27,12 @@ export function AlbumDetail(id: string): $CancellablePromise<$models.AlbumDetail
     return $Call.ByID(2463934050, id);
 }
 
-export function Albums(): $CancellablePromise<$models.Album[] | null> {
-    return $Call.ByID(3963836480);
-}
-
 export function AllTracks(): $CancellablePromise<$models.Track[] | null> {
     return $Call.ByID(1801758375);
 }
 
 export function ArtistDetail(id: string): $CancellablePromise<$models.ArtistDetailResult> {
     return $Call.ByID(3681162230, id);
-}
-
-export function Artists(): $CancellablePromise<$models.Artist[] | null> {
-    return $Call.ByID(1676284652);
 }
 
 export function Home(): $CancellablePromise<$models.Home> {
@@ -59,14 +51,6 @@ export function PickAndScan(): $CancellablePromise<$models.ScanResult> {
     return $Call.ByID(2592932683);
 }
 
-export function PickFolder(): $CancellablePromise<string> {
-    return $Call.ByID(3590645);
-}
-
-export function ScanFolder(folder: string): $CancellablePromise<$models.ScanResult> {
-    return $Call.ByID(2632166285, folder);
-}
-
 export function Search(query: string): $CancellablePromise<$models.SearchResult> {
     return $Call.ByID(1519698040, query);
 }
@@ -80,10 +64,6 @@ export function Search(query: string): $CancellablePromise<$models.SearchResult>
  */
 export function StreamURL(raw: string): $CancellablePromise<string> {
     return $Call.ByID(3193510517, raw);
-}
-
-export function TrackCount(): $CancellablePromise<number> {
-    return $Call.ByID(3878811754);
 }
 
 export function Tracks(ids: string[] | null): $CancellablePromise<$models.Track[] | null> {

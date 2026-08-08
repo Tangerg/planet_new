@@ -49,14 +49,6 @@ func (l *Library) callScope(ctx context.Context) (context.Context, context.Cance
 
 // ── scanning ─────────────────────────────────────────────────────────────────
 
-func (l *Library) PickFolder(ctx context.Context) (string, error) {
-	ctx, done := l.callScope(ctx)
-	defer done()
-
-	folder, err := l.service.PickFolder(ctx)
-	return folder, projectError("localLibrary.pickFolder", err)
-}
-
 func (l *Library) PickAndScan(ctx context.Context) (ScanResult, error) {
 	ctx, done := l.callScope(ctx)
 	defer done()
@@ -68,21 +60,6 @@ func (l *Library) PickAndScan(ctx context.Context) (ScanResult, error) {
 			return ScanResult{Status: ScanCancelled}, nil
 		}
 		return ScanResult{}, projectError("localLibrary.pickAndScan", err)
-	}
-	return scanResult(report, start), nil
-}
-
-func (l *Library) ScanFolder(ctx context.Context, folder string) (ScanResult, error) {
-	ctx, done := l.callScope(ctx)
-	defer done()
-
-	start := time.Now()
-	report, err := l.service.ScanFolder(ctx, folder)
-	if err != nil {
-		if application.Classify("", err).Code == application.ErrorCancelled {
-			return ScanResult{Status: ScanCancelled}, nil
-		}
-		return ScanResult{}, projectError("localLibrary.scanFolder", err)
 	}
 	return scanResult(report, start), nil
 }
@@ -106,14 +83,6 @@ func scanResult(r application.ScanReport, start time.Time) ScanResult {
 
 // ── reads ────────────────────────────────────────────────────────────────────
 
-func (l *Library) TrackCount(ctx context.Context) (int, error) {
-	ctx, done := l.callScope(ctx)
-	defer done()
-
-	count, err := l.service.Count(ctx)
-	return count, projectError("localLibrary.trackCount", err)
-}
-
 func (l *Library) Home(ctx context.Context) (Home, error) {
 	ctx, done := l.callScope(ctx)
 	defer done()
@@ -135,22 +104,6 @@ func (l *Library) AllTracks(ctx context.Context) ([]Track, error) {
 
 	tracks, err := l.service.AllTracks(ctx)
 	return l.urls.tracks(tracks), projectError("localLibrary.allTracks", err)
-}
-
-func (l *Library) Albums(ctx context.Context) ([]Album, error) {
-	ctx, done := l.callScope(ctx)
-	defer done()
-
-	albums, err := l.service.Albums(ctx)
-	return l.urls.albums(albums), projectError("localLibrary.albums", err)
-}
-
-func (l *Library) Artists(ctx context.Context) ([]Artist, error) {
-	ctx, done := l.callScope(ctx)
-	defer done()
-
-	artists, err := l.service.Artists(ctx)
-	return l.urls.artists(artists), projectError("localLibrary.artists", err)
 }
 
 func (l *Library) AlbumDetail(ctx context.Context, id string) (AlbumDetailResult, error) {

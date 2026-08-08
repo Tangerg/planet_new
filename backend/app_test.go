@@ -29,7 +29,7 @@ func TestOpenInfraRollsBackCatalogWhenMediaStartFails(t *testing.T) {
 	if openedCatalog == nil {
 		t.Fatal("test media starter never received the opened catalog")
 	}
-	if _, err := openedCatalog.Count(context.Background()); err == nil {
+	if _, err := openedCatalog.AllTracks(context.Background()); err == nil {
 		t.Fatal("catalog remained usable after media startup failed")
 	}
 }
@@ -56,7 +56,7 @@ func TestAppShutdownClosesMediaBeforeCatalogAndIsIdempotent(t *testing.T) {
 	if err := app.shutdown(ctx); err != nil {
 		t.Fatalf("second app shutdown should be a no-op: %v", err)
 	}
-	if _, err := infra.catalog.Count(context.Background()); err == nil {
+	if _, err := infra.catalog.AllTracks(context.Background()); err == nil {
 		t.Fatal("catalog remained usable after app shutdown")
 	}
 

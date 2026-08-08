@@ -28,7 +28,6 @@ func (f *fakeCatalog) Save(_ context.Context, folder string, scan domain.ScanSna
 	f.savedAt = at
 	return f.added, f.total, nil
 }
-func (f *fakeCatalog) Count(context.Context) (int, error)               { return f.total, nil }
 func (f *fakeCatalog) Albums(context.Context) ([]domain.Album, error)   { return f.albums, nil }
 func (f *fakeCatalog) Artists(context.Context) ([]domain.Artist, error) { return f.artists, nil }
 func (f *fakeCatalog) Album(context.Context, domain.AlbumID) (*domain.Album, error) {
@@ -121,7 +120,7 @@ func TestScanFolderOrchestratesScannerIntoCatalog(t *testing.T) {
 	}}
 	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
 
-	report, err := svc.ScanFolder(context.Background(), "/m")
+	report, err := svc.scanFolder(context.Background(), "/m")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +179,7 @@ func TestPartialScanPersistsObservedFilesWithoutPruneAuthority(t *testing.T) {
 	}}
 	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
 
-	report, err := svc.ScanFolder(context.Background(), "/m")
+	report, err := svc.scanFolder(context.Background(), "/m")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -201,7 +200,7 @@ func TestCancelledScanDoesNotTouchCatalog(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := svc.ScanFolder(ctx, "/m")
+	_, err := svc.scanFolder(ctx, "/m")
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("ScanFolderContext error = %v, want context.Canceled", err)
 	}
@@ -216,14 +215,14 @@ func TestScanWaitingForWriterCanBeCancelled(t *testing.T) {
 	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
 	firstDone := make(chan error, 1)
 	go func() {
-		_, err := svc.ScanFolder(context.Background(), "/first")
+		_, err := svc.scanFolder(context.Background(), "/first")
 		firstDone <- err
 	}()
 	<-scanner.started
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := svc.ScanFolder(ctx, "/second")
+	_, err := svc.scanFolder(ctx, "/second")
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("waiting ScanFolder error = %v, want context.Canceled", err)
 	}
@@ -286,7 +285,7 @@ func TestUnavailableWhenCatalogNil(t *testing.T) {
 	if _, err := svc.Home(context.Background()); err != ErrUnavailable {
 		t.Errorf("Home err = %v, want ErrUnavailable", err)
 	}
-	if _, err := svc.ScanFolder(context.Background(), "/x"); err != ErrUnavailable {
+	if _, err := svc.scanFolder(context.Background(), "/x"); err != ErrUnavailable {
 		t.Errorf("ScanFolder err = %v, want ErrUnavailable", err)
 	}
 }
@@ -300,7 +299,7 @@ func TestUnavailableWhenPortIsMissing(t *testing.T) {
 	}
 
 	pickerless := NewService(&fakeCatalog{}, fakeScanner{}, nil, fakeLyrics{}, fixedClock{})
-	if _, err := pickerless.PickFolder(context.Background()); !errors.Is(err, ErrUnavailable) {
+	if _, err := pickerless.pickFolder(context.Background()); !errors.Is(err, ErrUnavailable) {
 		t.Errorf("PickFolder error = %v, want ErrUnavailable", err)
 	}
 	if _, err := pickerless.PickAndScan(context.Background()); !errors.Is(err, ErrUnavailable) {
@@ -320,7 +319,7 @@ func TestScanUnavailableWhenRequiredDependencyIsMissing(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			svc := NewService(&fakeCatalog{}, test.scanner, fakePicker{}, fakeLyrics{}, test.clock)
-			if _, err := svc.ScanFolder(context.Background(), "/x"); !errors.Is(err, ErrUnavailable) {
+			if _, err := svc.scanFolder(context.Background(), "/x"); !errors.Is(err, ErrUnavailable) {
 				t.Fatalf("ScanFolder error = %v, want ErrUnavailable", err)
 			}
 		})

@@ -175,9 +175,9 @@ func TestCatalogOperationsHonorCancellation(t *testing.T) {
 	if _, err := c.AllTracks(ctx); !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancelled AllTracks error = %v, want context.Canceled", err)
 	}
-	count, err := c.Count(testContext)
-	if err != nil || count != 1 {
-		t.Fatalf("count after cancelled Save = %d, %v; want unchanged 1", count, err)
+	tracks, err := c.AllTracks(testContext)
+	if err != nil || len(tracks) != 1 {
+		t.Fatalf("tracks after cancelled Save = %d, %v; want unchanged 1", len(tracks), err)
 	}
 }
 

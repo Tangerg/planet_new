@@ -13,7 +13,10 @@ import (
 var assets embed.FS
 
 func main() {
-	shell := backend.New()
+	// Declared up front so the single-instance handler can reach the window it
+	// has to raise. The shell owns exactly one window, and it is assigned below
+	// before a second launch could possibly arrive.
+	var window *application.WebviewWindow
 
 	app := application.New(application.Options{
 		Name: "PLANET",
@@ -21,19 +24,47 @@ func main() {
 		// also what keeps Cmd+Q/W and clipboard shortcuts alive in a window that
 		// has no chrome of its own.
 		Description: "沉浸式桌面音乐播放器",
-		Services:    shell.Services(),
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
-		// The composition root owns the native resources (SQLite catalog, media
-		// server), so it — not the window — decides when they are released.
-		OnShutdown: shell.Shutdown,
+		// One process owns the on-device library. A second launch would open the
+		// same SQLite file and bind its own media server, and two scanners could
+		// then write the same catalog — so the second instance hands over to the
+		// first and exits instead.
+		SingleInstance: &application.SingleInstanceOptions{
+			UniqueID: "com.tangerg.planet",
+			OnSecondInstanceLaunch: func(application.SecondInstanceData) {
+				// Raise the window we own rather than asking which one is
+				// current: "current" resolves to the key window, and an app
+				// that is minimised — precisely when a relaunch is most likely
+				// — has none, so that lookup would hand back nothing to raise.
+				if window == nil {
+					return
+				}
+				// Un-minimise first: the launcher activates the app for us, but
+				// macOS leaves a minimised window in the Dock when it does.
+				window.UnMinimise()
+				window.Focus()
+			},
+		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	// Past the single-instance gate, so this process is the one that owns the
+	// library: only now is it safe to open the catalog and bind the media server.
+	// Constructing the shell earlier would have a losing second instance acquire
+	// both and drop them again on the way out.
+	shell := backend.New()
+	for _, service := range shell.Services() {
+		app.RegisterService(service)
+	}
+	// The composition root owns the native resources, so it — not the window —
+	// decides when they are released.
+	app.OnShutdown(shell.Shutdown)
+
+	window = app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "PLANET",
 		Width:  1280,
 		Height: 820,

@@ -100,26 +100,28 @@ func (s *Service) lyricAvailable() error {
 
 // ── scanning ─────────────────────────────────────────────────────────────────
 
-// PickFolder opens the native chooser; "" means the user cancelled.
-func (s *Service) PickFolder(ctx context.Context) (string, error) {
+// pickFolder opens the native chooser; "" means the user cancelled.
+func (s *Service) pickFolder(ctx context.Context) (string, error) {
 	if s == nil || s.picker == nil {
 		return "", ErrUnavailable
 	}
 	return s.picker.Pick(ctx)
 }
 
-// PickAndScan chains a folder choice + scan. A cancelled dialog returns a zero
-// report (Folder == "") with no error.
+// PickAndScan is the library's only scan use case: choose a folder, then index
+// it. A cancelled dialog returns a zero report (Folder == "") with no error.
+// The two halves stay separate for readability, not as separately drivable
+// operations — nothing outside this file has a reason to run half a scan.
 func (s *Service) PickAndScan(ctx context.Context) (ScanReport, error) {
-	folder, err := s.PickFolder(ctx)
+	folder, err := s.pickFolder(ctx)
 	if err != nil || folder == "" {
 		return ScanReport{}, err
 	}
-	return s.ScanFolder(ctx, folder)
+	return s.scanFolder(ctx, folder)
 }
 
-// ScanFolder indexes the observable audio files under folder into the catalog.
-func (s *Service) ScanFolder(ctx context.Context, folder string) (ScanReport, error) {
+// scanFolder indexes the observable audio files under folder into the catalog.
+func (s *Service) scanFolder(ctx context.Context, folder string) (ScanReport, error) {
 	if err := s.scanAvailable(); err != nil {
 		return ScanReport{}, err
 	}
@@ -149,13 +151,6 @@ func (s *Service) ScanFolder(ctx context.Context, folder string) (ScanReport, er
 
 // ── reads ────────────────────────────────────────────────────────────────────
 
-func (s *Service) Count(ctx context.Context) (int, error) {
-	if err := s.available(); err != nil {
-		return 0, err
-	}
-	return s.catalog.Count(ctx)
-}
-
 func (s *Service) Home(ctx context.Context) (Home, error) {
 	if err := s.available(); err != nil {
 		return Home{}, err
@@ -180,20 +175,6 @@ func (s *Service) AllTracks(ctx context.Context) ([]domain.Track, error) {
 		return nil, err
 	}
 	return s.catalog.AllTracks(ctx)
-}
-
-func (s *Service) Albums(ctx context.Context) ([]domain.Album, error) {
-	if err := s.available(); err != nil {
-		return nil, err
-	}
-	return s.catalog.Albums(ctx)
-}
-
-func (s *Service) Artists(ctx context.Context) ([]domain.Artist, error) {
-	if err := s.available(); err != nil {
-		return nil, err
-	}
-	return s.catalog.Artists(ctx)
 }
 
 func (s *Service) AlbumDetail(ctx context.Context, id domain.AlbumID) (*AlbumDetail, error) {

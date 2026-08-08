@@ -144,12 +144,6 @@ func pruneFolder(ctx context.Context, tx *sql.Tx, folder string, at int64) error
 	return err
 }
 
-func (c *Catalog) Count(ctx context.Context) (int, error) {
-	var n int
-	err := c.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM tracks`).Scan(&n)
-	return n, err
-}
-
 // TrackPath / AlbumCoverExt back the media package's HTTP endpoints (the media
 // Source interface).
 func (c *Catalog) TrackPath(ctx context.Context, id domain.TrackID) (string, error) {

@@ -14,7 +14,6 @@ type Catalog interface {
 	// a partial filesystem observation has no authority to declare files gone.
 	Save(ctx context.Context, folder string, scan ScanSnapshot, at int64) (added, total int, err error)
 
-	Count(ctx context.Context) (int, error)
 	Albums(ctx context.Context) ([]Album, error)
 	Artists(ctx context.Context) ([]Artist, error)
 	Album(ctx context.Context, id AlbumID) (*Album, error)
