@@ -94,7 +94,6 @@ describe("navigation model", () => {
       label: { text: "Now" },
       sub: { text: "Artist" },
       seed: 11,
-      dest: "np",
     });
     expect(nowPlaying?.items[1].sub).toEqual({ key: "counts.queued", values: { count: 1 } });
 

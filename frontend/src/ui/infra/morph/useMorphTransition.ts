@@ -40,15 +40,6 @@ type Rect = {
   borderRadius: number | string;
 };
 
-export type MorphSource = {
-  dest: string;
-  seed?: number;
-  grad?: string[];
-  image?: string;
-  radius?: number | string;
-  run?: () => void;
-};
-
 export type MorphLastTile = {
   origin: Rect;
   seed?: number;
@@ -56,9 +47,10 @@ export type MorphLastTile = {
   image?: string;
 };
 
-export type Transition = {
-  from: string;
-  to: string;
+/** `from` is the screen being left — the stage re-renders and freezes it as the
+ *  outgoing layer for the duration of the flight. */
+export type Transition<V extends string = string> = {
+  from: V;
   origin: Rect;
   target: Rect | null;
   point: { x: number; y: number };
@@ -77,7 +69,7 @@ export type Transition = {
  *  Only opacity+transform animate — both compositor-only. A `filter: blur` tween
  *  was dropped: it re-rasterised the WHOLE outgoing screen every frame (no GPU
  *  path in WKWebView), the single biggest stutter on every page transition. */
-export function layerStyle(t: Transition): React.CSSProperties {
+export function layerStyle(t: Transition<string>): React.CSSProperties {
   const begin = t.phase === "start" || t.hero === false;
   return {
     position: "absolute",
@@ -96,13 +88,16 @@ export function layerStyle(t: Transition): React.CSSProperties {
   };
 }
 
-export function useMorphTransition(
+export function useMorphTransition<V extends string>(
   viewRef: RefObject<HTMLDivElement | null>,
-  view: string,
-  setView: (v: string) => void,
+  view: V,
+  setView: (v: V) => void,
+  /** The view the reverse morph collapses to — the consumer's navigation root.
+   *  Passed in rather than hard-coded so this stays screen-agnostic infra. */
+  launcherView: V,
 ) {
-  const [trans, setTrans] = useState<Transition | null>(null);
-  const transRef = useRef<Transition | null>(null);
+  const [trans, setTrans] = useState<Transition<V> | null>(null);
+  const transRef = useRef<Transition<V> | null>(null);
   const lastTile = useRef<MorphLastTile | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafIds = useRef<number[]>([]);
@@ -162,8 +157,8 @@ export function useMorphTransition(
     return r;
   };
 
-  const startForward = useCallback(
-    (item: MorphSource, rect: DOMRect) => {
+  const startForward = useCallback<MorphFn>(
+    (item, rect) => {
       if (transRef.current) {
         abortTransition();
         item.run?.();
@@ -184,9 +179,8 @@ export function useMorphTransition(
       const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
       lastTile.current = { origin, seed: item.seed, grad: item.grad, image: item.image };
       if (item.run) item.run();
-      const next: Transition = {
+      const next: Transition<V> = {
         from: view,
-        to: item.dest,
         origin,
         target: fullRect(),
         point: { x: px, y: py },
@@ -221,13 +215,13 @@ export function useMorphTransition(
   const startReverse = useCallback(() => {
     if (transRef.current) {
       abortTransition();
-      setView("xmb");
+      setView(launcherView);
       return;
     }
     const lt = lastTile.current;
     const from = view;
     if (!viewRef.current || !lt || reduceMo()) {
-      setView("xmb");
+      setView(launcherView);
       return;
     }
     clearAll();
@@ -237,9 +231,8 @@ export function useMorphTransition(
     const px = o.left + o.width / 2,
       py = o.top + o.height / 2;
     const clipR = Math.hypot(Math.max(px, vw.width - px), Math.max(py, vw.height - py));
-    const next: Transition = {
+    const next: Transition<V> = {
       from,
-      to: "xmb",
       origin: lt.origin,
       target: src || fullRect(),
       point: { x: px, y: py },
@@ -255,7 +248,7 @@ export function useMorphTransition(
     const runId = ++transitionRun.current;
     transRef.current = next;
     setTrans(next);
-    setView("xmb");
+    setView(launcherView);
     timers.current.push(
       setTimeout(() => {
         if (transitionRun.current !== runId) return;
@@ -283,18 +276,12 @@ export function useMorphTransition(
     rafIds.current.push(revId1);
   }, [view]);
 
-  // Stable rect-based morph trigger for deep consumers (cards/rows), exposed via
-  // the MorphProvider context — not a window global. startForward is recreated
-  // each render (curated deps), so route through a ref to keep `morph` stable.
-  const goMorph: MorphFn = (rect, seed, grad, run, image, radius) =>
-    startForward({ seed, grad, dest: "_", run, image, radius }, rect);
-  const goMorphRef = useRef(goMorph);
-  goMorphRef.current = goMorph;
-  const morph = useCallback<MorphFn>(
-    (rect, seed, grad, run, image, radius) =>
-      goMorphRef.current(rect, seed, grad, run, image, radius),
-    [],
-  );
+  // The same trigger, with a STABLE identity, for deep consumers (cards/rows)
+  // exposed via the MorphProvider context — not a window global. startForward is
+  // recreated each render (curated deps), so route through a ref.
+  const startForwardRef = useRef(startForward);
+  startForwardRef.current = startForward;
+  const morph = useCallback<MorphFn>((source, rect) => startForwardRef.current(source, rect), []);
 
   // Measure the destination hero once the new screen mounts.
   useLayoutEffect(() => {

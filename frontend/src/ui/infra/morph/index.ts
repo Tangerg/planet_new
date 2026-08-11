@@ -4,4 +4,11 @@
 // separate concern (Motion); this owns only the navigation morph.
 export { useMorphTransition, type MorphLastTile, type Transition } from "./useMorphTransition";
 export { MorphStage } from "./MorphStage";
-export { MorphProvider, useMorph, MorphFrozen, useMorphFrozen, type MorphFn } from "./context";
+export {
+  MorphProvider,
+  useMorph,
+  MorphFrozen,
+  useMorphFrozen,
+  type MorphFn,
+  type MorphSource,
+} from "./context";

@@ -1,3 +1,5 @@
+import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
+
 export const DOUBLE_SHIFT_SEARCH_WINDOW_MS = 400;
 
 export type ShiftSearchState = {
@@ -28,24 +30,24 @@ export function elementMatchesClosest(el: Element | null | undefined, selector: 
   return Boolean(el?.closest(selector));
 }
 
-export function shouldGoBackFromShortcut(view: string): boolean {
-  return view !== "xmb";
+export function shouldGoBackFromShortcut(view: ShellScreenView): boolean {
+  return view !== LAUNCHER_VIEW;
 }
 
-export function shouldGoHomeFromShortcut(view: string): boolean {
-  return view !== "xmb";
+export function shouldGoHomeFromShortcut(view: ShellScreenView): boolean {
+  return view !== LAUNCHER_VIEW;
 }
 
-export function shouldOpenSearchFromShortcut(view: string): boolean {
+export function shouldOpenSearchFromShortcut(view: ShellScreenView): boolean {
   return view !== "search";
 }
 
-export function canUsePlaybackShortcut(view: string): boolean {
+export function canUsePlaybackShortcut(view: ShellScreenView): boolean {
   return view !== "mv-theater";
 }
 
 export function nowPlayingShortcutDecision(
-  view: string,
+  view: ShellScreenView,
   hasCurrentTrack = true,
 ): NowPlayingShortcutDecision {
   if (!canUsePlaybackShortcut(view)) return "ignore";

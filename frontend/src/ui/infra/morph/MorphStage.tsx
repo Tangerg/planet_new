@@ -11,15 +11,15 @@ import {
   type Transition,
 } from "./useMorphTransition";
 
-type MorphStageProps = {
+type MorphStageProps<V extends string> = {
   /** The resident container ref the engine measures against. */
   viewRef: RefObject<HTMLDivElement | null>;
   /** Current screen key. */
-  view: string;
+  view: V;
   /** Live transition state from useMorphTransition (null = idle). */
-  trans: Transition | null;
+  trans: Transition<V> | null;
   /** Renders a screen by key — supplied by the consumer (keeps infra screen-agnostic). */
-  renderScreen: (v: string) => React.ReactNode;
+  renderScreen: (v: V) => React.ReactNode;
   /** Background for the flying tile, by (seed, grad) — injected so infra holds no art/vibe logic. */
   tileBg: (seed: number | undefined, grad: string[] | undefined) => string;
 };
@@ -49,7 +49,13 @@ function radiusPct(r: number | string, size: number): number {
  * is reusable infra, not inlined in one screen. Visual classes (`.view`,
  * `.t-base`, `.t-from`, `.grain`) live in the design-system CSS.
  */
-export function MorphStage({ viewRef, view, trans, renderScreen, tileBg }: MorphStageProps) {
+export function MorphStage<V extends string>({
+  viewRef,
+  view,
+  trans,
+  renderScreen,
+  tileBg,
+}: MorphStageProps<V>) {
   // Freeze the OUTGOING screen's render for the whole transition. A heavy `from`
   // screen (e.g. ForYou — blurred hero + image rails) would otherwise re-render
   // on every Shell update mid-morph (its catalog/daily/record queries resolving),

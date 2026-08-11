@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import type { MediaService } from "@contexts/catalog";
 
+import type { ShellScreenView } from "@/model/shell-screen";
 import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 import { buildWorlds } from "@/model/navigation";
 
@@ -11,7 +12,7 @@ type Deps = {
   liked: ReadonlySet<string>;
   current?: VibeTrack;
   queueLength: number;
-  goto: (view: string) => void;
+  goto: (view: ShellScreenView) => void;
   openSearch: () => void;
   openLibrary: (tab: LibrarySectionTab) => void;
   openLikedSongs: () => void;

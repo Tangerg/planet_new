@@ -10,7 +10,7 @@ import { PlayerTrackIdentity } from "@/components/player-bar/PlayerTrackIdentity
 import { LiveScrubber } from "@/components/player-bar/LiveScrubber";
 import { PlayerUtilities } from "@/components/player-bar/PlayerUtilities";
 import { TransportControls } from "@/components/player-bar/TransportControls";
-import { useMorph } from "@/infra/morph";
+import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { artPair } from "@/components/primitives";
 import { BreathingLight } from "@/components/visualizer/BreathingLight";
 
@@ -68,17 +68,23 @@ export const PlayerBar = React.memo(function PlayerBar({
   onToggleMute,
   onOpenArtist,
 }: Props) {
-  const morph = useMorph();
+  const open = useMorphOpen();
 
   const [a, b] = artPair(track?.coverSeed || 0, track?.gradient);
 
   // Open the full-screen now-playing view, measuring the cover art as the morph
   // origin so the shared-element transition flies from the bar's artwork.
-  const openNowPlaying = (el: HTMLElement) => {
-    const art = el.querySelector(".grain");
-    const rect = (art ?? el).getBoundingClientRect();
-    morph(rect, track?.coverSeed || 0, track?.gradient, onOpenNowPlaying, track?.image);
-  };
+  const openNowPlaying = (el: HTMLElement) =>
+    open(
+      { currentTarget: el },
+      {
+        seed: track?.coverSeed || 0,
+        grad: track?.gradient,
+        image: track?.image,
+        artSelector: ".grain",
+        run: onOpenNowPlaying,
+      },
+    );
 
   return (
     <div className="glassbar gap-1.5" style={{ color: "#141418" }}>

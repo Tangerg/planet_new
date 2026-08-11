@@ -5,12 +5,9 @@
 // just the call-site helper that measures the origin rect and invokes it.
 // ============================================================
 import { useCallback } from "react";
-import { useMorph } from "@/infra/morph";
+import { useMorph, type MorphSource } from "@/infra/morph";
 
-export type MorphOpenOptions = {
-  seed?: number;
-  grad?: string[];
-  image?: string;
+export type MorphOpenOptions = Omit<MorphSource, "radius" | "run"> & {
   /** Circular origin (artists) → the flying tile collapses as a circle. */
   round?: boolean;
   /** Selector for the art element inside the clicked container to measure as the
@@ -28,7 +25,7 @@ export function useMorphOpen() {
       const { seed, grad, image, round, artSelector, run } = opts;
       const art = artSelector ? e.currentTarget.querySelector(artSelector) : null;
       const rect = (art ?? e.currentTarget).getBoundingClientRect();
-      morph(rect, seed, grad, run, image, round ? "50%" : undefined);
+      morph({ seed, grad, image, run, radius: round ? "50%" : undefined }, rect);
     },
     [morph],
   );

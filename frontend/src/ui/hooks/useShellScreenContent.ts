@@ -1,10 +1,11 @@
+import type { ShellScreenView } from "@/model/shell-screen";
 import type { VibeMusicVideo } from "@/model/vibe";
 import { useArtistMusicVideos, useMusicVideoComments } from "@/hooks/useMusicVideoData";
 import { useComments, useLyric } from "@/hooks/useTrackContentData";
 import { shellContentQueryPlan, shellMusicVideoRail } from "@/model/shell-content";
 
 type Deps = {
-  view: string;
+  view: ShellScreenView;
   currentTrackId?: string;
   musicVideoArtistId?: string;
   musicVideoId?: string;

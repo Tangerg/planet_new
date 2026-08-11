@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { ShellScreenView } from "./shell-screen";
 import type { NavSnapshot } from "./shell-navigation";
 import {
   NavigationHistory,
@@ -21,7 +22,7 @@ const track = (id: string): VibeTrack => ({
   duration: "0:10",
 });
 
-const snapshot = (view: string, playContext: VibeTrack[] = []): NavSnapshot<LastTile> => ({
+const snapshot = (view: ShellScreenView, playContext: VibeTrack[] = []): NavSnapshot<LastTile> => ({
   view,
   detail: null,
   artistObj: { id: "", name: "" },

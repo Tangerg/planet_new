@@ -30,7 +30,7 @@ import { ProfileScreen } from "@/screens/Profile";
 import { CommentsScreen } from "@/screens/Comments";
 import { NowPlaying } from "@/screens/NowPlaying";
 import type { NowPlayingMode } from "@/model/now-playing";
-import { resolveShellScreen } from "@/model/shell-screen";
+import { resolveShellScreen, type ShellScreenView } from "@/model/shell-screen";
 
 // Code-split screens. Only screens reached by a PLAIN view switch qualify: a
 // shared-element morph destination must render its hero synchronously for the
@@ -170,7 +170,7 @@ type SettingsBundle = {
 };
 
 type Props = {
-  view: string;
+  view: ShellScreenView;
   playback: PlaybackBundle;
   navigation: NavigationBundle;
   catalog: CatalogBundle;

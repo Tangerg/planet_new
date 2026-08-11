@@ -45,6 +45,7 @@ const LazyContextMenu = React.lazy(() =>
 );
 import { ShellScreenRouter, warmDeferredScreens } from "@/ShellScreenRouter";
 import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_GLASS_BLUR } from "@/model/defaults";
+import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type { NowPlayingMode } from "@/model/now-playing";
 
 export default function Shell() {
@@ -153,7 +154,7 @@ export default function Shell() {
   const openNowPlayingCover = useCallback(() => openNowPlaying("cover"), [openNowPlaying]);
   const openNowPlayingLyrics = useCallback(() => openNowPlaying("lyrics"), [openNowPlaying]);
   const gotoLauncherView = useCallback(
-    (target: string) => {
+    (target: ShellScreenView) => {
       if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
       setView(target);
     },
@@ -168,7 +169,7 @@ export default function Shell() {
   const npView = view === "np";
   const mvTheaterView = view === "mv-theater";
   const stageView = view === "stage";
-  const homeView = view === "xmb";
+  const homeView = view === LAUNCHER_VIEW;
   const { lyrics, comments, musicVideoRail, musicVideoComments } = useShellScreenContent({
     view,
     currentTrackId: playback.current?.id,
@@ -254,7 +255,7 @@ export default function Shell() {
   /* ==========================================================================
      render screen
      ========================================================================== */
-  const renderScreen = (screenView: string) => (
+  const renderScreen = (screenView: ShellScreenView) => (
     <ShellScreenRouter
       view={screenView}
       playback={{

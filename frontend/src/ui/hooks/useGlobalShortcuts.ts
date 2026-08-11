@@ -12,6 +12,7 @@
 import { useEffect } from "react";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { nextVolumeLevel } from "@/model/player";
+import type { ShellScreenView } from "@/model/shell-screen";
 import type { VibeTrack } from "@/model/vibe";
 import {
   canUsePlaybackShortcut,
@@ -31,12 +32,12 @@ const HK_PASSIVE = { preventDefault: false, stopPropagation: false }; // Space y
 
 export type GlobalShortcutHandlers = {
   /** Current view — guards (don't re-open Search while on it, etc.). */
-  view: string;
+  view: ShellScreenView;
   goBack: () => void;
   /** Jump straight to the XMB root from any depth (the "/" shortcut). */
   goHome: () => void;
   openSearch: () => void;
-  navigate: (view: string) => void;
+  navigate: (view: ShellScreenView) => void;
   togglePlay: () => void;
   playNext: () => void;
   playPrev: () => void;

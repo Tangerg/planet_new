@@ -34,6 +34,7 @@ import {
   type VibeTrack,
 } from "@/model/vibe";
 import { normalizeDetailTarget } from "@/model/detail";
+import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import { createNavSnapshot, NavigationSession, type NavSnapshot } from "@/model/shell-navigation";
 import {
   fetchArtistTarget,
@@ -44,7 +45,7 @@ import {
 
 export function useShellNavigation(media: MediaService, queryClient: QueryClient) {
   /* ---- navigation / view state ---- */
-  const [view, setView] = useState("xmb");
+  const [view, setView] = useState<ShellScreenView>(LAUNCHER_VIEW);
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const [artistObj, setArtistObj] = useState<ArtistTarget>({ id: "", name: "" });
   const [musicVideoObj, setMusicVideoObj] = useState<VibeMusicVideo | null>(null);
@@ -66,7 +67,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   const playContext = useRef<VibeTrack[]>([]);
 
   // Forward navigation to a bare view: push the current screen, then switch.
-  const navigate = useCallback((v: string) => {
+  const navigate = useCallback((v: ShellScreenView) => {
     navSession.current.beginForward(navSnapRef.current);
     setView(v);
   }, []);
@@ -165,6 +166,7 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     viewRef,
     view,
     setView,
+    LAUNCHER_VIEW,
   );
 
   /* Mirror the live navigation state so a back-stack push captures the screen

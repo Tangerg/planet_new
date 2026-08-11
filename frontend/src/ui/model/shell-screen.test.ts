@@ -48,8 +48,7 @@ describe("shell screen routing", () => {
     });
   });
 
-  it("rejects unknown views and data-backed views without payloads", () => {
-    expect(resolveShellScreen("unknown", detail, video)).toBeNull();
+  it("rejects data-backed views without payloads", () => {
     expect(resolveShellScreen("detail", null, video)).toBeNull();
     expect(resolveShellScreen("mv-detail", detail, null)).toBeNull();
     expect(resolveShellScreen("mv-theater", detail, null)).toBeNull();

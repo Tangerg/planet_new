@@ -21,6 +21,14 @@ export const SHELL_SCREEN_VIEWS = [
 ] as const;
 
 export type ShellScreenView = (typeof SHELL_SCREEN_VIEWS)[number];
+
+/**
+ * The XMB launcher — the navigation root. It is the one view the morph engine
+ * collapses back to, so it is named once here rather than spelled as a literal
+ * at each of the shell's launcher-boundary checks.
+ */
+export const LAUNCHER_VIEW = "xmb" satisfies ShellScreenView;
+
 type DataBackedView = "detail" | "mv-detail" | "mv-theater";
 type StaticView = Exclude<ShellScreenView, DataBackedView>;
 type StaticRoute = { [View in StaticView]: Readonly<{ kind: View }> }[StaticView];
@@ -31,21 +39,16 @@ export type ShellScreenRoute =
   | Readonly<{ kind: "mv-detail"; video: VibeMusicVideo }>
   | Readonly<{ kind: "mv-theater"; video: VibeMusicVideo }>;
 
-function isShellScreenView(view: string): view is ShellScreenView {
-  return SHELL_SCREEN_VIEWS.some((candidate) => candidate === view);
-}
-
 /**
- * Resolve an untrusted navigation string into a renderable screen. Data-backed
- * screens remain unavailable until their navigation payload exists, preserving
- * the resident shell's existing skeleton/fallback behavior.
+ * Resolve a view into a renderable screen. Data-backed screens remain
+ * unavailable until their navigation payload exists, preserving the resident
+ * shell's existing skeleton/fallback behavior.
  */
 export function resolveShellScreen(
-  view: string,
+  view: ShellScreenView,
   detail: DetailTarget | null,
   musicVideo: VibeMusicVideo | null,
 ): ShellScreenRoute | null {
-  if (!isShellScreenView(view)) return null;
   if (view === "detail") return detail ? { kind: view, detail } : null;
   if (view === "mv-detail" || view === "mv-theater") {
     return musicVideo ? { kind: view, video: musicVideo } : null;

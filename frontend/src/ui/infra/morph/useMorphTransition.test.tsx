@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MORPH_FAILSAFE_MS, useMorphTransition, type MorphSource } from "./useMorphTransition";
+import type { MorphSource } from "./context";
+import { MORPH_FAILSAFE_MS, useMorphTransition } from "./useMorphTransition";
 
 type HarnessApi = ReturnType<typeof useMorphTransition>;
 
@@ -21,7 +22,7 @@ const origin = {
 function Harness({ onApi }: { onApi: (api: HarnessApi) => void }) {
   const [view, setView] = useState("xmb");
   const rootRef = useRef<HTMLDivElement>(null);
-  const api = useMorphTransition(rootRef, view, setView);
+  const api = useMorphTransition(rootRef, view, setView, "xmb");
 
   useEffect(() => {
     onApi(api);
@@ -64,12 +65,12 @@ describe("useMorphTransition", () => {
     render(<Harness onApi={(next) => (api = next)} />);
 
     act(() => {
-      api.startForward({ dest: "home", run: () => runs.push("first") }, origin);
+      api.startForward({ run: () => runs.push("first") }, origin);
     });
     expect(runs).toEqual(["first"]);
 
     act(() => {
-      api.startForward({ dest: "detail", run: () => runs.push("second") }, origin);
+      api.startForward({ run: () => runs.push("second") }, origin);
     });
 
     expect(runs).toEqual(["first", "second"]);
@@ -78,7 +79,7 @@ describe("useMorphTransition", () => {
 
   it("clears a forward morph even if the animation phase never advances", () => {
     let api!: HarnessApi;
-    const item: MorphSource = { dest: "home", run: vi.fn<() => void>() };
+    const item: MorphSource = { run: vi.fn<() => void>() };
     render(<Harness onApi={(next) => (api = next)} />);
 
     act(() => {
@@ -95,7 +96,7 @@ describe("useMorphTransition", () => {
 
   it("clears a reverse morph even if the animation phase never advances", () => {
     let api!: HarnessApi;
-    const item: MorphSource = { dest: "home", run: vi.fn<() => void>() };
+    const item: MorphSource = { run: vi.fn<() => void>() };
     render(<Harness onApi={(next) => (api = next)} />);
 
     act(() => {

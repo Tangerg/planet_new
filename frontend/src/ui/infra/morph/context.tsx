@@ -1,24 +1,27 @@
 import { createContext, use } from "react";
 
 /**
- * Trigger a shared-element morph from a start rect into the destination Hero.
- * `rect`=origin rect, `seed`/`grad`=cover colours, `run`=mounts the target
- * screen, `image`=real cover art (so the flying tile shows it, avoiding a
- * gradient→image colour jump).
+ * The shared element a morph flies: `seed`/`grad` are the cover colours, `image`
+ * the real cover art (so the tile shows it and there is no gradient→image colour
+ * jump), `run` mounts the target screen, `radius` the tile's start corner radius
+ * (a round source passes "50%" so it flies circle→circle).
  */
-export type MorphFn = (
-  rect: DOMRect,
-  seed?: number,
-  grad?: string[],
-  run?: () => void,
-  image?: string,
-  /** Start corner radius of the flying tile (match a round source → circle→circle). */
-  radius?: number | string,
-) => void;
+export type MorphSource = {
+  seed?: number;
+  grad?: string[];
+  image?: string;
+  radius?: number | string;
+  run?: () => void;
+};
+
+/** Trigger a shared-element morph from `rect` into the destination Hero. This is
+ *  the engine's `startForward` — the same entry point the launcher uses, handed
+ *  down to deep consumers through the context below. */
+export type MorphFn = (source: MorphSource, rect: DOMRect) => void;
 
 // Fallback when no provider is mounted: still navigate (run), just no animation.
 // Keeps deep consumers safe without optional-chaining at every call site.
-const fallback: MorphFn = (_rect, _seed, _grad, run) => run?.();
+const fallback: MorphFn = (source) => source.run?.();
 
 const MorphContext = createContext<MorphFn>(fallback);
 

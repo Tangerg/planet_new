@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import type { RefObject } from "react";
 
 import { useEventCallback } from "@/hooks/useEventCallback";
+import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import {
   nearestSpatialCandidate,
   shouldLetTextInputHandleArrow,
@@ -23,13 +24,13 @@ function spatialCandidate(el: HTMLElement): SpatialCandidate<HTMLElement> {
 
 export function useSpatialNavigation(
   viewRef: RefObject<HTMLDivElement | null>,
-  view: string,
-  startReverse: () => void,
+  view: ShellScreenView,
+  goBack: () => void,
 ) {
-  const onStartReverse = useEventCallback(startReverse);
+  const onGoBack = useEventCallback(goBack);
 
   useEffect(() => {
-    if (view === "xmb") return;
+    if (view === LAUNCHER_VIEW) return;
     const root = viewRef.current;
     if (!root) return;
     const list = () =>
@@ -64,7 +65,7 @@ export function useSpatialNavigation(
         }
       } else if (e.key === "Backspace" && !inInput) {
         e.preventDefault();
-        onStartReverse();
+        onGoBack();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -72,5 +73,5 @@ export function useSpatialNavigation(
       clearTimeout(t);
       window.removeEventListener("keydown", onKey);
     };
-  }, [view, viewRef, onStartReverse]);
+  }, [view, viewRef, onGoBack]);
 }

@@ -1,3 +1,4 @@
+import type { ShellScreenView } from "./shell-screen";
 import type { ScreenData, VibeCollection, VibeMusicVideo } from "./vibe";
 
 export type ShellContentQueryPlan = {
@@ -14,7 +15,7 @@ export function shellLibraryData(
   return loggedIn && userPlaylists.length ? { ...catalog, playlists: [...userPlaylists] } : catalog;
 }
 
-export function shellContentQueryPlan(view: string): ShellContentQueryPlan {
+export function shellContentQueryPlan(view: ShellScreenView): ShellContentQueryPlan {
   const musicVideoScreen = view === "mv-detail" || view === "mv-theater";
   return {
     loadTrackComments: view === "comments" || view === "np",

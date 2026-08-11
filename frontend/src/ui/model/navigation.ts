@@ -15,6 +15,7 @@ import { clampIndex } from "@shared/number";
 import type { CatalogAvailability } from "@contexts/catalog";
 
 import type { LocalizedText } from "@/i18n/text";
+import type { ShellScreenView } from "@/model/shell-screen";
 import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 
 /** One XMB sub-item (a launcher tile under a category). Display text is named,
@@ -27,7 +28,6 @@ export type XmbItemModel = {
   seed: number;
   grad?: string[];
   image?: string;
-  dest: string;
   run?: () => void;
 };
 
@@ -52,7 +52,7 @@ export type NavContext = {
 /** The run-handlers each tile is wired to (owned by the Shell navigator). */
 export type NavActions = {
   /** Switch to a bare view (the within-launcher destinations). */
-  goto: (view: string) => void;
+  goto: (view: ShellScreenView) => void;
   openSearch: () => void;
   openLibrary: (tab: LibrarySectionTab) => void;
   openLikedSongs: () => void;
@@ -160,7 +160,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       icon: "star",
       seed: 7,
       grad: ["#1b1033", "#ff2188"],
-      dest: "home",
       run: () => goto("home"),
     });
   }
@@ -172,7 +171,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       icon: "bars",
       seed: 10,
       grad: ["#240b04", "#ff8a3c"],
-      dest: "charts",
       run: () => goto("charts"),
     });
   }
@@ -184,7 +182,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       icon: "search",
       seed: 6,
       grad: ["#021e24", "#36c5e0"],
-      dest: "search",
       run: openSearch,
     });
   }
@@ -206,7 +203,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
                 seed: current.coverSeed || 0,
                 grad: current.gradient,
                 image: current.image,
-                dest: "np",
                 run: () => goto("np"),
               },
             ]
@@ -217,7 +213,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           sub: { key: "counts.queued", values: { count: queueLength } },
           icon: "list",
           seed: 5,
-          dest: "queue",
           run: () => goto("queue"),
         },
         {
@@ -227,7 +222,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "clock",
           seed: 12,
           grad: ["#161320", "#8a7bff"],
-          dest: "history",
           run: () => goto("history"),
         },
       ],
@@ -252,7 +246,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "heart",
           seed: 0,
           grad: ["#2a0420", "#ff4fa3"],
-          dest: "detail",
           run: openLikedSongs,
         },
         {
@@ -262,7 +255,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "list",
           seed: 1,
           grad: ["#1a0d3a", "#7755ff"],
-          dest: "library",
           run: () => openLibrary("playlists"),
         },
         {
@@ -272,7 +264,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "stack",
           seed: 2,
           grad: ["#3a0d10", "#f3727f"],
-          dest: "library",
           run: () => openLibrary("albums"),
         },
         {
@@ -282,7 +273,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "user",
           seed: 4,
           grad: ["#06222b", "#19d3c5"],
-          dest: "library",
           run: () => openLibrary("artists"),
         },
       ],
@@ -300,7 +290,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "user",
           seed: 3,
           grad: ["#1b1033", "#ff2188"],
-          dest: "profile",
           run: () => goto("profile"),
         },
         {
@@ -310,7 +299,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "bars",
           seed: 9,
           grad: ["#2a0420", "#ff4fa3"],
-          dest: "profile",
           run: () => goto("profile"),
         },
       ],
@@ -328,7 +316,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           icon: "gear",
           seed: 9,
           grad: ["#13031f", "#b15cff"],
-          dest: "settings",
           run: () => goto("settings"),
         },
         {
@@ -337,7 +324,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
           sub: { key: "nav.aboutSub" },
           icon: "note",
           seed: 2,
-          dest: "settings",
           run: () => goto("settings"),
         },
       ],

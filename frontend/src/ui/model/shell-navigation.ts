@@ -1,3 +1,4 @@
+import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type {
   ArtistTarget,
   CollectionViewMode,
@@ -9,7 +10,7 @@ import type {
 
 /** One frame of navigation state — enough to rebuild any screen on "back". */
 export type NavSnapshot<TLastTile> = {
-  view: string;
+  view: ShellScreenView;
   detail: DetailTarget | null;
   artistObj: ArtistTarget;
   musicVideoObj: VibeMusicVideo | null;
@@ -22,7 +23,7 @@ export type NavSnapshot<TLastTile> = {
 };
 
 export function isLauncherSnapshot(snapshot: Pick<NavSnapshot<unknown>, "view">): boolean {
-  return snapshot.view === "xmb";
+  return snapshot.view === LAUNCHER_VIEW;
 }
 
 export function createNavSnapshot<TLastTile>(
