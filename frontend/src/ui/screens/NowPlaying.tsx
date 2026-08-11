@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import type { Lyric } from "@contexts/playback";
 import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
 import { localizeJoined } from "@/i18n/text";
-import { nowPlayingTrackModel } from "@/model/now-playing";
+import { nowPlayingTrackModel, type NowPlayingMode } from "@/model/now-playing";
 import { useAccent } from "@/hooks/accent";
 import { EXPO_OUT_CSS } from "@/styles/motion";
 import { TopEdgeControl } from "@/components/controls/TopEdgeControl";
@@ -29,7 +29,7 @@ type Props = {
   comments?: VibeComment[];
   onClose: () => void;
   onOpenStage?: () => void;
-  initialMode?: string;
+  initialMode?: NowPlayingMode;
   queue?: VibeTrack[];
   onPlay?: (t: VibeTrack) => void;
   current?: VibeTrack;

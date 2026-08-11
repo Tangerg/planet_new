@@ -95,7 +95,6 @@ export default function Shell() {
   const { liked, toggleLike, isLiked } = useLikes(playback.current);
   const { settings, setSettings } = useAppSettings();
   const history = usePlayHistory(playback.current);
-  const settingsNowPlayingMode: NowPlayingMode = settings.npMode === "LYRICS" ? "lyrics" : "cover";
   /* ---- navigation + shared-element transition machine (extracted hook) ----
      Owns the view string, every nav-significant screen slice, the morph engine,
      and the back-stack. Shell composes onPlay / likedDetail / menu / shortcuts /
@@ -145,10 +144,10 @@ export default function Shell() {
   const openNowPlayingLyrics = useCallback(() => openNowPlaying("lyrics"), [openNowPlaying]);
   const gotoLauncherView = useCallback(
     (target: ShellScreenView) => {
-      if (target === "np") setNowPlayingInitialMode(settingsNowPlayingMode);
+      if (target === "np") setNowPlayingInitialMode(settings.npMode);
       setView(target);
     },
-    [settingsNowPlayingMode, setView],
+    [settings.npMode, setView],
   );
   const openStage = useCallback(() => navigate("stage"), [navigate]);
   const openQueue = useCallback(() => navigate("queue"), [navigate]);

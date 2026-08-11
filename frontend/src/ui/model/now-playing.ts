@@ -6,6 +6,17 @@ import type { VibeTrack } from "./vibe";
 
 export type NowPlayingMode = "cover" | "lyrics" | "comments";
 
+/** The modes Now Playing can be *opened* in — the ones Settings offers. Derived
+ *  from NowPlayingMode rather than spelled again, so the setting and the screen
+ *  can never drift into two vocabularies for one fact (they had: the setting
+ *  held "COVER"/"LYRICS" and the Shell translated the casing by hand). */
+export type NowPlayingOpenMode = Extract<NowPlayingMode, "cover" | "lyrics">;
+
+export const NOW_PLAYING_OPEN_MODES = [
+  "cover",
+  "lyrics",
+] as const satisfies readonly NowPlayingOpenMode[];
+
 export type NowPlayingTrackModel = {
   artist: string;
   artistId?: string;
@@ -18,11 +29,6 @@ export type NowPlayingTrackModel = {
   quality?: string;
   title: string;
 };
-
-export function normalizeNowPlayingMode(mode: string | undefined): NowPlayingMode {
-  if (mode === "lyrics" || mode === "comments") return mode;
-  return "cover";
-}
 
 export function isNowPlayingLyricsMode(mode: NowPlayingMode): boolean {
   return mode === "lyrics";

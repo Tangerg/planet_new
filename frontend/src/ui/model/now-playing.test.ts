@@ -7,7 +7,6 @@ import {
   isNowPlayingLyricsMode,
   isNowPlayingPanelOpen,
   lyricLinesOrFallback,
-  normalizeNowPlayingMode,
   nowPlayingCredits,
   nowPlayingTrackModel,
   swipeAction,
@@ -39,11 +38,7 @@ describe("now-playing model", () => {
     expect(result).not.toBe(lines);
   });
 
-  it("normalizes and derives now-playing modes", () => {
-    expect(normalizeNowPlayingMode("lyrics")).toBe("lyrics");
-    expect(normalizeNowPlayingMode("comments")).toBe("comments");
-    expect(normalizeNowPlayingMode("whatever")).toBe("cover");
-
+  it("derives now-playing modes", () => {
     expect(isNowPlayingLyricsMode("lyrics")).toBe(true);
     expect(isNowPlayingCommentsMode("comments")).toBe(true);
     expect(isNowPlayingPanelOpen("cover")).toBe(false);

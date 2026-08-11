@@ -13,7 +13,11 @@ export const ARTIST_SECTION_TABS = [
   { value: "top", label: { key: "artist.hot" } },
   { value: "albums", label: { key: "artist.allAlbums" } },
   { value: "similar", label: { key: "artist.similarArtist" } },
-] satisfies { value: string; label: LocalizedText }[];
+] as const satisfies readonly { value: string; label: LocalizedText }[];
+
+/** The artist screen's section tabs, as a closed union — the screen's tab state
+ *  and every predicate below are typed by it rather than by bare `string`. */
+export type ArtistSectionTab = (typeof ARTIST_SECTION_TABS)[number]["value"];
 
 export type ArtistScreenModel = {
   albumFlowItems: FlowItem<VibeCollection>[];
@@ -28,7 +32,7 @@ export type ArtistScreenModel = {
   similar: readonly VibeArtist[];
 };
 
-export function artistSectionShowsViewToggle(tab: string): boolean {
+export function artistSectionShowsViewToggle(tab: ArtistSectionTab): boolean {
   return tab !== "similar";
 }
 
@@ -88,7 +92,7 @@ export function artistScreenModel({
   tracks: VibeTrack[];
   albums: VibeCollection[];
   similar: VibeArtist[];
-  tab: string;
+  tab: ArtistSectionTab;
   current?: VibeTrack;
   playing: boolean;
 }): ArtistScreenModel {

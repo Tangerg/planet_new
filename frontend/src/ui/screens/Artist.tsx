@@ -12,7 +12,12 @@ import type {
   VibeCollection,
   VibeTrack,
 } from "@/model/vibe";
-import { artistAlbumListMeta, artistAlbumSubtitle, artistScreenModel } from "@/model/artist-screen";
+import {
+  artistAlbumListMeta,
+  artistAlbumSubtitle,
+  artistScreenModel,
+  type ArtistSectionTab,
+} from "@/model/artist-screen";
 import { clampIndex } from "@shared/number";
 import { localize, localizeJoined } from "@/i18n/text";
 import { Art, artPair } from "@/components/primitives";
@@ -57,7 +62,7 @@ export function ArtistScreen({
 }: ArtistScreenProps) {
   const { t } = useTranslation();
   const accent = useAccent();
-  const [tab, setTab] = useState("top");
+  const [tab, setTab] = useState<ArtistSectionTab>("top");
   const [view, setView] = useState<CollectionViewMode>("list");
   const [flowCenter, setFlowCenter] = useState(0);
   // Recentre the flow per tab during render, not in an effect — an effect would

@@ -3,11 +3,13 @@ import type { ProviderId } from "@contexts/contracts";
 
 import type { LocalizedText } from "@/i18n/text";
 
+import { AUDIO_QUALITIES, type AudioQuality } from "./defaults";
+import { NOW_PLAYING_OPEN_MODES, type NowPlayingOpenMode } from "./now-playing";
 import { sourceDisplayName } from "./source-name";
 
-export type SettingsOption = {
-  value: string;
-  label: string;
+export type SettingsOption<TValue extends string = string> = {
+  value: TValue;
+  label: LocalizedText;
 };
 
 export type SourceOption = { value: string; label: LocalizedText };
@@ -19,12 +21,19 @@ export type SettingsScanState =
   | { phase: "partial"; added: number; total: number }
   | { phase: "error" };
 
-export const AUDIO_QUALITY_OPTIONS = tokenOptions("STD", "HQ", "SQ");
-export const NOW_PLAYING_OPEN_OPTIONS = tokenOptions("COVER", "LYRICS");
+/** Audio-quality tiers. The tokens ARE the label: STD/HQ/SQ are the universal
+ *  abbreviations, identical in every locale. */
+export const AUDIO_QUALITY_OPTIONS: SettingsOption<AudioQuality>[] = AUDIO_QUALITIES.map(
+  (value) => ({ value, label: { text: value } }),
+);
 
-export function tokenOptions(...values: readonly string[]): SettingsOption[] {
-  return values.map((value) => ({ value, label: value }));
-}
+/** What Now Playing opens showing. Unlike the quality tiers these are ordinary
+ *  words, so they resolve through the message catalogue. */
+export const NOW_PLAYING_OPEN_OPTIONS: SettingsOption<NowPlayingOpenMode>[] =
+  NOW_PLAYING_OPEN_MODES.map((value) => ({
+    value,
+    label: { key: value === "cover" ? "common.cover" : "common.lyrics" },
+  }));
 
 /** Source picker rows, named by the shared source-name authority. */
 export function sourceOptions(sources: readonly ProviderId[]): SourceOption[] {

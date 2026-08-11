@@ -8,7 +8,7 @@ import type { Image } from "@contexts/catalog";
 
 import type { LocalizedText } from "@/i18n/text";
 
-import type { VibeTrack, VibeCollection } from "./vibe";
+import type { LibrarySectionTab, VibeTrack, VibeCollection } from "./vibe";
 
 // ── CoverFlow items ──────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ export function collectionFlowItems(
 
 /** Row subtitle for a library collection, per active tab. Artists carry their
  *  name in the title already, so their subtitle stays empty. */
-export function collectionSub(c: VibeCollection, tab: string): LocalizedText {
+export function collectionSub(c: VibeCollection, tab: LibrarySectionTab): LocalizedText {
   if (tab === "albums") return { text: c.artist ?? "" };
   if (tab === "artists") return { text: "" };
   return { key: "common.playlist" };
@@ -72,7 +72,7 @@ export function collectionTrackCount(c: Pick<VibeCollection, "trackCount" | "tra
 }
 
 /** Row meta (right-aligned count/year) for a library collection, per tab. */
-export function collectionMeta(c: VibeCollection, tab: string): LocalizedText[] {
+export function collectionMeta(c: VibeCollection, tab: LibrarySectionTab): LocalizedText[] {
   if (tab === "artists") return [];
   const count: LocalizedText = { key: "counts.tracks", values: { count: collectionTrackCount(c) } };
   return tab === "albums" ? [{ text: c.year ? String(c.year) : "" }, count] : [count];

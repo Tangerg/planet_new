@@ -5,14 +5,13 @@ import {
   isNowPlayingCommentsMode,
   isNowPlayingLyricsMode,
   isNowPlayingPanelOpen,
-  normalizeNowPlayingMode,
   swipeAction,
   toggleNowPlayingLyricsMode,
   type NowPlayingMode,
 } from "@/model/now-playing";
 
 type Options = {
-  initialMode: string;
+  initialMode: NowPlayingMode;
   onNext?: () => void;
   onPrev?: () => void;
 };
@@ -25,7 +24,7 @@ type Options = {
  * LyricsPanel leaf, so the frequent tick never re-renders this screen.
  */
 export function useNowPlayingModel({ initialMode, onNext, onPrev }: Options) {
-  const [mode, setMode] = useState<NowPlayingMode>(() => normalizeNowPlayingMode(initialMode));
+  const [mode, setMode] = useState<NowPlayingMode>(initialMode);
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
 
   // Portal target for the queue Sheet; the two scroll containers auto-center.

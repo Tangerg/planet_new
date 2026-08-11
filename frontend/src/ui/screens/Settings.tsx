@@ -13,7 +13,11 @@ import { useTranslation } from "react-i18next";
 import { localize } from "@/i18n/text";
 import { LOCALES, LOCALE_LABELS } from "@/i18n";
 import { useLibrarySourceSettings } from "@/hooks/useLibrarySourceSettings";
-import { AUDIO_QUALITY_OPTIONS, NOW_PLAYING_OPEN_OPTIONS } from "@/model/settings-screen";
+import {
+  AUDIO_QUALITY_OPTIONS,
+  NOW_PLAYING_OPEN_OPTIONS,
+  type SettingsOption,
+} from "@/model/settings-screen";
 import { useAccent, useSetAccent } from "@/hooks/accent";
 
 function SetToggle({
@@ -38,17 +42,18 @@ function SetToggle({
   );
 }
 
-function SetSeg({
+function SetSeg<TValue extends string>({
   label,
   value,
   options,
   onChange,
 }: {
   label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (o: string) => void;
+  value: TValue;
+  options: SettingsOption<TValue>[];
+  onChange: (o: TValue) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="border-b border-white/[0.08] py-4">
       <div className="mb-3 text-[16px] font-light">{label}</div>
@@ -57,7 +62,7 @@ function SetSeg({
         className="seg"
         value={value}
         onValueChange={onChange}
-        items={options}
+        items={options.map((o) => ({ value: o.value, label: localize(t, o.label) }))}
       />
     </div>
   );
@@ -85,7 +90,7 @@ function LibrarySection() {
         <SetSeg
           label={t("settings.source")}
           value={library.source}
-          options={library.options.map((o) => ({ value: o.value, label: localize(t, o.label) }))}
+          options={library.options}
           onChange={library.switchSource}
         />
       )}
@@ -196,7 +201,7 @@ export function SettingsScreen({ settings, setSettings }: SettingsScreenProps) {
           <SetSeg
             label={t("settings.language")}
             value={i18n.resolvedLanguage ?? "en"}
-            options={LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l] }))}
+            options={LOCALES.map((l) => ({ value: l, label: { text: LOCALE_LABELS[l] } }))}
             onChange={(v) => void i18n.changeLanguage(v)}
           />
           <SetToggle

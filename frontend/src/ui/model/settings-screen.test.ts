@@ -2,19 +2,25 @@ import { describe, expect, it } from "vitest";
 import { ProviderId } from "@domain";
 
 import {
+  AUDIO_QUALITY_OPTIONS,
+  NOW_PLAYING_OPEN_OPTIONS,
   initialSettingsSource,
   scanStateFromFolderResult,
   scanStatusDescriptor,
   shouldActivateScannedSource,
   sourceOptions,
-  tokenOptions,
 } from "./settings-screen";
 
 describe("settings screen model", () => {
-  it("builds token segment options from literal setting values", () => {
-    expect(tokenOptions("STD", "HQ")).toEqual([
-      { value: "STD", label: "STD" },
-      { value: "HQ", label: "HQ" },
+  it("labels quality tiers by their token and now-playing modes by message key", () => {
+    expect(AUDIO_QUALITY_OPTIONS).toEqual([
+      { value: "STD", label: { text: "STD" } },
+      { value: "HQ", label: { text: "HQ" } },
+      { value: "SQ", label: { text: "SQ" } },
+    ]);
+    expect(NOW_PLAYING_OPEN_OPTIONS).toEqual([
+      { value: "cover", label: { key: "common.cover" } },
+      { value: "lyrics", label: { key: "common.lyrics" } },
     ]);
   });
 
