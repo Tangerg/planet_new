@@ -10,7 +10,6 @@ import {
   type IdentityGateway,
   type LoginFlow,
   type LyricProvider,
-  type PlaybackAvailabilityPolicy,
   type ProviderId,
   type UserLibrary,
 } from "@domain";
@@ -38,6 +37,7 @@ import {
 import { fetchNcmArtistMusicVideos, fetchNcmMusicVideoDetail } from "./music-videos";
 import { searchNcm } from "./search";
 import { fetchNcmLyrics, fetchNcmPlayUrls, fetchNcmTrackDetails } from "./tracks";
+import { PlaybackAvailabilityPolicy } from "@domain";
 
 export type Options = {
   host: string;
@@ -100,7 +100,7 @@ export class NeteaseCloudMusic extends Provider implements IdentityGateway, User
   }
 
   protected get playbackPolicy(): PlaybackAvailabilityPolicy {
-    return { canResolveFullPlayback: true, canUsePreviewPlayback: false };
+    return PlaybackAvailabilityPolicy.fullStream;
   }
 
   protected get lyricsPort(): LyricProvider {

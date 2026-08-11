@@ -6,12 +6,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
-import type { CardActivation } from "@/components/cards/activation";
+import { useCardActivation, type CardActivation } from "@/components/cards/activation";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
 import { PressTarget } from "@/components/controls/PressTarget";
-import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 
 /** Rendered height of one `.crow`. Windowed lists estimate with it, so it must
@@ -34,21 +33,11 @@ function CollectionRowInner<T extends CardItem>({
   playable = true,
 }: CollectionRowProps<T>) {
   const { t } = useTranslation();
-  const open = useMorphOpen();
   const { collMenu } = useScreenActions();
-  const activate = (e: React.MouseEvent | React.KeyboardEvent) =>
-    open(e, {
-      seed: item.coverSeed,
-      grad: item.gradient,
-      image: item.image,
-      round,
-      artSelector: ".clrt",
-      run: () => onOpen(item),
-    });
-  const activateFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    activate(e);
-  };
+  const { activate, activateFromTarget } = useCardActivation(
+    { item, onOpen },
+    { selector: ".clrt", round },
+  );
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- mouse-only row hit-area; cover/text below remain keyboard-accessible, and making the row role="button" would semantically nest the play button.
     <div onClick={activate} onContextMenu={(e) => collMenu(e, item)} className="crow">

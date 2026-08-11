@@ -2,7 +2,8 @@ import { Library, LookupStatus } from "@bindings/github.com/Tangerg/planet_new/b
 
 import { Provider } from "../provider";
 import { LocalLibraryUnavailableError, localLibraryCall } from "@contexts/local-library";
-import type { CatalogPorts, LyricProvider, PlaybackAvailabilityPolicy, ProviderId } from "@domain";
+import { PlaybackAvailabilityPolicy } from "@domain";
+import type { CatalogPorts, LyricProvider, ProviderId } from "@domain";
 import type { AlbumDetailSnapshot } from "@domain/model/album";
 import type { ArtistDetailSnapshot } from "@domain/model/artist";
 import { parseLyrics, type Lyric } from "@domain/model/lyric";
@@ -61,7 +62,7 @@ export class LocalMusic extends Provider {
   }
 
   protected get playbackPolicy(): PlaybackAvailabilityPolicy {
-    return { canResolveFullPlayback: true, canUsePreviewPlayback: false };
+    return PlaybackAvailabilityPolicy.fullStream;
   }
 
   protected get lyricsPort(): LyricProvider {

@@ -2,7 +2,8 @@ import type { KyInstance } from "ky";
 import ky from "ky";
 
 import { Provider } from "../provider";
-import type { CatalogPorts, PlaybackAvailabilityPolicy, ProviderId } from "@domain";
+import { PlaybackAvailabilityPolicy } from "@domain";
+import type { CatalogPorts, ProviderId } from "@domain";
 import type { PlaylistDetailSnapshot, PlaylistSnapshot } from "@domain/model/playlist";
 import type { TrackPlayUrl } from "@domain/model/track";
 import type { ArtistDetailSnapshot, ArtistLink, ArtistSnapshot } from "@domain/model/artist";
@@ -109,7 +110,7 @@ export class Spotify extends Provider {
   }
 
   protected get playbackPolicy(): PlaybackAvailabilityPolicy {
-    return { canResolveFullPlayback: false, canUsePreviewPlayback: true };
+    return PlaybackAvailabilityPolicy.previewOnly;
   }
 
   private async ensureToken(): Promise<string> {

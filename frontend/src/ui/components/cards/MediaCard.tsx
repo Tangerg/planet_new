@@ -7,12 +7,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
-import type { CardActivation } from "@/components/cards/activation";
+import { useCardActivation, type CardActivation } from "@/components/cards/activation";
 import { Art, artPair } from "@/components/primitives";
 import { LiftCard } from "@/components/lift";
 import { PlayFab } from "@/components/cards/PlayFab";
 import { PressTarget } from "@/components/controls/PressTarget";
-import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 
 /** Rendered height of one grid row of media cards (cover + two text lines).
@@ -41,21 +40,11 @@ function MediaCardInner<T extends CardItem>({
   playable = true,
 }: MediaCardProps<T>) {
   const { t } = useTranslation();
-  const open = useMorphOpen();
   const { collMenu } = useScreenActions();
-  const activate = (e: React.MouseEvent | React.KeyboardEvent) =>
-    open(e, {
-      seed: item.coverSeed,
-      grad: item.gradient,
-      image: item.image,
-      round,
-      artSelector: ".art",
-      run: () => onOpen(item),
-    });
-  const activateFromTarget = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    activate(e);
-  };
+  const { activate, activateFromTarget } = useCardActivation(
+    { item, onOpen },
+    { selector: ".art", round },
+  );
   return (
     <LiftCard
       className={"mcard gridcard" + (round ? " round" : "")}
