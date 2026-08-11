@@ -1,59 +1,18 @@
 import { AnimatePresence, motion } from "motion/react";
+import type { ComponentProps } from "react";
 
-import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerBar } from "@/components/PlayerBar";
+import { EXPO_OUT } from "@/styles/motion";
 
-type Props = {
-  show: boolean;
-  track?: VibeTrack;
-  playing: boolean;
-  onTogglePlay: () => void;
-  liked: boolean;
-  toggleLike: () => void;
-  shuffle: boolean;
-  onToggleShuffle: () => void;
-  repeat: boolean;
-  repeatOne: boolean;
-  onToggleRepeat: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onSeek: (percent: number) => void;
-  volume: number;
-  onVolume: (volume: number) => void;
-  onToggleMute: () => void;
-  onOpenNowPlaying: () => void;
-  onOpenStage: () => void;
-  onOpenQueue: () => void;
-  onOpenComments: () => void;
-  onOpenLyrics: () => void;
-  onOpenArtist: (artist: ArtistRef) => void;
-};
+/**
+ * The player bar's dock: it owns only whether the bar is on screen and how it
+ * slides in and out. Everything else it hands straight through, so it takes the
+ * bar's own props rather than restating them — a transport control added to the
+ * bar reaches it without a second edit here, and the two lists cannot drift.
+ */
+type Props = { show: boolean } & ComponentProps<typeof PlayerBar>;
 
-export function ShellPlayerDock({
-  show,
-  track,
-  playing,
-  onTogglePlay,
-  liked,
-  toggleLike,
-  shuffle,
-  onToggleShuffle,
-  repeat,
-  repeatOne,
-  onToggleRepeat,
-  onNext,
-  onPrev,
-  onSeek,
-  volume,
-  onVolume,
-  onToggleMute,
-  onOpenNowPlaying,
-  onOpenStage,
-  onOpenQueue,
-  onOpenComments,
-  onOpenLyrics,
-  onOpenArtist,
-}: Props) {
+export function ShellPlayerDock({ show, ...bar }: Props) {
   // The frequent progress tick is subscribed one level deeper, inside the bar's
   // LiveScrubber leaf — so neither this dock (nor its Motion slide wrapper) nor
   // the memoized PlayerBar re-render several times a second as the clock advances.
@@ -68,36 +27,13 @@ export function ShellPlayerDock({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "108%", opacity: 0 }}
             transition={{
-              y: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 0.32, ease: EXPO_OUT },
               opacity: { duration: 0.22 },
             }}
             className="absolute inset-x-0 bottom-0 z-30 overflow-visible will-change-transform"
             style={{ willChange: "transform, opacity" }}
           >
-            <PlayerBar
-              track={track}
-              playing={playing}
-              onTogglePlay={onTogglePlay}
-              liked={liked}
-              toggleLike={toggleLike}
-              shuffle={shuffle}
-              onToggleShuffle={onToggleShuffle}
-              repeat={repeat}
-              repeatOne={repeatOne}
-              onToggleRepeat={onToggleRepeat}
-              onNext={onNext}
-              onPrev={onPrev}
-              onSeek={onSeek}
-              volume={volume}
-              onVolume={onVolume}
-              onToggleMute={onToggleMute}
-              onOpenNowPlaying={onOpenNowPlaying}
-              onOpenStage={onOpenStage}
-              onOpenQueue={onOpenQueue}
-              onOpenComments={onOpenComments}
-              onOpenLyrics={onOpenLyrics}
-              onOpenArtist={onOpenArtist}
-            />
+            <PlayerBar {...bar} />
           </motion.div>
         )}
       </AnimatePresence>

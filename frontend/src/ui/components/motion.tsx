@@ -20,10 +20,10 @@
 import type React from "react";
 import { motion, type HTMLMotionProps } from "motion/react";
 import { useMorphFrozen } from "@/infra/morph";
+import { SETTLE } from "@/styles/motion";
 
 // CSS `ease` and the two ported bezier curves, kept verbatim from the keyframes.
 const EASE_CSS = [0.22, 1, 0.36, 1] as const;
-const EASE_RISE = [0.2, 0.7, 0.2, 1] as const;
 const EASE_NP = [0.32, 0.72, 0, 1] as const;
 
 type DivMotionProps = HTMLMotionProps<"div"> & { ref?: React.Ref<HTMLDivElement> };
@@ -52,7 +52,7 @@ export function Rise({ ref, children, delay = 0, ...rest }: DivMotionProps & { d
       ref={ref}
       initial={frozen ? false : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.36, ease: EASE_RISE, delay }}
+      transition={{ duration: 0.36, ease: SETTLE, delay }}
       {...rest}
     >
       {children}
@@ -68,7 +68,7 @@ export function XFade({ ref, children, ...rest }: DivMotionProps) {
       ref={ref}
       initial={frozen ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: EASE_RISE }}
+      transition={{ duration: 0.24, ease: SETTLE }}
       {...rest}
     >
       {children}

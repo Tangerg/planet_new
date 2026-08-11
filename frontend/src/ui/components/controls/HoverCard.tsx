@@ -2,6 +2,7 @@ import { PreviewCard } from "@base-ui/react/preview-card";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
 import type { PopupAlign, PopupSide } from "./popup";
+import { EXPO_OUT } from "@/styles/motion";
 
 export type HoverCardProps = {
   open: boolean;
@@ -62,7 +63,7 @@ export function HoverCard({
                     initial={{ opacity: 0, y: 5, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.2, ease: EXPO_OUT }}
                   />
                 }
               >
