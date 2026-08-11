@@ -10,22 +10,17 @@ import { LikeHeart } from "@/components/controls/LikeHeart";
 import { CommentList } from "@/components/CommentList";
 import { FadeIn } from "@/components/motion";
 import { useTranslation } from "react-i18next";
+import { useAccent } from "@/hooks/accent";
 
 type CommentsScreenProps = {
   track?: VibeTrack;
   comments: VibeComment[];
-  accent: string;
   liked: boolean;
   toggleLike: () => void;
 };
 
-export function CommentsScreen({
-  track,
-  comments,
-  accent,
-  liked,
-  toggleLike,
-}: CommentsScreenProps) {
+export function CommentsScreen({ track, comments, liked, toggleLike }: CommentsScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const model = commentsTrackModel(track);
   return (
@@ -48,7 +43,7 @@ export function CommentsScreen({
         {/* Top tags + bottom title via flow (space-between column), not absolute. */}
         <div className="relative z-[4] flex h-full flex-col items-start justify-between px-12 pb-[44px] pt-[60px]">
           <div className="flex flex-col items-start gap-[14px]">
-            <LikeHeart liked={liked} onToggle={toggleLike} accent={accent} />
+            <LikeHeart liked={liked} onToggle={toggleLike} />
             <span className="pill-accent">{model.qualityLabel}</span>
           </div>
           <div className="max-w-full">

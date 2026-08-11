@@ -8,9 +8,6 @@ import type { VibeTrack } from "./vibe";
 export const ACCENT_OPTIONS = ["#0fff83", "#ff2188", "#19d3c5", "#ff5a3c", "#7a5cff"] as const;
 export const DEFAULT_ACCENT: string = ACCENT_OPTIONS[0];
 
-/** Glass blur radius (px) applied to `--glass-blur`. */
-export const DEFAULT_GLASS_BLUR = 30;
-
 /** Shown in the player bar / screens before playback starts (defined fields, not
  *  undefined). The idle title is user-facing, so the caller passes it in
  *  translated rather than baking one language into a module constant. */

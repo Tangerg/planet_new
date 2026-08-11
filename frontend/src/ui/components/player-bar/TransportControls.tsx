@@ -3,16 +3,17 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 import { Tooltip } from "@/components/controls/Tooltip";
 import { Icon } from "@/infra/icons";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   playing: boolean;
   onTogglePlay: () => void;
-  accent: string;
   onNext?: () => void;
   onPrev?: () => void;
 };
 
-export function TransportControls({ playing, onTogglePlay, accent, onNext, onPrev }: Props) {
+export function TransportControls({ playing, onTogglePlay, onNext, onPrev }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const ctlCls = "grid place-items-center p-[5px]";
   const ctlColor = { color: "rgba(20,20,24,.78)" };

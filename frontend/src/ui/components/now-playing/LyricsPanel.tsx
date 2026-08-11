@@ -20,10 +20,9 @@ import { LyricLines } from "@/components/now-playing/LyricLines";
 
 type Props = {
   lyrics: readonly Lyric[];
-  accent: string;
 };
 
-export function LyricsPanel({ lyrics, accent }: Props) {
+export function LyricsPanel({ lyrics }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { positionSec } = usePlaybackProgress();
@@ -35,7 +34,7 @@ export function LyricsPanel({ lyrics, accent }: Props) {
 
   return (
     <div ref={scrollRef} className="scroll h-full">
-      <LyricLines lines={lines} accent={accent} active={active} scrollRef={scrollRef} />
+      <LyricLines lines={lines} active={active} scrollRef={scrollRef} />
     </div>
   );
 }

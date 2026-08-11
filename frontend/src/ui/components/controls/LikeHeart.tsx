@@ -7,15 +7,16 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";
+import { useAccent } from "@/hooks/accent";
 
 type LikeHeartProps = {
   liked: boolean;
   onToggle: () => void;
-  accent: string;
   size?: number;
 };
 
-export function LikeHeart({ liked, onToggle, accent, size = 30 }: LikeHeartProps) {
+export function LikeHeart({ liked, onToggle, size = 30 }: LikeHeartProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   return (
     <Button

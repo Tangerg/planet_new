@@ -6,9 +6,9 @@ import { HoverCard } from "@/components/controls/HoverCard";
 import { Slider } from "@/components/controls/Slider";
 import { Icon } from "@/infra/icons";
 import { volumeFromSliderValue, volumeLevel, volumeSliderValue } from "@/model/player";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
-  accent: string;
   tintA: string;
   tintB: string;
   volume: number;
@@ -16,7 +16,8 @@ type Props = {
   onToggleMute: () => void;
 };
 
-export function VolumeControl({ accent, tintA, tintB, volume, onVolume, onToggleMute }: Props) {
+export function VolumeControl({ tintA, tintB, volume, onVolume, onToggleMute }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const volumeIconByLevel = {

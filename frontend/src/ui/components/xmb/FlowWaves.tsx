@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { useAccent } from "@/hooks/accent";
 
 // The drift is authored in viewBox user units (that's the space the curves are
 // drawn in) and converted to a percentage of the box below, so the wrapper
@@ -31,7 +32,8 @@ const DRIFT_Y = [pct(-8, VIEW_H), pct(10, VIEW_H)];
  * instance gradient ids (useId): duplicate SVG ids resolve document-wide and
  * would cross-wire two mounted launchers.
  */
-export function FlowWaves({ accent }: { accent: string }) {
+export function FlowWaves() {
+  const accent = useAccent();
   const uid = useId();
   const reduce = useReducedMotion();
   return (

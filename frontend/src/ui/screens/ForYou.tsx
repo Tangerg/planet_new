@@ -30,6 +30,7 @@ import {
   forYouScreenModel,
   type ForYouFilter,
 } from "@/model/for-you";
+import { useAccent } from "@/hooks/accent";
 
 type ForYouScreenProps = {
   data: ScreenData;
@@ -40,7 +41,6 @@ type ForYouScreenProps = {
   openAlbum: (a: VibeCollection) => void;
   openArtist: (artist: ArtistRef) => void;
   openLibrary: (tab: LibrarySectionTab) => void;
-  accent: string;
 };
 
 export const ForYouScreen = React.memo(function ForYouScreen({
@@ -51,8 +51,8 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   openAlbum,
   openArtist,
   openLibrary,
-  accent,
 }: ForYouScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { collMenu } = useScreenActions();
@@ -124,7 +124,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
         <HeroBanner
           playlist={featured}
-          accent={accent}
           onOpen={() => openPlaylist(featured)}
           onPlay={canPlayCollection(featured) ? () => playCollection(featured) : undefined}
         />

@@ -18,10 +18,10 @@ import type { Lyric } from "@contexts/playback";
 import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
 import { localizeJoined } from "@/i18n/text";
 import { nowPlayingTrackModel } from "@/model/now-playing";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   track?: VibeTrack;
-  accent: string;
   liked: boolean;
   toggleLike: () => void;
   lyrics: readonly Lyric[];
@@ -47,7 +47,6 @@ const NO_QUEUE: VibeTrack[] = [];
 
 export const NowPlaying = React.memo(function NowPlaying({
   track,
-  accent,
   liked,
   toggleLike,
   lyrics,
@@ -63,6 +62,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   onClearQueue,
   onOpenArtist,
 }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const {
     mode,
@@ -125,7 +125,6 @@ export const NowPlaying = React.memo(function NowPlaying({
           }}
         />
         <TagStack
-          accent={accent}
           liked={liked}
           toggleLike={toggleLike}
           extra={
@@ -154,7 +153,6 @@ export const NowPlaying = React.memo(function NowPlaying({
               artists={trackModel.artists}
               fallback={trackModel.artist}
               fallbackId={trackModel.artistId}
-              accent={accent}
               color="rgba(255,255,255,.6)"
               onOpenArtist={onOpenArtist}
             />
@@ -258,7 +256,7 @@ export const NowPlaying = React.memo(function NowPlaying({
               <CommentList comments={comments} />
             </div>
           ) : (
-            <LyricsPanel lyrics={lyrics} accent={accent} />
+            <LyricsPanel lyrics={lyrics} />
           )}
         </NpSwap>
       </div>
@@ -272,7 +270,6 @@ export const NowPlaying = React.memo(function NowPlaying({
         contentRef={queueScrollRef}
         track={track}
         queue={queue}
-        accent={accent}
         tintA={a}
         grad={trackModel.gradient}
         onPlay={onPlay}

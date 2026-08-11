@@ -13,6 +13,7 @@ import "@/i18n"; // initialize i18next once (resources + active locale) before r
 import { engine } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
 import Shell from "@/Shell";
+import { AccentProvider } from "@/hooks/accent";
 import { installUiPerfProbe } from "@/infra/perf/uiPerfProbe";
 
 const container = document.getElementById("root") as HTMLElement;
@@ -32,7 +33,9 @@ root.render(
   <React.StrictMode>
     <EngineProvider engine={engine}>
       <QueryClientProvider client={queryClient}>
-        <Shell />
+        <AccentProvider>
+          <Shell />
+        </AccentProvider>
       </QueryClientProvider>
     </EngineProvider>
   </React.StrictMode>,

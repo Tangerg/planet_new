@@ -6,6 +6,7 @@ import { localize } from "@/i18n/text";
 import { Icon } from "@/infra/icons";
 import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
+import { useAccent } from "@/hooks/accent";
 
 // ============================================================
 // ContextMenu — right-click menu on Base UI Menu primitives. Edge-aware
@@ -19,10 +20,10 @@ type Props = {
   y: number;
   items: MenuItem[];
   onClose: () => void;
-  accent: string;
 };
 
-export function ContextMenu({ x, y, items, onClose, accent }: Props) {
+export function ContextMenu({ x, y, items, onClose }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   return (
     <Menu.Root open onOpenChange={(open) => !open && onClose()}>

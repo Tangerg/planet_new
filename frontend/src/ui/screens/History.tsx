@@ -16,6 +16,7 @@ import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
 import { Empty } from "@/components/layout/Empty";
 import { PageColumn } from "@/components/layout/PageColumn";
+import { useAccent } from "@/hooks/accent";
 
 type HistoryScreenProps = {
   /** This session's plays (newest last) → the "Today" group. */
@@ -29,7 +30,6 @@ type HistoryScreenProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
-  accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -39,7 +39,7 @@ type HistoryScreenProps = {
 // update (a track change, a like toggle).
 type HistoryGroupProps = Pick<
   HistoryScreenProps,
-  "onPlay" | "current" | "playing" | "liked" | "toggleLike" | "accent" | "onOpenArtist"
+  "onPlay" | "current" | "playing" | "liked" | "toggleLike" | "onOpenArtist"
 > & { section: HistorySection };
 
 function HistoryGroup({
@@ -49,7 +49,6 @@ function HistoryGroup({
   playing,
   liked,
   toggleLike,
-  accent,
   onOpenArtist,
 }: HistoryGroupProps) {
   const { t } = useTranslation();
@@ -66,7 +65,6 @@ function HistoryGroup({
           playing={playing}
           liked={liked}
           toggleLike={toggleLike}
-          accent={accent}
           onOpenArtist={onOpenArtist}
         />
       ))}
@@ -83,10 +81,10 @@ export function HistoryScreen({
   playing,
   liked,
   toggleLike,
-  accent,
   onOpenArtist,
 }: HistoryScreenProps) {
   const { t } = useTranslation();
+  const accent = useAccent();
   const model = historyScreenModel(session, weekRecord, all);
   const { hero, total } = model;
 
@@ -135,7 +133,6 @@ export function HistoryScreen({
               playing={playing}
               liked={liked}
               toggleLike={toggleLike}
-              accent={accent}
               onOpenArtist={onOpenArtist}
             />
           ))}

@@ -1,10 +1,10 @@
 import React, { useEffect, type RefObject } from "react";
 
 import type { Lyric } from "@contexts/playback";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   lines: readonly Lyric[];
-  accent: string;
   active: number;
   scrollRef: RefObject<HTMLDivElement | null>;
 };
@@ -30,12 +30,8 @@ export function activeLyricScrollTop(
  * list (up to a few hundred lines) is re-laid only when `active` actually
  * changes — not several times a second.
  */
-export const LyricLines = React.memo(function LyricLines({
-  lines,
-  accent,
-  active,
-  scrollRef,
-}: Props) {
+export const LyricLines = React.memo(function LyricLines({ lines, active, scrollRef }: Props) {
+  const accent = useAccent();
   useEffect(() => {
     const container = scrollRef.current;
     const el = container?.querySelector<HTMLElement>(`[data-lyric-idx="${active}"]`);

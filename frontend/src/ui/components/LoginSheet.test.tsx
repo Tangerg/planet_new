@@ -38,7 +38,6 @@ describe("LoginSheet", () => {
     render(
       <LoginSheet
         open
-        accent="#18f58a"
         beginLogin={beginLogin}
         markLoggedIn={markLoggedIn}
         sourceName="Test Source"
@@ -64,7 +63,6 @@ describe("LoginSheet", () => {
     render(
       <LoginSheet
         open
-        accent="#18f58a"
         beginLogin={beginLogin}
         markLoggedIn={vi.fn<() => void>()}
         sourceName="Test Source"
@@ -85,7 +83,6 @@ describe("LoginSheet", () => {
     render(
       <LoginSheet
         open
-        accent="#18f58a"
         beginLogin={() => Promise.resolve(qrFlow(poll))}
         markLoggedIn={vi.fn<() => void>()}
         sourceName="Test Source"
@@ -115,7 +112,6 @@ describe("LoginSheet", () => {
     const { unmount } = render(
       <LoginSheet
         open
-        accent="#18f58a"
         beginLogin={() => Promise.resolve(qrFlow(poll))}
         markLoggedIn={markLoggedIn}
         sourceName="Test Source"

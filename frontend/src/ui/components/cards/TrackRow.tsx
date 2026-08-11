@@ -17,6 +17,7 @@ import { useScreenActions } from "@/hooks/screenActions";
 import { usePlaybackPolicy } from "@/hooks/usePlaybackPolicy";
 import { writeTrackDragData } from "@/model/track-actions";
 import { cn } from "@/lib/cn";
+import { useAccent } from "@/hooks/accent";
 
 type TrackRowProps = {
   track: VibeTrack;
@@ -26,7 +27,6 @@ type TrackRowProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
-  accent: string;
   dark?: boolean;
   rank?: number;
   selected?: boolean;
@@ -41,18 +41,17 @@ const BADGE_CLASS =
 
 function TrackLeading({
   leading,
-  accent,
   color,
   muted,
   playable,
 }: {
   leading: TrackRowLeading;
-  accent: string;
   color: string;
   muted: string;
   /** A numbered playable row swaps its index for a play glyph under the cursor. */
   playable: boolean;
 }) {
+  const accent = useAccent();
   switch (leading.kind) {
     case "rank":
       return (
@@ -83,15 +82,8 @@ function TrackLeading({
   }
 }
 
-function TrackBadges({
-  badges,
-  accent,
-  muted,
-}: {
-  badges: readonly TrackRowBadge[];
-  accent: string;
-  muted: string;
-}) {
+function TrackBadges({ badges, muted }: { badges: readonly TrackRowBadge[]; muted: string }) {
+  const accent = useAccent();
   return badges.map((badge) =>
     badge.kind === "subscription" ? (
       <span
@@ -137,7 +129,6 @@ export const TrackRow = React.memo(function TrackRow({
   playing,
   liked,
   toggleLike,
-  accent,
   dark = true,
   rank,
   selected,
@@ -147,6 +138,7 @@ export const TrackRow = React.memo(function TrackRow({
   onMenuPlay,
 }: TrackRowProps) {
   const { t } = useTranslation();
+  const accent = useAccent();
   const { trackMenu } = useScreenActions();
   const policy = usePlaybackPolicy();
   const model = trackRowModel({ track, current, playing, index, rank, policy });
@@ -192,7 +184,6 @@ export const TrackRow = React.memo(function TrackRow({
         <div className="flex-none text-center" style={{ width: model.chart ? 30 : 22 }}>
           <TrackLeading
             leading={model.leading}
-            accent={accent}
             color={col}
             muted={sub}
             playable={!model.unavailable}
@@ -220,14 +211,13 @@ export const TrackRow = React.memo(function TrackRow({
           >
             {track.title}
           </span>
-          <TrackBadges badges={model.badges} accent={accent} muted={sub} />
+          <TrackBadges badges={model.badges} muted={sub} />
         </PressTarget>
         <div className="truncate text-[12.5px] font-light" style={{ color: sub }}>
           <ArtistLinks
             artists={track.artists}
             fallback={track.artist}
             fallbackId={track.artistId}
-            accent={accent}
             color={sub}
             onOpenArtist={onOpenArtist}
           />

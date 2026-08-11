@@ -31,7 +31,6 @@ describe("LyricLines", () => {
       <LyricLines
         lines={[{ duration: 0, content: "First line" }]}
         active={0}
-        accent="#18f58a"
         scrollRef={{ current: scrollContainer }}
       />,
       { container: scrollContainer },

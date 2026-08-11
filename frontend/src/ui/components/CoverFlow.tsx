@@ -30,6 +30,7 @@ import {
 } from "@/components/coverflow/geometry";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useCoverFlowInput } from "@/components/coverflow/useCoverFlowInput";
+import { useAccent } from "@/hooks/accent";
 
 type Props<T extends VibeTrack | VibeCollection> = {
   items: FlowItem<T>[];
@@ -39,7 +40,6 @@ type Props<T extends VibeTrack | VibeCollection> = {
   onOpen: (item: T) => void;
   onPlay: (item: T) => void;
   canPlay?: (item: T) => boolean;
-  accent: string;
   tracksFor?: (item: T) => VibeTrack[];
   onPlayTrack?: (track: VibeTrack) => void;
   /** Render covers as circles (artists) instead of squares (everything else). */
@@ -53,7 +53,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
   onOpen,
   onPlay,
   canPlay,
-  accent,
   tracksFor,
   onPlayTrack,
   round,
@@ -62,6 +61,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
   const { trackMenu, collMenu } = useScreenActions();
   // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
   const rootRef = useRef<HTMLDivElement>(null);
+  const accent = useAccent();
   const [expanded, setExpanded] = useState(false);
 
   const cur = items[center];
@@ -136,7 +136,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
                 isCenter={isC}
                 cover={COVER}
                 round={round}
-                accent={accent}
                 showPlay={isC && !round && (canPlay?.(it.obj) ?? true)}
                 transform={coverTransform(i - center)}
                 onActivate={() =>

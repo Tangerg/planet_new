@@ -15,20 +15,16 @@ import { useSourceName } from "@/hooks/useSourceName";
 
 import { VideoMeta } from "./VideoMeta";
 import { VideoThumb } from "./VideoThumb";
+import { useAccent } from "@/hooks/accent";
 
 type MusicVideosScreenProps = {
   videos: VibeMusicVideo[];
   isLoading: boolean;
-  accent: string;
   onOpenVideo: (video: VibeMusicVideo, related?: VibeMusicVideo[]) => void;
 };
 
-export function MusicVideosScreen({
-  videos,
-  isLoading,
-  accent,
-  onOpenVideo,
-}: MusicVideosScreenProps) {
+export function MusicVideosScreen({ videos, isLoading, onOpenVideo }: MusicVideosScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const sourceName = useSourceName();
   const model = musicVideosScreenModel(videos, isLoading);
@@ -135,13 +131,7 @@ export function MusicVideosScreen({
                   itemKey={(i) => rest[i].id}
                   renderItem={(i) => {
                     const mv = rest[i];
-                    return (
-                      <VideoThumb
-                        video={mv}
-                        accent={accent}
-                        onOpen={() => onOpenVideo(mv, related)}
-                      />
-                    );
+                    return <VideoThumb video={mv} onOpen={() => onOpenVideo(mv, related)} />;
                   }}
                 />
               </section>

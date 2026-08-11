@@ -32,6 +32,7 @@ import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
+import { useAccent } from "@/hooks/accent";
 
 type ArtistScreenProps = {
   artist: ArtistTarget;
@@ -43,7 +44,6 @@ type ArtistScreenProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
-  accent: string;
   onOpenAlbum: (album: VibeCollection) => void;
   onOpenArtist: (artist: ArtistRef) => void;
 };
@@ -58,11 +58,11 @@ export function ArtistScreen({
   playing,
   liked,
   toggleLike,
-  accent,
   onOpenAlbum,
   onOpenArtist,
 }: ArtistScreenProps) {
   const { t } = useTranslation();
+  const accent = useAccent();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("top");
   const [view, setView] = useState<CollectionViewMode>("list");
@@ -211,7 +211,6 @@ export function ArtistScreen({
                   playing={playing}
                   liked={liked}
                   toggleLike={toggleLike}
-                  accent={accent}
                   onOpenArtist={onOpenArtist}
                   flowCenter={flowCenter}
                   setFlowCenter={setFlowCenter}
@@ -265,7 +264,6 @@ export function ArtistScreen({
                     items={model.albumFlowItems}
                     center={clampIndex(flowCenter, model.albums.length)}
                     setCenter={setFlowCenter}
-                    accent={accent}
                     onOpen={onOpenAlbum}
                     onPlay={playCollection}
                     canPlay={canPlayCollection}

@@ -7,8 +7,9 @@
    `--color-*` so Tailwind utilities map to the same values.
    ============================================================ */
 :root {
-  --accent: #ff2188; /* hot magenta */
-  --accent-soft: #ff62a8;
+  /* --accent is published by AccentProvider (see ui/hooks/accent.tsx): it is a
+     runtime preference, so declaring a literal here would be a second source of
+     truth — and it already had drifted from DEFAULT_ACCENT. */
   --ink: #0a0a0c; /* near-black */
   --ink-2: #141417;
   --paper: #faf9f8; /* warm off-white */

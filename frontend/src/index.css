@@ -25,13 +25,12 @@
   --color-tx-3: rgba(255, 255, 255, 0.44);
   --color-tx-4: rgba(255, 255, 255, 0.28);
   --color-line: rgba(255, 255, 255, 0.09);
-  /* Accent is runtime-swappable: Shell writes the chosen accent to `--accent`
-     on :root (the accent picker). So the Tailwind accent utilities (bg-accent /
-     text-accent) must REFERENCE that live var, not mirror a frozen literal —
-     otherwise they'd stay stuck on the magenta default while everything driven
-     by var(--accent) tracks the picker. Literal = fallback before Shell mounts. */
-  --color-accent: var(--accent, #ff2188);
-  --color-accent-soft: var(--accent-soft, #ff62a8);
+  /* Accent is runtime-swappable: AccentProvider publishes the chosen accent to
+     `--accent` on :root (see ui/hooks/accent.tsx). So the Tailwind accent
+     utilities (bg-accent / text-accent) must REFERENCE that live var rather than
+     mirror a literal — a literal would both freeze them on one colour and be a
+     second source of truth for a value the provider already owns. */
+  --color-accent: var(--accent);
   --color-ink: #0a0a0c;
   --color-paper: #faf9f8;
 

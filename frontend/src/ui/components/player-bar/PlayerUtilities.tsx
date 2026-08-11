@@ -9,6 +9,7 @@ import { useScreenActions } from "@/hooks/screenActions";
 import { Icon } from "@/infra/icons";
 import { repeatTooltip } from "@/model/player";
 import { canAcceptTrackDrag, readTrackDragData } from "@/model/track-actions";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   liked: boolean;
@@ -21,7 +22,6 @@ type Props = {
   volume: number;
   onVolume: (value: number) => void;
   onToggleMute: () => void;
-  accent: string;
   tintA: string;
   tintB: string;
   onOpenStage: () => void;
@@ -41,7 +41,6 @@ export function PlayerUtilities({
   volume,
   onVolume,
   onToggleMute,
-  accent,
   tintA,
   tintB,
   onOpenStage,
@@ -49,6 +48,7 @@ export function PlayerUtilities({
   onOpenQueue,
   onOpenComments,
 }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const { enqueue } = useScreenActions();
   const [dragOver, setDragOver] = useState(false);
@@ -93,7 +93,6 @@ export function PlayerUtilities({
         </Toggle>
       </Tooltip>
       <VolumeControl
-        accent={accent}
         tintA={tintA}
         tintB={tintB}
         volume={volume}

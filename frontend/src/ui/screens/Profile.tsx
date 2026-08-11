@@ -14,14 +14,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { localize } from "@/i18n/text";
 import { profileScreenModel } from "@/model/profile";
 import { useSourceName } from "@/hooks/useSourceName";
+import { useAccent } from "@/hooks/accent";
 
 type ProfileScreenProps = {
-  accent: string;
   playlists: VibeCollection[];
   onOpenPlaylist: (playlist: VibeCollection) => void;
 };
 
-export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScreenProps) {
+export function ProfileScreen({ playlists, onOpenPlaylist }: ProfileScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const open = useMorphOpen();
   const { supported, loggedIn, account, beginLogin, markLoggedIn, logout } = useAuth();
@@ -196,7 +197,6 @@ export function ProfileScreen({ accent, playlists, onOpenPlaylist }: ProfileScre
       <LoginSheet
         open={loginOpen}
         onClose={closeLogin}
-        accent={accent}
         beginLogin={beginLogin}
         markLoggedIn={markLoggedIn}
         sourceName={sourceLabel}

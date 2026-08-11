@@ -10,7 +10,6 @@ type Props = {
   onTogglePlay: () => void;
   liked: boolean;
   toggleLike: () => void;
-  accent: string;
   shuffle: boolean;
   onToggleShuffle: () => void;
   repeat: boolean;
@@ -37,7 +36,6 @@ export function ShellPlayerDock({
   onTogglePlay,
   liked,
   toggleLike,
-  accent,
   shuffle,
   onToggleShuffle,
   repeat,
@@ -82,7 +80,6 @@ export function ShellPlayerDock({
               onTogglePlay={onTogglePlay}
               liked={liked}
               toggleLike={toggleLike}
-              accent={accent}
               shuffle={shuffle}
               onToggleShuffle={onToggleShuffle}
               repeat={repeat}

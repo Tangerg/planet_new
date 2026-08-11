@@ -38,7 +38,6 @@ type LibraryScreenProps = {
   onPlay: (track: VibeTrack) => void;
   current?: VibeTrack;
   playing: boolean;
-  accent: string;
   openPlaylist: (p: VibeCollection) => void;
   openAlbum: (a: VibeCollection) => void;
   openArtist: (artist: ArtistRef) => void;
@@ -56,7 +55,6 @@ export function LibraryScreen({
   onPlay,
   current,
   playing,
-  accent,
   openPlaylist,
   openAlbum,
   openArtist,
@@ -180,7 +178,6 @@ export function LibraryScreen({
                   round={round}
                   center={clampIndex(flowCenter, flowItems.length)}
                   setCenter={setFlowCenter}
-                  accent={accent}
                   onOpen={openOf}
                   onPlay={playCollection}
                   canPlay={canPlayCollection}
@@ -249,7 +246,6 @@ export function LibraryScreen({
                         playing={playing}
                         liked={liked}
                         toggleLike={toggleLike}
-                        accent={accent}
                         onOpenArtist={openArtist}
                       />
                     )}

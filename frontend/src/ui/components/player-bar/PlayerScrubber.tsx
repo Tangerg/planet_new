@@ -9,22 +9,17 @@ import {
   mediaSeekPercent,
   mediaTimelinePreview,
 } from "@/model/media-playback";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   positionSec: number;
   durationSec: number;
   fallbackDurationSec?: number;
-  accent: string;
   onSeek: (pct: number) => void;
 };
 
-export function PlayerScrubber({
-  positionSec,
-  durationSec,
-  fallbackDurationSec,
-  accent,
-  onSeek,
-}: Props) {
+export function PlayerScrubber({ positionSec, durationSec, fallbackDurationSec, onSeek }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const dur = effectiveMediaDuration(durationSec, fallbackDurationSec);
   const [scrub, setScrub] = useState<number | null>(null);

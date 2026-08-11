@@ -9,11 +9,11 @@ import { FadeIn } from "@/components/motion";
 import { Icon } from "@/infra/icons";
 import { formatMediaTime } from "@/model/media-playback";
 import { musicVideoTheaterModel } from "@/model/music-video-screen";
+import { useAccent } from "@/hooks/accent";
 
 type MusicVideoTheaterScreenProps = {
   video: VibeMusicVideo;
   comments: VibeComment[];
-  accent: string;
   playbackPolicy: MusicVideoAvailabilityPolicy;
   onClose: () => void;
 };
@@ -21,10 +21,10 @@ type MusicVideoTheaterScreenProps = {
 export function MusicVideoTheaterScreen({
   video,
   comments,
-  accent,
   playbackPolicy,
   onClose,
 }: MusicVideoTheaterScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const initialModel = musicVideoTheaterModel({

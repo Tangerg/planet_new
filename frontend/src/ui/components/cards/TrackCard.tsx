@@ -13,11 +13,11 @@ import { LiftCard, RiseFab } from "@/components/lift";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
+import { useAccent } from "@/hooks/accent";
 
 type TrackCardProps = {
   track: VibeTrack;
   onPlay: (track: VibeTrack) => void;
-  accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -28,9 +28,9 @@ type TrackCardProps = {
 export const TrackCard = React.memo(function TrackCard({
   track,
   onPlay,
-  accent,
   onOpenArtist,
 }: TrackCardProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
   const play = () => onPlay(track);
@@ -86,7 +86,6 @@ export const TrackCard = React.memo(function TrackCard({
           artists={track.artists}
           fallback={track.artist}
           fallbackId={track.artistId}
-          accent={accent}
           color="rgba(255,255,255,.5)"
           onOpenArtist={onOpenArtist}
         />

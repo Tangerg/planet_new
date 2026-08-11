@@ -12,6 +12,7 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { QueueClearButton } from "@/components/QueueClearButton";
 import { useScreenActions } from "@/hooks/screenActions";
 import { Icon } from "@/infra/icons";
+import { useAccent } from "@/hooks/accent";
 
 type Props = {
   open: boolean;
@@ -20,7 +21,6 @@ type Props = {
   contentRef: RefObject<HTMLDivElement | null>;
   track?: VibeTrack;
   queue: VibeTrack[];
-  accent: string;
   tintA: string;
   grad?: string[];
   onPlay?: (track: VibeTrack) => void;
@@ -36,7 +36,6 @@ export function UpNextSheet({
   contentRef,
   track,
   queue,
-  accent,
   tintA,
   grad,
   onPlay,
@@ -44,6 +43,7 @@ export function UpNextSheet({
   onClearQueue,
   onOpenArtist,
 }: Props) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const { trackMenu } = useScreenActions();
 
@@ -106,7 +106,6 @@ export function UpNextSheet({
                 artists={track?.artists}
                 fallback={track?.artist}
                 fallbackId={track?.artistId}
-                accent={accent}
                 color="rgba(255,255,255,.5)"
                 onOpenArtist={onOpenArtist}
               />

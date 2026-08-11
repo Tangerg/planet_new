@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import type { LoginFlow, LoginStatus } from "@contexts/identity";
 import { warnReadFailure } from "@shared/debug";
 import { Sheet } from "@/components/Sheet";
+import { useAccent } from "@/hooks/accent";
 
 type LoginViewStatus = LoginStatus["state"] | "failed";
 
@@ -23,20 +24,19 @@ const STATUS_LABEL_KEY: Record<LoginViewStatus, string> = {
 export function LoginSheet({
   open,
   onClose,
-  accent,
   beginLogin,
   markLoggedIn,
   sourceName,
 }: {
   open: boolean;
   onClose: () => void;
-  accent: string;
   beginLogin: () => Promise<LoginFlow>;
   markLoggedIn: () => void;
   /** The source being logged into, already resolved — the sheet stays a leaf. */
   sourceName: string;
 }) {
   const { t } = useTranslation();
+  const accent = useAccent();
   const [flow, setFlow] = useState<LoginFlow | null>(null);
   const [status, setStatus] = useState<LoginViewStatus>("pending");
 

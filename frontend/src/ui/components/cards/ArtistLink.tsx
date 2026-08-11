@@ -9,6 +9,7 @@ import type { ArtistRef } from "@/model/vibe";
 import { artistCreditLine } from "@/model/artist-credit";
 import { Button } from "@/components/controls/Button";
 import { activateOnKey } from "@/lib/keys";
+import { useAccent } from "@/hooks/accent";
 
 /** Inline style carrying the link's rest/hover colour custom properties. */
 type ArtistLinkStyle = React.CSSProperties & {
@@ -20,21 +21,14 @@ type ArtistLinkProps = {
   /** Display name. */
   name?: string;
   artistId?: string;
-  accent: string;
   /** Resting colour (varies per surface); hover goes to `accent`. */
   color: string;
   onOpenArtist?: (artist: ArtistRef) => void;
   style?: ArtistLinkStyle;
 };
 
-export function ArtistLink({
-  name,
-  artistId,
-  accent,
-  color,
-  onOpenArtist,
-  style,
-}: ArtistLinkProps) {
+export function ArtistLink({ name, artistId, color, onOpenArtist, style }: ArtistLinkProps) {
+  const accent = useAccent();
   if (!(onOpenArtist && artistId)) return <>{name ?? ""}</>;
   const open = (e: React.SyntheticEvent) => {
     e.stopPropagation();
@@ -64,7 +58,6 @@ type ArtistLinksProps = {
   fallback?: string;
   /** Primary artist id for that single fallback link. */
   fallbackId?: string;
-  accent: string;
   color: string;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
@@ -79,7 +72,6 @@ export function ArtistLinks({
   artists,
   fallback,
   fallbackId,
-  accent,
   color,
   onOpenArtist,
 }: ArtistLinksProps) {
@@ -89,7 +81,6 @@ export function ArtistLinks({
       <ArtistLink
         name={creditLine.name}
         artistId={creditLine.artistId}
-        accent={accent}
         color={color}
         onOpenArtist={onOpenArtist}
       />
@@ -100,13 +91,7 @@ export function ArtistLinks({
       {creditLine.artists.map((a, i) => (
         <React.Fragment key={(a.id || a.name) + i}>
           {i > 0 && <span style={{ color }}>, </span>}
-          <ArtistLink
-            name={a.name}
-            artistId={a.id}
-            accent={accent}
-            color={color}
-            onOpenArtist={onOpenArtist}
-          />
+          <ArtistLink name={a.name} artistId={a.id} color={color} onOpenArtist={onOpenArtist} />
         </React.Fragment>
       ))}
     </>

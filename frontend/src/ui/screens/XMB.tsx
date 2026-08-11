@@ -29,7 +29,6 @@ import {
 
 type Props = {
   cats: XmbCat[];
-  accent: string;
   playing: boolean;
   /** Now-playing cover — drives the ambient backdrop. Absent = nothing playing. */
   np?: { image?: string; seed?: number; grad?: string[] };
@@ -43,7 +42,6 @@ type Props = {
 
 export const XMB = React.memo(function XMB({
   cats,
-  accent,
   playing: _playing,
   np,
   showWaves = true,
@@ -99,7 +97,7 @@ export const XMB = React.memo(function XMB({
           }}
         />
       )}
-      {showWaves && <FlowWaves accent={accent} />}
+      {showWaves && <FlowWaves />}
 
       {/* sub-item column — single vertical list at the active category's x,
           passed items above the bar, upcoming below; the bar (icon+label) sits between */}

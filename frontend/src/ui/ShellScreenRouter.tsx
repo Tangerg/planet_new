@@ -163,9 +163,6 @@ type MusicVideoBundle = {
 type SettingsBundle = {
   settings: Settings;
   setSettings: React.Dispatch<React.SetStateAction<Settings>>;
-  accent: string;
-  setAccent: (accent: string) => void;
-  accentOptions: string[];
   nowPlayingInitialMode: NowPlayingMode;
 };
 
@@ -235,7 +232,7 @@ export function ShellScreenRouter(props: Props) {
     musicVideoComments,
     playbackPolicy: musicVideoPlaybackPolicy,
   } = props.musicVideo;
-  const { settings, setSettings, accent, setAccent, accentOptions } = props.settings;
+  const { settings, setSettings } = props.settings;
 
   // Derived props handed to memoized screens (XMB, NowPlaying). Built here rather
   // than inline in the branch so their identity only changes with the track —
@@ -260,7 +257,6 @@ export function ShellScreenRouter(props: Props) {
       return (
         <XMB
           cats={cats}
-          accent={accent}
           playing={playing}
           np={nowPlayingArt}
           showWaves={settings.waves}
@@ -278,7 +274,6 @@ export function ShellScreenRouter(props: Props) {
         <ForYouScreen
           data={catalog}
           daily={daily}
-          accent={accent}
           openPlaylist={openDetail}
           openAlbum={albumDetail}
           openArtist={openArtist}
@@ -294,7 +289,6 @@ export function ShellScreenRouter(props: Props) {
           onPlay={onPlay}
           current={current}
           playing={playing}
-          accent={accent}
           query={searchQuery}
           onQuery={setSeedQuery}
           liked={liked}
@@ -313,7 +307,6 @@ export function ShellScreenRouter(props: Props) {
           <MusicVideosScreen
             videos={musicVideos}
             isLoading={musicVideosLoading}
-            accent={accent}
             onOpenVideo={openMusicVideo}
           />
         </ScreenChunk>
@@ -326,7 +319,6 @@ export function ShellScreenRouter(props: Props) {
           <MusicVideoDetailScreen
             video={route.video}
             related={musicVideoRail}
-            accent={accent}
             playbackPolicy={musicVideoPlaybackPolicy}
             onPlay={(mv) => {
               onPause();
@@ -345,7 +337,6 @@ export function ShellScreenRouter(props: Props) {
           <MusicVideoTheaterScreen
             video={route.video}
             comments={musicVideoComments}
-            accent={accent}
             playbackPolicy={musicVideoPlaybackPolicy}
             onClose={goBack}
           />
@@ -368,7 +359,6 @@ export function ShellScreenRouter(props: Props) {
           onPlay={onPlay}
           current={current}
           playing={playing}
-          accent={accent}
           openPlaylist={openDetail}
           openAlbum={albumDetail}
           openArtist={openArtist}
@@ -387,7 +377,6 @@ export function ShellScreenRouter(props: Props) {
           playing={playing}
           liked={liked}
           toggleLike={toggleLike}
-          accent={accent}
           onOpenArtist={openArtist}
           onShufflePlay={shufflePlay}
         />
@@ -403,7 +392,6 @@ export function ShellScreenRouter(props: Props) {
           playing={playing}
           liked={liked}
           toggleLike={toggleLike}
-          accent={accent}
           onOpenArtist={openArtist}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}
@@ -422,22 +410,13 @@ export function ShellScreenRouter(props: Props) {
           playing={playing}
           liked={liked}
           toggleLike={toggleLike}
-          accent={accent}
           onOpenArtist={openArtist}
         />
       );
     }
 
     case "settings": {
-      return (
-        <SettingsScreen
-          accent={accent}
-          setAccent={setAccent}
-          accentOptions={accentOptions}
-          settings={settings}
-          setSettings={setSettings}
-        />
-      );
+      return <SettingsScreen settings={settings} setSettings={setSettings} />;
     }
 
     case "artist": {
@@ -452,7 +431,6 @@ export function ShellScreenRouter(props: Props) {
           playing={playing}
           liked={liked}
           toggleLike={toggleLike}
-          accent={accent}
           onOpenAlbum={albumDetail}
           onOpenArtist={openArtist}
         />
@@ -460,13 +438,7 @@ export function ShellScreenRouter(props: Props) {
     }
 
     case "profile": {
-      return (
-        <ProfileScreen
-          accent={accent}
-          playlists={libraryData.playlists}
-          onOpenPlaylist={openDetail}
-        />
-      );
+      return <ProfileScreen playlists={libraryData.playlists} onOpenPlaylist={openDetail} />;
     }
 
     case "comments": {
@@ -474,7 +446,6 @@ export function ShellScreenRouter(props: Props) {
         <CommentsScreen
           track={current}
           comments={comments}
-          accent={accent}
           liked={isLiked}
           toggleLike={toggleCurrentLike}
         />
@@ -485,7 +456,6 @@ export function ShellScreenRouter(props: Props) {
       return (
         <NowPlaying
           track={current}
-          accent={accent}
           liked={isLiked}
           toggleLike={toggleCurrentLike}
           lyrics={lyrics}
@@ -508,7 +478,7 @@ export function ShellScreenRouter(props: Props) {
     case "stage": {
       return (
         <ScreenChunk>
-          <Stage track={current} accent={accent} playing={playing} onClose={goBack} />
+          <Stage track={current} playing={playing} onClose={goBack} />
         </ScreenChunk>
       );
     }

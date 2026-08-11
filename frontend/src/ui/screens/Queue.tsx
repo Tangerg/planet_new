@@ -13,12 +13,12 @@ import { VList } from "@/components/layout/VList";
 import { Empty } from "@/components/layout/Empty";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { QueueClearButton } from "@/components/QueueClearButton";
+import { useAccent } from "@/hooks/accent";
 
 type QueueScreenProps = {
   current?: VibeTrack;
   queue: VibeTrack[];
   onPlay: (track: VibeTrack) => void;
-  accent: string;
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
@@ -31,7 +31,6 @@ export function QueueScreen({
   current,
   queue,
   onPlay,
-  accent,
   playing,
   liked,
   toggleLike,
@@ -39,6 +38,7 @@ export function QueueScreen({
   onRemoveFromQueue,
   onClearQueue,
 }: QueueScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const model = queueScreenModel(current, queue);
@@ -93,7 +93,6 @@ export function QueueScreen({
                   playing={playing}
                   liked={liked}
                   toggleLike={toggleLike}
-                  accent={accent}
                   onOpenArtist={onOpenArtist}
                   onRemoveFromQueue={onRemoveFromQueue}
                   onMenuPlay={onPlay}

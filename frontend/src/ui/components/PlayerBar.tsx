@@ -20,7 +20,6 @@ type Props = {
   onTogglePlay: () => void;
   liked: boolean;
   toggleLike: () => void;
-  accent: string;
   onOpenNowPlaying: () => void;
   onOpenStage: () => void;
   onOpenLyrics: () => void;
@@ -49,7 +48,6 @@ export const PlayerBar = React.memo(function PlayerBar({
   onTogglePlay,
   liked,
   toggleLike,
-  accent,
   onOpenNowPlaying,
   onOpenStage,
   onOpenLyrics,
@@ -98,11 +96,10 @@ export const PlayerBar = React.memo(function PlayerBar({
         }}
       />
 
-      <BreathingLight playing={playing && !!track?.playUrl} accent={accent} image={track?.image} />
+      <BreathingLight playing={playing && !!track?.playUrl} image={track?.image} />
 
       <PlayerTrackIdentity
         track={track}
-        accent={accent}
         onOpenNowPlaying={openNowPlaying}
         onOpenArtist={onOpenArtist}
       />
@@ -110,12 +107,11 @@ export const PlayerBar = React.memo(function PlayerBar({
       <TransportControls
         playing={playing}
         onTogglePlay={onTogglePlay}
-        accent={accent}
         onNext={onNext}
         onPrev={onPrev}
       />
 
-      <LiveScrubber fallbackDurationSec={track?.durSec} accent={accent} onSeek={onSeek} />
+      <LiveScrubber fallbackDurationSec={track?.durSec} onSeek={onSeek} />
 
       <PlayerUtilities
         liked={liked}
@@ -128,7 +124,6 @@ export const PlayerBar = React.memo(function PlayerBar({
         volume={volume}
         onVolume={onVolume}
         onToggleMute={onToggleMute}
-        accent={accent}
         tintA={a}
         tintB={b}
         onOpenStage={onOpenStage}

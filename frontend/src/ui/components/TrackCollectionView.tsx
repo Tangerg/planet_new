@@ -26,7 +26,6 @@ export function TrackCollectionView({
   playing,
   liked,
   toggleLike,
-  accent,
   onOpenArtist,
   flowCenter,
   setFlowCenter,
@@ -45,7 +44,6 @@ export function TrackCollectionView({
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
-  accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
   flowCenter: number;
   setFlowCenter: (n: number | ((c: number) => number)) => void;
@@ -75,7 +73,6 @@ export function TrackCollectionView({
               playing={playing}
               liked={liked}
               toggleLike={toggleLike}
-              accent={accent}
               onOpenArtist={onOpenArtist}
             />
           );
@@ -92,12 +89,7 @@ export function TrackCollectionView({
         estimateRowHeight={232}
         itemKey={(i) => tracks[i].id}
         renderItem={(i) => (
-          <TrackCard
-            track={tracks[i]}
-            onPlay={onPlay}
-            accent={accent}
-            onOpenArtist={onOpenArtist}
-          />
+          <TrackCard track={tracks[i]} onPlay={onPlay} onOpenArtist={onOpenArtist} />
         )}
       />
     );
@@ -108,7 +100,6 @@ export function TrackCollectionView({
         items={trackFlowItems(tracks)}
         center={clampIndex(flowCenter, tracks.length)}
         setCenter={setFlowCenter}
-        accent={accent}
         onOpen={onPlay}
         onPlay={onPlay}
       />

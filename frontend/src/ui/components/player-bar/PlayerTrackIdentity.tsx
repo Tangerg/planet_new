@@ -8,12 +8,11 @@ import { Art } from "@/components/primitives";
 
 type Props = {
   track?: VibeTrack;
-  accent: string;
   onOpenNowPlaying: (element: HTMLElement) => void;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
-export function PlayerTrackIdentity({ track, accent, onOpenNowPlaying, onOpenArtist }: Props) {
+export function PlayerTrackIdentity({ track, onOpenNowPlaying, onOpenArtist }: Props) {
   const { t } = useTranslation();
   const openNowPlayingFrom = (element: HTMLElement) => {
     onOpenNowPlaying(element.closest<HTMLElement>("[data-player-identity]") ?? element);
@@ -53,7 +52,6 @@ export function PlayerTrackIdentity({ track, accent, onOpenNowPlaying, onOpenArt
             artists={track?.artists}
             fallback={track?.artist || ""}
             fallbackId={track?.artistId}
-            accent={accent}
             color="rgba(20,20,24,.55)"
             onOpenArtist={onOpenArtist}
           />

@@ -18,12 +18,12 @@ import { FadeIn } from "@/components/motion";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useSearchScreenModel } from "@/hooks/useSearchScreenModel";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
+import { useAccent } from "@/hooks/accent";
 
 type SearchScreenProps = {
   onPlay: (track: VibeTrack) => void;
   current?: VibeTrack;
   playing: boolean;
-  accent: string;
   // Controlled by Shell so the typed query survives a back-navigation round-trip.
   query: string;
   onQuery: (q: string) => void;
@@ -40,7 +40,6 @@ export function SearchScreen({
   onPlay,
   current,
   playing,
-  accent,
   query: q,
   onQuery: setQ,
   openArtist,
@@ -50,6 +49,7 @@ export function SearchScreen({
   toggleLike,
   search,
 }: SearchScreenProps) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const open = useMorphOpen();
   const model = useSearchScreenModel({ query: q, search });
@@ -164,7 +164,6 @@ export function SearchScreen({
                   playing={playing}
                   liked={liked}
                   toggleLike={toggleLike}
-                  accent={accent}
                   onOpenArtist={openArtist}
                 />
               ))}

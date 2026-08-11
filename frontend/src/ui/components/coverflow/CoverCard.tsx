@@ -9,6 +9,7 @@ import { Icon } from "@/infra/icons";
 import type { FlowItem } from "@/model/derive";
 
 import { CARD_EASE, type CoverTransform } from "./geometry";
+import { useAccent } from "@/hooks/accent";
 
 /**
  * One Cover Flow card: the fanned 3D surface (cover art + optional play fab) and
@@ -21,7 +22,6 @@ export function CoverCard({
   isCenter,
   cover,
   round,
-  accent,
   showPlay,
   transform,
   onActivate,
@@ -33,7 +33,6 @@ export function CoverCard({
   isCenter: boolean;
   cover: number;
   round?: boolean;
-  accent: string;
   showPlay: boolean;
   transform: CoverTransform;
   onActivate: () => void;
@@ -41,6 +40,7 @@ export function CoverCard({
   onContextMenu?: (e: React.MouseEvent) => void;
   onPlay: () => void;
 }) {
+  const accent = useAccent();
   const { t } = useTranslation();
   const o = transform;
   return (

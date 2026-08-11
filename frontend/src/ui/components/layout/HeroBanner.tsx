@@ -12,15 +12,16 @@ import { LiftCard } from "@/components/lift";
 import { Button } from "@/components/controls/Button";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { collectionTrackCount } from "@/model/derive";
+import { useAccent } from "@/hooks/accent";
 
 type HeroBannerProps = {
   playlist: VibeCollection;
   onOpen: () => void;
   onPlay?: () => void;
-  accent: string;
 };
 
-export function HeroBanner({ playlist, onOpen, onPlay, accent }: HeroBannerProps) {
+export function HeroBanner({ playlist, onOpen, onPlay }: HeroBannerProps) {
+  const accent = useAccent();
   const open = useMorphOpen();
   const { t } = useTranslation();
   return (

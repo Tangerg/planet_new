@@ -44,21 +44,12 @@ const LazyContextMenu = React.lazy(() =>
   import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
 );
 import { ShellScreenRouter, warmDeferredScreens } from "@/ShellScreenRouter";
-import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_GLASS_BLUR } from "@/model/defaults";
 import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type { NowPlayingMode } from "@/model/now-playing";
 
 export default function Shell() {
   const media = useMediaService();
   const queryClient = useQueryClient();
-
-  /* ---- theme tweaks (example TweaksPanel knobs; fixed here, accent editable in Settings) ---- */
-  const [accent, setAccent] = useState(DEFAULT_ACCENT);
-  const [glass] = useState(DEFAULT_GLASS_BLUR);
-  useEffect(() => {
-    document.documentElement.style.setProperty("--accent", accent);
-    document.documentElement.style.setProperty("--glass-blur", glass + "px");
-  }, [accent, glass]);
 
   // Pull the code-split screens in once the app has settled, so the split costs
   // nothing at first navigation while still keeping them off the startup path.
@@ -325,9 +316,6 @@ export default function Shell() {
       settings={{
         settings,
         setSettings,
-        accent,
-        setAccent,
-        accentOptions: [...ACCENT_OPTIONS],
         nowPlayingInitialMode,
       }}
     />
@@ -364,7 +352,6 @@ export default function Shell() {
                 onTogglePlay={togglePlay}
                 liked={isLiked}
                 toggleLike={toggleCurrentLike}
-                accent={accent}
                 shuffle={shuffle}
                 onToggleShuffle={toggleShuffle}
                 repeat={repeat}
@@ -391,7 +378,6 @@ export default function Shell() {
                   x={menu.x}
                   y={menu.y}
                   items={menu.items}
-                  accent={accent}
                   onClose={() => setMenu(null)}
                 />
               </React.Suspense>

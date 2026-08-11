@@ -2,7 +2,7 @@
 // Settings — accent, playback and interface preferences.
 // ============================================================
 import React from "react";
-import type { Settings } from "@/model/defaults";
+import { ACCENT_OPTIONS, type Settings } from "@/model/defaults";
 import { Icon } from "@/infra/icons";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/controls/Button";
@@ -14,6 +14,7 @@ import { localize } from "@/i18n/text";
 import { LOCALES, LOCALE_LABELS } from "@/i18n";
 import { useLibrarySourceSettings } from "@/hooks/useLibrarySourceSettings";
 import { AUDIO_QUALITY_OPTIONS, NOW_PLAYING_OPEN_OPTIONS } from "@/model/settings-screen";
+import { useAccent, useSetAccent } from "@/hooks/accent";
 
 function SetToggle({
   label,
@@ -68,7 +69,8 @@ function SetSeg({
  * source and invalidates cached catalog reads, so the imported music shows at
  * once (Engine.media reads through the active provider).
  */
-function LibrarySection({ accent }: { accent: string }) {
+function LibrarySection() {
+  const accent = useAccent();
   const { t } = useTranslation();
   const library = useLibrarySourceSettings();
   const status = localize(t, library.status);
@@ -109,21 +111,14 @@ function LibrarySection({ accent }: { accent: string }) {
 }
 
 type SettingsScreenProps = {
-  accent: string;
-  setAccent: (col: string) => void;
-  accentOptions: string[];
   settings: Settings;
   setSettings: React.Dispatch<React.SetStateAction<Settings>>;
 };
 
-export function SettingsScreen({
-  accent,
-  setAccent,
-  accentOptions,
-  settings,
-  setSettings,
-}: SettingsScreenProps) {
+export function SettingsScreen({ settings, setSettings }: SettingsScreenProps) {
   const { t, i18n } = useTranslation();
+  const accent = useAccent();
+  const setAccent = useSetAccent();
   const s = settings;
   const up = <K extends keyof Settings>(k: K, v: Settings[K]) =>
     setSettings((prev) => ({ ...prev, [k]: v }));
@@ -141,7 +136,7 @@ export function SettingsScreen({
             {t("settings.accent")}
           </div>
           <div className="flex gap-3 border-b border-white/[0.08] py-4">
-            {accentOptions.map((col) => (
+            {ACCENT_OPTIONS.map((col) => (
               <Button
                 key={col}
                 onClick={() => setAccent(col)}
@@ -192,7 +187,7 @@ export function SettingsScreen({
           />
         </div>
 
-        <LibrarySection accent={accent} />
+        <LibrarySection />
 
         <div className="mt-[30px]">
           <div className="mlabel mb-1" style={{ color: accent }}>

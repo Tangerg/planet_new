@@ -3,17 +3,11 @@ import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";
 import type { VibeMusicVideo } from "@/model/vibe";
 import { useTranslation } from "react-i18next";
+import { useAccent } from "@/hooks/accent";
 
 /** 16:9 MV card used in the hub and detail rails: cover + hover play affordance. */
-export function VideoThumb({
-  video,
-  accent,
-  onOpen,
-}: {
-  video: VibeMusicVideo;
-  accent: string;
-  onOpen: () => void;
-}) {
+export function VideoThumb({ video, onOpen }: { video: VibeMusicVideo; onOpen: () => void }) {
+  const accent = useAccent();
   const { t } = useTranslation();
   return (
     <Button

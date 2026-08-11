@@ -86,7 +86,6 @@ describe("interactive component boundaries", () => {
     render(
       <PlayerTrackIdentity
         track={track}
-        accent="#18f58a"
         onOpenNowPlaying={onOpenNowPlaying}
         onOpenArtist={onOpenArtist}
       />,
@@ -105,7 +104,7 @@ describe("interactive component boundaries", () => {
     const onOpenArtist = vi.fn<(artist: { id: string; name: string }) => void>();
 
     const { container } = render(
-      <TrackCard track={track} onPlay={onPlay} accent="#18f58a" onOpenArtist={onOpenArtist} />,
+      <TrackCard track={track} onPlay={onPlay} onOpenArtist={onOpenArtist} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Artist" }));
@@ -136,7 +135,6 @@ describe("interactive component boundaries", () => {
         }}
         isCenter
         cover={180}
-        accent="#18f58a"
         showPlay
         transform={{ x: 0, tz: 0, ry: 0, sc: 1, op: 1, z: 1 }}
         onActivate={onActivate}
@@ -201,7 +199,6 @@ describe("interactive component boundaries", () => {
         playing={false}
         liked={new Set()}
         toggleLike={toggleLike}
-        accent="#18f58a"
         onOpenArtist={onOpenArtist}
       />,
     );
@@ -232,7 +229,6 @@ describe("interactive component boundaries", () => {
         playing={false}
         liked={new Set()}
         toggleLike={vi.fn<(track: VibeTrack) => void>()}
-        accent="#18f58a"
       />,
     );
 
@@ -262,7 +258,6 @@ describe("interactive component boundaries", () => {
         playing={false}
         liked={new Set()}
         toggleLike={vi.fn<(track: VibeTrack) => void>()}
-        accent="#18f58a"
       />,
     );
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
 import { createAudioEngine, resolveAudioEngineConfig } from "@shared/audio";
 
+import { useAccent } from "@/hooks/accent";
 import { useAudioSpectrum } from "@/hooks/useAudioSpectrum";
 
 import type { VisualEffect } from "./effect";
@@ -9,7 +10,6 @@ import type { VisualEffect } from "./effect";
 type Props = {
   effect: VisualEffect;
   image?: string;
-  accent: string;
   playing: boolean;
   /** Keep animating while paused (immersive stage). The player bar passes false so
    *  it settles to a static frame and stops the rAF loop when nothing is playing. */
@@ -33,12 +33,12 @@ const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling the field
 export function VisualizerCanvas({
   effect,
   image,
-  accent,
   playing,
   animateWhilePaused = true,
   className,
   style,
 }: Props) {
+  const accent = useAccent();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const config = useMemo(() => resolveAudioEngineConfig(effect.tuning), [effect]);
 

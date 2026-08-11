@@ -15,7 +15,6 @@ import type { VibeTrack } from "@/model/vibe";
 
 type Props = {
   track?: VibeTrack;
-  accent: string;
   playing: boolean;
   onClose: () => void;
 };
@@ -26,7 +25,7 @@ type Props = {
  * choice is local, transient screen state — it isn't part of navigation history, so
  * Shell doesn't own it.
  */
-export function Stage({ track, accent, playing, onClose }: Props) {
+export function Stage({ track, playing, onClose }: Props) {
   const { t } = useTranslation();
   const [effectId, setEffectId] = useState(DEFAULT_EFFECT_ID);
 
@@ -35,7 +34,6 @@ export function Stage({ track, accent, playing, onClose }: Props) {
       <VisualizerCanvas
         effect={effectById(effectId)}
         image={track?.image}
-        accent={accent}
         playing={playing && !!track?.playUrl}
         className="absolute inset-0 h-full w-full"
       />

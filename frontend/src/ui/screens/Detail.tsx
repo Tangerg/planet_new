@@ -20,6 +20,7 @@ import { useDetailScreenModel } from "@/hooks/useDetailScreenModel";
 import { detailHeroTitleSize } from "@/model/detail";
 import { collectionKindMessageKey } from "@/model/vibe";
 import { localizeJoined } from "@/i18n/text";
+import { useAccent } from "@/hooks/accent";
 
 type PlaylistDetailScreenProps = {
   playlist: DetailTarget;
@@ -29,7 +30,6 @@ type PlaylistDetailScreenProps = {
   playing: boolean;
   liked: Set<string>;
   toggleLike: (track: VibeTrack) => void;
-  accent: string;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -41,10 +41,10 @@ export function PlaylistDetailScreen({
   playing,
   liked,
   toggleLike,
-  accent,
   onOpenArtist,
 }: PlaylistDetailScreenProps) {
   const { t } = useTranslation();
+  const accent = useAccent();
   const p = playlist;
   const total = p.tracks.length;
   const {
@@ -219,7 +219,6 @@ export function PlaylistDetailScreen({
                 playing={playing}
                 liked={liked}
                 toggleLike={toggleLike}
-                accent={accent}
                 onOpenArtist={onOpenArtist}
                 flowCenter={flowCenter}
                 setFlowCenter={setFlowCenter}
