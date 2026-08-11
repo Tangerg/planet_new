@@ -4,7 +4,6 @@ import type { ArtistRef, VibeComment, VibeTrack } from "@/model/vibe";
 import { Art, artBg, artPair } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { FadeIn, NpSwap } from "@/components/motion";
-import { Button } from "@/components/controls/Button";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
 import { Marquee } from "@/components/Marquee";
 import { CommentList } from "@/components/CommentList";
@@ -20,6 +19,7 @@ import { localizeJoined } from "@/i18n/text";
 import { nowPlayingTrackModel } from "@/model/now-playing";
 import { useAccent } from "@/hooks/accent";
 import { EXPO_OUT_CSS } from "@/styles/motion";
+import { TopEdgeControl } from "@/components/controls/TopEdgeControl";
 
 type Props = {
   track?: VibeTrack;
@@ -91,23 +91,15 @@ export const NowPlaying = React.memo(function NowPlaying({
     >
       {/* enter the fullscreen visualiser stage */}
       {onOpenStage && (
-        <Button
-          onClick={onOpenStage}
-          aria-label={t("common.visualizer")}
-          className="absolute right-[92px] top-[18px] z-30 p-1 text-white/70"
-        >
+        <TopEdgeControl slot={1} onClick={onOpenStage} label={t("common.visualizer")}>
           <Icon.bars size={20} />
-        </Button>
+        </TopEdgeControl>
       )}
 
       {/* close */}
-      <Button
-        onClick={onClose}
-        aria-label={t("common.close")}
-        className="absolute right-14 top-[18px] z-30 p-1 text-white/70"
-      >
+      <TopEdgeControl onClick={onClose} label={t("common.close")}>
         <Icon.close size={20} />
-      </Button>
+      </TopEdgeControl>
 
       {/* full-bleed hero: one atmospheric stage, not a split functional panel. */}
       <Art

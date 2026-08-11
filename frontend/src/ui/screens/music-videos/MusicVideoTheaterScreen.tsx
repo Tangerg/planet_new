@@ -11,6 +11,7 @@ import { formatMediaTime } from "@/model/media-playback";
 import { musicVideoTheaterModel } from "@/model/music-video-screen";
 import { useAccent } from "@/hooks/accent";
 import { EXPO_OUT_CSS } from "@/styles/motion";
+import { TopEdgeControl } from "@/components/controls/TopEdgeControl";
 
 type MusicVideoTheaterScreenProps = {
   video: VibeMusicVideo;
@@ -123,13 +124,9 @@ export function MusicVideoTheaterScreen({
         }}
       />
 
-      <Button
-        onClick={onClose}
-        aria-label={t("a11y.closeMv")}
-        className="absolute right-14 top-[18px] z-40 p-1 text-white/70"
-      >
+      <TopEdgeControl onClick={onClose} label={t("a11y.closeMv")}>
         <Icon.close size={22} />
-      </Button>
+      </TopEdgeControl>
 
       <div className="absolute left-12 top-16 z-30 flex flex-col items-start gap-[14px]">
         <span

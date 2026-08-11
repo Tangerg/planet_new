@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/controls/Button";
 import { FadeIn } from "@/components/motion";
 import { ModeTag } from "@/components/now-playing/ModeTag";
 import { Icon } from "@/infra/icons";
@@ -12,6 +11,7 @@ import {
   VisualizerCanvas,
 } from "@/infra/visualizer";
 import type { VibeTrack } from "@/model/vibe";
+import { TopEdgeControl } from "@/components/controls/TopEdgeControl";
 
 type Props = {
   track?: VibeTrack;
@@ -38,13 +38,9 @@ export function Stage({ track, playing, onClose }: Props) {
         className="absolute inset-0 h-full w-full"
       />
 
-      <Button
-        onClick={onClose}
-        aria-label={t("common.close")}
-        className="absolute right-14 top-[18px] z-30 p-1 text-white/70"
-      >
+      <TopEdgeControl onClick={onClose} label={t("common.close")}>
         <Icon.close size={20} />
-      </Button>
+      </TopEdgeControl>
 
       {track && (
         <div className="pointer-events-none absolute bottom-[36px] left-12 z-20 max-w-[46%]">
