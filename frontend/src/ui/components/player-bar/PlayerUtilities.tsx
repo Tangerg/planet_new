@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/controls/Button";
@@ -11,7 +11,9 @@ import { repeatTooltip } from "@/model/player";
 import { canAcceptTrackDrag, readTrackDragData } from "@/model/track-actions";
 import { useAccent } from "@/hooks/accent";
 
-type Props = {
+/** Its own controls, plus whatever the volume control needs — those five are
+ *  passed straight through, so this shelf does not restate them. */
+type Props = ComponentProps<typeof VolumeControl> & {
   liked: boolean;
   toggleLike: () => void;
   shuffle: boolean;
@@ -19,11 +21,6 @@ type Props = {
   repeat: boolean;
   repeatOne: boolean;
   onToggleRepeat: () => void;
-  volume: number;
-  onVolume: (value: number) => void;
-  onToggleMute: () => void;
-  tintA: string;
-  tintB: string;
   onOpenStage: () => void;
   onOpenLyrics: () => void;
   onOpenQueue: () => void;
@@ -38,15 +35,11 @@ export function PlayerUtilities({
   repeat,
   repeatOne,
   onToggleRepeat,
-  volume,
-  onVolume,
-  onToggleMute,
-  tintA,
-  tintB,
   onOpenStage,
   onOpenLyrics,
   onOpenQueue,
   onOpenComments,
+  ...volumeControl
 }: Props) {
   const accent = useAccent();
   const { t } = useTranslation();
@@ -92,13 +85,7 @@ export function PlayerUtilities({
           {repeatOne ? <Icon.loopOne size={18} /> : <Icon.loop size={18} />}
         </Toggle>
       </Tooltip>
-      <VolumeControl
-        tintA={tintA}
-        tintB={tintB}
-        volume={volume}
-        onVolume={onVolume}
-        onToggleMute={onToggleMute}
-      />
+      <VolumeControl {...volumeControl} />
       <Tooltip label={t("common.visualizer")}>
         <Button
           className={ctlCls}
