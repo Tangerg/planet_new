@@ -3,7 +3,7 @@
 // Single-row layout (Listen1/QQ-style): identity · transport · inline scrubber
 // with always-visible times · utilities. Dark to match the app shell.
 // ============================================================
-import React from "react";
+import React, { type ComponentProps } from "react";
 import "./PlayerBar.css";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
 import { PlayerTrackIdentity } from "@/components/player-bar/PlayerTrackIdentity";
@@ -14,31 +14,18 @@ import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { artPair } from "@/components/primitives";
 import { BreathingLight } from "@/components/visualizer/BreathingLight";
 
-type Props = {
+/** What the bar itself renders, plus the utility shelf's own props (like,
+ *  shuffle/repeat, volume, the surface shortcuts) passed straight through. The
+ *  cover tints are the exception: the bar derives them from the artwork. */
+type Props = Omit<ComponentProps<typeof PlayerUtilities>, "tintA" | "tintB"> & {
   track?: VibeTrack;
   playing: boolean;
   onTogglePlay: () => void;
-  liked: boolean;
-  toggleLike: () => void;
-  onOpenNowPlaying: () => void;
-  onOpenStage: () => void;
-  onOpenLyrics: () => void;
-  onOpenQueue: () => void;
-  onOpenComments: () => void;
-  shuffle: boolean;
-  onToggleShuffle: () => void;
-  repeat: boolean;
-  /** Whether repeat mode is single-track (renders the repeat-one glyph). */
-  repeatOne: boolean;
-  onToggleRepeat: () => void;
   onNext?: () => void;
   onPrev?: () => void;
   /** Seek to a 0..100 percent of the track. */
   onSeek: (pct: number) => void;
-  /** Volume on the kernel's 0..100 scale, with its setter. */
-  volume: number;
-  onVolume: (v: number) => void;
-  onToggleMute: () => void;
+  onOpenNowPlaying: () => void;
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
@@ -46,25 +33,12 @@ export const PlayerBar = React.memo(function PlayerBar({
   track,
   playing,
   onTogglePlay,
-  liked,
-  toggleLike,
-  onOpenNowPlaying,
-  onOpenStage,
-  onOpenLyrics,
-  onOpenQueue,
-  onOpenComments,
-  shuffle,
-  onToggleShuffle,
-  repeat,
-  repeatOne,
-  onToggleRepeat,
   onNext,
   onPrev,
   onSeek,
-  volume,
-  onVolume,
-  onToggleMute,
+  onOpenNowPlaying,
   onOpenArtist,
+  ...utilities
 }: Props) {
   const open = useMorphOpen();
 
@@ -113,24 +87,7 @@ export const PlayerBar = React.memo(function PlayerBar({
 
       <LiveScrubber fallbackDurationSec={track?.durSec} onSeek={onSeek} />
 
-      <PlayerUtilities
-        liked={liked}
-        toggleLike={toggleLike}
-        shuffle={shuffle}
-        onToggleShuffle={onToggleShuffle}
-        repeat={repeat}
-        repeatOne={repeatOne}
-        onToggleRepeat={onToggleRepeat}
-        volume={volume}
-        onVolume={onVolume}
-        onToggleMute={onToggleMute}
-        tintA={a}
-        tintB={b}
-        onOpenStage={onOpenStage}
-        onOpenLyrics={onOpenLyrics}
-        onOpenQueue={onOpenQueue}
-        onOpenComments={onOpenComments}
-      />
+      <PlayerUtilities {...utilities} tintA={a} tintB={b} />
     </div>
   );
 });
