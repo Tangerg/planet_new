@@ -76,9 +76,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
           )}
           {item.icon &&
             !item.image &&
-            (Icon[item.icon]
-              ? React.createElement(Icon[item.icon], { size: active ? 20 : 15, filled: true })
-              : null)}
+            React.createElement(Icon[item.icon], { size: active ? 20 : 15, filled: true })}
         </motion.div>
       </div>
       <div className="relative z-[1] min-w-0">

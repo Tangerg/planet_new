@@ -70,7 +70,7 @@ function scaled(factor: number, children: React.ReactNode) {
 const VOL_SPEAKER = "M4 9.5v5h3.5l5 4V5.5L7.5 9.5z";
 const VOL_WAVE = "M15.5 9.5a4 4 0 0 1 0 5";
 
-export const Icon: Record<string, React.FC<IconProps>> = {
+export const Icon = {
   // transport — plain filled shapes (no surrounding circle)
   play: (p) => (
     <Svg {...p} fill="currentColor" stroke="none">
@@ -300,4 +300,11 @@ export const Icon: Record<string, React.FC<IconProps>> = {
       <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
     </Svg>
   ),
-};
+} satisfies Record<string, React.FC<IconProps>>;
+
+/**
+ * Every glyph in the set. Model layers that name an icon (the XMB tree, context
+ * menus) declare this rather than `string`, so a typo is a compile error instead
+ * of `React.createElement(undefined)` at the moment the menu opens.
+ */
+export type IconName = keyof typeof Icon;

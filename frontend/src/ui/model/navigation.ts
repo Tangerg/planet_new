@@ -15,6 +15,7 @@ import { clampIndex } from "@shared/number";
 import type { CatalogAvailability } from "@contexts/catalog";
 
 import type { LocalizedText } from "@/i18n/text";
+import type { IconName } from "@/infra/icons";
 import type { ShellScreenView } from "@/model/shell-screen";
 import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 
@@ -24,7 +25,7 @@ export type XmbItemModel = {
   key: string;
   label: LocalizedText;
   sub?: LocalizedText;
-  icon?: string;
+  icon?: IconName;
   seed: number;
   grad?: string[];
   image?: string;
@@ -34,7 +35,7 @@ export type XmbItemModel = {
 /** One XMB category column: an icon + a vertical list of items. */
 export type XmbCat = {
   id: string;
-  icon: string;
+  icon: IconName;
   label: LocalizedText;
   items: XmbItemModel[];
 };
@@ -186,6 +187,24 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     });
   }
 
+  // The live track's own tile, present only while something is playing. Held as a
+  // typed list so the spread below keeps its element type (an inline conditional
+  // spread widens the whole array literal and loses it).
+  const playerTile: XmbItemModel[] = current
+    ? [
+        {
+          key: "player",
+          label: current.title ? { text: current.title } : { key: "common.nowPlaying" },
+          sub: current.artist ? { text: current.artist } : undefined,
+          icon: "play",
+          seed: current.coverSeed || 0,
+          grad: current.gradient,
+          image: current.image,
+          run: () => goto("np"),
+        },
+      ]
+    : [];
+
   const worlds: XmbCat[] = [
     // 1 · NOW PLAYING — the live session: present (Player) · future (Up Next) · past (History).
     {
@@ -193,20 +212,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       icon: "play",
       label: { key: "common.nowPlaying" },
       items: [
-        ...(current
-          ? [
-              {
-                key: "player",
-                label: current.title ? { text: current.title } : { key: "common.nowPlaying" },
-                sub: current.artist ? { text: current.artist } : undefined,
-                icon: "play",
-                seed: current.coverSeed || 0,
-                grad: current.gradient,
-                image: current.image,
-                run: () => goto("np"),
-              },
-            ]
-          : []),
+        ...playerTile,
         {
           key: "queue",
           label: { key: "common.upNext" },

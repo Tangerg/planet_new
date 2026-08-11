@@ -1,10 +1,11 @@
 import type { LocalizedText } from "@/i18n/text";
+import type { IconName } from "@/infra/icons";
 import { vibeTrackKey, type ArtistTarget, type CardItem, type VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "./likes";
 
 export type MenuItem = {
   label?: LocalizedText;
-  icon?: string;
+  icon?: IconName;
   accent?: boolean;
   sep?: boolean;
   danger?: boolean;

@@ -21,7 +21,7 @@ export function XmbCategory({
   onClick: () => void;
 }) {
   const { t } = useTranslation();
-  const I = Icon[cat.icon] || Icon.note;
+  const I = Icon[cat.icon];
   const sz = active ? 92 : 58;
   // Breathing glow on the active icon. Motion can't interpolate a box-shadow
   // whose colour is `var(--accent)`, so drive a 0→1→0 value and template the
