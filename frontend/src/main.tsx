@@ -14,7 +14,6 @@ import { engine } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
 import Shell from "@/Shell";
 import { AccentProvider } from "@/hooks/accent";
-import { installUiPerfProbe } from "@/infra/perf/uiPerfProbe";
 
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
@@ -27,7 +26,12 @@ const queryClient = new QueryClient({
   },
 });
 
-installUiPerfProbe();
+// The frame-timing probe is a development instrument. Imported dynamically
+// behind the DEV flag so the whole module is dead-code-eliminated from the
+// production bundle instead of shipping to users as unreachable weight.
+if (import.meta.env.DEV) {
+  void import("@/infra/perf/uiPerfProbe").then((probe) => probe.installUiPerfProbe());
+}
 
 root.render(
   <React.StrictMode>
