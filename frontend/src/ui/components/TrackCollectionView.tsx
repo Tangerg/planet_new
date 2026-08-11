@@ -2,7 +2,7 @@ import type React from "react";
 
 import { clampIndex } from "@shared/number";
 
-import type { ArtistRef, CollectionViewMode, VibeTrack } from "@/model/vibe";
+import type { CollectionViewMode, TrackListBindings, VibeTrack } from "@/model/vibe";
 import { trackFlowItems } from "@/model/derive";
 import { CoverFlow } from "@/components/CoverFlow";
 import { TrackRow } from "@/components/cards/TrackRow";
@@ -33,18 +33,12 @@ export function TrackCollectionView({
   rankFor,
   selected,
   onSelect,
-}: {
+}: TrackListBindings & {
   view: CollectionViewMode;
   /** Grid + flow source, in natural order. */
   tracks: VibeTrack[];
   /** List source (Detail passes its sorted rows); defaults to `tracks` in order. */
   listRows?: { t: VibeTrack; i: number }[];
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
-  onOpenArtist?: (artist: ArtistRef) => void;
   flowCenter: number;
   setFlowCenter: (n: number | ((c: number) => number)) => void;
   flowHeight: number;

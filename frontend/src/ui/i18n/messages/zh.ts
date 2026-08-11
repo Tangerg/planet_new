@@ -30,8 +30,6 @@ export const zh = {
     comments: "评论",
     cover: "封面",
     discover: "发现",
-    follow: "关注",
-    following: "已关注",
     gridView: "网格视图",
     history: "历史记录",
     library: "音乐库",

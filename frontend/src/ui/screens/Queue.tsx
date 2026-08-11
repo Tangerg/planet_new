@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, VibeTrack } from "@/model/vibe";
+import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { queueItemKey, queueScreenModel } from "@/model/queue-screen";
 import { HeroBackdrop } from "@/components/primitives";
 import { HeroArt } from "@/components/HeroArt";
@@ -15,14 +15,8 @@ import { ScrollProvider } from "@/components/layout/ScrollContext";
 import { QueueClearButton } from "@/components/QueueClearButton";
 import { useAccent } from "@/hooks/accent";
 
-type QueueScreenProps = {
-  current?: VibeTrack;
+type QueueScreenProps = TrackListBindings & {
   queue: VibeTrack[];
-  onPlay: (track: VibeTrack) => void;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
-  onOpenArtist?: (artist: ArtistRef) => void;
   onRemoveFromQueue: (track: VibeTrack) => void;
   onClearQueue: () => void;
 };

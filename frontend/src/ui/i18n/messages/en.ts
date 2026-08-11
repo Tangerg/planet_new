@@ -20,8 +20,6 @@ export const en = {
     comments: "Comments",
     cover: "Cover",
     discover: "Discover",
-    follow: "Follow",
-    following: "Following",
     gridView: "Grid view",
     history: "History",
     library: "Library",

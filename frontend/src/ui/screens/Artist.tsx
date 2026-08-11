@@ -5,9 +5,9 @@
 import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
-  ArtistRef,
   ArtistTarget,
   CollectionViewMode,
+  TrackListBindings,
   VibeArtist,
   VibeCollection,
   VibeTrack,
@@ -34,18 +34,12 @@ import { FadeIn, XFade } from "@/components/motion";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { useAccent } from "@/hooks/accent";
 
-type ArtistScreenProps = {
+type ArtistScreenProps = TrackListBindings & {
   artist: ArtistTarget;
   tracks: VibeTrack[];
   albums: VibeCollection[];
   similar: VibeArtist[];
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
   onOpenAlbum: (album: VibeCollection) => void;
-  onOpenArtist: (artist: ArtistRef) => void;
 };
 
 export function ArtistScreen({
@@ -75,7 +69,6 @@ export function ArtistScreen({
     setFlowCenter(0);
   }
   const b = artPair(artist.coverSeed, artist.gradient)[1];
-  const [followed, setFollowed] = useState(true);
   const model = artistScreenModel({ artist, tracks, albums, similar, tab, current, playing });
   const statLabels = model.statLabels.map((label) => localize(t, label));
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
@@ -145,18 +138,11 @@ export function ArtistScreen({
                   >
                     {model.playingArtistTrack ? <Icon.pause size={24} /> : <Icon.play size={24} />}
                   </Button>
-                  <Button
-                    onClick={() => setFollowed((f) => !f)}
-                    className="tag rounded-full"
-                    style={{
-                      background: followed
-                        ? `linear-gradient(90deg, ${accent}, ${b})`
-                        : "rgba(255,255,255,.14)",
-                      color: followed ? "#06060a" : "#fff",
-                    }}
-                  >
-                    {followed ? t("common.following") : t("common.follow")}
-                  </Button>
+                  {/* No follow button: no provider exposes a follow capability, so
+                      the only honest options are to omit it or to fake a state.
+                      It used to render "Following" for every artist off a local
+                      useState(true) — a claim about the user's library that
+                      nothing backed. Restore it when a provider port exists. */}
                   {statLabels.map((label) => (
                     <StatPill key={label}>{label}</StatPill>
                   ))}

@@ -229,6 +229,7 @@ describe("interactive component boundaries", () => {
         playing={false}
         liked={new Set()}
         toggleLike={vi.fn<(track: VibeTrack) => void>()}
+        onOpenArtist={vi.fn<(artist: { id: string; name: string }) => void>()}
       />,
     );
 
@@ -258,6 +259,7 @@ describe("interactive component boundaries", () => {
         playing={false}
         liked={new Set()}
         toggleLike={vi.fn<(track: VibeTrack) => void>()}
+        onOpenArtist={vi.fn<(artist: { id: string; name: string }) => void>()}
       />,
     );
 

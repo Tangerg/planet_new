@@ -3,7 +3,7 @@
 // ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, SearchResults, VibeCollection, VibeTrack } from "@/model/vibe";
+import type { SearchResults, TrackListBindings, VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -20,18 +20,12 @@ import { useSearchScreenModel } from "@/hooks/useSearchScreenModel";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { useAccent } from "@/hooks/accent";
 
-type SearchScreenProps = {
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
+type SearchScreenProps = TrackListBindings & {
   // Controlled by Shell so the typed query survives a back-navigation round-trip.
   query: string;
   onQuery: (q: string) => void;
-  openArtist: (artist: ArtistRef) => void;
-  openPlaylist: (p: VibeCollection) => void;
-  openAlbum: (a: VibeCollection) => void;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
+  onOpenPlaylist: (p: VibeCollection) => void;
+  onOpenAlbum: (a: VibeCollection) => void;
   /** Real search: provider.search results projected to vibe shapes. */
   search?: (q: string) => Promise<SearchResults>;
 };
@@ -42,9 +36,9 @@ export function SearchScreen({
   playing,
   query: q,
   onQuery: setQ,
-  openArtist,
-  openPlaylist,
-  openAlbum,
+  onOpenArtist,
+  onOpenPlaylist,
+  onOpenAlbum,
   liked,
   toggleLike,
   search,
@@ -129,7 +123,7 @@ export function SearchScreen({
                       grad: topArtist.gradient,
                       image: topArtist.image,
                       artSelector: ".grain",
-                      run: () => openArtist(topArtist),
+                      run: () => onOpenArtist(topArtist),
                     })
                   }
                   className="grain relative block w-full overflow-hidden border-0 bg-surf-2 p-6 text-left"
@@ -164,7 +158,7 @@ export function SearchScreen({
                   playing={playing}
                   liked={liked}
                   toggleLike={toggleLike}
-                  onOpenArtist={openArtist}
+                  onOpenArtist={onOpenArtist}
                 />
               ))}
             </div>
@@ -186,7 +180,7 @@ export function SearchScreen({
                     sub={p.owner}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={openPlaylist}
+                    onOpen={onOpenPlaylist}
                     onPlay={playCollection}
                     playable={canPlayCollection(p)}
                   />
@@ -212,7 +206,7 @@ export function SearchScreen({
                     sub={t("common.artist")}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={openArtist}
+                    onOpen={onOpenArtist}
                   />
                 );
               }}
@@ -234,7 +228,7 @@ export function SearchScreen({
                     sub={al.artist}
                     liftScale={1.12}
                     liftY={-6}
-                    onOpen={openAlbum}
+                    onOpen={onOpenAlbum}
                     onPlay={playCollection}
                     playable={canPlayCollection(al)}
                   />

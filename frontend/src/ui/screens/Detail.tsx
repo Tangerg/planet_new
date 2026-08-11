@@ -2,7 +2,7 @@
 // Detail — Playlist / Album / Chart detail: cover hero, sticky condensed header,
 // list · grid · flow views, multi-select action bar. List/grid are windowed.
 // ============================================================
-import type { ArtistRef, DetailTarget, VibeTrack } from "@/model/vibe";
+import type { DetailTarget, TrackListBindings, VibeTrack } from "@/model/vibe";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
@@ -22,15 +22,9 @@ import { collectionKindMessageKey } from "@/model/vibe";
 import { localizeJoined } from "@/i18n/text";
 import { useAccent } from "@/hooks/accent";
 
-type PlaylistDetailScreenProps = {
+type PlaylistDetailScreenProps = TrackListBindings & {
   playlist: DetailTarget;
-  onPlay: (track: VibeTrack) => void;
   onShufflePlay: (tracks: VibeTrack[]) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
-  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 export function PlaylistDetailScreen({

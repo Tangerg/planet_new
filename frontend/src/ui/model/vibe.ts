@@ -190,6 +190,23 @@ export type DetailTarget = OpenTarget & { tracks: VibeTrack[] };
 
 export type ArtistRef = { id: string; name: string };
 
+/**
+ * What a track surface needs to render a row and act on it: the live playback /
+ * like state, plus the gestures a row offers. These six always travel together —
+ * the shell hands them to a screen, the screen hands them straight to TrackRow or
+ * TrackCollectionView — so they are one named contract instead of six props
+ * re-declared at every stop (which is how `onOpenArtist` ended up optional on
+ * four screens and required on two, for a handler that is always supplied).
+ */
+export type TrackListBindings = {
+  onPlay: (track: VibeTrack) => void;
+  current?: VibeTrack;
+  playing: boolean;
+  liked: Set<string>;
+  toggleLike: (track: VibeTrack) => void;
+  onOpenArtist: (artist: ArtistRef) => void;
+};
+
 export type ArtistTarget = ArtistRef & Partial<VibeArtist>;
 
 export type VibeComment = {

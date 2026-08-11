@@ -5,7 +5,7 @@
 // ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, VibeTrack } from "@/model/vibe";
+import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "@/model/likes";
 import { trackRowModel, type TrackRowBadge, type TrackRowLeading } from "@/model/track-row";
 import { Equalizer, Art } from "@/components/primitives";
@@ -19,19 +19,13 @@ import { writeTrackDragData } from "@/model/track-actions";
 import { cn } from "@/lib/cn";
 import { useAccent } from "@/hooks/accent";
 
-type TrackRowProps = {
+type TrackRowProps = TrackListBindings & {
   track: VibeTrack;
   index: number;
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
   dark?: boolean;
   rank?: number;
   selected?: boolean;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
-  onOpenArtist?: (artist: ArtistRef) => void;
   onRemoveFromQueue?: (track: VibeTrack) => void;
   onMenuPlay?: (track: VibeTrack) => void;
 };

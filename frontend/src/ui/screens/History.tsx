@@ -5,7 +5,7 @@
 // ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { ArtistRef, VibeTrack } from "@/model/vibe";
+import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { historyScreenModel, type HistorySection } from "@/model/history-screen";
 import { HeroBackdrop } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
@@ -18,29 +18,20 @@ import { Empty } from "@/components/layout/Empty";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { useAccent } from "@/hooks/accent";
 
-type HistoryScreenProps = {
+type HistoryScreenProps = TrackListBindings & {
   /** This session's plays (newest last) → the "Today" group. */
   session: readonly VibeTrack[];
   /** Account play record — most played last week. */
   week: VibeTrack[];
   /** Account play record — most played all time. */
   all: VibeTrack[];
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
-  onOpenArtist?: (artist: ArtistRef) => void;
 };
 
 // Module scope on purpose: declared inside HistoryScreen this would be a NEW
 // component type on every render, so React would unmount and remount every group
 // — throwing away each memoized TrackRow's DOM and hover state on any parent
 // update (a track change, a like toggle).
-type HistoryGroupProps = Pick<
-  HistoryScreenProps,
-  "onPlay" | "current" | "playing" | "liked" | "toggleLike" | "onOpenArtist"
-> & { section: HistorySection };
+type HistoryGroupProps = TrackListBindings & { section: HistorySection };
 
 function HistoryGroup({
   section,

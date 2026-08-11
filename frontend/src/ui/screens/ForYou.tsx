@@ -37,20 +37,20 @@ type ForYouScreenProps = {
   /** The day's recommendations ("每日推荐"); when present, headlines the hero. */
   daily: VibeTrack[];
   onPlay: (track: VibeTrack) => void;
-  openPlaylist: (p: VibeCollection) => void;
-  openAlbum: (a: VibeCollection) => void;
-  openArtist: (artist: ArtistRef) => void;
-  openLibrary: (tab: LibrarySectionTab) => void;
+  onOpenPlaylist: (p: VibeCollection) => void;
+  onOpenAlbum: (a: VibeCollection) => void;
+  onOpenArtist: (artist: ArtistRef) => void;
+  onOpenLibrary: (tab: LibrarySectionTab) => void;
 };
 
 export const ForYouScreen = React.memo(function ForYouScreen({
   data,
   daily,
   onPlay,
-  openPlaylist,
-  openAlbum,
-  openArtist,
-  openLibrary,
+  onOpenPlaylist,
+  onOpenAlbum,
+  onOpenArtist,
+  onOpenLibrary,
 }: ForYouScreenProps) {
   const accent = useAccent();
   const { t } = useTranslation();
@@ -96,8 +96,9 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
   // Stable so the memoized rail/tile cards don't re-render when the chip toggles.
   const openTile = useCallback(
-    (t: VibeCollection) => (forYouCollectionRoute(t) === "album" ? openAlbum(t) : openPlaylist(t)),
-    [openAlbum, openPlaylist],
+    (t: VibeCollection) =>
+      forYouCollectionRoute(t) === "album" ? onOpenAlbum(t) : onOpenPlaylist(t),
+    [onOpenAlbum, onOpenPlaylist],
   );
 
   if (!featured) {
@@ -124,7 +125,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
         <HeroBanner
           playlist={featured}
-          onOpen={() => openPlaylist(featured)}
+          onOpen={() => onOpenPlaylist(featured)}
           onPlay={canPlayCollection(featured) ? () => playCollection(featured) : undefined}
         />
 
@@ -187,7 +188,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
         <Rail
           title={t("forYou.madeForYou")}
-          onAll={() => openLibrary("playlists")}
+          onAll={() => onOpenLibrary("playlists")}
           count={playlists.length}
           itemKey={(i) => playlists[i].id}
           renderItem={(i) => {
@@ -198,7 +199,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={p.kind}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={openPlaylist}
+                onOpen={onOpenPlaylist}
                 onPlay={playCollection}
                 playable={canPlayCollection(p)}
               />
@@ -208,7 +209,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
         <Rail
           title={t("forYou.recentlyPlayed")}
-          onAll={() => openLibrary("albums")}
+          onAll={() => onOpenLibrary("albums")}
           count={albums.length}
           itemKey={(i) => albums[i].id}
           renderItem={(i) => {
@@ -219,7 +220,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={al.artist}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={openAlbum}
+                onOpen={onOpenAlbum}
                 onPlay={playCollection}
                 playable={canPlayCollection(al)}
               />
@@ -229,7 +230,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
 
         <Rail
           title={t("forYou.yourArtists")}
-          onAll={() => openLibrary("artists")}
+          onAll={() => onOpenLibrary("artists")}
           count={artists.length}
           itemKey={(i) => artists[i].id}
           renderItem={(i) => {
@@ -241,7 +242,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 sub={t("common.artist")}
                 liftScale={1.12}
                 liftY={-6}
-                onOpen={openArtist}
+                onOpen={onOpenArtist}
               />
             );
           }}

@@ -5,12 +5,11 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
-  ArtistRef,
   CollectionViewMode,
   LibrarySectionTab,
   ScreenData,
+  TrackListBindings,
   VibeCollection,
-  VibeTrack,
 } from "@/model/vibe";
 import { collectionFlowItems, collectionMeta, collectionSub } from "@/model/derive";
 import {
@@ -33,16 +32,10 @@ import { CoverFlow } from "@/components/CoverFlow";
 import { FadeIn, XFade } from "@/components/motion";
 import { firstPlayableCollectionTrack } from "@/model/track-actions";
 
-type LibraryScreenProps = {
+type LibraryScreenProps = TrackListBindings & {
   data: ScreenData;
-  onPlay: (track: VibeTrack) => void;
-  current?: VibeTrack;
-  playing: boolean;
-  openPlaylist: (p: VibeCollection) => void;
-  openAlbum: (a: VibeCollection) => void;
-  openArtist: (artist: ArtistRef) => void;
-  liked: Set<string>;
-  toggleLike: (track: VibeTrack) => void;
+  onOpenPlaylist: (p: VibeCollection) => void;
+  onOpenAlbum: (a: VibeCollection) => void;
   // Controlled by Shell so the active tab/view survives a back-navigation round-trip.
   tab: LibrarySectionTab;
   view: CollectionViewMode;
@@ -55,9 +48,9 @@ export function LibraryScreen({
   onPlay,
   current,
   playing,
-  openPlaylist,
-  openAlbum,
-  openArtist,
+  onOpenPlaylist,
+  onOpenAlbum,
+  onOpenArtist,
   liked,
   toggleLike,
   tab,
@@ -97,11 +90,11 @@ export function LibraryScreen({
   const openOf = useCallback(
     (o: VibeCollection) =>
       model.collectionRoute === "album"
-        ? openAlbum(o)
+        ? onOpenAlbum(o)
         : model.collectionRoute === "artist"
-          ? openArtist(o)
-          : openPlaylist(o),
-    [model.collectionRoute, openAlbum, openArtist, openPlaylist],
+          ? onOpenArtist(o)
+          : onOpenPlaylist(o),
+    [model.collectionRoute, onOpenAlbum, onOpenArtist, onOpenPlaylist],
   );
   // Library resolves a collection's tracks per active tab (they're lazy on the
   // object), so it can't use the shared collection.tracks-based useCollectionPlayback
@@ -246,7 +239,7 @@ export function LibraryScreen({
                         playing={playing}
                         liked={liked}
                         toggleLike={toggleLike}
-                        onOpenArtist={openArtist}
+                        onOpenArtist={onOpenArtist}
                       />
                     )}
                   />

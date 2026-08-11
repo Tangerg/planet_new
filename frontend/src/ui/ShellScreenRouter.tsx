@@ -10,6 +10,7 @@ import type {
   VibeCollection,
   VibeComment,
   VibeMusicVideo,
+  TrackListBindings,
   VibeTrack,
 } from "@/model/vibe";
 import type { Lyric } from "@contexts/playback";
@@ -249,6 +250,18 @@ export function ShellScreenRouter(props: Props) {
     if (current) toggleLike(current);
   }, [current, toggleLike]);
 
+  // The bindings every track surface needs, assembled once. They are spread into
+  // each screen rather than re-listed per branch: six props that always travel
+  // together drift the moment they are typed out six times.
+  const trackList: TrackListBindings = {
+    onPlay,
+    current,
+    playing,
+    liked,
+    toggleLike,
+    onOpenArtist: openArtist,
+  };
+
   const route = resolveShellScreen(view, detail, musicVideoObj);
   if (!route) return null;
 
@@ -274,10 +287,10 @@ export function ShellScreenRouter(props: Props) {
         <ForYouScreen
           data={catalog}
           daily={daily}
-          openPlaylist={openDetail}
-          openAlbum={albumDetail}
-          openArtist={openArtist}
-          openLibrary={openLibrary}
+          onOpenPlaylist={openDetail}
+          onOpenAlbum={albumDetail}
+          onOpenArtist={openArtist}
+          onOpenLibrary={openLibrary}
           onPlay={onPlay}
         />
       );
@@ -286,16 +299,11 @@ export function ShellScreenRouter(props: Props) {
     case "search": {
       return (
         <SearchScreen
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
+          {...trackList}
           query={searchQuery}
           onQuery={setSeedQuery}
-          liked={liked}
-          toggleLike={toggleLike}
-          openArtist={openArtist}
-          openPlaylist={openDetail}
-          openAlbum={albumDetail}
+          onOpenPlaylist={openDetail}
+          onOpenAlbum={albumDetail}
           search={search}
         />
       );
@@ -351,48 +359,32 @@ export function ShellScreenRouter(props: Props) {
     case "library": {
       return (
         <LibraryScreen
+          {...trackList}
           tab={libraryTab}
           view={libraryView}
           onTab={setLibraryTab}
           onView={setLibraryView}
           data={libraryData}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          openPlaylist={openDetail}
-          openAlbum={albumDetail}
-          openArtist={openArtist}
-          liked={liked}
-          toggleLike={toggleLike}
+          onOpenPlaylist={openDetail}
+          onOpenAlbum={albumDetail}
         />
       );
     }
 
     case "detail": {
       return (
-        <PlaylistDetailScreen
-          playlist={route.detail}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          onOpenArtist={openArtist}
-          onShufflePlay={shufflePlay}
-        />
+        <PlaylistDetailScreen {...trackList} playlist={route.detail} onShufflePlay={shufflePlay} />
       );
     }
 
     case "queue": {
       return (
         <QueueScreen
-          current={current}
+          {...trackList}
           queue={queue}
+          /* The queue plays by SELECTING an already-queued track, rather than
+             replacing the queue the way every other surface's onPlay does. */
           onPlay={selectTrack}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          onOpenArtist={openArtist}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}
         />
@@ -402,15 +394,10 @@ export function ShellScreenRouter(props: Props) {
     case "history": {
       return (
         <HistoryScreen
+          {...trackList}
           session={history}
           week={playRecord.week}
           all={playRecord.all}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          onOpenArtist={openArtist}
         />
       );
     }
@@ -422,17 +409,12 @@ export function ShellScreenRouter(props: Props) {
     case "artist": {
       return (
         <ArtistScreen
+          {...trackList}
           artist={artistObj}
           tracks={artistObj?.tracks ?? []}
           albums={artistObj?.albums ?? []}
           similar={artistObj?.similar ?? []}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
           onOpenAlbum={albumDetail}
-          onOpenArtist={openArtist}
         />
       );
     }
