@@ -19,6 +19,7 @@ import { useNowPlayingModel } from "@/hooks/useNowPlayingModel";
 import { localizeJoined } from "@/i18n/text";
 import { nowPlayingTrackModel } from "@/model/now-playing";
 import { useAccent } from "@/hooks/accent";
+import { EXPO_OUT_CSS } from "@/styles/motion";
 
 type Props = {
   track?: VibeTrack;
@@ -80,8 +81,7 @@ export const NowPlaying = React.memo(function NowPlaying({
   const trackModel = nowPlayingTrackModel(track);
   const creditsLabel = localizeJoined(t, trackModel.credits);
   const [a, b] = artPair(trackModel.coverSeed, trackModel.gradient);
-  const NP_EASE = "cubic-bezier(.16,1,.3,1)";
-  const NP_PANEL_TRANSITION = `transform .42s ${NP_EASE}, opacity .28s ease`;
+  const NP_PANEL_TRANSITION = `transform .42s ${EXPO_OUT_CSS}, opacity .28s ease`;
 
   return (
     <FadeIn
@@ -177,7 +177,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           zIndex: 4,
           transform: `scale(${panelOpen ? 0.86 : 1})`,
           transformOrigin: "center",
-          transition: `left .42s ${NP_EASE}, transform .42s ${NP_EASE}`,
+          transition: `left .42s ${EXPO_OUT_CSS}, transform .42s ${EXPO_OUT_CSS}`,
         }}
       >
         <motion.div

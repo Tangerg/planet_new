@@ -24,13 +24,12 @@ import {
   COVER,
   COVER_DOT_WINDOW,
   COVER_WINDOW,
-  META_EASE,
-  SCENE_EASE,
   coverTransform,
 } from "@/components/coverflow/geometry";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useCoverFlowInput } from "@/components/coverflow/useCoverFlowInput";
 import { useAccent } from "@/hooks/accent";
+import { EXPO_OUT, EXPO_OUT_CSS } from "@/styles/motion";
 
 type Props<T extends VibeTrack | VibeCollection> = {
   items: FlowItem<T>[];
@@ -120,7 +119,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         }}
         initial={false}
         animate={{ y: expanded ? -58 : 0, scale: expanded ? 0.92 : 1 }}
-        transition={{ duration: 0.34, ease: SCENE_EASE }}
+        transition={{ duration: 0.34, ease: EXPO_OUT }}
       >
         <div
           style={{ position: "absolute", left: "50%", top: "44%", transformStyle: "preserve-3d" }}
@@ -161,7 +160,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
             // than reflowing margin-top. A plain div (not the motion FadeIn) so
             // Motion's own transform management can't clobber the CSS transition.
             transform: `translateY(${expanded ? -COVER * 0.24 : 0}px)`,
-            transition: `transform .34s ${META_EASE}`,
+            transition: `transform .34s ${EXPO_OUT_CSS}`,
           }}
         >
           <TextReveal

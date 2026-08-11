@@ -24,7 +24,6 @@ import type { RefObject } from "react";
 
 import type { MorphFn } from "./context";
 
-export const EASE = "cubic-bezier(.16,1,.3,1)";
 export const MORPH_SEC = 0.48;
 export const MORPH_MS = MORPH_SEC * 1000;
 export const MORPH_REVEAL_MS = MORPH_MS + 20;

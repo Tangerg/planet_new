@@ -10,6 +10,7 @@ import { Icon } from "@/infra/icons";
 import { formatMediaTime } from "@/model/media-playback";
 import { musicVideoTheaterModel } from "@/model/music-video-screen";
 import { useAccent } from "@/hooks/accent";
+import { EXPO_OUT_CSS } from "@/styles/motion";
 
 type MusicVideoTheaterScreenProps = {
   video: VibeMusicVideo;
@@ -235,7 +236,7 @@ export function MusicVideoTheaterScreen({
           transform: commentsOpen ? "translateX(0)" : "translateX(100%)",
           opacity: commentsOpen ? 1 : 0,
           pointerEvents: commentsOpen ? "auto" : "none",
-          transition: "transform .42s cubic-bezier(.16,1,.3,1), opacity .26s ease",
+          transition: `transform .42s ${EXPO_OUT_CSS}, opacity .26s ease`,
         }}
       >
         <div

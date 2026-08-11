@@ -8,7 +8,8 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { Icon } from "@/infra/icons";
 import type { FlowItem } from "@/model/derive";
 
-import { CARD_EASE, type CoverTransform } from "./geometry";
+import { SETTLE } from "@/styles/motion";
+import type { CoverTransform } from "./geometry";
 import { useAccent } from "@/hooks/accent";
 
 /**
@@ -49,7 +50,7 @@ export function CoverCard({
       onContextMenu={onContextMenu}
       initial={false}
       animate={{ x: o.x, z: o.tz, rotateY: o.ry, scale: o.sc, opacity: o.op }}
-      transition={{ duration: 0.32, ease: CARD_EASE }}
+      transition={{ duration: 0.32, ease: SETTLE }}
       style={{
         position: "absolute",
         left: -cover / 2,

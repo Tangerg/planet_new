@@ -12,10 +12,10 @@
 import React from "react";
 import { motion, type Variants } from "motion/react";
 import { Button, type ButtonProps } from "@/components/controls/Button";
+import { EXPO_OUT } from "@/styles/motion";
 
 // the morph engine's ease — the lift glides on the same curve as the page
 // transitions it sits beside.
-const EASE = [0.16, 1, 0.3, 1] as const;
 
 // Square cover cards lift hard (1.22); wider/compact shapes (rail cards, chart
 // banners, genre tiles, quick rows) dial it down via the `scale`/`liftY` props
@@ -36,14 +36,14 @@ function liftVariants(scale: number, liftY: number): Variants {
     rest: {
       y: 0,
       scale: 1,
-      transition: { duration: 0.26, ease: EASE },
+      transition: { duration: 0.26, ease: EXPO_OUT },
       transitionEnd: { zIndex: 0 },
     },
     hover: {
       y: liftY,
       scale,
       zIndex: 5,
-      transition: { duration: 0.24, ease: EASE },
+      transition: { duration: 0.24, ease: EXPO_OUT },
     },
   };
   LIFT_VARIANTS.set(key, variants);
@@ -53,8 +53,13 @@ function liftVariants(scale: number, liftY: number): Variants {
 // fab rises from below as the card lifts (slight delay so it trails). Inherits
 // the rest/hover label from the LiftCard parent via Motion variant propagation.
 const fabVariants: Variants = {
-  rest: { y: 16, opacity: 0, scale: 0.92, transition: { duration: 0.22, ease: EASE } },
-  hover: { y: 0, opacity: 1, scale: 1, transition: { duration: 0.24, ease: EASE, delay: 0.02 } },
+  rest: { y: 16, opacity: 0, scale: 0.92, transition: { duration: 0.22, ease: EXPO_OUT } },
+  hover: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.24, ease: EXPO_OUT, delay: 0.02 },
+  },
 };
 
 type LiftTuning = { scale?: number; liftY?: number };

@@ -15,8 +15,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
 import { cn } from "@/lib/cn";
-
-const EASE = [0.16, 1, 0.3, 1] as const;
+import { EXPO_OUT } from "@/styles/motion";
 
 type SheetProps = {
   open: boolean;
@@ -90,7 +89,7 @@ export function Sheet({
                   initial={{ transform: "translateY(102%)" }}
                   animate={{ transform: "translateY(0%)" }}
                   exit={{ transform: "translateY(102%)" }}
-                  transition={{ duration: durationSec, ease: EASE }}
+                  transition={{ duration: durationSec, ease: EXPO_OUT }}
                 />
               }
             >

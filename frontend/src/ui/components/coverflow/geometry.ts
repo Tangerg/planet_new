@@ -11,10 +11,6 @@ export const COVER_WINDOW = 6;
 // at scale; window them too. Small lists (≤ 2*win+1) still render every dot.
 export const COVER_DOT_WINDOW = 20;
 
-export const SCENE_EASE = [0.16, 1, 0.3, 1] as const; // scene y/scale on expand
-export const CARD_EASE = [0.2, 0.7, 0.2, 1] as const; // per-card fan tween
-export const META_EASE = "cubic-bezier(.16,1,.3,1)"; // meta translate on expand
-
 export type CoverTransform = {
   x: number;
   ry: number;
