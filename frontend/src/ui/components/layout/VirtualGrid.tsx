@@ -1,5 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+
+import { scrollTopOffset, useMeasuredInScroller } from "@/components/layout/measure";
 
 export type VirtualGridProps = {
   /** The scrolling ancestor (the grid may sit below a hero/header). */
@@ -14,6 +16,11 @@ export type VirtualGridProps = {
   renderItem: (index: number) => React.ReactNode;
   itemKey?: (index: number) => React.Key;
 };
+
+/** Column count for `repeat(auto-fill, minmax(minColumnWidth, 1fr))` at this width. */
+function autoFillColumns(width: number, minColumnWidth: number, gap: number): number {
+  return Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap)));
+}
 
 /**
  * Windowed responsive grid backed by TanStack Virtual. Columns are derived from
@@ -35,47 +42,15 @@ export function VirtualGrid({
   const [scrollMargin, setScrollMargin] = useState(0);
   const [columns, setColumns] = useState(1);
 
-  // Keep mutable refs so the ResizeObserver callback always reads the latest
-  // gap/minColumnWidth without needing them in deps (observer stays stable).
-  const gapRef = useRef(gap);
-  gapRef.current = gap;
-  const minColumnWidthRef = useRef(minColumnWidth);
-  minColumnWidthRef.current = minColumnWidth;
-
-  // Stable ResizeObserver — never recreated when count/gap/minColumnWidth
-  // change, since the callback always reads the latest DOM dimensions from refs.
-  useLayoutEffect(() => {
-    const measure = () => {
-      const el = containerRef.current;
-      const scroller = scrollRef.current;
-      if (!el || !scroller) return;
-      const width = el.clientWidth;
-      const _gap = gapRef.current;
-      const _minW = minColumnWidthRef.current;
-      setColumns(Math.max(1, Math.floor((width + _gap) / (_minW + _gap))));
-      setScrollMargin(
-        el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
-      );
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (scrollRef.current) ro.observe(scrollRef.current);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [scrollRef]);
-
-  // Re-measure when dependent values change (avoids stale columns/scrollMargin
-  // without touching the observer).
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    const scroller = scrollRef.current;
-    if (!el || !scroller) return;
-    const width = el.clientWidth;
-    setColumns(Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap))));
-    setScrollMargin(
-      el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
-    );
-  }, [count, gap, minColumnWidth, scrollRef]);
+  useMeasuredInScroller(
+    scrollRef,
+    containerRef,
+    (el, scroller) => {
+      setColumns(autoFillColumns(el.clientWidth, minColumnWidth, gap));
+      setScrollMargin(scrollTopOffset(el, scroller));
+    },
+    `${count}:${minColumnWidth}:${gap}`,
+  );
 
   const rowCount = Math.ceil(count / columns);
   const virtualizer = useVirtualizer({

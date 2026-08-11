@@ -1,5 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+
+import { scrollTopOffset, useMeasuredInScroller } from "@/components/layout/measure";
 
 export type VirtualListProps = {
   /** The scrolling ancestor. The list may sit below other content (a hero, a
@@ -32,34 +34,12 @@ export function VirtualList({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  // Stable ResizeObserver — never recreated when count changes, since the
-  // callback always reads the latest DOM dimensions from refs.
-  useLayoutEffect(() => {
-    const measure = () => {
-      const el = containerRef.current;
-      const scroller = scrollRef.current;
-      if (!el || !scroller) return;
-      const top =
-        el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
-      setScrollMargin(top);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (scrollRef.current) ro.observe(scrollRef.current);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [scrollRef]);
-
-  // Re-measure when count changes (avoids stale scrollMargin during virtualizer
-  // updates without touching the observer).
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    const scroller = scrollRef.current;
-    if (!el || !scroller) return;
-    setScrollMargin(
-      el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop,
-    );
-  }, [count, scrollRef]);
+  useMeasuredInScroller(
+    scrollRef,
+    containerRef,
+    (el, scroller) => setScrollMargin(scrollTopOffset(el, scroller)),
+    count,
+  );
 
   const virtualizer = useVirtualizer({
     count,
