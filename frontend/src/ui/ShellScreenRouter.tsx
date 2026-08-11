@@ -15,7 +15,7 @@ import type {
 } from "@/model/vibe";
 import type { Lyric } from "@contexts/playback";
 import type { MusicVideoAvailabilityPolicy } from "@contexts/catalog";
-import type { XmbCat, XmbItemModel } from "@/model/navigation";
+import type { XmbCat, XmbItemModel, XmbRowMemory } from "@/model/navigation";
 import type { Settings } from "@/model/defaults";
 import { XMB } from "@/screens/XMB";
 import { ForYouScreen } from "@/screens/ForYou";
@@ -119,8 +119,8 @@ type NavigationBundle = {
   cats: XmbCat[];
   xmbCategory: number;
   setXmbCategory: (value: number) => void;
-  xmbRowByCategory: Record<string, number>;
-  setXmbRowByCategory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  xmbRowByCategory: XmbRowMemory;
+  setXmbRowByCategory: React.Dispatch<React.SetStateAction<XmbRowMemory>>;
 };
 
 type CatalogBundle = {

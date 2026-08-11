@@ -59,7 +59,9 @@ export type NavActions = {
   openLikedSongs: () => void;
 };
 
-export type XmbRowMemory = Record<string, number>;
+/** The remembered row index per XMB category, keyed by the category's position
+ *  in the tree — so a user returning to a column lands where they left it. */
+export type XmbRowMemory = Record<number, number>;
 
 export function xmbSelectedRow(rows: XmbRowMemory, categoryIndex: number): number {
   return rows[categoryIndex] || 0;

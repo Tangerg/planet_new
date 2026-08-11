@@ -46,6 +46,7 @@ const LazyContextMenu = React.lazy(() =>
 import { ShellScreenRouter, warmDeferredScreens } from "@/ShellScreenRouter";
 import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type { NowPlayingMode } from "@/model/now-playing";
+import type { XmbRowMemory } from "@/model/navigation";
 
 export default function Shell() {
   const media = useMediaService();
@@ -59,7 +60,7 @@ export default function Shell() {
      Shell holds so it survives the XMB's mount/unmount; not part of the
      navigation back-stack (which the nav hook owns). ---- */
   const [xmbCategory, setXmbCategory] = useState(1);
-  const [xmbRowByCategory, setXmbRowByCategory] = useState<Record<string, number>>({});
+  const [xmbRowByCategory, setXmbRowByCategory] = useState<XmbRowMemory>({});
   const [nowPlayingInitialMode, setNowPlayingInitialMode] = useState<NowPlayingMode>("cover");
 
   const {
