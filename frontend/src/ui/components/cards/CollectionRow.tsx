@@ -14,6 +14,10 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 
+/** Rendered height of one `.crow`. Windowed lists estimate with it, so it must
+ *  track the row metrics in cards.css. */
+export const COLLECTION_ROW_HEIGHT = 66;
+
 type CollectionRowProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   meta?: string;

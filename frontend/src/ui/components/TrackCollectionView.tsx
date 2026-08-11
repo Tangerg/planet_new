@@ -5,8 +5,8 @@ import { clampIndex } from "@shared/number";
 import type { CollectionViewMode, TrackListBindings, VibeTrack } from "@/model/vibe";
 import { trackFlowItems } from "@/model/derive";
 import { CoverFlow } from "@/components/CoverFlow";
-import { TrackRow } from "@/components/cards/TrackRow";
-import { TrackCard } from "@/components/cards/TrackCard";
+import { TrackRow, TRACK_ROW_HEIGHT } from "@/components/cards/TrackRow";
+import { TrackCard, TRACK_CARD_ROW_HEIGHT } from "@/components/cards/TrackCard";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 
@@ -51,7 +51,7 @@ export function TrackCollectionView({
     return (
       <VList
         count={rows.length}
-        estimateSize={66}
+        estimateSize={TRACK_ROW_HEIGHT}
         itemKey={(vi) => rows[vi].t.id}
         renderItem={(vi) => {
           const { t, i } = rows[vi];
@@ -80,7 +80,7 @@ export function TrackCollectionView({
         count={tracks.length}
         minColumnWidth={168}
         gap={26}
-        estimateRowHeight={232}
+        estimateRowHeight={TRACK_CARD_ROW_HEIGHT}
         itemKey={(i) => tracks[i].id}
         renderItem={(i) => (
           <TrackCard track={tracks[i]} onPlay={onPlay} onOpenArtist={onOpenArtist} />

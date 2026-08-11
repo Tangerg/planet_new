@@ -8,7 +8,7 @@ import { queueItemKey, queueScreenModel } from "@/model/queue-screen";
 import { HeroBackdrop } from "@/components/primitives";
 import { HeroArt } from "@/components/HeroArt";
 import { FadeIn } from "@/components/motion";
-import { TrackRow } from "@/components/cards/TrackRow";
+import { TrackRow, TRACK_ROW_HEIGHT } from "@/components/cards/TrackRow";
 import { VList } from "@/components/layout/VList";
 import { Empty } from "@/components/layout/Empty";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
@@ -76,7 +76,7 @@ export function QueueScreen({
           <ScrollProvider value={scrollRef}>
             <VList
               count={model.count}
-              estimateSize={66}
+              estimateSize={TRACK_ROW_HEIGHT}
               itemKey={(vi) => queueItemKey(model.queue[vi], vi)}
               renderItem={(vi) => (
                 <TrackRow

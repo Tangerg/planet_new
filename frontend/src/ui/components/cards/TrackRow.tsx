@@ -30,6 +30,11 @@ type TrackRowProps = TrackListBindings & {
   onMenuPlay?: (track: VibeTrack) => void;
 };
 
+/** Rendered height of one `.trow` (art 44 + 11px padding each side). Windowed
+ *  lists estimate with it, so it must track the row metrics in cards.css —
+ *  a stale value spaces the virtualized rows wrong. */
+export const TRACK_ROW_HEIGHT = 66;
+
 const BADGE_CLASS =
   "flex-none rounded-sm px-[5px] py-[2px] font-mono text-[8.5px] uppercase leading-[1.3] tracking-[0.08em]";
 

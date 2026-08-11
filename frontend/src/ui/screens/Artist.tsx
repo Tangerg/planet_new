@@ -21,8 +21,8 @@ import { Button } from "@/components/controls/Button";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
 import { TextReveal } from "@/components/controls/TextReveal";
-import { MediaCard } from "@/components/cards/MediaCard";
-import { CollectionRow } from "@/components/cards/CollectionRow";
+import { MediaCard, MEDIA_CARD_ROW_HEIGHT } from "@/components/cards/MediaCard";
+import { CollectionRow, COLLECTION_ROW_HEIGHT } from "@/components/cards/CollectionRow";
 import { TrackCollectionView } from "@/components/TrackCollectionView";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
@@ -207,7 +207,7 @@ export function ArtistScreen({
               count={albums.length}
               minColumnWidth={176}
               gap={24}
-              estimateRowHeight={240}
+              estimateRowHeight={MEDIA_CARD_ROW_HEIGHT}
               itemKey={(i) => model.albums[i].id}
               renderItem={(i) => {
                 const al = model.albums[i];
@@ -226,7 +226,7 @@ export function ArtistScreen({
           {tab === "albums" && view === "list" && (
             <VList
               count={albums.length}
-              estimateSize={66}
+              estimateSize={COLLECTION_ROW_HEIGHT}
               itemKey={(i) => model.albums[i].id}
               renderItem={(i) => {
                 const al = model.albums[i];
@@ -263,7 +263,7 @@ export function ArtistScreen({
               count={similar.length}
               minColumnWidth={176}
               gap={18}
-              estimateRowHeight={240}
+              estimateRowHeight={MEDIA_CARD_ROW_HEIGHT}
               itemKey={(i) => model.similar[i].id}
               renderItem={(i) => {
                 const ar = model.similar[i];

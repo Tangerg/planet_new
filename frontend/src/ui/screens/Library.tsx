@@ -21,9 +21,9 @@ import { clampIndex } from "@shared/number";
 import { localize, localizeJoined } from "@/i18n/text";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
-import { MediaCard } from "@/components/cards/MediaCard";
-import { CollectionRow } from "@/components/cards/CollectionRow";
-import { TrackRow } from "@/components/cards/TrackRow";
+import { MediaCard, MEDIA_CARD_ROW_HEIGHT } from "@/components/cards/MediaCard";
+import { CollectionRow, COLLECTION_ROW_HEIGHT } from "@/components/cards/CollectionRow";
+import { TrackRow, TRACK_ROW_HEIGHT } from "@/components/cards/TrackRow";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 import { ScrollProvider } from "@/components/layout/ScrollContext";
@@ -184,7 +184,7 @@ export function LibraryScreen({
                 count={collections.length}
                 minColumnWidth={176}
                 gap={24}
-                estimateRowHeight={240}
+                estimateRowHeight={MEDIA_CARD_ROW_HEIGHT}
                 itemKey={(i) => collections[i].id}
                 renderItem={(i) => {
                   const o = collections[i];
@@ -204,7 +204,7 @@ export function LibraryScreen({
             {cardTab && view === "list" && (
               <VList
                 count={collections.length}
-                estimateSize={66}
+                estimateSize={COLLECTION_ROW_HEIGHT}
                 itemKey={(i) => collections[i].id}
                 renderItem={(i) => {
                   const o = collections[i];
@@ -228,7 +228,7 @@ export function LibraryScreen({
                   <VList
                     key={side}
                     count={column.tracks.length}
-                    estimateSize={66}
+                    estimateSize={TRACK_ROW_HEIGHT}
                     itemKey={(i) => column.tracks[i].id}
                     renderItem={(i) => (
                       <TrackRow

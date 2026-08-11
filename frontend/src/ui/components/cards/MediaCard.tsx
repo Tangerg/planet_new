@@ -15,6 +15,10 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { useMorphOpen } from "@/hooks/useMorphOpen";
 import { useScreenActions } from "@/hooks/screenActions";
 
+/** Rendered height of one grid row of media cards (cover + two text lines).
+ *  Windowed grids estimate with it. */
+export const MEDIA_CARD_ROW_HEIGHT = 240;
+
 type MediaCardProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   round?: boolean;
