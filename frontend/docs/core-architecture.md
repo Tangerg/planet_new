@@ -225,7 +225,7 @@ XMB 是 L1 launcher。单领域(全是音乐)App 的横轴**既不能是内容�
 - **L4+ = 内容图的横向穿行**(album↔artist↔track):**每个实体在树里只有唯一"家",跨引用 = 传送到那个家,不长新枝**——树保持干净,内容仍互联。morph 承载 L2→L3 与 L3↔L3。
 - **能力门控**:只有来源供数的项由 `media.availability` 门控；availability 从实际注册的 `CatalogPorts` 投影，不维护字符串声明。本地世界(Player/Queue/History、Library、You、Settings)恒在。**门控为空的世界整列隐藏**。
 - **Discover 优先级**:For You(`personalized`)· **Browse**(按维度,无 capability → 预留 #2、暂隐)· Charts(`toplist`)· Search(`search`)。
-- **Search**:与 Discover 同属 Catalog 域 → 放 Discover 下;高频访问靠**全局 `/` 或 ⌘/Ctrl+K 热键**(任意页面唤起),而非提到一级。
+- **Search**:与 Discover 同属 Catalog 域 → 放 Discover 下;高频访问靠**全局热键**(任意页面唤起 —— ⌘/Ctrl+F,或连按两下 Shift),而非提到一级。`/` 另有其职:一键回 XMB 根。
 
 ---
 

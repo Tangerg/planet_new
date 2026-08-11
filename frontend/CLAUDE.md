@@ -50,10 +50,10 @@
 ## 2 · 技术栈(选择已定,别轻易换 —— 反向不变量见 §5)
 
 - **UI**:React 19 + TypeScript。**桌面壳**:Wails v3(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `@wailsio/runtime` 的 `Application`/`Window`,统一收在 `ui/infra/wails.ts`)。Go 侧绑定用 **Service**(`application.NewService`)而非 v2 的 `Bind`,构建由根 `Taskfile.yml` 编排。
-- **样式**:`vibe.css`(class-based,逐字移植,设计系统主体)+ **Tailwind v4(无 Preflight,工具类补充)**。**不引 CSS-in-JS / 大型 UI Kit**;动态值(accent / 渐变 / 计算量)留内联 style,静态/重复模式可用 Tailwind 工具类(如 `truncate`)。
+- **样式**:**co-located CSS**(`ui/styles/*` 全局 token/reset + `ui/Shell.css` + 每个组件旁的同名 `.css`,均由移植的 class 体系逐字拆分而来,设计系统主体)+ **Tailwind v4(无 Preflight,工具类补充)**。**不引 CSS-in-JS / 大型 UI Kit**;动态值(accent / 渐变 / 计算量)留内联 style,静态/重复模式可用 Tailwind 工具类(如 `truncate`)。**accent 只有一个持有者**:`AccentProvider` 同时持状态与 `--accent` 自定义属性(样式表不再自带字面量),JS 里要算色就 `useAccent()`。
 - **交互件**:优先 **Base UI**(`@base-ui/react`,headless)替换手写;新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
-- **HTTP**:ky。**动画**:CSS(vibe.css)为主。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
+- **HTTP**:ky。**动画**:页面间切换归 morph 引擎,页面内入场/位移归 **Motion**(`ui/components/motion.tsx` / `lift.tsx`),hover 等微交互留 CSS;缓动曲线取 `ui/styles/motion.ts` 的 token,别就地再写一条。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
 - **数据源**:provider 插件(NeteaseCloudMusic / QQMusic / Spotify / Local),由 `VITE_PROVIDER` 选(默认 / 兜底为 NCM)或运行时在 Settings「音乐来源」切换;QQ 对接本机 `Rain120/qq-music-api`(:3200);Local 是桌面自带的本地库(Go 侧扫盘 + SQLite + 回环媒体流,无需外部服务),扫描经 Settings 原生目录选择器触发。桌面壳动作(原生对话框 / 窗口控制)走 `ui/infra` 薄 shim,不进 Engine facade。
 
 ---
@@ -74,9 +74,9 @@
 - **取数走 provider**:任何外部数据都经 `MusicProvider` + mapper + React Query;**组件不 fetch、不直连后端**。
 - **产品范围先行**:新增 provider/API 能力先看 `../doc/product-scope.md`;只接核心流媒体能力,不因为平台接口存在就把签到、任务、社交、播客、广播等能力带进产品。
 - **播放态唯一源是内核**:控制 `planet.hooks.emit(...)`,读 `usePlayQueueStore` / `on(...)`;不在 UI 另存一份。
-- **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail` / `window.__MORPH`;**不引路由库**(见 §5)。
-- **设计系统主体仍是 `vibe.css`,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 vibe.css)、动态值留内联、视觉零回归;新 .css 不写,玻璃/morph keyframes 等复杂视觉留 vibe.css(见 §5)。
-- **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(保持与示例一致的 prop 形状,便于比对保真)。
+- **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail`,深层卡片飞 morph 走 `useMorph()`(`MorphProvider` 提供,已取代早期的 `window.__MORPH` 全局);`view` 是收敛联合 `ShellScreenView`,不是裸 string。**不引路由库**(见 §5)。
+- **设计系统主体仍是那套移植的 class 体系,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 `ui/styles/base.css`)、动态值留内联、视觉零回归;新样式跟随既有拆分方式**与组件同目录同名**落 `.css`,玻璃/morph keyframes 等复杂视觉留 CSS(见 §5)。
+- **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(布局与结构保持与示例一致,便于比对保真)。**同组必然同行的 props 用具名契约**(见 `TrackListBindings`),别逐屏抄一遍;**全局主题值(accent)不进 props**,就地 `useAccent()` —— 曾经 51 处 prop 声明只为传一个谁也没得选的值。
 - **无后端能力的屏幕走诚实空态**:Browse 分类 / Comments / Radio 等还没有对应 provider capability,**直接显示空态(如 "No comments yet"),绝不伪造数据、绝不用假数据冒充真数据**。**不维护任何 mock 目录 / mock provider**(早期的 `providers/Mock.ts` 与 `ui/model/mock.ts` 均已删)。想要有数据的 dev 体验就起真实后端(NCM / QQ);等 provider 有了对应 capability 再接真。
 - **显示文案只有一处来源**:用户可见文案一律进 `ui/i18n/messages/*`;纯模型层(`ui/model/*`)**产出 message key(`LocalizedText`),不产出英文串**,由组件端 `localize()` 解析。**绝不允许**「模型给英文 → 组件再查表翻回 key」或「模型给 label → 组件按 key 重算一遍」这两种补丁形态(两者都曾存在,都让模型输出变成切语言够不到的死代码)。
 - **同一事实只留一个 tag**:`kind` / `view` / `tab` 这类判别标签用**收敛的字面量联合**(见 `CollectionKind` / `CollectionViewMode` / `LibrarySectionTab`),不要用裸 `string`,更不要为同一事实并存两个 tag —— `kind` 与 `variant` 曾并存并漂移,直接让榜单排名整体失效。
@@ -87,7 +87,7 @@
 ## 5 · 强反向不变量(已知错的方向,别再提)
 
 - ❌ **重新引入 TanStack Router / 任何「一屏一路由」**:会破坏共享元素 morph(新旧屏需在同一常驻容器共存测量),这正是当初去掉路由的原因。
-- ❌ **机械全量把 `vibe.css` / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Base UI 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails3 dev` 里核对**,不盲目大面积重写。
+- ❌ **机械全量把设计系统 CSS / vibe 屏内联样式改写成 Tailwind、或重做设计系统**:逐字保真是「切换效果原样」的前提,大改必漂移。✅ 允许的是:Tailwind 工具类**增量**补充(token 走 `@theme`、动态值留内联、逐 token 还原、视觉零回归)、Base UI 替换手写交互件、虚拟滚动 —— 没有可视化回归比对手段时尤其**逐屏小步、在 `wails3 dev` 里核对**,不盲目大面积重写。
 - ❌ **在组件 / 屏幕里直接 fetch 或 import provider 实例**:一律走 `MusicProvider` 抽象 + mapper + React Query。
 - ❌ **在 UI 里复制播放态**(本地 `useState` 存 current / queue / progress):唯一源是内核 store + hooks。
 - ❌ **加回原生窗口标题栏 / 系统红绿灯**:窗口无边框,装饰由页面 `.win` + 伪装红绿灯承担。
