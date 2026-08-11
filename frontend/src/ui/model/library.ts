@@ -22,17 +22,19 @@ export const LIBRARY_SECTION_TABS = [
 
 export const LIBRARY_INITIAL_FLOW_CENTER = 2;
 
-export type LibrarySongColumns = {
-  split: number;
-  left: VibeTrack[];
-  right: VibeTrack[];
+/** One column of the two-up songs list. `startIndex` is the running position of
+ *  its first track in the WHOLE list, so the right column continues the left's
+ *  numbering instead of restarting at 1. */
+export type LibrarySongColumn = {
+  tracks: VibeTrack[];
+  startIndex: number;
 };
 
 export type LibraryScreenModel = {
   tabs: typeof LIBRARY_SECTION_TABS;
   tracks: readonly VibeTrack[];
   collections: VibeCollection[];
-  songColumns: LibrarySongColumns;
+  songColumns: readonly LibrarySongColumn[];
   cardTab: boolean;
   flowMode: boolean;
   round: boolean;
@@ -68,13 +70,12 @@ export function libraryTracksForCollection(
   return tracks.filter((track) => track.artistId === collection.id);
 }
 
-export function librarySongColumns(tracks: readonly VibeTrack[]): LibrarySongColumns {
+export function librarySongColumns(tracks: readonly VibeTrack[]): readonly LibrarySongColumn[] {
   const split = Math.ceil(tracks.length / 2);
-  return {
-    split,
-    left: tracks.slice(0, split),
-    right: tracks.slice(split),
-  };
+  return [
+    { tracks: tracks.slice(0, split), startIndex: 0 },
+    { tracks: tracks.slice(split), startIndex: split },
+  ];
 }
 
 export function libraryScreenModel(

@@ -234,42 +234,27 @@ export function LibraryScreen({
             )}
             {tab === "songs" && (
               <div className="grid grid-cols-2 gap-x-10">
-                <VList
-                  count={songColumns.left.length}
-                  estimateSize={66}
-                  itemKey={(i) => songColumns.left[i].id}
-                  renderItem={(i) => (
-                    <TrackRow
-                      track={songColumns.left[i]}
-                      index={i + 1}
-                      onPlay={onPlay}
-                      current={current}
-                      playing={playing}
-                      liked={liked}
-                      toggleLike={toggleLike}
-                      accent={accent}
-                      onOpenArtist={openArtist}
-                    />
-                  )}
-                />
-                <VList
-                  count={songColumns.right.length}
-                  estimateSize={66}
-                  itemKey={(i) => songColumns.right[i].id}
-                  renderItem={(i) => (
-                    <TrackRow
-                      track={songColumns.right[i]}
-                      index={songColumns.split + i + 1}
-                      onPlay={onPlay}
-                      current={current}
-                      playing={playing}
-                      liked={liked}
-                      toggleLike={toggleLike}
-                      accent={accent}
-                      onOpenArtist={openArtist}
-                    />
-                  )}
-                />
+                {songColumns.map((column, side) => (
+                  <VList
+                    key={side}
+                    count={column.tracks.length}
+                    estimateSize={66}
+                    itemKey={(i) => column.tracks[i].id}
+                    renderItem={(i) => (
+                      <TrackRow
+                        track={column.tracks[i]}
+                        index={column.startIndex + i + 1}
+                        onPlay={onPlay}
+                        current={current}
+                        playing={playing}
+                        liked={liked}
+                        toggleLike={toggleLike}
+                        accent={accent}
+                        onOpenArtist={openArtist}
+                      />
+                    )}
+                  />
+                ))}
               </div>
             )}
           </XFade>

@@ -83,9 +83,8 @@ describe("library screen model", () => {
   it("splits songs into balanced display columns", () => {
     const columns = librarySongColumns([track("1"), track("2"), track("3")]);
 
-    expect(columns.split).toBe(2);
-    expect(columns.left.map((t) => t.id)).toEqual(["1", "2"]);
-    expect(columns.right.map((t) => t.id)).toEqual(["3"]);
+    expect(columns.map((c) => c.startIndex)).toEqual([0, 2]);
+    expect(columns.map((c) => c.tracks.map((t) => t.id))).toEqual([["1", "2"], ["3"]]);
   });
 
   it("keeps the library flow initial center explicit", () => {

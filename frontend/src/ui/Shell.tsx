@@ -81,9 +81,8 @@ export default function Shell() {
     repeatOne,
     queue,
     togglePlay,
-    onTogglePlay,
-    onToggleShuffle,
-    onToggleRepeat,
+    toggleShuffle,
+    toggleRepeat,
     playNext,
     playPrev,
   } = useShellPlayback();
@@ -362,15 +361,15 @@ export default function Shell() {
                 show={showBar}
                 track={current}
                 playing={playing}
-                onTogglePlay={onTogglePlay}
+                onTogglePlay={togglePlay}
                 liked={isLiked}
                 toggleLike={toggleCurrentLike}
                 accent={accent}
                 shuffle={shuffle}
-                onToggleShuffle={onToggleShuffle}
+                onToggleShuffle={toggleShuffle}
                 repeat={repeat}
                 repeatOne={repeatOne}
-                onToggleRepeat={onToggleRepeat}
+                onToggleRepeat={toggleRepeat}
                 onNext={playNext}
                 onPrev={playPrev}
                 onSeek={playback.seek}

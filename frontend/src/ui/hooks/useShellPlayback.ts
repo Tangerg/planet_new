@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { RepeatMode } from "@contexts/playback";
@@ -9,13 +9,16 @@ import { useVibePlayback } from "@/hooks/useVibePlayback";
 export function useShellPlayback() {
   const { t } = useTranslation();
   const playback = useVibePlayback();
+  // These are already stable (useVibePlayback binds each to the service), so they
+  // travel to the memoized dock/screens as-is — re-wrapping them in another
+  // useCallback would only add a second name for the same function.
   const {
     play: playFn,
     togglePlay,
     toggleShuffle,
     toggleRepeat,
-    next: playNextFn,
-    prev: playPrevFn,
+    next: playNext,
+    prev: playPrev,
   } = playback;
 
   // Stable identity: the idle track is compared by reference all over the shell.
@@ -27,12 +30,6 @@ export function useShellPlayback() {
   const repeatOne = playback.repeat === RepeatMode.ONE;
   const queue = playback.upNext;
 
-  const onTogglePlay = useCallback(() => togglePlay(), [togglePlay]);
-  const onToggleShuffle = useCallback(() => toggleShuffle(), [toggleShuffle]);
-  const onToggleRepeat = useCallback(() => toggleRepeat(), [toggleRepeat]);
-  const playNext = useCallback(() => playNextFn(), [playNextFn]);
-  const playPrev = useCallback(() => playPrevFn(), [playPrevFn]);
-
   return {
     playback,
     playFn,
@@ -43,9 +40,8 @@ export function useShellPlayback() {
     repeatOne,
     queue,
     togglePlay,
-    onTogglePlay,
-    onToggleShuffle,
-    onToggleRepeat,
+    toggleShuffle,
+    toggleRepeat,
     playNext,
     playPrev,
   };
