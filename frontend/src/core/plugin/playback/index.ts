@@ -1,7 +1,8 @@
-import { definePlugin, service } from "dougong";
+import { definePlugin, service, type LifetimeOperations, type Task } from "dougong";
 import type { Track } from "@domain/model/track";
 import { PlayState } from "@domain/model/play-state";
 import type { AudioOutputPort } from "@domain/ports/playback";
+import { abandonOnAbort } from "@shared/async";
 import {
   AUDIO_RUNTIME,
   broadcaster,
@@ -21,6 +22,8 @@ type TransportDeps = {
   readonly providers: ProviderRegistryPort;
   readonly queue: PlayQueueRuntime;
   readonly broadcast: Broadcast;
+  /** Owns the stream re-resolve, so teardown cancels one that is still in the air. */
+  readonly spawn: LifetimeOperations["spawn"];
 };
 
 /**
@@ -30,12 +33,20 @@ type TransportDeps = {
  * into the `TRACK_ENDED` choreography fact the queue auto-advances on.
  */
 export class AudioPlaybackAdapter implements AudioOutputPort {
-  /** Invalidates a pending audio.play() continuation after pause/stop/release. */
+  /**
+   * Invalidates a pending audio.play() continuation after pause/stop/release.
+   * Deliberately a counter and not a spawned Task: `audio.play()` owns no
+   * resource and honours no signal, so there is nothing here for a Lifetime to
+   * hold — only a question of whether this continuation is still the current
+   * one, which a synchronous bump answers exactly.
+   */
   private playGeneration = 0;
   /** Current track, kept so an `error` (expired stream URL) can re-resolve it. */
   private current: Track | undefined;
   /** Whether the current track's URL was already refreshed once after an error. */
   private recovered = false;
+  /** In-flight stream re-resolve; a newer track or a teardown disposes it. */
+  private recovery: Task<void> | undefined;
 
   constructor(private readonly deps: TransportDeps) {
     this.deps.audioElement.addEventListener("ended", this.onEnded);
@@ -74,6 +85,8 @@ export class AudioPlaybackAdapter implements AudioOutputPort {
   readonly onCurrentChanged = (track: Track | undefined): void => {
     this.current = track;
     this.recovered = false;
+    // Whatever the previous track was recovering is no longer wanted.
+    void this.recovery?.dispose();
     // No playable URL (cleared queue, a source with no playback port, or a
     // Spotify track with no preview): stop and bail — the metadata already went out.
     if (!track?.playUrl) {
@@ -92,6 +105,7 @@ export class AudioPlaybackAdapter implements AudioOutputPort {
    */
   release(): void {
     this.halt();
+    void this.recovery?.dispose();
     this.deps.audioElement.removeEventListener("ended", this.onEnded);
     this.deps.audioElement.removeEventListener("error", this.onError);
   }
@@ -117,25 +131,23 @@ export class AudioPlaybackAdapter implements AudioOutputPort {
     // Ignore the empty-source `error` from stop()'s reset — only a real loaded
     // source that failed should recover.
     if (!this.deps.audioElement.currentSrc) return;
-    void this.recoverOrSkip();
-  };
-
-  private async recoverOrSkip(): Promise<void> {
     const track = this.current;
     if (!track?.playbackId || this.recovered) {
       this.deps.queue.next();
       return;
     }
     this.recovered = true;
-    const url = await this.resolveFreshUrl(track);
-    if (this.current !== track) return; // a newer track superseded the recovery
-    if (!url) {
-      this.deps.queue.next();
-      return;
-    }
-    this.deps.audioElement.src = url;
-    void this.resume();
-  }
+    void this.recovery?.dispose();
+    this.recovery = this.deps.spawn(async (signal) => {
+      const url = await abandonOnAbort(this.resolveFreshUrl(track), signal);
+      if (!url) {
+        this.deps.queue.next();
+        return;
+      }
+      this.deps.audioElement.src = url;
+      void this.resume();
+    });
+  };
 
   /** Ask the track's own provider for a fresh stream URL (its old one expired). */
   private async resolveFreshUrl(track: Track): Promise<string | undefined> {
@@ -160,6 +172,7 @@ export const playbackPlugin = definePlugin({
       providers: ctx.providers,
       queue: ctx.queue,
       broadcast: broadcaster(ctx),
+      spawn: ctx.spawn,
     });
     ctx.on(CURRENT_TRACK_CHANGED, adapter.onCurrentChanged);
     ctx.cleanup(() => adapter.release());

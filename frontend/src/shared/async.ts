@@ -37,3 +37,23 @@ export function pageOffsets(total: number, size: number): number[] {
   if (total <= 0 || size <= 0) return [];
   return Array.from({ length: Math.ceil(total / size) }, (_, page) => page * size);
 }
+
+/**
+ * Resolve `work`, or stop waiting for it once `signal` aborts.
+ *
+ * Not a cancellation: the underlying call — an HTTP request, a native bridge
+ * invocation — keeps running and its result is simply dropped. That distinction
+ * matters when the waiter is owned by something that disposes structurally,
+ * because disposal blocks until the awaited work settles. Abandoning the wait
+ * is what lets an owner shut down promptly while an uncancellable call drains.
+ */
+export function abandonOnAbort<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason as Error);
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = (): void => reject(signal.reason as Error);
+    signal.addEventListener("abort", onAbort, { once: true });
+    void work.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", onAbort);
+    });
+  });
+}

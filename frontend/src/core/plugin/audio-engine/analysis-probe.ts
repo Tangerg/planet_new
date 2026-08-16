@@ -1,4 +1,5 @@
 import { errorMessage, warn } from "@shared/debug";
+import { abandonOnAbort } from "@shared/async";
 
 import {
   directMediaAnalysisSource,
@@ -36,7 +37,6 @@ export class AudioAnalysisProbe {
   private silentSink: GainNode | null = null;
   private probe: HTMLAudioElement | null = null;
   private lastClockSyncAt = 0;
-  private sourceGeneration = 0;
 
   constructor(private readonly options: AudioAnalysisProbeOptions) {
     this.resolveAnalysisSource = options.resolveAnalysisSource ?? directMediaAnalysisSource;
@@ -51,16 +51,31 @@ export class AudioAnalysisProbe {
     return node;
   }
 
-  async load(playUrl: string | undefined, shouldPlay: () => boolean): Promise<void> {
-    const generation = ++this.sourceGeneration;
+  /**
+   * Point the probe at a track. Staleness is the caller's to declare: resolving
+   * an analysis URL can outlive the track that asked for it, and the owner of
+   * that race is the plugin whose Lifetime spawned the load, not this element.
+   */
+  async load(
+    playUrl: string | undefined,
+    shouldPlay: () => boolean,
+    signal: AbortSignal,
+  ): Promise<void> {
     if (!playUrl) {
       this.clear();
       return;
     }
 
     this.pause();
-    const analysisUrl = await resolveAnalysisSourceUrl(this.resolveAnalysisSource, playUrl);
-    if (generation !== this.sourceGeneration) return;
+    let analysisUrl: string;
+    try {
+      analysisUrl = await abandonOnAbort(
+        resolveAnalysisSourceUrl(this.resolveAnalysisSource, playUrl),
+        signal,
+      );
+    } catch {
+      return; // superseded or torn down while the analysis URL was resolving
+    }
 
     try {
       this.loadProbe(analysisUrl);
@@ -99,7 +114,6 @@ export class AudioAnalysisProbe {
   }
 
   dispose(): void {
-    this.sourceGeneration++;
     this.clear();
     this.source?.disconnect();
     this.node?.disconnect();

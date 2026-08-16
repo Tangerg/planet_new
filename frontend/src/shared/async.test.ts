@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapConcurrent, pageOffsets } from "./async";
+import { abandonOnAbort, mapConcurrent, pageOffsets } from "./async";
 
 /** Resolves once `release()` is called, recording how many are in flight. */
 function tracker() {
@@ -103,5 +103,38 @@ describe("pageOffsets", () => {
     expect(pageOffsets(0, 500)).toEqual([]);
     expect(pageOffsets(-1, 500)).toEqual([]);
     expect(pageOffsets(10, 0)).toEqual([]);
+  });
+});
+
+describe("abandonOnAbort", () => {
+  it("resolves with the work when it settles first", async () => {
+    const controller = new AbortController();
+    await expect(abandonOnAbort(Promise.resolve("done"), controller.signal)).resolves.toBe("done");
+  });
+
+  it("stops waiting once the signal aborts, without cancelling the work", async () => {
+    const controller = new AbortController();
+    let settled = false;
+    const work = new Promise<string>((resolve) =>
+      setTimeout(() => {
+        settled = true;
+        resolve("late");
+      }, 5),
+    );
+
+    const waited = abandonOnAbort(work, controller.signal);
+    controller.abort();
+
+    // The signal's own reason, which is what marks this as a cancellation
+    // rather than a fault to whoever owns the abandoned waiter.
+    await expect(waited).rejects.toHaveProperty("name", "AbortError");
+    expect(settled).toBe(false); // the abandoned call is still running
+    await expect(work).resolves.toBe("late");
+  });
+
+  it("rejects immediately when the signal is already aborted", async () => {
+    await expect(
+      abandonOnAbort(Promise.resolve("done"), AbortSignal.abort()),
+    ).rejects.toHaveProperty("name", "AbortError");
   });
 });

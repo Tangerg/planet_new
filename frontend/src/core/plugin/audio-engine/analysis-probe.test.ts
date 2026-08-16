@@ -107,7 +107,7 @@ describe("AudioAnalysisProbe", () => {
       resolveAnalysisSource,
     });
 
-    await subject.load("provider:track", () => true);
+    await subject.load("provider:track", () => true, new AbortController().signal);
 
     expect(resolveAnalysisSource).toHaveBeenCalledWith("provider:track");
     expect(createdProbe.src).toBe("loopback:track");
@@ -126,13 +126,13 @@ describe("AudioAnalysisProbe", () => {
     });
     const { subject, createdProbe } = makeFixture({ resolveAnalysisSource });
 
-    await subject.load("provider:track", () => false);
+    await subject.load("provider:track", () => false, new AbortController().signal);
 
     expect(createdProbe.src).toBe("provider:track");
     expect(createdProbe.play).not.toHaveBeenCalled();
   });
 
-  it("does not let a stale async load overwrite the newest source", async () => {
+  it("does not let a superseded async load overwrite the newest source", async () => {
     const first = deferred<string>();
     const resolveAnalysisSource: MediaAnalysisSourceResolver = vi
       .fn<(playUrl: string) => Promise<string>>()
@@ -140,8 +140,11 @@ describe("AudioAnalysisProbe", () => {
       .mockResolvedValueOnce("loopback:second");
     const { subject, createdProbe } = makeFixture({ resolveAnalysisSource });
 
-    const firstLoad = subject.load("provider:first", () => false);
-    await subject.load("provider:second", () => false);
+    // The owner of the race declares it: superseding aborts the older load.
+    const superseded = new AbortController();
+    const firstLoad = subject.load("provider:first", () => false, superseded.signal);
+    superseded.abort();
+    await subject.load("provider:second", () => false, new AbortController().signal);
 
     expect(createdProbe.src).toBe("loopback:second");
     first.resolve("loopback:first");
@@ -150,14 +153,18 @@ describe("AudioAnalysisProbe", () => {
     expect(createdProbe.src).toBe("loopback:second");
   });
 
-  it("invalidates pending loads on dispose", async () => {
+  it("abandons a pending load once its signal is aborted", async () => {
     const first = deferred<string>();
     const resolveAnalysisSource: MediaAnalysisSourceResolver = vi.fn<
       (playUrl: string) => Promise<string>
     >(() => first.promise);
     const { subject, createdProbe } = makeFixture({ resolveAnalysisSource });
 
-    const load = subject.load("provider:first", () => true);
+    // What a Lifetime does at teardown: abort the spawned load, then release
+    // the probe. The kernel disposes tasks before cleanups, so this is the order.
+    const owner = new AbortController();
+    const load = subject.load("provider:first", () => true, owner.signal);
+    owner.abort();
     subject.dispose();
     first.resolve("loopback:first");
     await load;

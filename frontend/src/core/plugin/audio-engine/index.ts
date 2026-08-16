@@ -1,4 +1,4 @@
-import { definePlugin, service } from "dougong";
+import { definePlugin, service, type Task } from "dougong";
 import { errorMessage } from "@shared/debug";
 
 import type { Track } from "@domain/model/track";
@@ -47,8 +47,20 @@ export const audioEnginePlugin = definePlugin({
       return probe;
     };
 
-    ctx.on(CURRENT_TRACK_CHANGED, async (track: Track | undefined) => {
-      await ensureProbe().load(track?.playUrl, () => playbackState === PlayState.PLAYING);
+    // The probe follows the current-track fact directly — the data source is
+    // timing-sensitive and has been broken before by resolving it later or from
+    // somewhere else. Only the supersede mechanism is structural now: a newer
+    // track disposes the pending load, which aborts its signal synchronously.
+    let loading: Task<void> | undefined;
+    ctx.on(CURRENT_TRACK_CHANGED, (track: Track | undefined) => {
+      void loading?.dispose();
+      // Build the probe on the fact, not inside the task: the element and its
+      // Web Audio graph must exist as early as they did before, and only the
+      // URL resolution is what needs an owner.
+      const target = ensureProbe();
+      loading = ctx.spawn((signal) =>
+        target.load(track?.playUrl, () => playbackState === PlayState.PLAYING, signal),
+      );
     });
 
     ctx.on(PLAY_STATE_CHANGED, (state: PlayState) => {

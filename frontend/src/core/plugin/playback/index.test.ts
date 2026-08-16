@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Event } from "dougong";
+import type { Event, LifetimeOperations } from "dougong";
 import type { Track } from "@domain/model/track";
 import { PlayState } from "@domain/model/play-state";
 import { ProviderId } from "@domain/model/provider-id";
@@ -54,6 +54,33 @@ function makeProviders(resolve?: PlaybackResolver["resolve"]): ProviderRegistryP
   } as unknown as ProviderRegistryPort;
 }
 
+/**
+ * Stands in for the Lifetime that would own a spawned task: runs the work with
+ * its own signal, and aborts it synchronously on dispose — the property the
+ * adapter relies on to supersede a recovery.
+ */
+function makeSpawn(): LifetimeOperations["spawn"] {
+  return (task) => {
+    const controller = new AbortController();
+    const result = Promise.resolve().then(() => task(controller.signal));
+    const settled = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return {
+      result,
+      dispose: () => {
+        controller.abort();
+        return settled;
+      },
+      [Symbol.asyncDispose]: () => {
+        controller.abort();
+        return settled;
+      },
+    };
+  };
+}
+
 function mount(opts?: { resolve?: PlaybackResolver["resolve"]; next?: () => void }) {
   const facts: { fact: Event<unknown>; payload: unknown }[] = [];
   const broadcast: Broadcast = (fact, ...payload) => {
@@ -65,6 +92,7 @@ function mount(opts?: { resolve?: PlaybackResolver["resolve"]; next?: () => void
     providers: makeProviders(opts?.resolve),
     queue: { next: opts?.next ?? (() => {}) } as unknown as PlayQueueRuntime,
     broadcast,
+    spawn: makeSpawn(),
   });
 
   const stated = <T>(fact: Event<T>): T[] =>
