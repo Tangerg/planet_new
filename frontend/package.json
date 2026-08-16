@@ -38,7 +38,7 @@
     "@tanstack/react-virtual": "^3.14.3",
     "@wailsio/runtime": "3.0.0-beta.1",
     "clsx": "^2.1.1",
-    "dougong": "^0.1.0",
+    "dougong": "0.2.0",
     "i18next": "^26.3.3",
     "ky": "^2.0.2",
     "motion": "^12.41.0",

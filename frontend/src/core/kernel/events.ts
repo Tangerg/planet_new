@@ -29,29 +29,32 @@ export const VOLUME_CHANGED = event<number>("planet/volume/changed");
 
 export const LYRICS_CHANGED = event<readonly Lyric[]>("planet/lyrics/changed");
 
+/** Mirrors the kernel's own emit arity, so a payload-less fact takes no argument. */
+type FactArguments<T> = [T] extends [void] ? [payload?: T] : [payload: T];
+
 /**
  * States a fact without waiting for the reactions to it. Plugins broadcast from
  * synchronous command paths (a transport call, a DOM event handler), so a slow
  * or failing listener must not surface as a rejected promise inside the plugin
  * that merely reported what happened.
  */
-export type Broadcast = <T>(fact: Event<T>, payload: T) => void;
+export type Broadcast = <T>(fact: Event<T>, ...payload: FactArguments<T>) => void;
 
 /** The slice of a dougong plugin context a broadcaster needs. */
 type FactSource = {
   readonly signal: AbortSignal;
-  emit<T>(fact: Event<T>, payload: T): Promise<void>;
+  emit<T>(fact: Event<T>, ...payload: FactArguments<T>): Promise<void>;
   readonly log: Logger;
 };
 
 export function broadcaster(source: FactSource): Broadcast {
-  return (fact, payload) => {
+  return (fact, ...payload) => {
     // In-flight work can outrace the Lifetime that owns it — a resolve landing
-    // after the graph stopped, a DOM handler firing during teardown. Emitting
-    // through a released Lifetime is an error, not a no-op, and a fact stated
-    // then has no audience left anyway.
+    // after the graph stopped, a DOM handler firing during teardown. A fact
+    // stated then has no audience, so drop it here instead of letting the
+    // kernel reject and reporting a routine teardown race as a failure.
     if (source.signal.aborted) return;
-    void source.emit(fact, payload).catch((error: unknown) => {
+    void source.emit(fact, ...payload).catch((error: unknown) => {
       source.log.error(`Listeners of '${fact.id}' failed`, error);
     });
   };

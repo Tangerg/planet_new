@@ -1,4 +1,4 @@
-import { createHost, type Host } from "dougong";
+import { createHost, type Host, type Installer } from "dougong";
 import { audioRuntimePlugin, kernelLogger, type AudioRuntimePort } from "@core";
 import {
   playbackPlugin,
@@ -28,10 +28,11 @@ export type PlanetComposition = Readonly<{
    * App-level extensions installed onto the same Host before it starts. A
    * callback rather than a Plugin array: every plugin carries its own
    * requires/provides/config types, and one array element type would erase
-   * exactly the declarations the Host resolves the graph from. The parameter is
-   * narrowed to installation — starting and stopping stay this function's job.
+   * exactly the declarations the Host resolves the graph from. `Installer` is
+   * the Host without its lifecycle — starting and stopping stay this
+   * function's job.
    */
-  extend?: (installer: Pick<Host, "install" | "group" | "change">) => void;
+  extend?: (installer: Installer) => void;
 }>;
 
 /**

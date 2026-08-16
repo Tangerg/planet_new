@@ -105,7 +105,7 @@ export class AudioPlaybackAdapter implements AudioOutputPort {
 
   private onEnded = (): void => {
     this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.STOPPED);
-    this.deps.broadcast(TRACK_ENDED, undefined);
+    this.deps.broadcast(TRACK_ENDED);
   };
 
   // Provider stream URLs are short-lived, and the whole queue is resolved up front,

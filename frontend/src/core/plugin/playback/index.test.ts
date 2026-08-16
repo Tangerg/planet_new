@@ -56,8 +56,8 @@ function makeProviders(resolve?: PlaybackResolver["resolve"]): ProviderRegistryP
 
 function mount(opts?: { resolve?: PlaybackResolver["resolve"]; next?: () => void }) {
   const facts: { fact: Event<unknown>; payload: unknown }[] = [];
-  const broadcast: Broadcast = (fact, payload) => {
-    facts.push({ fact: fact as Event<unknown>, payload });
+  const broadcast: Broadcast = (fact, ...payload) => {
+    facts.push({ fact: fact as Event<unknown>, payload: payload[0] });
   };
   const audioElement = makeAudioElement();
   const adapter = new AudioPlaybackAdapter({

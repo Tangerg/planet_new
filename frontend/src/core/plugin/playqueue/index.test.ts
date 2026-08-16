@@ -20,8 +20,8 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
 /** Records the facts the runtime states, in order, per event token. */
 function mount() {
   const facts: { fact: Event<unknown>; payload: unknown }[] = [];
-  const broadcast: Broadcast = (fact, payload) => {
-    facts.push({ fact: fact as Event<unknown>, payload });
+  const broadcast: Broadcast = (fact, ...payload) => {
+    facts.push({ fact: fact as Event<unknown>, payload: payload[0] });
   };
   const runtime = new PlayQueueRuntime({ next: () => 0.5 }, broadcast);
 
