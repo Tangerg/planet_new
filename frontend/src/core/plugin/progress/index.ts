@@ -48,12 +48,6 @@ export class ProgressRuntime {
     };
   }
 
-  /** Seed the UI with the element's real position/duration at startup. */
-  announce(): void {
-    this.onDurationChange();
-    this.onTimeUpdate();
-  }
-
   seek = (v: number): void => {
     const total = this.audioElement.duration;
     if (!Number.isFinite(total)) {
@@ -91,7 +85,6 @@ export const progressPlugin = definePlugin({
   setup(ctx) {
     const runtime = new ProgressRuntime(ctx.audio.audioElement, broadcaster(ctx));
     ctx.cleanup(() => runtime.release());
-    runtime.announce();
     return { progress: runtime };
   },
 });

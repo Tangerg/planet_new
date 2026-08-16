@@ -1,4 +1,4 @@
-import type { Host } from "dougong";
+import { optional, type Host } from "dougong";
 import type {
   CredentialStore,
   IdentitySourcePort,
@@ -83,7 +83,7 @@ export class Engine {
     this.identity = new IdentityService(identitySources, credentials);
     this.library = new LibraryService(librarySources);
     this.engagement = new EngagementService(getSource);
-    this.audio = new AudioAnalysisService(() => host.get(AUDIO_ANALYSER));
+    this.audio = new AudioAnalysisService(() => host.get(optional(AUDIO_ANALYSER)));
   }
 
   private providerRegistry(): ProviderRegistryPort {

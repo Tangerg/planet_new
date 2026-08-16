@@ -32,15 +32,15 @@ export class VolumeRuntime {
     this.apply(this.volume.toggleMute());
   }
 
-  /** The element defaults to full volume but doesn't broadcast it; seed the UI. */
-  announce(): void {
-    this.broadcast(VOLUME_CHANGED, this.volume.level);
+  /** Current output level, 0..100. The initial value is read, never broadcast. */
+  get level(): number {
+    return this.volume.level;
   }
 
   private apply(next: Volume): void {
     this.volume = next;
     this.audioElement.volume = next.level / 100;
-    this.announce();
+    this.broadcast(VOLUME_CHANGED, next.level);
   }
 }
 
@@ -49,8 +49,6 @@ export const volumePlugin = definePlugin({
   requires: { audio: AUDIO_RUNTIME },
   provides: { volume: VOLUME_CONTROL },
   setup(ctx) {
-    const runtime = new VolumeRuntime(ctx.audio.audioElement, broadcaster(ctx));
-    runtime.announce();
-    return { volume: runtime };
+    return { volume: new VolumeRuntime(ctx.audio.audioElement, broadcaster(ctx)) };
   },
 });

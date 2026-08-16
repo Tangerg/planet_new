@@ -1,5 +1,5 @@
 import { createHost, type Host, type Installer } from "dougong";
-import { audioRuntimePlugin, kernelLogger, type AudioRuntimePort } from "@core";
+import { audioRuntimePlugin, type AudioRuntimePort } from "@core";
 import {
   playbackPlugin,
   playQueuePlugin,
@@ -42,7 +42,11 @@ export type PlanetComposition = Readonly<{
  * inventory, not a sequence.
  */
 export async function composePlanet(options: PlanetComposition): Promise<Host> {
-  const host = createHost({ name: "planet", logger: kernelLogger });
+  // No logger override: the kernel defaults to `console`, which keeps the four
+  // levels apart and leaves the InstanceMeta it appends inspectable as an
+  // object. Funnelling those through the app's single warn channel stringified
+  // that metadata away.
+  const host = createHost({ name: "planet" });
 
   host.install(audioRuntimePlugin, options.audio);
   host.install(playQueueStoreBridge);

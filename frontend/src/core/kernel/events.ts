@@ -1,4 +1,4 @@
-import { event, type Event, type Logger } from "dougong";
+import { event, type Event, type LifetimeOperations, type Logger } from "dougong";
 
 import type { FormattedDuration, Progress } from "@domain/model/duration";
 import type { Lyric } from "@domain/model/lyric";
@@ -29,7 +29,11 @@ export const VOLUME_CHANGED = event<number>("planet/volume/changed");
 
 export const LYRICS_CHANGED = event<readonly Lyric[]>("planet/lyrics/changed");
 
-/** Mirrors the kernel's own emit arity, so a payload-less fact takes no argument. */
+/**
+ * Mirrors the kernel's emit arity so a payload-less fact takes no argument. The
+ * kernel keeps its own copy of this conditional internal, so this is the one
+ * place the shape is restated; `FactSource` below binds to the real signature.
+ */
 type FactArguments<T> = [T] extends [void] ? [payload?: T] : [payload: T];
 
 /**
@@ -41,11 +45,7 @@ type FactArguments<T> = [T] extends [void] ? [payload?: T] : [payload: T];
 export type Broadcast = <T>(fact: Event<T>, ...payload: FactArguments<T>) => void;
 
 /** The slice of a dougong plugin context a broadcaster needs. */
-type FactSource = {
-  readonly signal: AbortSignal;
-  emit<T>(fact: Event<T>, ...payload: FactArguments<T>): Promise<void>;
-  readonly log: Logger;
-};
+type FactSource = Pick<LifetimeOperations, "emit" | "signal"> & { readonly log: Logger };
 
 export function broadcaster(source: FactSource): Broadcast {
   return (fact, ...payload) => {

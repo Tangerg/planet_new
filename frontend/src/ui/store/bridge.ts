@@ -5,9 +5,11 @@ import {
   LYRICS_CHANGED,
   POSITION_CHANGED,
   PLAY_STATE_CHANGED,
+  PROGRESS,
   QUEUE_CHANGED,
   REPEAT_CHANGED,
   SHUFFLE_CHANGED,
+  VOLUME_CONTROL,
   VOLUME_CHANGED,
 } from "@contexts/playback";
 
@@ -18,15 +20,24 @@ import { usePlayQueueStore } from "./playqueue";
  * component mounted at any time reads current state without caring about
  * subscription timing. This is the kernel→UI boundary for playback state.
  *
- * It declares no requirements on purpose. That puts it in the first startup
- * layer, so its listeners are published before any plugin that needs the audio
- * runtime can announce its seed — the volume level the element already carries
- * would otherwise be broadcast into an empty room, leaving the UI on a made-up
- * default.
+ * Starting values are read from the Services that own them, not caught from a
+ * fact: an Event is a transient statement that something changed, with no
+ * replay and no dependable ordering against a sibling's setup. Volume in
+ * particular is real state before anything changes it — the element already
+ * carries a level — so the store would otherwise open on a default nobody chose.
+ * Requiring those Services is also what puts this installation after them.
  */
 export const playQueueStoreBridge = definePlugin({
   name: "planet.ui.play-queue-store-bridge",
+  requires: { volume: VOLUME_CONTROL, progress: PROGRESS },
   setup(ctx) {
+    usePlayQueueStore.setState((s) => ({
+      ...s,
+      volume: ctx.volume.level,
+      duration: ctx.progress.duration,
+      progress: ctx.progress.current,
+    }));
+
     ctx.on(QUEUE_CHANGED, (tracks) => usePlayQueueStore.setState((s) => ({ ...s, tracks })));
     ctx.on(CURRENT_TRACK_CHANGED, (track) => usePlayQueueStore.setState((s) => ({ ...s, track })));
     ctx.on(PLAY_STATE_CHANGED, (playState) =>

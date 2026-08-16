@@ -44,12 +44,11 @@ describe("application kernel composition", () => {
       random: { next: () => 0.5 },
       resolveAnalysisSource: async (url) => url,
     });
-    await flush();
 
-    // The volume plugin broadcasts the element's real level during setup. The
-    // bridge declares no requirements, so it starts a layer earlier and its
-    // listeners are already published — otherwise the UI would show its own
-    // hardcoded default instead.
+    // No flush: the bridge reads the element's real level off the volume Service
+    // during its own setup, so a started Host already implies a seeded store.
+    // Catching that level as a fact instead would depend on layer ordering the
+    // kernel does not promise, and the UI would open on a default nobody chose.
     expect(usePlayQueueStore.getState().volume).toBe(40);
 
     host.get(PLAY_QUEUE).toggleShuffle();

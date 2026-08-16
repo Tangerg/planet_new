@@ -40,6 +40,7 @@
      ① `Engine` services(发命令 / 取数据);
      ② zustand store(`playQueueStoreBridge` 这个插件把内核事实固化进 `usePlayQueueStore`,任何时刻 mount 的组件都读得到当前播放态)。
      **UI 不订阅内核事件总线**:`on()` 只存在于插件 Lifetime 里,要多接一个事实就往 bridge 加一行,不再开第二条订阅通道。
+     **初始值从 Service getter 读,不从 Event 接**:Event 不缓存不重放,同层 setup 也没有可依赖的先后顺序;bridge 因此把它要播种的 Service 写进 `requires`。
      **绝不在 UI 里复制一份播放态**(current / playing / queue / progress 全来自内核 store)。
   2. **Provider 抽象(取数唯一入口)**:所有数据源实现 `MusicProvider`(`src/providers/`),**只取渲染必要字段**,字段映射全在 `mappers/` 里(参考已有的 `mapQQ*`)。新增一类数据 = 在 `domain/ports` 加 capability / 方法 + 基类 `provider.ts` 给空默认实现(让其余 provider 仍编译)+ 具体 provider 覆写 + 写 mapper。**组件 / 屏幕绝不直接 fetch**,一律走 provider + React Query。
   3. **导航 = 单页状态机 + 共享元素切换引擎**(`ui/Shell.tsx`,逐字移植自示例)。屏幕在**同一个常驻 `.view` 容器**里挂载 / 卸载,切换相位机(`trans` / `startForward` / `startReverse` / morph 飞行图块)靠在该容器内**测量起点与目标 Hero 的矩形**做容器形变。**这是这套丝滑切换的根因,载荷极重 —— 不要破坏它。**
@@ -75,7 +76,8 @@
 - **产品范围先行**:新增 provider/API 能力先看 `../doc/product-scope.md`;只接核心流媒体能力,不因为平台接口存在就把签到、任务、社交、播客、广播等能力带进产品。
 - **播放态唯一源是内核**:命令走 `Engine`(`engine.playback.*`,直达 Service 的方法调用),状态读 `usePlayQueueStore`;不在 UI 另存一份。
 - **能力只经 dougong 的原子**:一对一能力用 `service()`,开放集合用 `extensionPoint()`,状态事实用 `event()`(token 集中在 `@core/kernel/events`,避免插件互相 import 成环);依赖写进 `requires`,资源写进 `ctx.cleanup`。**不再手写 Plugin 基类 / Capability 注册表 / EventEmitter**(`check-layers` 会拦退役词汇)。
-- **事实广播是异步的**:`ctx.emit` 走微任务派发,`broadcaster()` 包成 fire-and-forget 并在 Lifetime 已 abort 时静默丢弃。测试里断言事实落地要先 flush 一次微任务队列。
+- **事实广播是异步的**:`ctx.emit` 走微任务派发,`broadcaster()` 包成 fire-and-forget 并在 Lifetime 已 abort 时静默丢弃。测试里断言事实落地要先 flush 一次微任务队列;**断言初始值则不需要**,那条路径是同步读 getter。
+- **贴合库的原生做法,不自己搭脚手架**:能力探测用 `host.get(optional(T))`(不是自造 tryGet),图外读贡献集用 `host.contributions()`(不是塞一个空插件进图),日志用内核默认的 `console`(它会附带 InstanceMeta,自己拍平成字符串会把它丢掉)。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail`,深层卡片飞 morph 走 `useMorph()`(`MorphProvider` 提供,已取代早期的 `window.__MORPH` 全局);`view` 是收敛联合 `ShellScreenView`,不是裸 string。**不引路由库**(见 §5)。
 - **设计系统主体仍是那套移植的 class 体系,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 `ui/styles/base.css`)、动态值留内联、视觉零回归;新样式跟随既有拆分方式**与组件同目录同名**落 `.css`,玻璃/morph keyframes 等复杂视觉留 CSS(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(布局与结构保持与示例一致,便于比对保真)。**同组必然同行的 props 用具名契约**(见 `TrackListBindings`),别逐屏抄一遍;**全局主题值(accent)不进 props**,就地 `useAccent()` —— 曾经 51 处 prop 声明只为传一个谁也没得选的值。

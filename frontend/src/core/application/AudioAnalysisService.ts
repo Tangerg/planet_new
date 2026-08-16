@@ -20,18 +20,23 @@ const DEFAULT_FFT_SIZE = 128;
  *
  * Availability is answered by sampling, not by a second predicate: the probe can
  * fail at any frame (a stale stream, a suspended context), so a caller that
- * trusted an "is it supported" flag would still have to handle `false`.
+ * trusted an "is it supported" flag would still have to handle `false`. The two
+ * ways that can happen stay distinct at the seam — an unmounted analyser is an
+ * absent Service, not a thrown error.
  */
 export class AudioAnalysisService {
-  constructor(private readonly port: () => AnalyserPort) {}
+  constructor(private readonly port: () => AnalyserPort | undefined) {}
 
   frequencyBinCount(fftSize = DEFAULT_FFT_SIZE): number {
     return Math.max(1, Math.floor(fftSize / 2));
   }
 
   sampleFrequencyData(target: FrequencyData, options: AudioAnalysisOptions = {}): boolean {
+    const port = this.port();
+    if (!port) return false;
+
     try {
-      const analyser = this.port().analyser();
+      const analyser = port.analyser();
       const fftSize = options.fftSize ?? DEFAULT_FFT_SIZE;
       if (analyser.fftSize !== fftSize) analyser.fftSize = fftSize;
       if (

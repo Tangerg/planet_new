@@ -4,16 +4,26 @@ import type { AnalyserPort } from "../plugin/audio-engine";
 import { AudioAnalysisService } from "./AudioAnalysisService";
 
 function makeService(analyser?: Partial<AnalyserNode>) {
-  const port = (): AnalyserPort => {
-    if (!analyser) throw new Error("Service 'planet/audio-analyser' is not active");
-    return { analyser: () => analyser as AnalyserNode };
-  };
+  const port = (): AnalyserPort | undefined =>
+    analyser ? { analyser: () => analyser as AnalyserNode } : undefined;
   return { service: new AudioAnalysisService(port) };
 }
 
 describe("AudioAnalysisService", () => {
-  it("reports a failed sample when the analyser Service is not active", () => {
+  it("reports a failed sample when the analyser Service is absent", () => {
     const { service } = makeService();
+
+    expect(service.sampleFrequencyData(new Uint8Array(1))).toBe(false);
+  });
+
+  it("reports a failed sample when a mounted analyser faults mid-frame", () => {
+    // Distinct from absence: the probe exists but cannot build its graph right
+    // now (suspended context, stale stream). Both answer the caller with false.
+    const service = new AudioAnalysisService(() => ({
+      analyser: () => {
+        throw new Error("probe unavailable");
+      },
+    }));
 
     expect(service.sampleFrequencyData(new Uint8Array(1))).toBe(false);
   });
