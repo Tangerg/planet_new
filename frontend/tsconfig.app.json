@@ -5,7 +5,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    /* dougong 要求 ES2024 运行时(Promise.withResolvers)+ 显式资源管理声明 */
+    "lib": ["DOM", "DOM.Iterable", "ES2024", "ESNext.Disposable"],
 
     /* —— 输入与互操作 —— */
     "allowJs": false,

@@ -15,6 +15,9 @@ class ScenarioAudio extends EventTarget {
   volume = 1;
   readonly play = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
   readonly pause = vi.fn<() => void>();
+  // The analysis probe drives its hidden element through these on teardown.
+  readonly load = vi.fn<() => void>();
+  readonly removeAttribute = vi.fn<() => void>();
 }
 
 class ScenarioProvider extends Provider {
@@ -65,6 +68,9 @@ const credentials: CredentialStore = {
   clear: () => undefined,
 };
 
+/** Drain the microtask queue that carries an un-awaited kernel broadcast. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 function track(providerId: ProviderIdValue, id: string): TrackSnapshot {
   return {
     providerId,
@@ -91,14 +97,14 @@ describe("core application flow", () => {
       createAnalysisElement: () => new ScenarioAudio() as unknown as HTMLAudioElement,
       dispose: disposeAudio,
     };
-    const planet = composePlanet({
+    const host = await composePlanet({
       providers: [first, second],
       activeProviderId: firstId,
       audio,
       random: { next: () => 0.5 },
       resolveAnalysisSource: async (url) => url,
     });
-    const engine = new Engine(planet, credentials);
+    const engine = new Engine(host, credentials);
 
     const firstHome = await engine.media.personalized();
     expect(firstHome).toMatchObject({ status: "success" });
@@ -109,6 +115,7 @@ describe("core application flow", () => {
       resolutions: [{ status: "resolved", requested: 2, resolved: 2 }],
     });
     expect(first.resolveCalls).toEqual([["one", "two"]]);
+    await flush();
     expect(audioElement.src).toBe("https://audio.test/scenario-first/one");
 
     expect(engine.sources.select(secondId)).toBe(true);
@@ -118,12 +125,14 @@ describe("core application flow", () => {
     );
 
     engine.playback.next();
+    // The queue states the new current track; the transport reacts to that fact.
+    await flush();
     expect(audioElement.src).toBe("https://audio.test/scenario-first/two");
     expect(second.resolveCalls).toEqual([]);
 
-    engine.dispose();
+    await engine.dispose();
     expect(disposeAudio).toHaveBeenCalledTimes(1);
     expect(audioElement.pause).toHaveBeenCalled();
-    expect(() => engine.sources.activeId).toThrow("ProviderRegistry plugin is not registered");
+    expect(() => engine.sources.activeId).toThrow("not active");
   });
 });

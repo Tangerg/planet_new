@@ -1,50 +1,24 @@
 import { describe, expect, it } from "vitest";
 
+import { createHost } from "dougong";
 import { ProviderId, type MusicSource } from "@domain";
-import { Planet, Plugin, type AudioRuntimePort } from "../../kernel";
-import { MUSIC_SOURCE, ProviderRegistry } from ".";
-
-function audioRuntime(): AudioRuntimePort {
-  return {
-    audioElement: {} as HTMLAudioElement,
-    audioContext: {} as AudioContext,
-    createAnalysisElement: () => ({}) as HTMLAudioElement,
-    dispose() {},
-  };
-}
+import { musicSourcePlugin, PROVIDER_REGISTRY, providerRegistryPlugin } from ".";
 
 function provider(id: string, name: string): MusicSource {
-  const providerId = ProviderId.of(id);
-  return {
-    providerId,
-    name,
-  } as unknown as MusicSource;
+  return { providerId: ProviderId.of(id), name } as unknown as MusicSource;
 }
 
-class RegisterProvider extends Plugin {
-  constructor(private readonly provider: MusicSource) {
-    super();
-  }
-
-  get id(): string {
-    return `test-provider:${this.provider.providerId}`;
-  }
-
-  protected onInit(): void {
-    this.context.registry.provide(MUSIC_SOURCE, this.provider);
-  }
-}
-
-describe("ProviderRegistry", () => {
-  it("selects by stable id and ignores unknown or unchanged ids", () => {
+describe("provider registry", () => {
+  it("selects by stable id and ignores unknown or unchanged ids", async () => {
     const netease = provider("netease", "Netease Cloud Music");
     const qqmusic = provider("qqmusic", "QQ Music");
-    const registry = new ProviderRegistry(netease.providerId);
-    const planet = new Planet({
-      audio: audioRuntime(),
-      plugins: [new RegisterProvider(netease), new RegisterProvider(qqmusic), registry],
-    });
+    const host = createHost({ name: "registry-test" });
+    host.install(musicSourcePlugin(netease));
+    host.install(musicSourcePlugin(qqmusic));
+    host.install(providerRegistryPlugin, { defaultActive: netease.providerId });
+    await host.start();
 
+    const registry = host.get(PROVIDER_REGISTRY);
     expect(registry.active).toBe(netease);
     expect(registry.get(qqmusic.providerId)).toBe(qqmusic);
     expect(registry.get(ProviderId.of("unknown"))).toBeNull();
@@ -55,6 +29,30 @@ describe("ProviderRegistry", () => {
     expect(registry.active).toBe(qqmusic);
 
     expect(registry.setActive(qqmusic.providerId)).toBe(false);
-    planet.dispose();
+    await host.stop();
+  });
+
+  it("sees a source installed after startup without restarting", async () => {
+    const netease = provider("netease", "Netease Cloud Music");
+    const local = provider("local", "Local Music");
+    const host = createHost({ name: "registry-test" });
+    host.install(musicSourcePlugin(netease));
+    host.install(providerRegistryPlugin, { defaultActive: netease.providerId });
+    await host.start();
+
+    const registry = host.get(PROVIDER_REGISTRY);
+    expect(registry.providers).toHaveLength(1);
+
+    // An ExtensionPoint is not a dependency edge: the registry Instance stays
+    // the same object across the change, it just reads a longer contribution set.
+    const installation = host.install(musicSourcePlugin(local));
+    await installation.ready();
+
+    expect(host.get(PROVIDER_REGISTRY)).toBe(registry);
+    expect(registry.get(local.providerId)).toBe(local);
+
+    await installation.remove();
+    expect(registry.get(local.providerId)).toBeNull();
+    await host.stop();
   });
 });

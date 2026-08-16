@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { Plugin, type AudioRuntimePort } from "@core";
-import { AUDIO_ANALYSER, MUSIC_SOURCE, PROVIDER_REGISTRY } from "@core/plugin";
+import { definePlugin } from "dougong";
+import { type AudioRuntimePort } from "@core";
+import { AUDIO_ANALYSER, MUSIC_SOURCES, PROVIDER_REGISTRY } from "@core/plugin";
 import { PLAY_QUEUE, PROGRESS, RepeatMode, TRANSPORT, VOLUME_CONTROL } from "@contexts/playback";
 import { LocalMusic } from "@providers";
 import { usePlayQueueStore } from "@/store/playqueue";
@@ -28,37 +29,44 @@ function audioRuntime() {
   return { audioElement, dispose, runtime };
 }
 
-describe("application Planet composition", () => {
-  it("pins kernel-seeded playback state into the store before React can subscribe", () => {
+/** Drain the microtask queue that carries an un-awaited kernel broadcast. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe("application kernel composition", () => {
+  it("pins kernel-seeded playback state into the store before React can subscribe", async () => {
     const audio = audioRuntime();
     audio.audioElement.volume = 0.4;
     const provider = new LocalMusic();
-    const planet = composePlanet({
+    const host = await composePlanet({
       providers: [provider],
       activeProviderId: provider.providerId,
       audio: audio.runtime,
       random: { next: () => 0.5 },
       resolveAnalysisSource: async (url) => url,
     });
+    await flush();
 
-    // The Volume plugin broadcasts the element's real level during init; without
-    // the bridge pinning it, the UI would show its own hardcoded default instead.
+    // The volume plugin broadcasts the element's real level during setup. The
+    // bridge declares no requirements, so it starts a layer earlier and its
+    // listeners are already published — otherwise the UI would show its own
+    // hardcoded default instead.
     expect(usePlayQueueStore.getState().volume).toBe(40);
 
-    planet.resolve(PLAY_QUEUE)?.toggleShuffle();
-    planet.resolve(PLAY_QUEUE)?.cycleRepeat();
+    host.get(PLAY_QUEUE).toggleShuffle();
+    host.get(PLAY_QUEUE).cycleRepeat();
+    await flush();
     expect(usePlayQueueStore.getState().shuffle).toBe(true);
     expect(usePlayQueueStore.getState().repeat).not.toBe(RepeatMode.OFF);
 
-    planet.dispose();
+    await host.stop();
   });
 
-  it("assembles the real provider/playback graph and revokes every capability on dispose", () => {
+  it("assembles the real provider/playback graph and releases it on stop", async () => {
     const audio = audioRuntime();
     const provider = new LocalMusic();
     const addListener = vi.spyOn(audio.audioElement, "addEventListener");
     const removeListener = vi.spyOn(audio.audioElement, "removeEventListener");
-    const planet = composePlanet({
+    const host = await composePlanet({
       providers: [provider],
       activeProviderId: provider.providerId,
       audio: audio.runtime,
@@ -66,45 +74,47 @@ describe("application Planet composition", () => {
       resolveAnalysisSource: async (url) => url,
     });
 
-    expect(planet.resolveAll(MUSIC_SOURCE)).toHaveLength(1);
-    expect(planet.resolve(PROVIDER_REGISTRY)?.active?.providerId).toBe(provider.providerId);
-    expect(planet.resolve(TRANSPORT)).not.toBeNull();
-    expect(planet.resolve(PLAY_QUEUE)).not.toBeNull();
-    expect(planet.resolve(VOLUME_CONTROL)).not.toBeNull();
-    expect(planet.resolve(PROGRESS)).not.toBeNull();
-    expect(planet.resolve(AUDIO_ANALYSER)).not.toBeNull();
+    expect(host.get(PROVIDER_REGISTRY).providers).toHaveLength(1);
+    expect(host.get(PROVIDER_REGISTRY).active?.providerId).toBe(provider.providerId);
+    expect(host.get(TRANSPORT)).toBeDefined();
+    expect(host.get(PLAY_QUEUE)).toBeDefined();
+    expect(host.get(VOLUME_CONTROL)).toBeDefined();
+    expect(host.get(PROGRESS)).toBeDefined();
+    expect(host.get(AUDIO_ANALYSER)).toBeDefined();
     // ended + error (playback) + timeupdate + durationchange (progress).
     expect(addListener).toHaveBeenCalledTimes(4);
 
-    planet.dispose();
+    await host.stop();
 
-    expect(planet.resolveAll(MUSIC_SOURCE)).toEqual([]);
-    expect(planet.resolve(PROVIDER_REGISTRY)).toBeNull();
-    expect(planet.resolve(TRANSPORT)).toBeNull();
+    expect(() => host.get(PROVIDER_REGISTRY)).toThrow("not active");
+    expect(() => host.get(TRANSPORT)).toThrow("not active");
     expect(removeListener).toHaveBeenCalledTimes(4);
     expect(audio.dispose).toHaveBeenCalledTimes(1);
   });
 
-  it("rolls back the real graph when an app extension fails to initialize", () => {
-    class FailingExtension extends Plugin {
-      readonly id = "failing-app-extension";
-      protected override onInit(): void {
-        throw new Error("extension startup failed");
-      }
-    }
-
+  it("rolls the whole graph back when an app extension fails to start", async () => {
     const audio = audioRuntime();
     const provider = new LocalMusic();
-    expect(() =>
+    const failing = definePlugin({
+      name: "test.failing-app-extension",
+      requires: { sources: MUSIC_SOURCES },
+      setup() {
+        throw new Error("extension startup failed");
+      },
+    });
+
+    await expect(
       composePlanet({
         providers: [provider],
         activeProviderId: provider.providerId,
         audio: audio.runtime,
         random: { next: () => 0.5 },
         resolveAnalysisSource: async (url) => url,
-        additionalPlugins: [new FailingExtension()],
+        extend: (installer) => installer.install(failing),
       }),
-    ).toThrow("extension startup failed");
+    ).rejects.toThrow("extension startup failed");
+    // The transaction is all-or-nothing: no Instance survives a failed start,
+    // so the audio runtime this composition took ownership of is released too.
     expect(audio.dispose).toHaveBeenCalledTimes(1);
   });
 });

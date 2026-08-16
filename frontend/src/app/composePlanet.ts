@@ -1,16 +1,22 @@
-import { Planet, type AudioRuntimePort, type Plugin } from "@core";
+import { createHost, type Host } from "dougong";
+import { audioRuntimePlugin, kernelLogger, type AudioRuntimePort } from "@core";
 import {
-  AudioPlaybackAdapter,
-  PlayQueueRuntime,
-  ProgressRuntime,
-  VolumeRuntime,
+  playbackPlugin,
+  playQueuePlugin,
+  progressPlugin,
+  volumePlugin,
   type RandomSource,
 } from "@contexts/playback";
-import { AudioEngine, Lyrics, ProviderRegistry } from "@core/plugin";
+import {
+  audioEnginePlugin,
+  lyricsPlugin,
+  musicSourcePlugin,
+  providerRegistryPlugin,
+} from "@core/plugin";
 import type { MediaAnalysisSourceResolver } from "@core/plugin";
 import type { ProviderId } from "@contexts/contracts";
 import type { Provider } from "@providers";
-import { PlayQueueStoreBridge } from "@/store/bridge";
+import { playQueueStoreBridge } from "@/store/bridge";
 
 export type PlanetComposition = Readonly<{
   providers: readonly Provider[];
@@ -18,29 +24,37 @@ export type PlanetComposition = Readonly<{
   audio: AudioRuntimePort;
   random: RandomSource;
   resolveAnalysisSource: MediaAnalysisSourceResolver;
-  /** Optional app-level extensions; useful for third-party plugins and composition tests. */
-  additionalPlugins?: readonly Plugin[];
+  /**
+   * App-level extensions installed onto the same Host before it starts. A
+   * callback rather than a Plugin array: every plugin carries its own
+   * requires/provides/config types, and one array element type would erase
+   * exactly the declarations the Host resolves the graph from. The parameter is
+   * narrowed to installation — starting and stopping stay this function's job.
+   */
+  extend?: (installer: Pick<Host, "install" | "group" | "change">) => void;
 }>;
 
-/** Assemble the real application plugin graph from explicit outer adapters. */
-export function composePlanet(options: PlanetComposition): Planet {
-  return new Planet({
-    audio: options.audio,
-    plugins: [
-      // First: the store bridge is a pure observer of kernel facts, so it has to
-      // be subscribed before any plugin's own init broadcasts one. VolumeRuntime
-      // seeds the output level during init — install the bridge later and that
-      // seed is simply lost, leaving the UI on a made-up default.
-      new PlayQueueStoreBridge(),
-      ...options.providers,
-      new AudioPlaybackAdapter(),
-      new PlayQueueRuntime(options.random),
-      new VolumeRuntime(),
-      new ProgressRuntime(),
-      new AudioEngine(options.resolveAnalysisSource),
-      new ProviderRegistry(options.activeProviderId),
-      new Lyrics(),
-      ...(options.additionalPlugins ?? []),
-    ],
-  });
+/**
+ * Assemble the real application plugin graph from explicit outer adapters and
+ * start it. Install order is not startup order — dougong derives that from the
+ * declared Service and ExtensionPoint edges — so this list reads as an
+ * inventory, not a sequence.
+ */
+export async function composePlanet(options: PlanetComposition): Promise<Host> {
+  const host = createHost({ name: "planet", logger: kernelLogger });
+
+  host.install(audioRuntimePlugin, options.audio);
+  host.install(playQueueStoreBridge);
+  for (const provider of options.providers) host.install(musicSourcePlugin(provider.source));
+  host.install(providerRegistryPlugin, { defaultActive: options.activeProviderId });
+  host.install(playQueuePlugin, { random: options.random });
+  host.install(playbackPlugin);
+  host.install(volumePlugin);
+  host.install(progressPlugin);
+  host.install(audioEnginePlugin, { resolveAnalysisSource: options.resolveAnalysisSource });
+  host.install(lyricsPlugin);
+  options.extend?.(host);
+
+  await host.start();
+  return host;
 }

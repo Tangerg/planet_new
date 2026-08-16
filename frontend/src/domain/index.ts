@@ -25,6 +25,7 @@ export * from "./model/personalized";
 export * from "./model/playback-intent";
 export * from "./model/playback-availability";
 export * from "./model/play-queue";
+export * from "./model/play-state";
 export * from "./model/repeat";
 export * from "./model/volume";
 export * from "./model/search";

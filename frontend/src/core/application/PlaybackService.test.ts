@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ProviderId, type PlaybackResolver } from "@domain";
 import type { Track, TrackPlayUrl } from "@domain/model/track";
 
-import type { Planet } from "../kernel";
+import type { Host } from "dougong";
 import { PLAY_QUEUE } from "../plugin/playqueue";
 import { PlaybackResolutionError, PlaybackService } from "./PlaybackService";
 
@@ -27,7 +27,7 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
   artists: [],
 });
 
-/** Minimal harness: a fake queue capability + a provider stub. play() only ever
+/** Minimal harness: a fake queue Service + a provider stub. play() only ever
  *  touches PLAY_QUEUE and the provider, so nothing else needs resolving. */
 function makeService(
   resolver: Partial<PlaybackResolver>,
@@ -38,9 +38,12 @@ function makeService(
   const addNext = vi.fn<(track: Track) => void>();
   const clear = vi.fn<() => void>();
   const queue = { playNow, setShuffle, addNext, clear } as unknown;
-  const planet = {
-    resolve: (cap: unknown) => (cap === PLAY_QUEUE ? queue : null),
-  } as unknown as Planet;
+  const host = {
+    get: (token: unknown) => {
+      if (token !== PLAY_QUEUE) throw new Error("unexpected Service lookup");
+      return queue;
+    },
+  } as unknown as Host;
 
   const complete = (partial: Partial<PlaybackResolver>, index: number): PlaybackResolver => {
     return {
@@ -55,7 +58,7 @@ function makeService(
   const resolvers = [active, ...additionalResolvers.map(complete)];
 
   return {
-    service: new PlaybackService(planet, {
+    service: new PlaybackService(host, {
       active: () => active,
       get: (providerId) =>
         resolvers.find((candidate) => candidate.providerId === providerId) ?? null,

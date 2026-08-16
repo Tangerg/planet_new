@@ -1,4 +1,4 @@
-import type { Planet } from "../kernel";
+import type { Host } from "dougong";
 import type {
   CredentialStore,
   IdentitySourcePort,
@@ -7,7 +7,7 @@ import type {
   ProviderId,
 } from "@domain";
 import type { UserLibrarySourcePort } from "@domain/ports/user-library";
-import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
+import { AUDIO_ANALYSER, PROVIDER_REGISTRY, type ProviderRegistryPort } from "../plugin";
 import { AudioAnalysisService } from "./AudioAnalysisService";
 import { EngagementService } from "./EngagementService";
 import { IdentityService } from "./IdentityService";
@@ -18,10 +18,10 @@ import { SourceSelectionService } from "./SourceSelectionService";
 
 /**
  * The application-facing facade over the kernel — the single handle the UI
- * holds. It hides the plugin container: the view subscribes to state via
- * `events`, issues commands/use-cases via `playback` / `media`, lists/switches
- * sources via `sources`, and manages the kernel lifecycle via `dispose` — it
- * never resolves plugins or reaches into Planet internals.
+ * holds. It hides the plugin host: the view issues commands/use-cases via
+ * `playback` / `media`, lists/switches sources via `sources`, and reads
+ * playback state from the zustand store the kernel bridge pins. It never
+ * resolves plugins or reaches into the Host.
  *
  * Provider resolution lives here (not in the UI): both services are bound to a
  * getter that re-reads the active provider from the ProviderRegistry, so a
@@ -41,14 +41,14 @@ export class Engine {
   readonly sources: SourceSelectionService;
 
   constructor(
-    private readonly planet: Planet,
+    private readonly host: Host,
     credentials: CredentialStore,
   ) {
     this.sources = new SourceSelectionService(() => this.providerRegistry());
     const getSource = (): MusicSource => {
       const provider = this.providerRegistry().active;
       if (!provider) {
-        throw new Error("No music provider is registered on the Planet.");
+        throw new Error("No music provider is registered on the kernel.");
       }
       return provider;
     };
@@ -58,7 +58,7 @@ export class Engine {
         return this.providerRegistry().get(providerId)?.playback ?? null;
       },
     };
-    this.playback = new PlaybackService(planet, playbackResolvers);
+    this.playback = new PlaybackService(host, playbackResolvers);
     this.media = new MediaService(getSource);
     const identitySources: IdentitySourcePort = {
       active: () => {
@@ -83,24 +83,15 @@ export class Engine {
     this.identity = new IdentityService(identitySources, credentials);
     this.library = new LibraryService(librarySources);
     this.engagement = new EngagementService(getSource);
-    this.audio = new AudioAnalysisService(planet);
-  }
-
-  /** The kernel event bus — UI store-bridges subscribe here for playback/state. */
-  get events(): Planet["hooks"] {
-    return this.planet.hooks;
+    this.audio = new AudioAnalysisService(() => host.get(AUDIO_ANALYSER));
   }
 
   private providerRegistry(): ProviderRegistryPort {
-    const registry = this.planet.resolve(PROVIDER_REGISTRY);
-    if (!registry) {
-      throw new Error("ProviderRegistry plugin is not registered on the Planet.");
-    }
-    return registry;
+    return this.host.get(PROVIDER_REGISTRY);
   }
 
-  /** Unmount the kernel (app teardown). */
-  dispose(): void {
-    this.planet.dispose();
+  /** Stop the kernel (app teardown); every plugin's Lifetime is released. */
+  dispose(): Promise<void> {
+    return this.host.stop();
   }
 }

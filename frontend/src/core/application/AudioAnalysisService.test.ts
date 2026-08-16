@@ -1,22 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { AUDIO_ANALYSER } from "../plugin/audio-engine";
-import type { Planet } from "../kernel";
+import type { AnalyserPort } from "../plugin/audio-engine";
 import { AudioAnalysisService } from "./AudioAnalysisService";
 
 function makeService(analyser?: Partial<AnalyserNode>) {
-  const port = analyser ? { analyser: () => analyser as AnalyserNode } : null;
-  const planet = {
-    resolve: vi.fn<(cap: unknown) => typeof port>((cap) => (cap === AUDIO_ANALYSER ? port : null)),
-  } as unknown as Planet;
-  return { service: new AudioAnalysisService(planet), port };
+  const port = (): AnalyserPort => {
+    if (!analyser) throw new Error("Service 'planet/audio-analyser' is not active");
+    return { analyser: () => analyser as AnalyserNode };
+  };
+  return { service: new AudioAnalysisService(port) };
 }
 
 describe("AudioAnalysisService", () => {
-  it("reports unsupported when no analyser capability is mounted", () => {
+  it("reports a failed sample when the analyser Service is not active", () => {
     const { service } = makeService();
 
-    expect(service.supported).toBe(false);
     expect(service.sampleFrequencyData(new Uint8Array(1))).toBe(false);
   });
 
@@ -62,10 +60,5 @@ describe("AudioAnalysisService", () => {
 
     expect(service.sampleFrequencyData(new Uint8Array(2), { fftSize: 128 })).toBe(false);
     expect(getByteFrequencyData).not.toHaveBeenCalled();
-  });
-
-  it("reports supported when the analyser capability is mounted", () => {
-    const { service } = makeService({ fftSize: 128, frequencyBinCount: 1 });
-    expect(service.supported).toBe(true);
   });
 });

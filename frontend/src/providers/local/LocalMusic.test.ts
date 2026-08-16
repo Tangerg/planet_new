@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Library, LookupStatus } from "@bindings/github.com/Tangerg/planet_new/backend";
-import { Planet, type AudioRuntimePort } from "@core";
-import { ProviderRegistry } from "@core/plugin";
 import { LocalMusic } from "./LocalMusic";
 import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
 
@@ -59,15 +57,6 @@ function artist(over: Partial<LocalArtist> = {}): LocalArtist {
   return { id: "ar1", name: "Artist", albumCount: 1, trackCount: 2, coverUrl: "", ...over };
 }
 
-function audioRuntime(): AudioRuntimePort {
-  return {
-    audioElement: {} as HTMLAudioElement,
-    audioContext: {} as AudioContext,
-    createAnalysisElement: () => ({}) as HTMLAudioElement,
-    dispose() {},
-  };
-}
-
 // vi.mock-factory mocks aren't swept by the suite's restoreMocks, so reset their
 // call history + implementations per test to keep the "not called" assertions honest.
 beforeEach(() => {
@@ -84,24 +73,21 @@ describe("LocalMusic — bridge present", () => {
 
   afterEach(leaveDesktopShell);
 
-  it("registers only the context ports it actually implements", () => {
+  it("publishes only the context ports it actually implements", () => {
     expect(provider.name).toBe("Local");
     expect(provider.providerId).toBe("local");
-    const registry = new ProviderRegistry(provider.providerId);
-    const planet = new Planet({ audio: audioRuntime(), plugins: [provider, registry] });
-    const source = registry.active;
+    const source = provider.source;
 
-    expect(source?.catalog.search).toBe(provider);
-    expect(source?.catalog.tracks).toBe(provider);
-    expect(source?.lyrics).toBe(provider);
-    expect(source?.playback.policy).toEqual({
+    expect(source.catalog.search).toBe(provider);
+    expect(source.catalog.tracks).toBe(provider);
+    expect(source.lyrics).toBe(provider);
+    expect(source.playback.policy).toEqual({
       canResolveFullPlayback: true,
       canUsePreviewPlayback: false,
     });
-    expect(source?.catalog.charts).toBeNull();
-    expect(source?.identity).toBeNull();
-    expect(source?.userLibrary).toBeNull();
-    planet.dispose();
+    expect(source.catalog.charts).toBeNull();
+    expect(source.identity).toBeNull();
+    expect(source.userLibrary).toBeNull();
   });
 
   it("projects Home into a synthetic 'all tracks' playlist plus recent rows", async () => {

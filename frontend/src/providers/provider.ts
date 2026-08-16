@@ -1,5 +1,3 @@
-import { Plugin } from "@core";
-import { MUSIC_SOURCE } from "@core/plugin";
 import type {
   CatalogPorts,
   EngagementPorts,
@@ -13,18 +11,18 @@ import type {
 import type { TrackPlayUrl } from "@domain/model/track";
 
 /**
- * Base lifecycle adapter for a music source. Concrete providers expose their
- * real context ports through catalogPorts/lyricsPort/identityPort/libraryPort.
- * A missing port is null; there is no parallel string capability declaration
- * and no empty optional method pretending that a port exists.
+ * Base adapter for a music source. Concrete providers expose their real context
+ * ports through catalogPorts/lyricsPort/identityPort/libraryPort. A missing port
+ * is null; there is no parallel string capability declaration and no empty
+ * optional method pretending that a port exists.
+ *
+ * A provider is a value, not a lifecycle: `source` is the whole of what it
+ * publishes, and the composition root installs it through `musicSourcePlugin`.
  */
-export abstract class Provider extends Plugin {
-  get id(): string {
-    return `provider:${this.providerId}`;
-  }
-
-  protected onInit(): void {
-    const source: MusicSource = {
+export abstract class Provider {
+  /** Everything this adapter offers the kernel, as one contributed value. */
+  get source(): MusicSource {
+    return {
       providerId: this.providerId,
       name: this.name,
       catalog: this.catalogPorts,
@@ -39,7 +37,6 @@ export abstract class Provider extends Plugin {
       userLibrary: this.libraryPort,
       engagement: this.engagementPorts,
     };
-    this.context.registry.provide(MUSIC_SOURCE, source);
   }
 
   abstract get name(): string;

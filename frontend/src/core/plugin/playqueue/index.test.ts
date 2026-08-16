@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import type { Event } from "dougong";
 import type { Track } from "@domain/model/track";
 import { ProviderId } from "@domain/model/provider-id";
 
-import { EventEmitter } from "../../event";
-import type { PlanetEventMap } from "../../kernel/event";
-import { CapabilityRegistry } from "../../kernel/capability";
-import type { PluginContext } from "../../kernel/context";
-import "../playback"; // pulls the "playback:track-ended" event-type augmentation
-import { PLAY_QUEUE, PlayQueueRuntime } from "./index";
+import { CURRENT_TRACK_CHANGED, QUEUE_CHANGED, type Broadcast } from "../../kernel";
+import { PlayQueueRuntime } from "./index";
 
 const TEST_PROVIDER_ID = ProviderId.of("test");
 
@@ -20,102 +17,97 @@ const track = (id: string, providerId = TEST_PROVIDER_ID): Track => ({
   artists: [],
 });
 
+/** Records the facts the runtime states, in order, per event token. */
 function mount() {
-  const hooks = new EventEmitter<PlanetEventMap>();
-  const registry = new CapabilityRegistry();
-  const plugin = new PlayQueueRuntime({ next: () => 0.5 });
-  plugin.init({ hooks, registry } as unknown as PluginContext);
-  return { plugin, hooks, registry };
+  const facts: { fact: Event<unknown>; payload: unknown }[] = [];
+  const broadcast: Broadcast = (fact, payload) => {
+    facts.push({ fact: fact as Event<unknown>, payload });
+  };
+  const runtime = new PlayQueueRuntime({ next: () => 0.5 }, broadcast);
+
+  const stated = <T>(fact: Event<T>): T[] =>
+    facts.filter((entry) => entry.fact === fact).map((entry) => entry.payload as T);
+
+  return {
+    runtime,
+    currents: () => stated(CURRENT_TRACK_CHANGED),
+    queues: () => stated(QUEUE_CHANGED),
+  };
 }
 
-describe("PlayQueueRuntime plugin event flow", () => {
-  it("provides the PLAY_QUEUE capability once mounted", () => {
-    const { plugin, registry } = mount();
-    expect(registry.resolve(PLAY_QUEUE)).toBe(plugin);
-  });
-
+describe("PlayQueueRuntime facts", () => {
   it("broadcasts queue + current facts on playNow / next / previous / add", () => {
-    const { plugin, hooks } = mount();
-    const currents: (Track | undefined)[] = [];
-    const queues: (readonly Track[])[] = [];
-    hooks.on("queue:current-changed", (t) => currents.push(t));
-    hooks.on("queue:changed", (q) => queues.push(q));
+    const { runtime, currents, queues } = mount();
 
     const [a, b, c] = [track("a"), track("b"), track("c")];
-    plugin.playNow([a, b], a);
-    expect(queues.at(-1)).toEqual([a, b]);
-    expect(currents.at(-1)).toBe(a);
+    runtime.playNow([a, b], a);
+    expect(queues().at(-1)).toEqual([a, b]);
+    expect(currents().at(-1)).toBe(a);
 
-    plugin.next();
-    expect(currents.at(-1)).toBe(b);
-    plugin.previous();
-    expect(currents.at(-1)).toBe(a);
+    runtime.next();
+    expect(currents().at(-1)).toBe(b);
+    runtime.previous();
+    expect(currents().at(-1)).toBe(a);
 
-    plugin.add(c);
-    expect(queues.at(-1)).toEqual([a, b, c]);
+    runtime.add(c);
+    expect(queues().at(-1)).toEqual([a, b, c]);
   });
 
   it("supports play-next insertion and emits playback-order changes", () => {
-    const { plugin, hooks } = mount();
-    const queues: (readonly Track[])[] = [];
-    hooks.on("queue:changed", (q) => queues.push(q));
+    const { runtime, queues } = mount();
 
     const [a, b, c] = [track("a"), track("b"), track("c")];
-    plugin.playNow([a, c], a);
-    plugin.addNext(b);
+    runtime.playNow([a, c], a);
+    runtime.addNext(b);
 
-    expect(queues.at(-1)?.map((t) => t.id)).toEqual(["a", "b", "c"]);
+    expect(
+      queues()
+        .at(-1)
+        ?.map((t) => t.id),
+    ).toEqual(["a", "b", "c"]);
   });
 
   it("preserves colliding local ids from different providers", () => {
-    const { plugin, hooks } = mount();
-    const queues: (readonly Track[])[] = [];
-    const currents: (Track | undefined)[] = [];
-    hooks.on("queue:changed", (q) => queues.push(q));
-    hooks.on("queue:current-changed", (track) => currents.push(track));
+    const { runtime, currents, queues } = mount();
     const local = track("same");
     const remote = track("same", ProviderId.of("other"));
 
-    plugin.playNow([local, remote], remote);
-    expect(queues.at(-1)).toEqual([local, remote]);
-    expect(currents.at(-1)).toBe(remote);
+    runtime.playNow([local, remote], remote);
+    expect(queues().at(-1)).toEqual([local, remote]);
+    expect(currents().at(-1)).toBe(remote);
 
-    plugin.remove(local);
-    expect(queues.at(-1)).toEqual([remote]);
-    expect(currents.at(-1)).toBe(remote);
+    runtime.remove(local);
+    expect(queues().at(-1)).toEqual([remote]);
+    expect(currents().at(-1)).toBe(remote);
   });
 
   it("does not wrap manual next in sequence mode, but does in list-repeat mode", () => {
-    const { plugin, hooks } = mount();
-    const currents: (Track | undefined)[] = [];
-    hooks.on("queue:current-changed", (t) => currents.push(t));
+    const { runtime, currents } = mount();
 
     const [a, b] = [track("a"), track("b")];
-    plugin.playNow([a, b], b);
-    const afterPlayNow = currents.length;
+    runtime.playNow([a, b], b);
+    const afterPlayNow = currents().length;
 
-    plugin.next();
-    expect(currents).toHaveLength(afterPlayNow);
+    runtime.next();
+    expect(currents()).toHaveLength(afterPlayNow);
 
-    plugin.cycleRepeat(); // off -> all
-    plugin.next();
-    expect(currents.at(-1)).toBe(a);
+    runtime.cycleRepeat(); // off -> all
+    runtime.next();
+    expect(currents().at(-1)).toBe(a);
   });
 
-  it("auto-advances on playback:track-ended, then stops at the tail (repeat off)", () => {
-    const { plugin, hooks } = mount();
-    const currents: (Track | undefined)[] = [];
-    hooks.on("queue:current-changed", (t) => currents.push(t));
+  it("auto-advances after a track ends, then stops at the tail (repeat off)", () => {
+    const { runtime, currents } = mount();
 
     const [a, b] = [track("a"), track("b")];
-    plugin.playNow([a, b], a); // current → a
-    const afterPlay = currents.length;
+    runtime.playNow([a, b], a); // current → a
+    const afterPlay = currents().length;
 
-    hooks.emit("playback:track-ended");
-    expect(currents.at(-1)).toBe(b); // advanced a → b
+    runtime.advanceAfterTrackEnd();
+    expect(currents().at(-1)).toBe(b); // advanced a → b
 
-    hooks.emit("playback:track-ended");
+    runtime.advanceAfterTrackEnd();
     // b is the last track and repeat is off → "stopped", no new current fact.
-    expect(currents.length).toBe(afterPlay + 1);
+    expect(currents().length).toBe(afterPlay + 1);
   });
 });

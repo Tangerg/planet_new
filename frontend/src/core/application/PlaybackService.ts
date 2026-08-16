@@ -1,4 +1,4 @@
-import type { Capability, Planet } from "../kernel";
+import type { Host, Service } from "dougong";
 import type { PlaybackResolverRegistry, ProviderId } from "@domain";
 import { PlaybackIntent } from "@domain/model/playback-intent";
 import type { PlaybackAvailabilityPolicy } from "@domain/model/playback-availability";
@@ -60,11 +60,11 @@ type CompletedResolutionStatus = "resolved" | "partial" | "unresolved";
  * exactly one receiver, so routing it through fire-and-forget pub/sub would only
  * lose the receiver and the result. State flows back the other way, as events.
  *
- * The service resolves the capabilities it needs from the Planet registry on
- * each call (they're always provided by the time the UI issues a command). It
- * never imports concrete providers or React; provider play-URL resolution comes
- * through the domain port. Dependency direction: core/application → core/kernel
- * + core/plugin + domain.
+ * The service resolves the Services it needs from the Host on each call (they're
+ * always active by the time the UI issues a command). It never imports concrete
+ * providers or React; provider play-URL resolution comes through the domain
+ * port. Dependency direction: core/application → core/kernel + core/plugin +
+ * domain.
  */
 export class PlaybackService {
   /**
@@ -75,7 +75,7 @@ export class PlaybackService {
   private playGeneration = 0;
 
   constructor(
-    private readonly planet: Planet,
+    private readonly host: Host,
     private readonly resolvers: PlaybackResolverRegistry,
   ) {}
 
@@ -238,14 +238,10 @@ export class PlaybackService {
     this.queue.cycleRepeat();
   }
 
-  // ── Capability resolution ─────────────────────────────────────────
+  // ── Service resolution ────────────────────────────────────────────
 
-  private require<T>(cap: Capability<T>): T {
-    const impl = this.planet.resolve(cap);
-    if (!impl) {
-      throw new Error(`Playback requires the "${cap.key}" capability, which is not provided.`);
-    }
-    return impl;
+  private require<T>(token: Service<T>): T {
+    return this.host.get(token);
   }
 
   private cancelPendingPlay(): void {

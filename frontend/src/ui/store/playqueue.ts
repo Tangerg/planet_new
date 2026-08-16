@@ -37,7 +37,7 @@ export interface PlayQueueState {
 }
 
 /**
- * The store is written by `PlayQueueStoreBridge` only — it is a pinned
+ * The store is written by `playQueueStoreBridge` only — it is a pinned
  * projection of kernel events, not a place the UI mutates. So there are no
  * setter actions on it; commands go through PlaybackService.
  */

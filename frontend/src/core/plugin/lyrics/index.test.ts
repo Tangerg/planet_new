@@ -1,16 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createHost, definePlugin } from "dougong";
 import type { Lyric } from "@domain/model/lyric";
 import { ProviderId, type LyricProvider, type MusicSource } from "@domain";
 import type { Track } from "@domain/model/track";
 
-import { EventEmitter } from "../../event";
-import type { PlanetEventMap } from "../../kernel/event";
-import { CapabilityRegistry } from "../../kernel/capability";
-import type { PluginContext } from "../../kernel/context";
+import { CURRENT_TRACK_CHANGED, LYRICS_CHANGED } from "../../kernel";
 import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../provider-registry";
-import "../playqueue"; // pulls the "queue:current-changed" event-type augmentation
-import { Lyrics } from "./index";
+import { lyricsPlugin } from "./index";
 
 const LINES: Lyric[] = [{ content: "hello", duration: 0 }];
 const TEST_PROVIDER_ID = ProviderId.of("test");
@@ -30,42 +27,73 @@ function musicProvider(
   return { providerId, name: providerId, lyrics: { lyric } } as unknown as MusicSource;
 }
 
-function mount(lyric: LyricProvider["lyric"], additionalProviders: MusicSource[] = []) {
-  const hooks = new EventEmitter<PlanetEventMap>();
-  const registry = new CapabilityRegistry();
+/**
+ * The plugin's whole behaviour is its reaction to a kernel fact, so it is
+ * exercised on a real Host: a stub registry provides the Service it requires,
+ * and a driver installation states the current-track fact and observes the
+ * lyrics fact — exactly the seams the composed graph uses.
+ */
+async function mount(lyric: LyricProvider["lyric"], additionalProviders: MusicSource[] = []) {
   const active = musicProvider(TEST_PROVIDER_ID, lyric);
   const providers = [active, ...additionalProviders];
-  const port = {
+  const registry: ProviderRegistryPort = {
     active,
     providers,
-    get: (providerId: MusicSource["providerId"]) =>
-      providers.find((provider) => provider.providerId === providerId) ?? null,
-  } as unknown as ProviderRegistryPort;
-  registry.provide(PROVIDER_REGISTRY, port);
-  new Lyrics().init({ hooks, registry } as unknown as PluginContext);
-  const nextLyrics = () => new Promise<Lyric[]>((res) => hooks.once("lyrics:changed", res));
-  return { hooks, nextLyrics };
+    get: (providerId) => providers.find((p) => p.providerId === providerId) ?? null,
+    setActive: () => false,
+  };
+
+  const emitted: (readonly Lyric[])[] = [];
+  let announce!: (current: Track | undefined) => Promise<void>;
+  const driver = definePlugin({
+    name: "test.lyrics-driver",
+    setup(ctx) {
+      ctx.on(LYRICS_CHANGED, (lines) => emitted.push(lines));
+      announce = (current) => ctx.emit(CURRENT_TRACK_CHANGED, current);
+    },
+  });
+
+  const host = createHost({ name: "lyrics-test" });
+  host.install(
+    definePlugin({
+      name: "test.provider-registry",
+      provides: { registry: PROVIDER_REGISTRY },
+      setup: () => ({ registry }),
+    }),
+  );
+  host.install(lyricsPlugin);
+  host.install(driver);
+  await host.start();
+
+  /** Announce a track and let the fire-and-forget lyrics fact land. */
+  const play = async (current: Track | undefined) => {
+    await announce(current);
+    await flush();
+  };
+  return { host, emitted, announce, play };
 }
 
-describe("Lyrics plugin follows the current track", () => {
+/** Drain the microtask queue that carries an un-awaited broadcast. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe("lyrics plugin follows the current track", () => {
   it("fetches the active provider's lyrics when the track changes", async () => {
     const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
-    const { hooks, nextLyrics } = mount(lyric);
+    const { emitted, play } = await mount(lyric);
 
-    const changed = nextLyrics();
-    hooks.emit("queue:current-changed", track("1"));
-    expect(await changed).toEqual(LINES);
+    await play(track("1"));
+
+    expect(emitted.at(-1)).toEqual(LINES);
     expect(lyric).toHaveBeenCalledWith("1");
   });
 
   it("does not refetch when the same track re-emits", async () => {
     const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
-    const { hooks, nextLyrics } = mount(lyric);
+    const { play } = await mount(lyric);
 
-    const first = nextLyrics();
-    hooks.emit("queue:current-changed", track("1"));
-    await first;
-    hooks.emit("queue:current-changed", track("1")); // same id → deduped
+    await play(track("1"));
+    await play(track("1")); // same id → deduped
+
     expect(lyric).toHaveBeenCalledTimes(1);
   });
 
@@ -76,28 +104,25 @@ describe("Lyrics plugin follows the current track", () => {
     const otherLyric = vi.fn<LyricProvider["lyric"]>(async () => [
       { content: "other", duration: 0 },
     ]);
-    const { hooks, nextLyrics } = mount(activeLyric, [
+    const { emitted, play } = await mount(activeLyric, [
       musicProvider(OTHER_PROVIDER_ID, otherLyric),
     ]);
 
-    const first = nextLyrics();
-    hooks.emit("queue:current-changed", track("same"));
-    await first;
-    const second = nextLyrics();
-    hooks.emit("queue:current-changed", track("same", OTHER_PROVIDER_ID));
+    await play(track("same"));
+    await play(track("same", OTHER_PROVIDER_ID));
 
-    expect(await second).toEqual([{ content: "other", duration: 0 }]);
+    expect(emitted.at(-1)).toEqual([{ content: "other", duration: 0 }]);
     expect(activeLyric).toHaveBeenCalledTimes(1);
     expect(otherLyric).toHaveBeenCalledWith("same");
   });
 
   it("clears lyrics when there is no current track", async () => {
     const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
-    const { hooks, nextLyrics } = mount(lyric);
+    const { emitted, play } = await mount(lyric);
 
-    const changed = nextLyrics();
-    hooks.emit("queue:current-changed", undefined);
-    expect(await changed).toEqual([]);
+    await play(undefined);
+
+    expect(emitted.at(-1)).toEqual([]);
     expect(lyric).not.toHaveBeenCalled();
   });
 
@@ -106,20 +131,19 @@ describe("Lyrics plugin follows the current track", () => {
     const lyric = vi.fn<LyricProvider["lyric"]>(
       () => new Promise<Lyric[]>((res) => gate.push(res)),
     );
-    const { hooks, nextLyrics } = mount(lyric);
+    const { emitted, announce } = await mount(lyric);
 
-    hooks.emit("queue:current-changed", track("1")); // slow fetch #0
-    hooks.emit("queue:current-changed", track("2")); // supersedes → fetch #1
+    void announce(track("1")); // slow fetch #0
+    void announce(track("2")); // supersedes → fetch #1
+    await flush();
 
-    const changed = nextLyrics();
     gate[1](LINES); // track 2 resolves → its lyrics win
-    expect(await changed).toEqual(LINES);
+    await flush();
+    expect(emitted.at(-1)).toEqual(LINES);
 
     // Track 1 (stale) resolves late; its result must be dropped, not emitted.
-    let leaked = false;
-    hooks.once("lyrics:changed", () => (leaked = true));
     gate[0]([{ content: "stale", duration: 0 }]);
-    await Promise.resolve();
-    expect(leaked).toBe(false);
+    await flush();
+    expect(emitted).toHaveLength(1);
   });
 });

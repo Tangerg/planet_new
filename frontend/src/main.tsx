@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "@/i18n"; // initialize i18next once (resources + active locale) before render
 
-import { engine } from "./app/planet";
+import { startPlanet } from "./app/planet";
 import { EngineProvider } from "@/hooks/engineProvider";
 import Shell from "@/Shell";
 import { AccentProvider } from "@/hooks/accent";
@@ -32,6 +32,11 @@ const queryClient = new QueryClient({
 if (import.meta.env.DEV) {
   void import("@/infra/perf/uiPerfProbe").then((probe) => probe.installUiPerfProbe());
 }
+
+// The kernel activates its plugin graph in dependency layers, so the Engine is
+// only complete after an await. Rendering behind it keeps every component's
+// "the Engine is live" assumption true instead of scattering null checks.
+const engine = await startPlanet();
 
 root.render(
   <React.StrictMode>

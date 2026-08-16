@@ -1,96 +1,77 @@
-import { Plugin, defineCapability } from "../../kernel";
+import { definePlugin, service } from "dougong";
 import type { Track } from "@domain/model/track";
+import { PlayState } from "@domain/model/play-state";
 import type { AudioOutputPort } from "@domain/ports/playback";
-import { PROVIDER_REGISTRY } from "../provider-registry";
-import { PLAY_QUEUE } from "../playqueue";
-
-export enum PlayState {
-  PLAYING = "playing",
-  PAUSED = "paused",
-  STOPPED = "stopped",
-}
-
-declare module "../../kernel/event" {
-  interface PlanetEventMap {
-    "playback:state-changed": PlayState;
-    "playback:track-ended": never;
-  }
-}
+import {
+  AUDIO_RUNTIME,
+  broadcaster,
+  CURRENT_TRACK_CHANGED,
+  PLAY_STATE_CHANGED,
+  TRACK_ENDED,
+  type Broadcast,
+} from "../../kernel";
+import { PROVIDER_REGISTRY, type ProviderRegistryPort } from "../provider-registry";
+import { PLAY_QUEUE, type PlayQueueRuntime } from "../playqueue";
 
 /** Audio transport (resume/pause/stop). */
-export const TRANSPORT = defineCapability<AudioOutputPort>("transport");
+export const TRANSPORT = service<AudioOutputPort>("planet/transport");
+
+type TransportDeps = {
+  readonly audioElement: HTMLAudioElement;
+  readonly providers: ProviderRegistryPort;
+  readonly queue: PlayQueueRuntime;
+  readonly broadcast: Broadcast;
+};
 
 /**
  * Drives the shared <audio> element. Transport commands (resume/pause) arrive as
- * direct method calls from PlaybackService. It reacts to the internal
- * `queue:current-changed` fact by loading + playing the new track, and turns the
- * element's native `ended` into the `playback:track-ended` choreography event
- * the queue plugin auto-advances on.
+ * direct method calls from PlaybackService. It reacts to the current-track fact
+ * by loading + playing the new track, and turns the element's native `ended`
+ * into the `TRACK_ENDED` choreography fact the queue auto-advances on.
  */
-export class AudioPlaybackAdapter extends Plugin implements AudioOutputPort {
-  public static readonly id = "playback";
-  /** Invalidates a pending audio.play() continuation after pause/stop/dispose. */
+export class AudioPlaybackAdapter implements AudioOutputPort {
+  /** Invalidates a pending audio.play() continuation after pause/stop/release. */
   private playGeneration = 0;
   /** Current track, kept so an `error` (expired stream URL) can re-resolve it. */
   private current: Track | undefined;
   /** Whether the current track's URL was already refreshed once after an error. */
   private recovered = false;
 
-  get id(): string {
-    return AudioPlaybackAdapter.id;
-  }
-
-  protected onInit(): void {
-    this.context.registry.provide(TRANSPORT, this);
-    this.context.audioElement.addEventListener("ended", this.onEnded);
-    this.context.audioElement.addEventListener("error", this.onError);
-    this.context.hooks.on("queue:current-changed", this.onCurrentChanged, this);
-  }
-
-  protected onDispose(): void {
-    this.stop();
-    this.context.audioElement.removeEventListener("ended", this.onEnded);
-    this.context.audioElement.removeEventListener("error", this.onError);
-    this.context.hooks.off("queue:current-changed", this.onCurrentChanged);
+  constructor(private readonly deps: TransportDeps) {
+    this.deps.audioElement.addEventListener("ended", this.onEnded);
+    this.deps.audioElement.addEventListener("error", this.onError);
   }
 
   async resume(): Promise<void> {
-    const context = this.context;
-    const audio = context.audioElement;
+    const audio = this.deps.audioElement;
     const generation = ++this.playGeneration;
     if (!audio.src) {
-      context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+      this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.STOPPED);
       return;
     }
     try {
       await audio.play();
       if (generation !== this.playGeneration) return;
-      context.hooks.emit("playback:state-changed", PlayState.PLAYING);
+      this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.PLAYING);
     } catch {
       if (generation !== this.playGeneration) return;
-      context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+      this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.STOPPED);
     }
   }
 
   pause(): void {
     this.playGeneration += 1;
-    this.context.audioElement.pause();
-    this.context.hooks.emit("playback:state-changed", PlayState.PAUSED);
+    this.deps.audioElement.pause();
+    this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.PAUSED);
   }
 
   stop(): void {
-    this.playGeneration += 1;
-    this.context.audioElement.pause();
-    this.context.audioElement.src = "";
-    this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
+    this.halt();
+    this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.STOPPED);
   }
 
-  private onEnded = (): void => {
-    this.context.hooks.emit("playback:state-changed", PlayState.STOPPED);
-    this.context.hooks.emit("playback:track-ended");
-  };
-
-  private onCurrentChanged = (track: Track | undefined): void => {
+  /** Load and start whatever the queue just made current. */
+  readonly onCurrentChanged = (track: Track | undefined): void => {
     this.current = track;
     this.recovered = false;
     // No playable URL (cleared queue, a source with no playback port, or a
@@ -100,8 +81,31 @@ export class AudioPlaybackAdapter extends Plugin implements AudioOutputPort {
       return;
     }
 
-    this.context.audioElement.src = track.playUrl;
+    this.deps.audioElement.src = track.playUrl;
     void this.resume();
+  };
+
+  /**
+   * Symmetric teardown for what the constructor attached. It halts the element
+   * without announcing a stop: the graph is being torn down, so there is no
+   * listener left that the transport state could still be news to.
+   */
+  release(): void {
+    this.halt();
+    this.deps.audioElement.removeEventListener("ended", this.onEnded);
+    this.deps.audioElement.removeEventListener("error", this.onError);
+  }
+
+  /** Silence the element and invalidate any pending play() continuation. */
+  private halt(): void {
+    this.playGeneration += 1;
+    this.deps.audioElement.pause();
+    this.deps.audioElement.src = "";
+  }
+
+  private onEnded = (): void => {
+    this.deps.broadcast(PLAY_STATE_CHANGED, PlayState.STOPPED);
+    this.deps.broadcast(TRACK_ENDED, undefined);
   };
 
   // Provider stream URLs are short-lived, and the whole queue is resolved up front,
@@ -112,36 +116,30 @@ export class AudioPlaybackAdapter extends Plugin implements AudioOutputPort {
   private onError = (): void => {
     // Ignore the empty-source `error` from stop()'s reset — only a real loaded
     // source that failed should recover.
-    if (!this.context.audioElement.currentSrc) return;
+    if (!this.deps.audioElement.currentSrc) return;
     void this.recoverOrSkip();
   };
 
   private async recoverOrSkip(): Promise<void> {
     const track = this.current;
     if (!track?.playbackId || this.recovered) {
-      this.skipToNext();
+      this.deps.queue.next();
       return;
     }
     this.recovered = true;
     const url = await this.resolveFreshUrl(track);
     if (this.current !== track) return; // a newer track superseded the recovery
     if (!url) {
-      this.skipToNext();
+      this.deps.queue.next();
       return;
     }
-    this.context.audioElement.src = url;
+    this.deps.audioElement.src = url;
     void this.resume();
-  }
-
-  private skipToNext(): void {
-    this.context.registry.resolve(PLAY_QUEUE)?.next();
   }
 
   /** Ask the track's own provider for a fresh stream URL (its old one expired). */
   private async resolveFreshUrl(track: Track): Promise<string | undefined> {
-    const resolver = this.context.registry
-      .resolve(PROVIDER_REGISTRY)
-      ?.get(track.providerId)?.playback;
+    const resolver = this.deps.providers.get(track.providerId)?.playback;
     if (!resolver || !track.playbackId) return undefined;
     try {
       const urls = await resolver.resolve([track.playbackId]);
@@ -151,3 +149,20 @@ export class AudioPlaybackAdapter extends Plugin implements AudioOutputPort {
     }
   }
 }
+
+export const playbackPlugin = definePlugin({
+  name: "planet.playback",
+  requires: { audio: AUDIO_RUNTIME, providers: PROVIDER_REGISTRY, queue: PLAY_QUEUE },
+  provides: { transport: TRANSPORT },
+  setup(ctx) {
+    const adapter = new AudioPlaybackAdapter({
+      audioElement: ctx.audio.audioElement,
+      providers: ctx.providers,
+      queue: ctx.queue,
+      broadcast: broadcaster(ctx),
+    });
+    ctx.on(CURRENT_TRACK_CHANGED, adapter.onCurrentChanged);
+    ctx.cleanup(() => adapter.release());
+    return { transport: adapter };
+  },
+});

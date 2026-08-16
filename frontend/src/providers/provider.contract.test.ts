@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { Planet, type AudioRuntimePort } from "@core";
-import { MUSIC_SOURCE } from "@core/plugin";
 import type { CatalogPorts, EngagementPorts, ProviderId } from "@domain";
 import { LocalMusic, NeteaseCloudMusic, QQMusic, Spotify } from ".";
 import type { Provider } from ".";
@@ -30,15 +28,6 @@ const ENGAGEMENT_METHODS: Record<EngagementSlot, readonly string[]> = {
   musicVideoComments: ["musicVideoComments"],
 };
 const ALL_ENGAGEMENT_SLOTS = Object.keys(ENGAGEMENT_METHODS) as EngagementSlot[];
-
-function audioRuntime(): AudioRuntimePort {
-  return {
-    audioElement: {} as HTMLAudioElement,
-    audioContext: {} as AudioContext,
-    createAnalysisElement: () => ({}) as HTMLAudioElement,
-    dispose() {},
-  };
-}
 
 type ProviderCase = {
   label: string;
@@ -100,54 +89,49 @@ const cases: ProviderCase[] = [
 ];
 
 describe.each(cases)("$label source adapter contract", (providerCase) => {
-  it("registers stable identity and only real context ports", async () => {
+  it("publishes stable identity and only real context ports", async () => {
     const adapter = providerCase.create();
-    const planet = new Planet({ audio: audioRuntime(), plugins: [adapter] });
-    try {
-      const [source] = planet.resolveAll(MUSIC_SOURCE);
-      expect(source.providerId).toBe(providerCase.providerId);
-      expect(source.name).toBe(adapter.name);
-      expect(source.playback).toMatchObject({
-        providerId: providerCase.providerId,
-        diagnosticName: adapter.name,
-        policy: providerCase.playback,
+    const source = adapter.source;
+    expect(source.providerId).toBe(providerCase.providerId);
+    expect(source.name).toBe(adapter.name);
+    expect(source.playback).toMatchObject({
+      providerId: providerCase.providerId,
+      diagnosticName: adapter.name,
+      policy: providerCase.playback,
+    });
+    await expect(source.playback.resolve([])).resolves.toEqual([]);
+
+    for (const slot of ALL_CATALOG_SLOTS) {
+      const port = source.catalog[slot];
+      expect({ registered: port !== null, slot }).toEqual({
+        registered: providerCase.catalog.includes(slot),
+        slot,
       });
-      await expect(source.playback.resolve([])).resolves.toEqual([]);
-
-      for (const slot of ALL_CATALOG_SLOTS) {
-        const port = source.catalog[slot];
-        expect({ registered: port !== null, slot }).toEqual({
-          registered: providerCase.catalog.includes(slot),
+      if (!port) continue;
+      for (const method of PORT_METHODS[slot]) {
+        expect({
+          method,
           slot,
-        });
-        if (!port) continue;
-        for (const method of PORT_METHODS[slot]) {
-          expect({
-            method,
-            slot,
-            type: typeof (port as unknown as Record<string, unknown>)[method],
-          }).toEqual({ method, slot, type: "function" });
-        }
+          type: typeof (port as unknown as Record<string, unknown>)[method],
+        }).toEqual({ method, slot, type: "function" });
       }
-
-      expect(source.lyrics !== null).toBe(providerCase.lyrics);
-      expect(source.identity !== null).toBe(providerCase.identity);
-      expect(source.userLibrary !== null).toBe(providerCase.userLibrary);
-      for (const slot of ALL_ENGAGEMENT_SLOTS) {
-        const port = source.engagement[slot];
-        expect({ registered: port !== null, slot }).toEqual({
-          registered: providerCase.engagement.includes(slot),
-          slot,
-        });
-        if (!port) continue;
-        for (const method of ENGAGEMENT_METHODS[slot]) {
-          expect(typeof (port as unknown as Record<string, unknown>)[method]).toBe("function");
-        }
-      }
-      expect("capabilities" in source).toBe(false);
-      expect("supports" in source).toBe(false);
-    } finally {
-      planet.dispose();
     }
+
+    expect(source.lyrics !== null).toBe(providerCase.lyrics);
+    expect(source.identity !== null).toBe(providerCase.identity);
+    expect(source.userLibrary !== null).toBe(providerCase.userLibrary);
+    for (const slot of ALL_ENGAGEMENT_SLOTS) {
+      const port = source.engagement[slot];
+      expect({ registered: port !== null, slot }).toEqual({
+        registered: providerCase.engagement.includes(slot),
+        slot,
+      });
+      if (!port) continue;
+      for (const method of ENGAGEMENT_METHODS[slot]) {
+        expect(typeof (port as unknown as Record<string, unknown>)[method]).toBe("function");
+      }
+    }
+    expect("capabilities" in source).toBe(false);
+    expect("supports" in source).toBe(false);
   });
 });

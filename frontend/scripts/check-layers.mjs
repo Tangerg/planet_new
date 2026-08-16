@@ -167,6 +167,12 @@ for (const [file, deps] of Object.entries(graph)) {
   if (/\bprovider:changed\b/.test(source)) {
     architectureViolations.push(`${file}: uses the removed provider-change event`);
   }
+  // The plugin model is dougong's. These are the names of the hand-rolled
+  // kernel it replaced; seeing one again means a second plugin system is
+  // growing back beside the library's Host / Service / Event / Lifetime.
+  if (/\b(?:defineCapability|CapabilityRegistry|PlanetEventMap|PlanetOption)\b/.test(source)) {
+    architectureViolations.push(`${file}: retired hand-rolled kernel vocabulary`);
+  }
   if (/from\s+["']@contexts\/[^/"']+\//.test(source)) {
     architectureViolations.push(`${file}: bypasses a bounded-context public index`);
   }
