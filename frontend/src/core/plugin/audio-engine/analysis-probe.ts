@@ -69,9 +69,8 @@ export class AudioAnalysisProbe {
     this.pause();
     let analysisUrl: string;
     try {
-      analysisUrl = await abandonOnAbort(
+      analysisUrl = await abandonOnAbort(signal, () =>
         resolveAnalysisSourceUrl(this.resolveAnalysisSource, playUrl),
-        signal,
       );
     } catch {
       return; // superseded or torn down while the analysis URL was resolving

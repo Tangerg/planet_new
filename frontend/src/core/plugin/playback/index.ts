@@ -139,7 +139,7 @@ export class AudioPlaybackAdapter implements AudioOutputPort {
     this.recovered = true;
     void this.recovery?.dispose();
     this.recovery = this.deps.spawn(async (signal) => {
-      const url = await abandonOnAbort(this.resolveFreshUrl(track), signal);
+      const url = await abandonOnAbort(signal, () => this.resolveFreshUrl(track));
       if (!url) {
         this.deps.queue.next();
         return;

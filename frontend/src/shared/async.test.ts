@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { abandonOnAbort, mapConcurrent, pageOffsets } from "./async";
 
@@ -109,7 +109,9 @@ describe("pageOffsets", () => {
 describe("abandonOnAbort", () => {
   it("resolves with the work when it settles first", async () => {
     const controller = new AbortController();
-    await expect(abandonOnAbort(Promise.resolve("done"), controller.signal)).resolves.toBe("done");
+    await expect(abandonOnAbort(controller.signal, () => Promise.resolve("done"))).resolves.toBe(
+      "done",
+    );
   });
 
   it("stops waiting once the signal aborts, without cancelling the work", async () => {
@@ -122,7 +124,7 @@ describe("abandonOnAbort", () => {
       }, 5),
     );
 
-    const waited = abandonOnAbort(work, controller.signal);
+    const waited = abandonOnAbort(controller.signal, () => work);
     controller.abort();
 
     // The signal's own reason, which is what marks this as a cancellation
@@ -132,9 +134,22 @@ describe("abandonOnAbort", () => {
     await expect(work).resolves.toBe("late");
   });
 
-  it("rejects immediately when the signal is already aborted", async () => {
+  it("never starts the work when the signal is already aborted", async () => {
+    const start = vi.fn<() => Promise<string>>().mockResolvedValue("done");
+
+    await expect(abandonOnAbort(AbortSignal.abort(), start)).rejects.toHaveProperty(
+      "name",
+      "AbortError",
+    );
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a synchronous throw from the work as a rejection", async () => {
+    const controller = new AbortController();
     await expect(
-      abandonOnAbort(Promise.resolve("done"), AbortSignal.abort()),
-    ).rejects.toHaveProperty("name", "AbortError");
+      abandonOnAbort(controller.signal, () => {
+        throw new Error("could not start");
+      }),
+    ).rejects.toThrow("could not start");
   });
 });

@@ -51,7 +51,7 @@ export const lyricsPlugin = definePlugin({
       }
 
       inFlight = ctx.spawn(async (signal) => {
-        const lyrics = await abandonOnAbort(fetchLyrics(ctx.providers, track), signal);
+        const lyrics = await abandonOnAbort(signal, () => fetchLyrics(ctx.providers, track));
         broadcast(LYRICS_CHANGED, lyrics);
       });
     });

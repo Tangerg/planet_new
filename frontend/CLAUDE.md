@@ -77,7 +77,8 @@
 - **播放态唯一源是内核**:命令走 `Engine`(`engine.playback.*`,直达 Service 的方法调用),状态读 `usePlayQueueStore`;不在 UI 另存一份。
 - **能力只经 dougong 的原子**:一对一能力用 `service()`,开放集合用 `extensionPoint()`,状态事实用 `event()`(token 集中在 `@core/kernel/events`,避免插件互相 import 成环);依赖写进 `requires`,资源写进 `ctx.cleanup`。**不再手写 Plugin 基类 / Capability 注册表 / EventEmitter**(`check-layers` 会拦退役词汇)。
 - **事实广播是异步的**:`ctx.emit` 走微任务派发,`broadcaster()` 包成 fire-and-forget 并在 Lifetime 已 abort 时静默丢弃。测试里断言事实落地要先 flush 一次微任务队列;**断言初始值则不需要**,那条路径是同步读 getter。
-- **贴合库的原生做法,不自己搭脚手架**:能力探测用 `host.get(optional(T))`(不是自造 tryGet),图外读贡献集用 `host.contributions()`(不是塞一个空插件进图),日志用内核默认的 `console`(它会附带 InstanceMeta,自己拍平成字符串会把它丢掉)。
+- **贴合库的原生做法,不自己搭脚手架**:能力探测用 `host.get(optional(T))`(不是自造 tryGet),图外读贡献集用 `host.contributions()`(不是塞一个空插件进图),日志用内核默认的 `console`(它会附带 InstanceMeta,自己拍平成字符串会把它丢掉)。库文档里给了范式的,照抄范式,别另发明一个签名。
+- **abort 是通知,不是抢占**:释放 Task / Lifetime / `host.stop()` 都会**等任务体 settle**。所以 `spawn` 里 await 一个不认 signal 的调用(HTTP、原生桥)会把关停卡死 —— 这类等待必须显式放弃(拿到 signal 后再决定要不要发起),且只用于「晚到无害、失败无害」的工作;握着独占资源或需要清理的,得换成真能取消的适配器。
 - **导航走 `view` 状态机**:屏幕切换调 `Shell` 的 `setView` / `openDetail`,深层卡片飞 morph 走 `useMorph()`(`MorphProvider` 提供,已取代早期的 `window.__MORPH` 全局);`view` 是收敛联合 `ShellScreenView`,不是裸 string。**不引路由库**(见 §5)。
 - **设计系统主体仍是那套移植的 class 体系,不重做、不机械全量 Tailwind 化**:可用 Tailwind 工具类增量补充,但 token 来自 `@theme`(镜像 `ui/styles/base.css`)、动态值留内联、视觉零回归;新样式跟随既有拆分方式**与组件同目录同名**落 `.css`,玻璃/morph keyframes 等复杂视觉留 CSS(见 §5)。
 - **vibe 屏幕保持纯展示**:数据 / 真实接线在 `Shell` / `ui/hooks/` / `ui/model/adapters/` 完成,屏幕只吃 props(布局与结构保持与示例一致,便于比对保真)。**同组必然同行的 props 用具名契约**(见 `TrackListBindings`),别逐屏抄一遍;**全局主题值(accent)不进 props**,就地 `useAccent()` —— 曾经 51 处 prop 声明只为传一个谁也没得选的值。

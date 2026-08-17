@@ -287,26 +287,26 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-1.1.0.tgz#44b5ce3485e95235aca06e628eeaaa3c816bc4cc"
   integrity sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==
 
-"@dougongjs/core@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@dougongjs/core/-/core-0.2.0.tgz#0ef3746796dfcc87d320241d3dcb56f1e461eec3"
-  integrity sha512-ulV8jnJv86r2gEXyLjMirCwb4tMqQT8ly3WMkOAlebAaHSfjj9jDhkdRhHe6noBUyxx6KZSe0Du7XP3f0NaYHQ==
+"@dougongjs/core@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@dougongjs/core/-/core-0.3.0.tgz#dff9d546a2c98685be7da965013702d59eb1c060"
+  integrity sha512-iyLAEPkrr5S2qUrZT/KRGXd3xUep0k0QhA3D1593OhxiV7SLjfkx+VKM9A/n4OrMHi22r9OLIFtSqzrZJx2HyA==
   dependencies:
     "@standard-schema/spec" "^1.0.0"
 
-"@dougongjs/platform@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@dougongjs/platform/-/platform-0.2.0.tgz#0f3995d3f7f83553e4f2441b49d2f841072c1ee4"
-  integrity sha512-daxJtFLELrLm7zsXz6s3v2wQoMDxrd/Pw0fejJkvLZt9iG014nZNU/tvdierwXh6Fr7uqOvYYNTwv/CpA5U8jA==
+"@dougongjs/platform@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@dougongjs/platform/-/platform-0.3.0.tgz#cac4526b6abb02894bb8cc8d3b216b3f70ddd50e"
+  integrity sha512-lCzOi5M6OikIfvOEwQYyD4nyRgGTge+6Oza7A3t0pd/L7CQd7h1tEHAr09dhE15ukn7Pk+nE03kdpMRhS88D7A==
   dependencies:
-    "@dougongjs/core" "0.2.0"
+    "@dougongjs/core" "0.3.0"
     compare-versions "^6.1.1"
     zod "^4.4.3"
 
-"@dougongjs/reactive@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@dougongjs/reactive/-/reactive-0.2.0.tgz#3abd871d2f47ca0f973a839adf44027201f6f5e6"
-  integrity sha512-6v4V6MHcsbCE6OA26zMlOO6ukWtBJM6SeeDcGQnVagBDYEzFQV9Fsz+KGmvWgmqXDNk19gA28xf9pUnlASZ+Sg==
+"@dougongjs/reactive@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@dougongjs/reactive/-/reactive-0.3.0.tgz#ee4cfcefb078f3553983f6c3f67bb7a9f8069c84"
+  integrity sha512-I2IKHTtKHwuFBjQ10Uc93d9Aqjids7WCyk1AzhcPqLLNWObpQp0Va2zGYzdeEikfQrxtox5aYS/BtWLVC1Z33w==
 
 "@emnapi/core@1.10.0":
   version "1.10.0"
@@ -1680,14 +1680,14 @@ dom-accessibility-api@^0.6.3:
   resolved "https://registry.npmjs.org/dom-accessibility-api/-/dom-accessibility-api-0.6.3.tgz"
   integrity sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==
 
-dougong@0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/dougong/-/dougong-0.2.0.tgz#f02fdd94d220f1bcb5106b9e335057392f3bc0a5"
-  integrity sha512-dx09o78RXpLlN6JPrc8Cxp4wfx5DdPtKp0jru6ujXF6dopY9IPKBQaN/k+U8BpoDKoj3Z/8+n4XlXYxHUv0s0g==
+dougong@0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/dougong/-/dougong-0.3.0.tgz#400c39e0cfd18536e4a4b926ef9014eb09b5c723"
+  integrity sha512-ogIbYVJio9qsqdD2PjQ6/lm+J1Osme7zxt8aY30/2oxeegoi9x/1ETcpTT7c3Iu75eTxmnu80DSiwscqcdIFpA==
   dependencies:
-    "@dougongjs/core" "0.2.0"
-    "@dougongjs/platform" "0.2.0"
-    "@dougongjs/reactive" "0.2.0"
+    "@dougongjs/core" "0.3.0"
+    "@dougongjs/platform" "0.3.0"
+    "@dougongjs/reactive" "0.3.0"
 
 electron-to-chromium@^1.5.328:
   version "1.5.349"

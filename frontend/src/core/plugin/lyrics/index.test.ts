@@ -126,22 +126,41 @@ describe("lyrics plugin follows the current track", () => {
     expect(lyric).not.toHaveBeenCalled();
   });
 
-  it("drops a stale fetch when the track changes again mid-flight (generation guard)", async () => {
+  it("never issues a fetch for a track superseded before its task starts", async () => {
+    const lyric = vi.fn<LyricProvider["lyric"]>(async () => LINES);
+    const { emitted, announce } = await mount(lyric);
+
+    // A spawned task body starts one microtask after `spawn`, so a supersede in
+    // the same turn aborts the first task's signal before it runs. The request
+    // is then never issued at all, rather than issued and thrown away.
+    void announce(track("1"));
+    void announce(track("2"));
+    await flush();
+
+    expect(lyric.mock.calls).toEqual([["2"]]);
+    expect(emitted).toEqual([LINES]);
+  });
+
+  it("drops a stale fetch that resolves after a newer track has won", async () => {
     const gate: Array<(lines: Lyric[]) => void> = [];
     const lyric = vi.fn<LyricProvider["lyric"]>(
       () => new Promise<Lyric[]>((res) => gate.push(res)),
     );
     const { emitted, announce } = await mount(lyric);
 
-    void announce(track("1")); // slow fetch #0
-    void announce(track("2")); // supersedes → fetch #1
+    await announce(track("1")); // fetch #0 is genuinely in the air…
     await flush();
+    expect(gate).toHaveLength(1);
+
+    void announce(track("2")); // …when track 2 supersedes it → fetch #1
+    await flush();
+    expect(gate).toHaveLength(2);
 
     gate[1](LINES); // track 2 resolves → its lyrics win
     await flush();
     expect(emitted.at(-1)).toEqual(LINES);
 
-    // Track 1 (stale) resolves late; its result must be dropped, not emitted.
+    // Track 1 (stale) resolves late; abandoning the wait already dropped it.
     gate[0]([{ content: "stale", duration: 0 }]);
     await flush();
     expect(emitted).toHaveLength(1);

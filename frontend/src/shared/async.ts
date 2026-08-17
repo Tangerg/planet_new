@@ -39,21 +39,34 @@ export function pageOffsets(total: number, size: number): number[] {
 }
 
 /**
- * Resolve `work`, or stop waiting for it once `signal` aborts.
+ * Run `start`, or stop waiting for its result once `signal` aborts.
  *
  * Not a cancellation: the underlying call — an HTTP request, a native bridge
  * invocation — keeps running and its result is simply dropped. That distinction
  * matters when the waiter is owned by something that disposes structurally,
  * because disposal blocks until the awaited work settles. Abandoning the wait
  * is what lets an owner shut down promptly while an uncancellable call drains.
+ *
+ * Only for work that is safe to complete late and safe to fail unobserved. Work
+ * holding an exclusive resource, needing cleanup, or able to mutate disposed
+ * state needs a genuinely cancellable adapter instead.
+ *
+ * `start` is a thunk rather than a promise so an already-aborted owner never
+ * launches the call at all, and a synchronous throw surfaces as a rejection.
  */
-export function abandonOnAbort<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) return Promise.reject(signal.reason as Error);
+export function abandonOnAbort<T>(signal: AbortSignal, start: () => PromiseLike<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const onAbort = (): void => reject(signal.reason as Error);
+    if (signal.aborted) {
+      onAbort();
+      return;
+    }
     signal.addEventListener("abort", onAbort, { once: true });
-    void work.then(resolve, reject).finally(() => {
-      signal.removeEventListener("abort", onAbort);
-    });
+    void Promise.resolve()
+      .then(start)
+      .then(resolve, reject)
+      .finally(() => {
+        signal.removeEventListener("abort", onAbort);
+      });
   });
 }
