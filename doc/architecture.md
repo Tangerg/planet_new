@@ -26,8 +26,8 @@ Planet 是一个 Wails 桌面音乐播放器。Go 端主要提供桌面壳、窗
 │  │ Engine · context use cases · explicit QueryResult       │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │ Planet kernel                                          │  │
-│  │ PluginContext · CapabilityRegistry · EventEmitter      │  │
+│  │ Plugin kernel (dougong Host)                           │  │
+│  │ Service · ExtensionPoint · Event · Lifetime            │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │ Runtime plugins + outer adapters                       │  │
@@ -91,7 +91,7 @@ UI and infrastructure adapters are siblings: both depend inward on context contr
 | -------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
 | Shared         | `src/shared`         | Small pure utilities with no framework dependency.                                             |
 | Domain         | `src/domain`         | Music entities, value objects, provider/auth/library ports.                                    |
-| Core           | `src/core`           | Planet kernel, typed event bus, plugin system and internal application services.               |
+| Core           | `src/core`           | Kernel contracts (audio runtime + fact tokens), runtime plugins, application services.         |
 | Contexts       | `src/contexts`       | Stable public APIs for bounded contexts/modules and cross-context contracts.                   |
 | Providers      | `src/providers`      | Concrete data-source adapters and anti-corruption mappers for NCM, QQMusic, Spotify and Local. |
 | Infrastructure | `src/infrastructure` | Browser/runtime adapters such as `WebAudioRuntime` and `SystemRandom`.                         |
@@ -153,22 +153,20 @@ SQLite startup applies ordered, transactional migrations tracked by `PRAGMA user
 
 ## 5. Core Kernel
 
-The kernel is centered on three pieces:
+The plugin system is the external **dougong** package, not a local one. Plugins are written with the library's own primitives — `definePlugin`, `service()`, `extensionPoint()`, `event()` — and installed on a `createHost()` Host. What `core/kernel` adds is only the two contracts this application composes on top:
 
-| Piece               | Path                        | Purpose                                                                      |
-| ------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| Event bus           | `core/event`                | Strongly typed publish/subscribe for state facts and internal choreography.  |
-| Capability registry | `core/kernel/capability.ts` | Plugins publish typed capabilities; services resolve them by capability key. |
-| Plugin lifecycle    | `core/kernel/plugin.ts`     | `init` / `dispose` with shared `PluginContext`.                              |
+| Piece         | Path                 | Purpose                                                                                            |
+| ------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| Audio runtime | `core/kernel/audio.ts` | The `AUDIO_RUNTIME` Service and the plugin that publishes the injected browser audio and owns its release. |
+| Fact tokens   | `core/kernel/events.ts` | The Events plugins exchange, declared in one module so reacting to a fact never means importing its author. |
 
-`Planet` installs plugins in dependency order, rolls back on init failure, and disposes in reverse order. Plugins communicate by:
+Which primitive a capability uses is a decision, not a habit: one-to-one capabilities are a `service()`, open sets are an `extensionPoint()` (every music source contributes itself to `MUSIC_SOURCES`), and state facts are an `event()`. Commands like `playback.play()` are direct Service method calls; facts like the current track changing are broadcast.
 
-- Direct capability calls for commands with a single receiver.
-- Events for state changes and cross-plugin facts.
+Install order is not startup order. `composePlanet` reads as an inventory because the Host derives the activation order from the Service and ExtensionPoint edges each plugin declares, rolls back the whole transaction if a setup fails, and releases Lifetimes in reverse.
 
-This split is deliberate: commands like `playback.play()` return through services/capabilities; facts like `queue:current-changed` or `volume:changed` are broadcast.
+Two consequences worth knowing before touching a plugin. Broadcasting is asynchronous — `ctx.emit` dispatches on a microtask, so `broadcaster()` wraps it fire-and-forget and drops silently once its Lifetime has aborted; a test asserting a fact landed must flush the microtask queue first, while asserting an initial value need not, because that path reads a Service getter synchronously. And abort is a notification rather than pre-emption: releasing a Task or stopping the Host waits for the body to settle, so awaiting an uncancellable call inside `spawn` would hang shutdown — such waits go through `abandonOnAbort`, and only for work that is harmless to finish late and harmless to fail unobserved.
 
-`Planet` does not construct browser resources. `WebAudioRuntime` owns the audible element, analysis elements and `AudioContext`; it is injected through `AudioRuntimePort` and disposed exactly once on normal teardown or startup rollback. `PlayQueue` receives a `RandomSource`, so shuffle tests do not depend on ambient randomness. Pending `audio.play()` continuations are generation-guarded and cannot publish through a disposed plugin.
+The kernel constructs no browser resources. `WebAudioRuntime` owns the audible element, analysis elements and `AudioContext`; it is injected through `AudioRuntimePort` and released exactly once by its plugin's Lifetime cleanup, whether the graph stops normally or a sibling's setup rolls the transaction back. `PlayQueue` receives a `RandomSource`, so shuffle tests do not depend on ambient randomness. Pending `audio.play()` continuations are generation-guarded and cannot publish after a pause, stop or release.
 
 ---
 
@@ -191,7 +189,7 @@ This keeps React from resolving plugins directly or importing concrete providers
 ```text
 React UI
   -> Engine context use case
-  -> minimal context port / kernel capability
+  -> minimal context port / kernel Service
   -> active provider adapter or runtime plugin
   -> domain snapshot / QueryResult / state event
   -> UI projection + React Query/Zustand

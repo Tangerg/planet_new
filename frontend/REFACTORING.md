@@ -35,7 +35,7 @@
 
 数据可能未就绪时,**由提供它的 hook / 组件自己**给安全默认,消费者直接用:
 
-- provider 不支持的能力返回**空数组 / 占位**(不抛错),调用方无脑 `.map`(已是 IProvider 约定)。
+- 数据源不支持的能力以**空端口槽**表达,应用层投影成 `unsupported` 而非抛错;调用方拿到的永远是可直接 `.map` 的空集合。
 - 屏幕的 Hero **立即渲染骨架**(尺寸/位置定死),数据(<1s)到了再填 —— 这是 morph 能量到目标矩形的前提,**不要把整屏 gate 在 `isLoading` 后面**。
 - 封面统一"有真图用 `<img>`,无则 seed 渐变"兜底,消费端不判空。
 - 只在**真正会缺失**的边界加这层;内部已确定非空处再判空是噪音。
@@ -44,7 +44,7 @@
 
 - 只被一个屏幕用的 helper:就近放它旁边(模块私有,不进 barrel)。
 - 与某领域对象强相关的纯函数(QQ 字段映射)放进对应 `mappers/`,不散落到通用 util。
-- **共享面越小越好**:`vibe/core.tsx`、`adapt.ts`、`hooks.ts` 只导出真正跨屏复用的符号。
+- **共享面越小越好**:`components/primitives.tsx`、`model/adapters/`、`hooks/` 只导出真正跨屏复用的符号。
 
 ## 6. 卫语句 / 降低分支复杂度
 
@@ -71,11 +71,11 @@
 
 ## 10. 节奏与纪律 —— 详见 CLAUDE.md §3 + §6
 
-- **破坏性改动先算"爆炸半径"**:改 `MusicProvider` 形状 / store schema / vibe 屏幕 props 前,先 grep 所有消费方(跨 provider、跨屏、跨 hook),列影响面再动。
+- **破坏性改动先算"爆炸半径"**:改 `MusicSource` / 端口形状、store schema、vibe 屏幕 props 前,先 grep 所有消费方(跨 provider、跨屏、跨 hook),列影响面再动。
 - **承认审计误报**:深入看后发现某"坏味道"其实是有意设计(切换引擎的结构性嵌套、内核/UI 的单向边界、内聚的大文件、无后端能力的屏幕走诚实空态),就 skip 并写明理由 —— 正常 false positive,别为"清干净"去动 morph 引擎这类正确性敏感处。
 
 ---
 
 ## 一句话
 
-设计前问"**该不该**"(CLAUDE.md);重构时对照本篇镜头定"**改什么、怎么改**";每批一个可独立 revert 的 commit、`yarn typecheck && yarn build && yarn test` 全绿再推。**镜头是工程通则,例子活在代码里。**
+设计前问"**该不该**"(CLAUDE.md);重构时对照本篇镜头定"**改什么、怎么改**";每批一个可独立 revert 的 commit、`yarn run check`(前端)或 `make check`(全仓)全绿再推。**镜头是工程通则,例子活在代码里。**
