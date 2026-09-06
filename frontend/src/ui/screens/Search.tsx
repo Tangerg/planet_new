@@ -45,9 +45,8 @@ export function SearchScreen({
   const { albums, artists, chips, normalizedTerm, playlists, status, topArtist, topTracks } = model;
   // Stable so the memoized rail cards don't re-render on every keystroke.
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
-  const emptyMsg = (text: string) => (
-    <Empty className="p-[90px] text-center text-[22px]">{text}</Empty>
-  );
+  // What stands in for results, per status. "ready" never reaches here — it is
+  // the one status that renders the results themselves.
   const statusText =
     status === "idle"
       ? t("search.idle")
@@ -99,7 +98,7 @@ export function SearchScreen({
         </div>
 
         {status !== "ready" ? (
-          emptyMsg(statusText || model.emptyMessage)
+          <Empty className="p-[90px] text-center text-[22px]">{statusText}</Empty>
         ) : (
           <div
             className="mt-10 grid gap-12"

@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { isVibeTrackLiked } from "@/model/likes";
 import { trackRowModel, type TrackRowBadge, type TrackRowLeading } from "@/model/track-row";
+import { localize } from "@/i18n/text";
 import { Equalizer, Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
@@ -83,6 +84,7 @@ function TrackLeading({
 
 function TrackBadges({ badges, muted }: { badges: readonly TrackRowBadge[]; muted: string }) {
   const accent = useAccent();
+  const { t } = useTranslation();
   return badges.map((badge) =>
     badge.kind === "subscription" ? (
       <span
@@ -90,7 +92,7 @@ function TrackBadges({ badges, muted }: { badges: readonly TrackRowBadge[]; mute
         className={`${BADGE_CLASS} font-bold`}
         style={{ color: "#06060a", background: accent }}
       >
-        {badge.label}
+        {localize(t, badge.label)}
       </span>
     ) : (
       <span
@@ -103,7 +105,7 @@ function TrackBadges({ badges, muted }: { badges: readonly TrackRowBadge[]; mute
           }`,
         }}
       >
-        {badge.label}
+        {localize(t, badge.label)}
       </span>
     ),
   );

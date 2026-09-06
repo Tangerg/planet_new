@@ -10,11 +10,9 @@ export type QueueHeroModel = {
 };
 
 export type QueueScreenModel = {
-  count: number;
   current?: VibeTrack;
   hero: QueueHeroModel;
   isEmpty: boolean;
-  label: string;
   queue: readonly VibeTrack[];
 };
 
@@ -38,11 +36,9 @@ export function queueScreenModel(
   queue: readonly VibeTrack[],
 ): QueueScreenModel {
   return {
-    count: queue.length,
     current,
     hero: queueHeroModel(current),
     isEmpty: queue.length === 0,
-    label: `Up Next · ${queue.length}`,
     queue,
   };
 }

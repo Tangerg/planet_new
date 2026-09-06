@@ -133,6 +133,7 @@ export const zh = {
     noLyrics: "这首歌暂无歌词。",
     notPlaying: "未在播放",
     producedBy: "制作：{{name}}",
+    unavailable: "不可播放",
     writtenBy: "作曲：{{name}}",
   },
   nav: {

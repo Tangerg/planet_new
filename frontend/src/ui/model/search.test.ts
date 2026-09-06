@@ -55,20 +55,12 @@ describe("search screen model", () => {
     expect(hasSearchResults(results({ artists: [artist("a1")] }))).toBe(true);
   });
 
-  it("projects top artist and empty messages for the screen", () => {
+  it("projects status and top artist for the screen", () => {
     const loading = searchScreenModel("周杰伦", EMPTY_SEARCH_RESULTS, true);
     const ready = searchScreenModel("周杰伦", results({ artists: [artist("a1")] }));
 
-    expect(loading).toMatchObject({
-      status: "loading",
-      emptyMessage: "Searching “周杰伦”…",
-      topArtist: null,
-    });
-    expect(ready).toMatchObject({
-      status: "ready",
-      emptyMessage: "",
-      topArtist: { id: "a1", name: "a1" },
-    });
+    expect(loading).toMatchObject({ status: "loading", topArtist: null });
+    expect(ready).toMatchObject({ status: "ready", topArtist: { id: "a1", name: "a1" } });
   });
 
   it("limits the song preview without mutating raw search results", () => {

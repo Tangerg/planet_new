@@ -64,14 +64,14 @@ export function QueueScreen({
       <div className="scroll relative z-[2] px-6 pb-[30px] pt-16" ref={scrollRef}>
         <div className="flex items-center justify-between px-[14px] pb-[14px]">
           <div className="mlabel text-white/50">
-            {t("common.upNext")} · {model.count}
+            {t("common.upNext")} · {model.queue.length}
           </div>
           {!model.isEmpty && <QueueClearButton onClear={onClearQueue} />}
         </div>
         {!model.isEmpty ? (
           <ScrollProvider value={scrollRef}>
             <VList
-              count={model.count}
+              count={model.queue.length}
               estimateSize={TRACK_ROW_HEIGHT}
               itemKey={(vi) => queueItemKey(model.queue[vi], vi)}
               renderItem={(vi) => (

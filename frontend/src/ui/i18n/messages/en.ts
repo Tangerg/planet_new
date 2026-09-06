@@ -123,6 +123,8 @@ export const en = {
     noLyrics: "No lyrics for this track.",
     notPlaying: "Not playing",
     producedBy: "Produced by {{name}}",
+    /** Row badge: the active source does not license this track for playback. */
+    unavailable: "Unavailable",
     writtenBy: "Written by {{name}}",
   },
   nav: {

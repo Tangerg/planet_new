@@ -51,11 +51,10 @@ describe("queue screen model", () => {
     const model = queueScreenModel(first, [first, second]);
 
     expect(model).toMatchObject({
-      count: 2,
       isEmpty: false,
-      label: "Up Next · 2",
+      queue: [first, second],
     });
     expect(queueItemKey(second, 1)).toBe("b1");
-    expect(queueScreenModel(first, [])).toMatchObject({ isEmpty: true, label: "Up Next · 0" });
+    expect(queueScreenModel(first, [])).toMatchObject({ isEmpty: true, queue: [] });
   });
 });

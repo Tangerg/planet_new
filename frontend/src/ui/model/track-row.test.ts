@@ -71,9 +71,10 @@ describe("track row model", () => {
         index: 1,
       }).badges,
     ).toEqual([
-      { kind: "version", label: "live" },
-      { kind: "subscription", label: "VIP" },
-      { kind: "unavailable", label: "Unavailable" },
+      // Provider content and the tier mark stay verbatim; only our own copy is keyed.
+      { kind: "version", label: { text: "live" } },
+      { kind: "subscription", label: { text: "VIP" } },
+      { kind: "unavailable", label: { key: "player.unavailable" } },
     ]);
 
     expect(

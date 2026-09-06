@@ -1,6 +1,8 @@
 import { Track } from "@contexts/catalog";
 import type { PlaybackAvailabilityPolicy } from "@contexts/playback";
 
+import type { LocalizedText } from "@/i18n/text";
+
 import { sameVibeTrack, type VibeTrack } from "./vibe";
 
 /**
@@ -15,10 +17,14 @@ export type TrackRowLeading =
   | { kind: "equalizer" }
   | { kind: "index"; value: number };
 
-export type TrackRowBadge =
-  | { kind: "version"; label: string }
-  | { kind: "subscription"; label: "VIP" }
-  | { kind: "unavailable"; label: "Unavailable" };
+/** A badge's text is `LocalizedText` because the three kinds differ in origin:
+ *  a version is provider content ("live", "acoustic") that must not be
+ *  translated, "VIP" is a tier mark the sources print the same way in every
+ *  language, and unavailability is our own copy — which has to be. */
+export type TrackRowBadge = {
+  kind: "version" | "subscription" | "unavailable";
+  label: LocalizedText;
+};
 
 export type TrackRowModel = {
   current: boolean;
@@ -77,13 +83,13 @@ function trackRowLeading({
 function trackRowBadges(track: VibeTrack, unavailable: boolean): TrackRowBadge[] {
   const badges: TrackRowBadge[] = [];
   if (track.version && track.version !== "studio") {
-    badges.push({ kind: "version", label: track.version });
+    badges.push({ kind: "version", label: { text: track.version } });
   }
   if (track.requiresSubscription) {
-    badges.push({ kind: "subscription", label: "VIP" });
+    badges.push({ kind: "subscription", label: { text: "VIP" } });
   }
   if (unavailable) {
-    badges.push({ kind: "unavailable", label: "Unavailable" });
+    badges.push({ kind: "unavailable", label: { key: "player.unavailable" } });
   }
   return badges;
 }

@@ -14,10 +14,10 @@ export const SEARCH_SONG_PREVIEW_LIMIT = 6;
 
 export type SearchScreenModel = SearchResults & {
   chips: readonly string[];
-  emptyMessage: string;
+  /** Lower-cased term, for matching a suggestion chip against what was typed.
+   *  The screen already holds the raw query, so the model does not echo it. */
   normalizedTerm: string;
   status: SearchStatus;
-  term: string;
   topArtist: VibeArtist | null;
   topTracks: SearchResults["tracks"];
 };
@@ -60,27 +60,16 @@ export function searchStatus(
   return hasSearchResults(results) ? "ready" : "empty";
 }
 
-function emptyMessage(query: string, status: SearchStatus): string {
-  if (status === "idle") return "Search tracks, playlists, artists & albums…";
-  if (status === "loading") return `Searching “${query}”…`;
-  if (status === "empty") return `Nothing for “${query}”…`;
-  return "";
-}
-
 export function searchScreenModel(
   query: string,
   results: SearchResults = EMPTY_SEARCH_RESULTS,
   loading = false,
 ): SearchScreenModel {
-  const term = normalizeSearchTerm(query);
-  const status = searchStatus(query, results, loading);
   return {
     ...results,
     chips: SEARCH_SUGGESTIONS,
-    emptyMessage: emptyMessage(query, status),
-    normalizedTerm: term.toLowerCase(),
-    status,
-    term,
+    normalizedTerm: normalizeSearchTerm(query).toLowerCase(),
+    status: searchStatus(query, results, loading),
     topArtist: results.artists[0] ?? null,
     topTracks: results.tracks.slice(0, SEARCH_SONG_PREVIEW_LIMIT),
   };
