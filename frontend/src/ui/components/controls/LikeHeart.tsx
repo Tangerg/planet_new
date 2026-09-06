@@ -3,7 +3,6 @@
 // Playing, Comments): accent-tinted with a soft accent glow. The dense list/bar
 // hearts (TrackRow, PlayerBar) stay inline — their colour is hover/context-driven.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/controls/Button";
 import { Icon } from "@/infra/icons";

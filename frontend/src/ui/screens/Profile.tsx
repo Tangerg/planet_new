@@ -1,7 +1,7 @@
 // ============================================================
 // Profile — restrained music identity: square image · thin account type · rows.
 // ============================================================
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";

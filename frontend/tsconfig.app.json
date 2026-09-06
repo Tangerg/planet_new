@@ -19,9 +19,10 @@
 
     /* —— 严格性 —— */
     "strict": true,
-    /* vibe UI 层逐字移植自示例,保留原始未用变量/参数;关闭这两项避免大量噪声 */
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    /* 曾因「移植层保留原始未用变量」关闭;那批噪声早已不存在(重开后仅剩 18 处
+       automatic-JSX 下多余的 `import React`,已删),所以两项都收回来当门禁用 */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     /* 类型-only 导入必须用 `import type`(配合 isolatedModules,打包器擦除更干净) */
     "verbatimModuleSyntax": true,

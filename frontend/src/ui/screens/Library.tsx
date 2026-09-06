@@ -2,7 +2,7 @@
 // Library — your collections, as grid · list · cover-flow, plus a songs tab.
 // Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
 // ============================================================
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   CollectionViewMode,

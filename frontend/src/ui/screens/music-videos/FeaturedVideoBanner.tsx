@@ -3,7 +3,6 @@
 // ForYou playlist banner (BannerFrame), different subject: a video's title,
 // artist, blurb and open action.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 
 import {

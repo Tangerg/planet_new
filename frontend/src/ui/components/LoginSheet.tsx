@@ -3,7 +3,7 @@
 // with the mobile app and polls until authorized; the credential is persisted
 // by the provider, so on success we just mark logged-in and close.
 // ============================================================
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { LoginFlow, LoginStatus } from "@contexts/identity";

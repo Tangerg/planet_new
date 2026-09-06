@@ -3,7 +3,6 @@
 // All-time, the latter two from the account's real play record. Groups are
 // small/bounded so plain rows, not windowed.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { historyScreenModel, type HistorySection } from "@/model/history-screen";

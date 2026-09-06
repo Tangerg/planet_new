@@ -1,7 +1,7 @@
 // ============================================================
 // Queue — "Up Next": now-playing hero on the left, windowed queue on the right.
 // ============================================================
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { queueItemKey, queueScreenModel } from "@/model/queue-screen";

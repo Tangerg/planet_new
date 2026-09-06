@@ -1,7 +1,6 @@
 // ============================================================
 // Charts — grid of ranked-chart banners.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 
 import { localize } from "@/i18n/text";

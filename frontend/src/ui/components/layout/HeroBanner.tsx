@@ -3,7 +3,6 @@
 // copy and actions; the banner chrome itself is BannerFrame, shared with the
 // music-video hub's featured hero.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import {

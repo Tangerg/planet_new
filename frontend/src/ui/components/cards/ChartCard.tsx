@@ -3,7 +3,6 @@
 // tile (the "card flow" lift, via LiftButton — neighbours stay put). Opening flies
 // the morph as a square from the whole tile.
 // ============================================================
-import React from "react";
 import { artBg } from "@/components/primitives";
 import { LiftButton } from "@/components/lift";
 import { useMorphOpen } from "@/hooks/useMorphOpen";

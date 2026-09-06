@@ -3,7 +3,6 @@
 // content · like count), with an honest empty fallback. Used by both the
 // Comments screen and Now Playing's comments mode.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeComment } from "@/model/vibe";
 import { Art } from "@/components/primitives";

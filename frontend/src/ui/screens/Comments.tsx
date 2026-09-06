@@ -2,7 +2,6 @@
 // Comments — track comments (left cover + right list). Providers that expose a
 // comment endpoint (NCM) fill the list; others fall back to an honest empty state.
 // ============================================================
-import React from "react";
 import type { VibeComment, VibeTrack } from "@/model/vibe";
 import { commentsTrackModel } from "@/model/comments-screen";
 import { Art } from "@/components/primitives";

@@ -2,7 +2,7 @@
 // Artist — atmospheric circular header + Top tracks · Albums · Similar, each as
 // list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
 // ============================================================
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   ArtistTarget,

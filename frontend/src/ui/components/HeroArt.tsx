@@ -4,7 +4,6 @@
 // morph engine measures it as the landing target. Only the size varies per
 // screen. (Round portraits like the Artist header stay bespoke.)
 // ============================================================
-import React from "react";
 import type { Image } from "@contexts/catalog";
 import { Art, artPair } from "@/components/primitives";
 

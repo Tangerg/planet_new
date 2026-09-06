@@ -1,7 +1,6 @@
 // ============================================================
 // Search — taxonomy results: top artist · songs · playlist/artist/album rails.
 // ============================================================
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { SearchResults, TrackListBindings, VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
