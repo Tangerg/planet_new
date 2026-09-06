@@ -70,6 +70,17 @@ function scaled(factor: number, children: React.ReactNode) {
 const VOL_SPEAKER = "M4 9.5v5h3.5l5 4V5.5L7.5 9.5z";
 const VOL_WAVE = "M15.5 9.5a4 4 0 0 1 0 5";
 
+// The repeat cycle, for the same reason: `loopOne` IS `loop` plus a centred "1",
+// so restyling the arrows must not be a two-place edit.
+const LOOP_ARROWS = (
+  <>
+    <path d="m17 2 4 4-4 4" />
+    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+    <path d="m7 22-4-4 4-4" />
+    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+  </>
+);
+
 export const Icon = {
   // transport — plain filled shapes (no surrounding circle)
   play: (p) => (
@@ -108,29 +119,14 @@ export const Icon = {
       )}
     </Svg>
   ),
-  loop: (p) => (
-    <Svg {...p}>
-      {scaled(
-        0.88,
-        <>
-          <path d="m17 2 4 4-4 4" />
-          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-          <path d="m7 22-4-4 4-4" />
-          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
-        </>,
-      )}
-    </Svg>
-  ),
-  // repeat-one — the repeat cycle with a small "1" centred (single-track loop).
+  loop: (p) => <Svg {...p}>{scaled(0.88, LOOP_ARROWS)}</Svg>,
+  // repeat-one — the same cycle with a small "1" centred (single-track loop).
   loopOne: (p) => (
     <Svg {...p}>
       {scaled(
         0.88,
         <>
-          <path d="m17 2 4 4-4 4" />
-          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-          <path d="m7 22-4-4 4-4" />
-          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+          {LOOP_ARROWS}
           <path d="M11 10.4 12.3 9.5V15" />
         </>,
       )}

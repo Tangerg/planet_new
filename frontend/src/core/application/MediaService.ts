@@ -12,10 +12,10 @@ import { SearchResult } from "@domain/model/search";
 import type { TrackSnapshot } from "@domain/model/track";
 import {
   MusicVideo,
+  type MusicVideoAvailabilityPolicy,
   type MusicVideoDetailSnapshot,
   type MusicVideoSummary,
 } from "@domain/model/music-video";
-import type { MusicVideoAvailabilityPolicy } from "@domain/model/music-video";
 import { QueryFailedError, QueryResult, type QueryResult as Result } from "./QueryResult";
 
 export type MusicVideoDiscoveryOptions = {

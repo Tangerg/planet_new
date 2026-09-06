@@ -4,7 +4,7 @@ import type { Chart } from "@domain/model/chart";
 import type { Comment } from "@domain/model/comment";
 import type { Image } from "@domain/model/image";
 import type { MusicVideo } from "@domain/model/music-video";
-import type { PlaylistDetailSnapshot, PlaylistSummary } from "@domain/model/playlist";
+import type { Playlist, PlaylistDetailSnapshot, PlaylistSummary } from "@domain/model/playlist";
 import type { Track } from "@domain/model/track";
 import type { User } from "@domain/model/user";
 import { httpsUrl } from "@shared/url";
@@ -158,6 +158,17 @@ export function mapNcmPlaylistStub(raw: NcmPlaylist): PlaylistSummary {
     images: coverSet(raw.picUrl ?? raw.coverImgUrl),
     totalTracks: raw.trackCount,
   };
+}
+
+/**
+ * One row of the signed-in listener's own playlists (/user/playlist).
+ *
+ * The row carries thumbnail fields only, so tracks stay empty here: every
+ * surface that lists these shows a cover and a name, and opening one refetches
+ * the full playlist anyway.
+ */
+export function mapNcmUserPlaylist(raw: NcmPlaylist): Playlist {
+  return { ...mapNcmPlaylistStub(raw), tracks: [] };
 }
 
 /** Chart list item (/toplist -> list[]): each chart is a playlist, so toplistDetail reuses playlistDetail. */

@@ -3,8 +3,7 @@ import type { KyInstance } from "ky";
 import type { Playlist } from "@domain/model/playlist";
 import type { TrackSnapshot } from "@domain/model/track";
 
-import { mapNcmPlaylistStub, mapNcmTrack } from "./mapper";
-import { NCM_PROVIDER_ID } from "./identity";
+import { mapNcmTrack, mapNcmUserPlaylist } from "./mapper";
 import type {
   NcmDailyRecommendationsResponse,
   NcmLikedTrackIdsResponse,
@@ -33,19 +32,7 @@ export async function fetchNcmUserPlaylists(http: KyInstance, uid: string): Prom
   const res = await http
     .get("user/playlist", { searchParams: { uid, limit: 50, timestamp: Date.now() } })
     .json<NcmUserPlaylistsResponse>();
-  return (res.playlist ?? []).map((playlist): Playlist => {
-    const stub = mapNcmPlaylistStub(playlist);
-    return {
-      providerId: NCM_PROVIDER_ID,
-      id: stub.id ?? "",
-      name: stub.name ?? "",
-      description: stub.description,
-      images: stub.images ?? [],
-      owner: stub.owner,
-      totalTracks: stub.totalTracks,
-      tracks: [],
-    };
-  });
+  return (res.playlist ?? []).map(mapNcmUserPlaylist);
 }
 
 export async function fetchNcmPlayRecord(
