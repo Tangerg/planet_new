@@ -181,12 +181,20 @@ func TestCatalogOperationsHonorCancellation(t *testing.T) {
 	}
 }
 
-func TestTrackPathTreatsMissingTrackAsEmptyResult(t *testing.T) {
+// Both media Source lookups agree that an unknown id is an empty result, not a
+// failure — that is what lets the handlers tell a missing file apart from a
+// database that is broken.
+func TestMediaLookupsTreatUnknownIDsAsEmptyResults(t *testing.T) {
 	c := newTestCatalog(t)
 
 	path, err := c.TrackPath(testContext, "missing")
 	if err != nil || path != "" {
 		t.Fatalf("TrackPath = (%q, %v), want empty path without error", path, err)
+	}
+
+	ext, err := c.AlbumCoverExt(testContext, "missing")
+	if err != nil || ext != "" {
+		t.Fatalf("AlbumCoverExt = (%q, %v), want empty extension without error", ext, err)
 	}
 }
 

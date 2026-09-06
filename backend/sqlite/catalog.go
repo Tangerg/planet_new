@@ -145,7 +145,8 @@ func pruneFolder(ctx context.Context, tx *sql.Tx, folder string, at int64) error
 }
 
 // TrackPath / AlbumCoverExt back the media package's HTTP endpoints (the media
-// Source interface).
+// Source interface). Both report an unknown id as an empty string with no
+// error, so an error from either one means the query itself failed.
 func (c *Catalog) TrackPath(ctx context.Context, id domain.TrackID) (string, error) {
 	var path string
 	err := c.db.QueryRowContext(ctx, `SELECT path FROM tracks WHERE id = ?`, id.String()).Scan(&path)
@@ -158,6 +159,9 @@ func (c *Catalog) TrackPath(ctx context.Context, id domain.TrackID) (string, err
 func (c *Catalog) AlbumCoverExt(ctx context.Context, id domain.AlbumID) (string, error) {
 	var ext string
 	err := c.db.QueryRowContext(ctx, `SELECT cover_ext FROM albums WHERE id = ?`, id.String()).Scan(&ext)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
 	return ext, err
 }
 

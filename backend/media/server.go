@@ -29,6 +29,10 @@ import (
 // Source is what the server needs from the catalog: resolve an id to a file.
 // Defined here (the consumer) so the server depends on a minimal port, not the
 // whole repository.
+//
+// Both lookups report "no such row" the same way: an empty string and a nil
+// error. An error therefore always means the lookup itself failed, which is
+// what lets the handlers keep the two apart.
 type Source interface {
 	TrackPath(context.Context, domain.TrackID) (string, error)
 	AlbumCoverExt(context.Context, domain.AlbumID) (string, error)
@@ -164,7 +168,7 @@ func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path, err := s.source.TrackPath(r.Context(), id)
-	if err != nil {
+	if err != nil || path == "" {
 		http.NotFound(w, r)
 		return
 	}

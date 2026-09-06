@@ -27,6 +27,8 @@ type Catalog interface {
 	Search(ctx context.Context, query string, limit int) (SearchResult, error)
 	// TrackPath is the on-disk location of a track's audio file — used to reach
 	// files that live next to it (sidecar lyrics), not returned to the frontend.
+	// An unknown id is an empty path with no error, so an error here always
+	// means the lookup failed rather than that the track is gone.
 	TrackPath(ctx context.Context, id TrackID) (string, error)
 }
 
