@@ -1,3 +1,6 @@
+import { TrackKey, type ProviderId } from "@contexts/contracts";
+import { vibeTrackKey, type VibeTrack } from "./vibe";
+
 export type OptimisticLikeUpdate = {
   ids: string[];
   willLike: boolean;
@@ -95,5 +98,3 @@ export function withoutLikedIds(
   const merged = new Set<string>(localIds.map((localId) => TrackKey.of(providerId, localId)));
   return new Set([...liked].filter((key) => !merged.has(key)));
 }
-import { TrackKey, type ProviderId } from "@contexts/contracts";
-import { vibeTrackKey, type VibeTrack } from "./vibe";

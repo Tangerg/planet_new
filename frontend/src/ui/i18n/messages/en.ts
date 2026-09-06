@@ -25,6 +25,8 @@ export const en = {
     library: "Library",
     listView: "List view",
     lyrics: "Lyrics",
+    maximise: "Maximise",
+    minimise: "Minimise",
     mixes: "Mixes",
     moreActions: "More actions",
     music: "Music",

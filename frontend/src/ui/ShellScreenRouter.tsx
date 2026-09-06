@@ -233,7 +233,7 @@ export function ShellScreenRouter(props: Props) {
     musicVideoComments,
     playbackPolicy: musicVideoPlaybackPolicy,
   } = props.musicVideo;
-  const { settings, setSettings } = props.settings;
+  const { settings, setSettings, nowPlayingInitialMode } = props.settings;
 
   // Derived props handed to memoized screens (XMB, NowPlaying). Built here rather
   // than inline in the branch so their identity only changes with the track —
@@ -444,12 +444,11 @@ export function ShellScreenRouter(props: Props) {
           comments={comments}
           queue={queue}
           onPlay={selectTrack}
-          current={current}
           onNext={onNext}
           onPrev={onPrev}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}
-          initialMode={props.settings.nowPlayingInitialMode}
+          initialMode={nowPlayingInitialMode}
           onClose={goBack}
           onOpenStage={openStage}
           onOpenArtist={openArtist}

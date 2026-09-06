@@ -43,8 +43,8 @@ export function ShellWindowChrome({
         {(
           [
             ["r", t("common.close"), closeWindow],
-            ["y", "Minimise", minimiseWindow],
-            ["g", "Maximise", toggleMaximiseWindow],
+            ["y", t("common.minimise"), minimiseWindow],
+            ["g", t("common.maximise"), toggleMaximiseWindow],
           ] as const
         ).map(([cls, label, action]) => (
           <Button key={cls} aria-label={label} className={cls} onClick={action} title={label} />

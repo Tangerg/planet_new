@@ -39,14 +39,15 @@ import { useShellPlayback } from "@/hooks/useShellPlayback";
 import { useShellTrackActions } from "@/hooks/useShellTrackActions";
 import { useShellScreenContent } from "@/hooks/useShellScreenContent";
 import { useShellXmbModel } from "@/hooks/useShellXmbModel";
-// ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
-const LazyContextMenu = React.lazy(() =>
-  import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
-);
 import { ShellScreenRouter, warmDeferredScreens } from "@/ShellScreenRouter";
 import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type { NowPlayingMode } from "@/model/now-playing";
 import type { XmbRowMemory } from "@/model/navigation";
+
+// ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
+const LazyContextMenu = React.lazy(() =>
+  import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
+);
 
 export default function Shell() {
   const media = useMediaService();

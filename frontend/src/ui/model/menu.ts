@@ -87,7 +87,12 @@ export function collectionMenuItems(opts: {
   return items.filter(isMenuItem);
 }
 
-export function appMenuItems(opts: {
+/**
+ * The app menu's whole input: which entries apply, and where each one goes.
+ * Named because the shell hook that opens the menu carries the same nine values
+ * straight through — a contract, not nine props to spell out again at each stop.
+ */
+export type AppMenuBindings = {
   canGoBack: boolean;
   hasQueue: boolean;
   goBack: () => void;
@@ -97,7 +102,9 @@ export function appMenuItems(opts: {
   openQueue: () => void;
   openProfile: () => void;
   openSettings: () => void;
-}): MenuItem[] {
+};
+
+export function appMenuItems(opts: AppMenuBindings): MenuItem[] {
   const items: OptionalMenuItem[] = [
     opts.canGoBack && { label: { key: "menu.back" }, icon: "back", onClick: opts.goBack },
     { label: { key: "menu.home" }, icon: "compass", onClick: opts.goHome },

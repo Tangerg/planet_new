@@ -35,6 +35,8 @@ export const zh = {
     library: "音乐库",
     listView: "列表视图",
     lyrics: "歌词",
+    maximise: "最大化",
+    minimise: "最小化",
     mixes: "混合",
     moreActions: "更多操作",
     music: "音乐",

@@ -1,64 +1,23 @@
-import { useCallback } from "react";
 import type React from "react";
 
-import { appMenuItems, type MenuState } from "@/model/menu";
+import { useEventCallback } from "@/hooks/useEventCallback";
+import { appMenuItems, type AppMenuBindings, type MenuState } from "@/model/menu";
 
 type SetMenu = (state: MenuState) => void;
 
-export function useAppMenu(opts: {
-  setMenu: SetMenu;
-  canGoBack: boolean;
-  hasQueue: boolean;
-  goBack: () => void;
-  goHome: () => void;
-  openSearch: () => void;
-  openLibrary: () => void;
-  openQueue: () => void;
-  openProfile: () => void;
-  openSettings: () => void;
-}) {
-  const {
-    setMenu,
-    canGoBack,
-    hasQueue,
-    goBack,
-    goHome,
-    openSearch,
-    openLibrary,
-    openQueue,
-    openProfile,
-    openSettings,
-  } = opts;
-  return useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      const r = e.currentTarget.getBoundingClientRect();
-      setMenu({
-        x: r.right,
-        y: r.bottom + 8,
-        items: appMenuItems({
-          canGoBack,
-          hasQueue,
-          goBack,
-          goHome,
-          openSearch,
-          openLibrary,
-          openQueue,
-          openProfile,
-          openSettings,
-        }),
-      });
-    },
-    [
-      canGoBack,
-      goBack,
-      goHome,
-      hasQueue,
-      openLibrary,
-      openProfile,
-      openQueue,
-      openSearch,
-      openSettings,
-      setMenu,
-    ],
-  );
+/**
+ * Open the app menu anchored under the button that was clicked.
+ *
+ * The bindings travel through as one contract (`AppMenuBindings`) rather than
+ * nine parameters re-listed here and re-assembled below. Identity is stable for
+ * the life of the shell: a menu opener is only ever invoked from a click, so it
+ * reads the freshest bindings at that moment instead of being rebuilt — and a
+ * new handler on every navigation (`canGoBack` flips constantly) would push a
+ * fresh prop into the window chrome for nothing.
+ */
+export function useAppMenu(opts: AppMenuBindings & { setMenu: SetMenu }) {
+  return useEventCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    opts.setMenu({ x: r.right, y: r.bottom + 8, items: appMenuItems(opts) });
+  });
 }

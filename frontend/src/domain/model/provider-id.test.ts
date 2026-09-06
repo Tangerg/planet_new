@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ProviderId } from "./provider";
+import { ProviderId } from "./provider-id";
 
 describe("ProviderId", () => {
   it("accepts stable lowercase machine ids", () => {

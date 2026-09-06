@@ -32,7 +32,6 @@ type Props = {
   initialMode?: NowPlayingMode;
   queue?: VibeTrack[];
   onPlay?: (t: VibeTrack) => void;
-  current?: VibeTrack;
   onNext?: () => void;
   onPrev?: () => void;
   onRemoveFromQueue?: (track: VibeTrack) => void;

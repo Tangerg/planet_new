@@ -5,23 +5,6 @@ import type { PlaybackResolver } from "./playback";
 import type { UserLibrary } from "./user-library";
 import type { EngagementPorts } from "./engagement";
 
-export { ProviderId } from "../model/provider-id";
-export type { ProviderIdentity } from "./source";
-export type {
-  AlbumReader,
-  ArtistMusicVideoReader,
-  ArtistReader,
-  CatalogAvailability,
-  CatalogHomePort,
-  CatalogPorts,
-  CatalogSearchPort,
-  CatalogSource,
-  ChartReader,
-  MusicVideoReader,
-  PlaylistReader,
-  TrackReader,
-} from "./catalog";
-
 export interface LyricProvider {
   lyric(id: string): Promise<Lyric[]>;
 }
