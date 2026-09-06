@@ -4,17 +4,26 @@ import ky from "ky";
 import { Provider } from "../provider";
 import { PlaybackAvailabilityPolicy } from "@domain";
 import type { CatalogPorts, ProviderId } from "@domain";
-import type { PlaylistDetailSnapshot, PlaylistSnapshot } from "@domain/model/playlist";
+import type { PlaylistDetailSnapshot } from "@domain/model/playlist";
 import type { TrackPlayUrl } from "@domain/model/track";
-import type { ArtistDetailSnapshot, ArtistLink, ArtistSnapshot } from "@domain/model/artist";
-import type { AlbumDetailSnapshot, AlbumSnapshot } from "@domain/model/album";
+import type { ArtistDetailSnapshot } from "@domain/model/artist";
+import type { AlbumDetailSnapshot } from "@domain/model/album";
 import type { Personalized } from "@domain/model/personalized";
-import { toImages, toTrack } from "./mapper";
+import {
+  toAlbumSnapshot,
+  toArtistLink,
+  toArtistSnapshot,
+  toImages,
+  toPlaylistSnapshot,
+  toTrack,
+} from "./mapper";
 import type {
+  SpotifyArtist,
   SpotifyImage,
   SpotifyPaging,
   SpotifySimplifiedAlbum,
   SpotifySimplifiedArtist,
+  SpotifySimplifiedPlaylist,
   SpotifyTrack,
 } from "./types";
 import { SPOTIFY_PROVIDER_ID, SPOTIFY_PROVIDER_NAME } from "./identity";
@@ -205,24 +214,15 @@ export class Spotify extends Provider {
       totalTracks: res.total_tracks,
       releaseDate: res.release_date,
       tracks,
-      artists: res.artists.map(
-        (a): ArtistLink => ({ providerId: SPOTIFY_PROVIDER_ID, id: a.id, name: a.name }),
-      ),
+      artists: res.artists.map(toArtistLink),
     };
   }
 
   async artistDetail(id: string): Promise<ArtistDetailSnapshot | undefined> {
-    type ArtistInfo = {
-      id: string;
-      name: string;
-      images: SpotifyImage[];
-      genres?: string[];
-      followers?: { total?: number };
-    };
     type TopTracksRes = { tracks?: SpotifyTrack[] };
     // /artists/{id} for basics; /artists/{id}/top-tracks for top tracks.
     const [info, top] = await Promise.all([
-      this.api.get(`artists/${id}`).json<ArtistInfo>(),
+      this.api.get(`artists/${id}`).json<SpotifyArtist>(),
       this.api
         .get(`artists/${id}/top-tracks`, {
           searchParams: this.withMarket({}),
@@ -271,100 +271,35 @@ export class Spotify extends Provider {
   }
 
   async personalized(): Promise<Personalized> {
+    type NewReleasesResponse = { albums: SpotifyPaging<SpotifySimplifiedAlbum> };
+    type PlaylistSearchResponse = { playlists: SpotifyPaging<SpotifySimplifiedPlaylist> };
+    type ArtistSearchResponse = { artists: SpotifyPaging<SpotifyArtist> };
+
     const [newReleases, popularPlaylists, popularArtists] = await Promise.all([
       this.api
         .get("browse/new-releases", {
           searchParams: this.withMarket({ limit: "20" }),
         })
-        .json<{ albums: SpotifyPaging<SpotifySimplifiedAlbum> }>(),
+        .json<NewReleasesResponse>(),
       // featured-playlists is unavailable to apps created after 2024-11; fall back to search.
       this.api
         .get("search", {
-          searchParams: this.withMarket({
-            q: "top hits",
-            type: "playlist",
-            limit: "20",
-          }),
+          searchParams: this.withMarket({ q: "top hits", type: "playlist", limit: "20" }),
         })
-        .json<{
-          playlists: SpotifyPaging<{
-            id: string;
-            name: string;
-            images: SpotifyImage[];
-            tracks?: { total?: number };
-          }>;
-        }>()
-        .catch(() => ({
-          playlists: { items: [] } as SpotifyPaging<{
-            id: string;
-            name: string;
-            images: SpotifyImage[];
-            tracks?: { total?: number };
-          }>,
-        })),
+        .json<PlaylistSearchResponse>()
+        .catch((): PlaylistSearchResponse => ({ playlists: { items: [] } })),
       this.api
         .get("search", {
-          searchParams: this.withMarket({
-            q: "year:2024",
-            type: "artist",
-            limit: "10",
-          }),
+          searchParams: this.withMarket({ q: "year:2024", type: "artist", limit: "10" }),
         })
-        .json<{
-          artists: SpotifyPaging<{
-            id: string;
-            name: string;
-            images: SpotifyImage[];
-            genres?: string[];
-          }>;
-        }>()
-        .catch(() => ({
-          artists: { items: [] } as SpotifyPaging<{
-            id: string;
-            name: string;
-            images: SpotifyImage[];
-            genres?: string[];
-          }>,
-        })),
+        .json<ArtistSearchResponse>()
+        .catch((): ArtistSearchResponse => ({ artists: { items: [] } })),
     ]);
 
-    const albums = (newReleases.albums.items ?? []).map(
-      (al): AlbumSnapshot => ({
-        providerId: SPOTIFY_PROVIDER_ID,
-        id: al.id,
-        name: al.name,
-        images: toImages(al.images),
-        totalTracks: al.total_tracks ?? 0,
-        artists: (al.artists ?? []).map(
-          (a): ArtistLink => ({ providerId: SPOTIFY_PROVIDER_ID, id: a.id, name: a.name }),
-        ),
-      }),
-    );
-
-    const playlists = (popularPlaylists.playlists.items ?? []).map(
-      (pl): PlaylistSnapshot => ({
-        providerId: SPOTIFY_PROVIDER_ID,
-        id: pl.id,
-        name: pl.name,
-        images: toImages(pl.images),
-        totalTracks: pl.tracks?.total ?? 0,
-      }),
-    );
-
-    const artists = (popularArtists.artists.items ?? []).map(
-      (ar): ArtistSnapshot => ({
-        providerId: SPOTIFY_PROVIDER_ID,
-        id: ar.id,
-        name: ar.name,
-        images: toImages(ar.images),
-        genres: ar.genres ?? [],
-      }),
-    );
-
     return {
-      playlists: playlists.slice(0, 10),
-      albums: albums.slice(0, 10),
-      artists: artists.slice(0, 10),
+      playlists: (popularPlaylists.playlists.items ?? []).slice(0, 10).map(toPlaylistSnapshot),
+      albums: (newReleases.albums.items ?? []).slice(0, 10).map(toAlbumSnapshot),
+      artists: (popularArtists.artists.items ?? []).slice(0, 10).map(toArtistSnapshot),
       tracks: [],
     };
   }

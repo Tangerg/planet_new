@@ -8,6 +8,21 @@ export type SpotifyImage = {
 
 export type SpotifySimplifiedArtist = { id: string; name: string };
 
+/** The fuller artist object, as /artists and search return it. */
+export type SpotifyArtist = SpotifySimplifiedArtist & {
+  images: SpotifyImage[];
+  genres?: string[];
+  followers?: { total?: number };
+};
+
+/** A playlist as search and /playlists list rows return it. */
+export type SpotifySimplifiedPlaylist = {
+  id: string;
+  name: string;
+  images: SpotifyImage[];
+  tracks?: { total?: number };
+};
+
 export type SpotifySimplifiedAlbum = {
   id: string;
   name: string;
