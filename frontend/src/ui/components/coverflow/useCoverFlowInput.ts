@@ -31,7 +31,9 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
   items: FlowItem<T>[];
   center: number;
   expanded: boolean;
-  expandable: unknown;
+  /** Whether the centered cover has a tracklist to expand — arrow-down and
+   *  arrow-up mean nothing on a surface that has none. */
+  canExpand: boolean;
   onOpen: (item: T) => void;
   setCenter: (n: number | ((c: number) => number)) => void;
   setExpanded: (open: boolean) => void;
@@ -41,15 +43,11 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;
 } {
-  const { items, center, expanded, expandable, onOpen, setCenter, setExpanded } = params;
+  const { items, center, expanded, canExpand, onOpen, setCenter, setExpanded } = params;
   const drag = useRef<DragState>(null);
 
   const onKey = useEventCallback((e: KeyboardEvent) => {
-    const action = coverFlowKeyAction({
-      key: e.key,
-      expanded,
-      expandable: Boolean(expandable),
-    });
+    const action = coverFlowKeyAction({ key: e.key, expanded, expandable: canExpand });
     if (action === "none") return;
 
     if (action === "previous") {

@@ -89,7 +89,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
     items,
     center,
     expanded,
-    expandable,
+    canExpand: Boolean(expandable),
     onOpen,
     setCenter,
     setExpanded,
