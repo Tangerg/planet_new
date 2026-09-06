@@ -1,4 +1,5 @@
 import { useCallback, type RefObject } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { ArtistTarget, OpenTarget, ScreenData, VibeCollection, VibeTrack } from "@/model/vibe";
 import { useContextMenu } from "@/hooks/useContextMenu";
@@ -36,6 +37,7 @@ export function useShellTrackActions({
   openArtist,
   toggleLike,
 }: Deps) {
+  const { t } = useTranslation();
   const onPlay = useCallback(
     (track: VibeTrack | undefined) => {
       if (!track) return;
@@ -46,8 +48,20 @@ export function useShellTrackActions({
   );
 
   const likedDetail = useCallback(() => {
-    openDetail(likedSongsOpenTarget({ catalog, liked, loggedIn, userPlaylists }));
-  }, [openDetail, loggedIn, userPlaylists, catalog, liked]);
+    openDetail(
+      likedSongsOpenTarget({
+        catalog,
+        liked,
+        loggedIn,
+        text: {
+          name: t("library.likedSongs"),
+          owner: t("library.likedSongsOwner"),
+          description: t("library.likedSongsDescription"),
+        },
+        userPlaylists,
+      }),
+    );
+  }, [openDetail, loggedIn, t, userPlaylists, catalog, liked]);
 
   const { enqueueByKey } = useQueueActions({
     addToQueue,

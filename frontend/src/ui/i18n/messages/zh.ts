@@ -143,7 +143,6 @@ export const zh = {
     discoverSearchSub: "歌曲、艺人、专辑",
     forYou: "为你推荐",
     historySub: "最近播放",
-    likedSongs: "喜欢的歌曲",
     listening: "聆听统计",
     listeningSub: "常听艺人与时长",
     preferences: "偏好设置",
@@ -169,6 +168,9 @@ export const zh = {
   library: {
     title: "你的音乐库",
     section: "音乐库分类",
+    likedSongs: "喜欢的歌曲",
+    likedSongsOwner: "我",
+    likedSongsDescription: "你喜欢过的每一首,都在这里。",
   },
   search: {
     placeholder: "搜索歌曲、歌单、艺人、专辑…",

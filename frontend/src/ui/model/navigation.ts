@@ -249,7 +249,7 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
       items: [
         {
           key: "liked",
-          label: { key: "nav.likedSongs" },
+          label: { key: "library.likedSongs" },
           sub: { key: "counts.tracks", values: { count: liked.size } },
           icon: "heart",
           seed: 0,

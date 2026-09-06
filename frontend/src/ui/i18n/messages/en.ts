@@ -134,7 +134,6 @@ export const en = {
     discoverSearchSub: "Tracks, artists, albums",
     forYou: "For You",
     historySub: "Recently played",
-    likedSongs: "Liked Songs",
     listening: "Listening",
     listeningSub: "Your top artists & minutes",
     preferences: "Preferences",
@@ -160,6 +159,11 @@ export const en = {
   library: {
     title: "Your Library",
     section: "Library section",
+    /** The synthetic "everything you hearted" collection: its name, its owner
+     *  line and its blurb. App-authored, so it is keyed like any other copy. */
+    likedSongs: "Liked Songs",
+    likedSongsOwner: "You",
+    likedSongsDescription: "Everything you've hearted, in one place.",
   },
   search: {
     placeholder: "Search tracks, playlists, artists, albums…",

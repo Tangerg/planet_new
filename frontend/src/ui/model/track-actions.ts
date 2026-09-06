@@ -72,19 +72,25 @@ export function readTrackDragData(
   }
 }
 
+/** The synthetic Liked Songs collection is app-authored, so its text is
+ *  translated by the caller and handed in — a collection flows on into detail
+ *  screens and morph targets, which read plain display strings. */
+export type LikedSongsText = Readonly<{ name: string; owner: string; description: string }>;
+
 export function syntheticLikedSongsCollection(
   catalog: Pick<ScreenData, "allTracks">,
   liked: ReadonlySet<string>,
+  text: LikedSongsText,
 ): VibeCollection {
   return {
     id: "liked",
-    name: "Liked Songs",
+    name: text.name,
     kind: "playlist",
-    owner: "You",
+    owner: text.owner,
     coverSeed: 0,
     gradient: ["#2a0420", "#ff4fa3"],
     fetchDetail: false,
-    description: "Everything you've hearted, in one place.",
+    description: text.description,
     tracks: catalog.allTracks.filter((track) => isVibeTrackLiked(liked, track)),
   };
 }
@@ -93,13 +99,15 @@ export function likedSongsOpenTarget({
   catalog,
   liked,
   loggedIn,
+  text,
   userPlaylists,
 }: {
   catalog: Pick<ScreenData, "allTracks">;
   liked: ReadonlySet<string>;
   loggedIn: boolean;
+  text: LikedSongsText;
   userPlaylists: readonly VibeCollection[];
 }): OpenTarget {
   const real = loggedIn ? userPlaylists[0] : undefined;
-  return real ? { ...real, kind: "playlist" } : syntheticLikedSongsCollection(catalog, liked);
+  return real ? { ...real, kind: "playlist" } : syntheticLikedSongsCollection(catalog, liked, text);
 }

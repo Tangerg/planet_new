@@ -41,6 +41,9 @@ const playlist = (id: string): VibeCollection => ({
 
 const catalog = (tracks: VibeTrack[]): Pick<ScreenData, "allTracks"> => ({ allTracks: tracks });
 
+/** Already-translated copy, as the shell hands it in. */
+const LIKED_TEXT = { name: "Liked Songs", owner: "You", description: "Everything you hearted." };
+
 describe("track action model", () => {
   it("plays inside the current context only when the selected track belongs to it", () => {
     const selected = track("selected");
@@ -114,13 +117,14 @@ describe("track action model", () => {
     const liked = syntheticLikedSongsCollection(
       catalog([track("a"), track("b")]),
       new Set([TrackKey.of(TEST_PROVIDER_ID, "b")]),
+      LIKED_TEXT,
     );
 
     expect(liked).toMatchObject({
       id: "liked",
-      name: "Liked Songs",
+      name: LIKED_TEXT.name,
       kind: "playlist",
-      owner: "You",
+      owner: LIKED_TEXT.owner,
       fetchDetail: false,
       tracks: [{ id: "b" }],
     });
@@ -132,6 +136,7 @@ describe("track action model", () => {
         catalog: catalog([track("local")]),
         liked: new Set([TrackKey.of(TEST_PROVIDER_ID, "local")]),
         loggedIn: true,
+        text: LIKED_TEXT,
         userPlaylists: [playlist("real")],
       }),
     ).toMatchObject({ id: "real", kind: "playlist" });
@@ -141,6 +146,7 @@ describe("track action model", () => {
         catalog: catalog([track("local")]),
         liked: new Set([TrackKey.of(TEST_PROVIDER_ID, "local")]),
         loggedIn: false,
+        text: LIKED_TEXT,
         userPlaylists: [playlist("real")],
       }),
     ).toMatchObject({ id: "liked", tracks: [{ id: "local" }] });
