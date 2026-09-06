@@ -67,6 +67,22 @@ export function mapNcmFeaturedArtist(raw: NcmArtist): ArtistSummary {
   };
 }
 
+/** The credited artist NCM embeds on an album node, as a list (empty when the
+ *  payload omits it). Shared so a detail album and a "newest" album cannot end
+ *  up crediting the same artist with different fields — they already had, one
+ *  carrying artwork and the other not. */
+function mapNcmAlbumArtists(raw: NcmAlbum): ArtistLink[] {
+  if (!raw.artist) return [];
+  return [
+    {
+      providerId: NCM_PROVIDER_ID,
+      id: toIdString(raw.artist.id),
+      name: raw.artist.name ?? "",
+      images: coverSet(raw.artist.picUrl),
+    },
+  ];
+}
+
 /** Slim album (used when embedded in a track). */
 function mapNcmAlbumStub(raw: NcmAlbum): AlbumReference {
   return {
@@ -174,16 +190,7 @@ export function mapNcmAlbum(raw: NcmAlbum, songs: NcmTrack[]): AlbumDetailSnapsh
     images: cover,
     totalTracks: raw.size ?? tracks.length,
     releaseDate: raw.publishTime ? new Date(raw.publishTime).toISOString().slice(0, 10) : undefined,
-    artists: raw.artist
-      ? [
-          {
-            providerId: NCM_PROVIDER_ID,
-            id: toIdString(raw.artist.id),
-            name: raw.artist.name ?? "",
-            images: coverSet(raw.artist.picUrl),
-          },
-        ]
-      : [],
+    artists: mapNcmAlbumArtists(raw),
     tracks,
   };
 }
@@ -251,14 +258,6 @@ export function mapNcmAlbumNewest(raw: NcmAlbum): AlbumSummary {
     name: raw.name ?? "",
     totalTracks: raw.size,
     images: coverSet(raw.picUrl),
-    artists: raw.artist
-      ? [
-          {
-            providerId: NCM_PROVIDER_ID,
-            id: toIdString(raw.artist.id),
-            name: raw.artist.name ?? "",
-          },
-        ]
-      : [],
+    artists: mapNcmAlbumArtists(raw),
   };
 }

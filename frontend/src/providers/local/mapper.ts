@@ -3,7 +3,7 @@ import type { Album } from "@domain/model/album";
 import type { Artist, ArtistLink } from "@domain/model/artist";
 import { singleImage } from "@providers/mapping";
 import type { LocalAlbum, LocalArtist, LocalTrack } from "./types";
-import { LOCAL_PROVIDER_ID } from "./identity";
+import { LOCAL_PROVIDER_ID } from "@contexts/local-library";
 
 /**
  * Go DTO → domain. Local tracks arrive with their loopback `playUrl` and album

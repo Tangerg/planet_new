@@ -197,6 +197,12 @@ function stripTags(s: string | undefined): string {
   return (s ?? "").replace(/<[^>]+>/g, "");
 }
 
+/** A smartbox row credits its artist as one display string, not an artist list,
+ *  so the credit has a name and no id to navigate to. */
+function smartboxArtists(singer: string | undefined): ArtistLink[] {
+  return singer ? [{ providerId: QQMUSIC_PROVIDER_ID, name: stripTags(singer) }] : [];
+}
+
 /** Search (/getSmartbox -> response.data.song.itemlist[]): { mid, name, singer(string) } */
 export function mapQQSmartboxSong(raw: QQSmartboxItem): Track {
   const id = toIdString(raw.mid);
@@ -206,7 +212,7 @@ export function mapQQSmartboxSong(raw: QQSmartboxItem): Track {
     playbackId: optionalId(raw.mid),
     name: stripTags(raw.name),
     durationMs: 0,
-    artists: raw.singer ? [{ providerId: QQMUSIC_PROVIDER_ID, name: stripTags(raw.singer) }] : [],
+    artists: smartboxArtists(raw.singer),
   };
 }
 
@@ -233,7 +239,7 @@ export function mapQQSmartboxAlbum(raw: QQSmartboxItem): AlbumSummary {
     alias: [],
     images: singleImage(url),
     totalTracks: 0,
-    artists: raw.singer ? [{ providerId: QQMUSIC_PROVIDER_ID, name: stripTags(raw.singer) }] : [],
+    artists: smartboxArtists(raw.singer),
   };
 }
 
@@ -262,6 +268,9 @@ export function mapQQRankSong(raw: QQTrack, index?: number): Track {
     playbackId,
     name: raw.title ?? raw.name ?? raw.songname ?? "",
     durationMs: secondsToMs(raw.interval),
+    // Chart rows flatten the credit to singerName/singerMid; when they don't,
+    // the row carries the ordinary singer list, so map it the ordinary way —
+    // an inline copy here silently dropped the snake_case field fallbacks.
     artists: raw.singerName
       ? [
           {
@@ -270,11 +279,7 @@ export function mapQQRankSong(raw: QQTrack, index?: number): Track {
             name: raw.singerName,
           },
         ]
-      : (raw.singer ?? []).map((a) => ({
-          providerId: QQMUSIC_PROVIDER_ID,
-          id: toIdString(a.mid),
-          name: a.name ?? "",
-        })),
+      : (raw.singer ?? []).map(mapQQArtist),
     album: {
       providerId: QQMUSIC_PROVIDER_ID,
       id: toIdString(albumMid),

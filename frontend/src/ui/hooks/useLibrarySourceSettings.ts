@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProviderId } from "@contexts/contracts";
+import { LOCAL_PROVIDER_ID } from "@contexts/local-library";
 
 import type { LocalizedText } from "@/i18n/text";
 import { useEngine } from "@/hooks/useEngine";
-import { scanLocalFolder, LOCAL_PROVIDER_ID } from "@/infra/localLibrary";
+import { scanLocalFolder } from "@/infra/localLibrary";
 import {
   initialSettingsSource,
   scanStateFromFolderResult,

@@ -1,4 +1,18 @@
 /** Cross-language application contract for the Go-owned Local Library Context. */
+import { ProviderId } from "@domain/model/provider-id";
+
+/**
+ * Who the on-device library is, as a music source.
+ *
+ * It lives in the context contract rather than inside the provider because both
+ * sides of the boundary need it: the adapter stamps it on every entity it maps,
+ * and the shell's scan action switches the app to it once a folder is indexed.
+ * Written twice, the two could disagree and the switch would silently target a
+ * source that is not registered.
+ */
+export const LOCAL_PROVIDER_ID = ProviderId.of("local");
+export const LOCAL_PROVIDER_NAME = "Local";
+
 export const LocalLibraryErrorCode = {
   invalidArgument: "invalidArgument",
   unavailable: "unavailable",

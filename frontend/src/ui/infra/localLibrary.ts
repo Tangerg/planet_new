@@ -6,7 +6,6 @@ import {
   type LocalLibraryScanOutcome,
   type LocalLibraryScanResult,
 } from "@contexts/local-library";
-import { ProviderId } from "@contexts/contracts";
 import { isDesktopShell } from "@shared/desktop";
 
 /**
@@ -16,10 +15,6 @@ import { isDesktopShell } from "@shared/desktop";
  * actions, kept out of the Engine facade (which owns kernel/provider data, not
  * OS actions like native dialogs).
  */
-
-/** The Local provider's stable id. Mirrors `LocalMusic.ID`, duplicated as a
- *  literal because the UI layer must not import the providers layer. */
-export const LOCAL_PROVIDER_ID = ProviderId.of("local");
 
 /**
  * Open a native folder picker and index it into the on-device library. Resolves

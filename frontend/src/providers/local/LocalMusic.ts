@@ -1,7 +1,12 @@
 import { Library, LookupStatus } from "@bindings/github.com/Tangerg/planet_new/backend";
 
 import { Provider } from "../provider";
-import { LocalLibraryUnavailableError, localLibraryCall } from "@contexts/local-library";
+import {
+  LocalLibraryUnavailableError,
+  localLibraryCall,
+  LOCAL_PROVIDER_ID,
+  LOCAL_PROVIDER_NAME,
+} from "@contexts/local-library";
 import { PlaybackAvailabilityPolicy } from "@domain";
 import type { CatalogPorts, LyricProvider, ProviderId } from "@domain";
 import type { AlbumDetailSnapshot } from "@domain/model/album";
@@ -12,7 +17,6 @@ import type { Personalized } from "@domain/model/personalized";
 import type { PlaylistDetailSnapshot } from "@domain/model/playlist";
 import type { SearchResult } from "@domain/model/search";
 import type { TrackPlayUrl, TrackSnapshot } from "@domain/model/track";
-import { LOCAL_PROVIDER_ID, LOCAL_PROVIDER_NAME } from "./identity";
 import { toAlbum, toArtist, toTrack } from "./mapper";
 
 /** Synthetic playlist id for "every scanned track". */
