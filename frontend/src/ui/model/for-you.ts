@@ -23,7 +23,6 @@ export type DailyMixText = Readonly<{ name: string; owner: string; description: 
 export type ForYouScreenModel = {
   albums: VibeCollection[];
   artists: ScreenData["artists"];
-  dailyMix?: VibeCollection;
   featured?: VibeCollection;
   filters: readonly ForYouFilter[];
   greetingKey: MessageKey;
@@ -78,7 +77,7 @@ export function forYouScreenModel(
   return {
     albums: data.albums,
     artists: data.artists,
-    dailyMix,
+    // The day's mix headlines when there is one; otherwise a real playlist does.
     featured: dailyMix ?? data.playlists[1] ?? data.playlists[0],
     filters: FOR_YOU_FILTERS,
     greetingKey: timeOfDayGreetingKey(now),

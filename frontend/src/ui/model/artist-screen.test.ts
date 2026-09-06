@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ArtistTarget, VibeArtist, VibeCollection, VibeTrack } from "./vibe";
+import type { ArtistTarget, VibeCollection, VibeTrack } from "./vibe";
 import {
   artistAlbumListMeta,
   artistAlbumSubtitle,
@@ -91,13 +91,11 @@ describe("artist screen model", () => {
   it("collects the model consumed by the Artist screen", () => {
     const tracks = [track("t1")];
     const albums = [album("a1", { year: 2020 })];
-    const similar: VibeArtist[] = [{ id: "s1", name: "Similar", coverSeed: 4 }];
 
     const model = artistScreenModel({
       artist: artist({ genres: ["Pop"] }),
       tracks,
       albums,
-      similar,
       tab: "top",
       current: tracks[0],
       playing: true,
@@ -113,9 +111,6 @@ describe("artist screen model", () => {
         { key: "counts.albums", values: { count: 1 } },
         { text: "Pop" },
       ],
-      tracks,
-      albums,
-      similar,
     });
     expect(model.albumFlowItems[0]).toMatchObject({ id: "a1", sub: "2020" });
     expect(model.tabs.map((tab) => tab.value)).toEqual(["top", "albums", "similar"]);

@@ -70,7 +70,7 @@ export function ArtistScreen({
     setFlowCenter(0);
   }
   const b = artPair(artist.coverSeed, artist.gradient)[1];
-  const model = artistScreenModel({ artist, tracks, albums, similar, tab, current, playing });
+  const model = artistScreenModel({ artist, tracks, albums, tab, current, playing });
   const statLabels = model.statLabels.map((label) => localize(t, label));
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
 
@@ -205,9 +205,9 @@ export function ArtistScreen({
               minColumnWidth={176}
               gap={24}
               estimateRowHeight={MEDIA_CARD_ROW_HEIGHT}
-              itemKey={(i) => model.albums[i].id}
+              itemKey={(i) => albums[i].id}
               renderItem={(i) => {
-                const al = model.albums[i];
+                const al = albums[i];
                 return (
                   <MediaCard
                     item={al}
@@ -224,9 +224,9 @@ export function ArtistScreen({
             <VList
               count={albums.length}
               estimateSize={COLLECTION_ROW_HEIGHT}
-              itemKey={(i) => model.albums[i].id}
+              itemKey={(i) => albums[i].id}
               renderItem={(i) => {
-                const al = model.albums[i];
+                const al = albums[i];
                 return (
                   <CollectionRow
                     item={al}
@@ -244,7 +244,7 @@ export function ArtistScreen({
             <div className="-mx-12 h-[480px]">
               <CoverFlow
                 items={model.albumFlowItems}
-                center={clampIndex(flowCenter, model.albums.length)}
+                center={clampIndex(flowCenter, albums.length)}
                 setCenter={setFlowCenter}
                 onOpen={onOpenAlbum}
                 onPlay={playCollection}
@@ -261,9 +261,9 @@ export function ArtistScreen({
               minColumnWidth={176}
               gap={18}
               estimateRowHeight={MEDIA_CARD_ROW_HEIGHT}
-              itemKey={(i) => model.similar[i].id}
+              itemKey={(i) => similar[i].id}
               renderItem={(i) => {
-                const ar = model.similar[i];
+                const ar = similar[i];
                 return (
                   <MediaCard
                     item={ar}

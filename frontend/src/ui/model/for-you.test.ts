@@ -140,7 +140,6 @@ describe("for you screen model", () => {
       greetingKey: "forYou.morning",
       albums: [],
       artists: [],
-      dailyMix: undefined,
       featured: undefined,
       playlists: [],
       tiles: [],

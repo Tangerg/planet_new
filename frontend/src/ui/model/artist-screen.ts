@@ -1,13 +1,7 @@
 import type { LocalizedText } from "@/i18n/text";
 
 import { collectionFlowItems, collectionTrackCount, type FlowItem } from "./derive";
-import {
-  sameVibeTrack,
-  type ArtistTarget,
-  type VibeArtist,
-  type VibeCollection,
-  type VibeTrack,
-} from "./vibe";
+import { sameVibeTrack, type ArtistTarget, type VibeCollection, type VibeTrack } from "./vibe";
 
 export const ARTIST_SECTION_TABS = [
   { value: "top", label: { key: "artist.hot" } },
@@ -19,6 +13,9 @@ export const ARTIST_SECTION_TABS = [
  *  and every predicate below are typed by it rather than by bare `string`. */
 export type ArtistSectionTab = (typeof ARTIST_SECTION_TABS)[number]["value"];
 
+/** What the Artist screen cannot read straight off its props. The screen's own
+ *  `tracks` / `albums` / `similar` are deliberately absent: echoing an input
+ *  back invites reading the count from one copy and the items from the other. */
 export type ArtistScreenModel = {
   albumFlowItems: FlowItem<VibeCollection>[];
   firstTrack?: VibeTrack;
@@ -27,9 +24,6 @@ export type ArtistScreenModel = {
   showViewToggle: boolean;
   statLabels: LocalizedText[];
   tabs: typeof ARTIST_SECTION_TABS;
-  tracks: readonly VibeTrack[];
-  albums: readonly VibeCollection[];
-  similar: readonly VibeArtist[];
 };
 
 export function artistSectionShowsViewToggle(tab: ArtistSectionTab): boolean {
@@ -83,7 +77,6 @@ export function artistScreenModel({
   artist,
   tracks,
   albums,
-  similar,
   tab,
   current,
   playing,
@@ -91,7 +84,6 @@ export function artistScreenModel({
   artist: ArtistTarget;
   tracks: VibeTrack[];
   albums: VibeCollection[];
-  similar: VibeArtist[];
   tab: ArtistSectionTab;
   current?: VibeTrack;
   playing: boolean;
@@ -104,8 +96,5 @@ export function artistScreenModel({
     showViewToggle: artistSectionShowsViewToggle(tab),
     statLabels: artistStatLabels(artist, tracks, albums),
     tabs: ARTIST_SECTION_TABS,
-    tracks,
-    albums,
-    similar,
   };
 }
