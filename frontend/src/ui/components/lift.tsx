@@ -14,9 +14,6 @@ import { motion, type Variants } from "motion/react";
 import { Button, type ButtonProps } from "@/components/controls/Button";
 import { EXPO_OUT } from "@/styles/motion";
 
-// the morph engine's ease — the lift glides on the same curve as the page
-// transitions it sits beside.
-
 // Square cover cards lift hard (1.22); wider/compact shapes (rail cards, chart
 // banners, genre tiles, quick rows) dial it down via the `scale`/`liftY` props
 // so the float reads as a gentle pop, not a balloon. z-index can't tween, so the
@@ -62,7 +59,14 @@ const fabVariants: Variants = {
   },
 };
 
-type LiftTuning = { scale?: number; liftY?: number };
+export type LiftTuning = { scale?: number; liftY?: number };
+
+/** The gentler pop for cards that are not full square covers — rail cards and
+ *  the wrapping "similar artists" grid that used to be one. A named tuning
+ *  rather than the pair written out at each card: seven surfaces share it, and
+ *  a rail whose lift is 2% off its neighbour's reads as a bug, not a variant. */
+export const RAIL_LIFT: LiftTuning = { scale: 1.12, liftY: -6 };
+
 type LiftCardProps = React.ComponentPropsWithoutRef<typeof motion.div> & LiftTuning;
 
 /** Grid tile that floats up + scales on hover; nested <RiseFab>s rise with it. */

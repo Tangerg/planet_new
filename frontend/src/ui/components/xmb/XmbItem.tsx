@@ -3,7 +3,7 @@ import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { useTranslation } from "react-i18next";
 
 import { localize } from "@/i18n/text";
-import { artBg } from "@/components/primitives";
+import { artBg, CoverFill } from "@/components/primitives";
 import { FadeIn } from "@/components/motion";
 import { Icon } from "@/infra/icons";
 import type { XmbItemModel } from "@/model/navigation";
@@ -66,14 +66,7 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             position: "relative",
           }}
         >
-          {item.image && (
-            <img
-              src={item.image}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          )}
+          <CoverFill src={item.image} />
           {item.icon &&
             !item.image &&
             React.createElement(Icon[item.icon], { size: active ? 20 : 15, filled: true })}

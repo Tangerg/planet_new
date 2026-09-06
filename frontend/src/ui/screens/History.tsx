@@ -32,15 +32,7 @@ type HistoryScreenProps = TrackListBindings & {
 // update (a track change, a like toggle).
 type HistoryGroupProps = TrackListBindings & { section: HistorySection };
 
-function HistoryGroup({
-  section,
-  onPlay,
-  current,
-  playing,
-  liked,
-  toggleLike,
-  onOpenArtist,
-}: HistoryGroupProps) {
+function HistoryGroup({ section, ...trackList }: HistoryGroupProps) {
   const { t } = useTranslation();
   return (
     <div className="mb-9">
@@ -50,12 +42,7 @@ function HistoryGroup({
           key={section.labelKey + track.id + i}
           track={track}
           index={i + 1}
-          onPlay={onPlay}
-          current={current}
-          playing={playing}
-          liked={liked}
-          toggleLike={toggleLike}
-          onOpenArtist={onOpenArtist}
+          {...trackList}
         />
       ))}
     </div>
@@ -66,12 +53,7 @@ export function HistoryScreen({
   session,
   week: weekRecord,
   all,
-  onPlay,
-  current,
-  playing,
-  liked,
-  toggleLike,
-  onOpenArtist,
+  ...trackList
 }: HistoryScreenProps) {
   const { t } = useTranslation();
   const accent = useAccent();
@@ -105,7 +87,7 @@ export function HistoryScreen({
             </div>
             {hero && (
               <Button
-                onClick={() => onPlay(hero)}
+                onClick={() => trackList.onPlay(hero)}
                 className="pill-accent mt-[22px] inline-flex items-center gap-[9px] font-medium"
                 style={{ padding: "11px 22px", color: "#06060a" }}
               >
@@ -116,16 +98,7 @@ export function HistoryScreen({
         </div>
         {/* grouped lists */}
         {model.sections.map((section) => (
-          <HistoryGroup
-            key={section.labelKey}
-            section={section}
-            onPlay={onPlay}
-            current={current}
-            playing={playing}
-            liked={liked}
-            toggleLike={toggleLike}
-            onOpenArtist={onOpenArtist}
-          />
+          <HistoryGroup key={section.labelKey} section={section} {...trackList} />
         ))}
         {model.isEmpty && <Empty className="p-[50px]">{t("history.empty")}</Empty>}
       </PageColumn>

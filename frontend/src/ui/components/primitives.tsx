@@ -79,6 +79,40 @@ export function artBg(seed = 0, grad?: string[]): string {
   );
 }
 
+/**
+ * The cover layer that fills its box. `<Art>` paints it, and so does every
+ * surface that has to build its own box instead — the rotating now-playing
+ * disc, a cover-flow card and its mirror, an XMB tile. They render it
+ * identically, so the markup and the decode hints live here rather than being
+ * re-typed (and drifting) at each one.
+ */
+export function CoverFill({
+  src,
+  lazy = false,
+  className = "",
+}: {
+  src?: string;
+  /** Defer the fetch until the box nears the viewport. ON for covers in long
+   *  lists and grids; OFF for art that is visible the moment it mounts, where
+   *  deferring makes the very animation it rides wait on a fetch. */
+  lazy?: boolean;
+  className?: string;
+}) {
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      loading={lazy ? "lazy" : undefined}
+      // Decode off the main thread so a grid of covers can't land as one long
+      // blocking decode.
+      decoding="async"
+      className={"absolute inset-0 h-full w-full object-cover " + className}
+    />
+  );
+}
+
 /* Art surface: gradient + grain. Renders a real cover <img> when an
    `image` URL is given (gradient stays behind as fallback / while loading). */
 export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -130,20 +164,10 @@ export function Art({
       // winner would hinge on Tailwind's emission order.
       style={{ position: "relative", overflow: "hidden", background: bg, ...style }}
     >
-      {src && (
-        <img
-          src={src}
-          alt=""
-          draggable={false}
-          // Defer off-screen covers and decode off the main thread — covers in
-          // long lists/grids no longer load+decode all at once. In-viewport art
-          // (heroes, the morph tile) still loads immediately, so transitions and
-          // the gradient→image fill are unaffected.
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 z-0 h-full w-full object-cover"
-        />
-      )}
+      {/* Deferred: covers in long lists/grids no longer load+decode all at once.
+          In-viewport art (heroes, the morph tile) is already near the viewport,
+          so transitions and the gradient→image fill are unaffected. */}
+      <CoverFill src={src} lazy className="z-0" />
       {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real
          cover it tints the photo (a coloured film that reads as haze), so skip
          it once an image is present. */}

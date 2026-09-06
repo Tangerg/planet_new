@@ -22,16 +22,12 @@ type QueueScreenProps = TrackListBindings & {
 };
 
 export function QueueScreen({
-  current,
   queue,
-  onPlay,
-  playing,
-  liked,
-  toggleLike,
-  onOpenArtist,
   onRemoveFromQueue,
   onClearQueue,
+  ...trackList
 }: QueueScreenProps) {
+  const { current, onPlay } = trackList;
   const accent = useAccent();
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -82,12 +78,10 @@ export function QueueScreen({
                 <TrackRow
                   track={model.queue[vi]}
                   index={vi + 1}
-                  onPlay={onPlay}
+                  {...trackList}
+                  /* The screen's model re-derives "which row is current" from the
+                     queue, so it wins over the raw binding. */
                   current={model.current}
-                  playing={playing}
-                  liked={liked}
-                  toggleLike={toggleLike}
-                  onOpenArtist={onOpenArtist}
                   onRemoveFromQueue={onRemoveFromQueue}
                   onMenuPlay={onPlay}
                 />

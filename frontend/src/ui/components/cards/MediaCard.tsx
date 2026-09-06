@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
 import { useCardActivation, type CardActivation } from "@/components/cards/activation";
 import { Art, artPair } from "@/components/primitives";
-import { LiftCard } from "@/components/lift";
+import { LiftCard, type LiftTuning } from "@/components/lift";
 import { PlayFab } from "@/components/cards/PlayFab";
 import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
@@ -21,9 +21,9 @@ export const MEDIA_CARD_ROW_HEIGHT = 240;
 type MediaCardProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   round?: boolean;
-  /** Lift intensity — gentler for rail/wrapping cards (square covers use 1.22). */
-  liftScale?: number;
-  liftY?: number;
+  /** Hover-lift intensity. Defaults to the hard square-cover lift; rail and
+   *  wrapping cards pass `RAIL_LIFT`. */
+  lift?: LiftTuning;
   /** Art render-width hint for image-variant selection. */
   px?: number;
 };
@@ -32,8 +32,7 @@ function MediaCardInner<T extends CardItem>({
   item,
   sub,
   round,
-  liftScale,
-  liftY,
+  lift,
   px = 176,
   onOpen,
   onPlay,
@@ -48,8 +47,7 @@ function MediaCardInner<T extends CardItem>({
   return (
     <LiftCard
       className={"mcard gridcard" + (round ? " round" : "")}
-      scale={liftScale}
-      liftY={liftY}
+      {...lift}
       onClick={activate}
       onContextMenu={(e) => collMenu(e, item)}
     >

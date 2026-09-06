@@ -21,18 +21,13 @@ export function TrackCollectionView({
   view,
   tracks,
   listRows,
-  onPlay,
-  current,
-  playing,
-  liked,
-  toggleLike,
-  onOpenArtist,
   flowCenter,
   setFlowCenter,
   flowHeight,
   rankFor,
   selected,
   onSelect,
+  ...trackList
 }: TrackListBindings & {
   view: CollectionViewMode;
   /** Grid + flow source, in natural order. */
@@ -46,6 +41,7 @@ export function TrackCollectionView({
   selected?: Set<string>;
   onSelect?: (track: VibeTrack, e: React.MouseEvent) => void;
 }) {
+  const { onPlay, onOpenArtist } = trackList;
   if (view === "list") {
     const rows = listRows ?? tracks.map((t, i) => ({ t, i }));
     return (
@@ -60,14 +56,9 @@ export function TrackCollectionView({
               track={t}
               index={i + 1}
               rank={rankFor?.(t, i)}
-              onPlay={onPlay}
-              current={current}
               selected={selected?.has(t.id)}
               onSelect={onSelect}
-              playing={playing}
-              liked={liked}
-              toggleLike={toggleLike}
-              onOpenArtist={onOpenArtist}
+              {...trackList}
             />
           );
         }}

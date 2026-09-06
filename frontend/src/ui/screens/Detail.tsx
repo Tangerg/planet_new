@@ -29,14 +29,10 @@ type PlaylistDetailScreenProps = TrackListBindings & {
 
 export function PlaylistDetailScreen({
   playlist,
-  onPlay,
   onShufflePlay,
-  current,
-  playing,
-  liked,
-  toggleLike,
-  onOpenArtist,
+  ...trackList
 }: PlaylistDetailScreenProps) {
+  const { onPlay } = trackList;
   const { t } = useTranslation();
   const accent = useAccent();
   const p = playlist;
@@ -208,12 +204,7 @@ export function PlaylistDetailScreen({
                 view={view}
                 tracks={p.tracks}
                 listRows={sorted}
-                onPlay={onPlay}
-                current={current}
-                playing={playing}
-                liked={liked}
-                toggleLike={toggleLike}
-                onOpenArtist={onOpenArtist}
+                {...trackList}
                 flowCenter={flowCenter}
                 setFlowCenter={setFlowCenter}
                 flowHeight={520}

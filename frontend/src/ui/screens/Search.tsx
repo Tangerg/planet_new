@@ -7,7 +7,7 @@ import type { SearchResults, TrackListBindings, VibeCollection } from "@/model/v
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { Button } from "@/components/controls/Button";
-import { LiftButton } from "@/components/lift";
+import { LiftButton, RAIL_LIFT } from "@/components/lift";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { SectionHead } from "@/components/layout/SectionHead";
@@ -31,18 +31,14 @@ type SearchScreenProps = TrackListBindings & {
 };
 
 export function SearchScreen({
-  onPlay,
-  current,
-  playing,
   query: q,
   onQuery: setQ,
-  onOpenArtist,
   onOpenPlaylist,
   onOpenAlbum,
-  liked,
-  toggleLike,
   search,
+  ...trackList
 }: SearchScreenProps) {
+  const { onPlay, onOpenArtist } = trackList;
   const accent = useAccent();
   const { t } = useTranslation();
   const open = useMorphOpen();
@@ -148,18 +144,8 @@ export function SearchScreen({
             {/* songs */}
             <div>
               <SectionHead title={t("common.songs")} size={22} />
-              {topTracks.map((t, i) => (
-                <TrackRow
-                  key={t.id}
-                  track={t}
-                  index={i + 1}
-                  onPlay={onPlay}
-                  current={current}
-                  playing={playing}
-                  liked={liked}
-                  toggleLike={toggleLike}
-                  onOpenArtist={onOpenArtist}
-                />
+              {topTracks.map((track, i) => (
+                <TrackRow key={track.id} track={track} index={i + 1} {...trackList} />
               ))}
             </div>
           </div>
@@ -178,8 +164,7 @@ export function SearchScreen({
                   <MediaCard
                     item={p}
                     sub={p.owner}
-                    liftScale={1.12}
-                    liftY={-6}
+                    lift={RAIL_LIFT}
                     onOpen={onOpenPlaylist}
                     onPlay={playCollection}
                     playable={canPlayCollection(p)}
@@ -204,8 +189,7 @@ export function SearchScreen({
                     item={a}
                     round
                     sub={t("common.artist")}
-                    liftScale={1.12}
-                    liftY={-6}
+                    lift={RAIL_LIFT}
                     onOpen={onOpenArtist}
                   />
                 );
@@ -226,8 +210,7 @@ export function SearchScreen({
                   <MediaCard
                     item={al}
                     sub={al.artist}
-                    liftScale={1.12}
-                    liftY={-6}
+                    lift={RAIL_LIFT}
                     onOpen={onOpenAlbum}
                     onPlay={playCollection}
                     playable={canPlayCollection(al)}

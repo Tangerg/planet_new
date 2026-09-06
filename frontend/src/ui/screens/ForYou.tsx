@@ -12,7 +12,7 @@ import type {
 } from "@/model/vibe";
 import { Art } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
-import { LiftCard } from "@/components/lift";
+import { LiftCard, RAIL_LIFT } from "@/components/lift";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { Rail } from "@/components/layout/Rail";
 import { HeroBanner } from "@/components/layout/HeroBanner";
@@ -96,8 +96,8 @@ export const ForYouScreen = React.memo(function ForYouScreen({
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
   // Stable so the memoized rail/tile cards don't re-render when the chip toggles.
   const openTile = useCallback(
-    (t: VibeCollection) =>
-      forYouCollectionRoute(t) === "album" ? onOpenAlbum(t) : onOpenPlaylist(t),
+    (tile: VibeCollection) =>
+      forYouCollectionRoute(tile) === "album" ? onOpenAlbum(tile) : onOpenPlaylist(tile),
     [onOpenAlbum, onOpenPlaylist],
   );
 
@@ -197,8 +197,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
               <MediaCard
                 item={p}
                 sub={p.kind}
-                liftScale={1.12}
-                liftY={-6}
+                lift={RAIL_LIFT}
                 onOpen={onOpenPlaylist}
                 onPlay={playCollection}
                 playable={canPlayCollection(p)}
@@ -218,8 +217,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
               <MediaCard
                 item={al}
                 sub={al.artist}
-                liftScale={1.12}
-                liftY={-6}
+                lift={RAIL_LIFT}
                 onOpen={onOpenAlbum}
                 onPlay={playCollection}
                 playable={canPlayCollection(al)}
@@ -240,8 +238,7 @@ export const ForYouScreen = React.memo(function ForYouScreen({
                 item={ar}
                 round
                 sub={t("common.artist")}
-                liftScale={1.12}
-                liftY={-6}
+                lift={RAIL_LIFT}
                 onOpen={onOpenArtist}
               />
             );

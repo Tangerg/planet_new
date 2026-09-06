@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import type { ArtistRef, VibeComment, VibeTrack } from "@/model/vibe";
-import { Art, artBg, artPair } from "@/components/primitives";
+import { Art, artBg, artPair, CoverFill } from "@/components/primitives";
 import { Icon } from "@/infra/icons";
 import { FadeIn, NpSwap } from "@/components/motion";
 import { ArtistLinks } from "@/components/cards/ArtistLink";
@@ -186,14 +186,7 @@ export const NowPlaying = React.memo(function NowPlaying({
           animate={{ rotate: 360 }}
           transition={{ duration: 26, ease: "linear", repeat: Infinity }}
         >
-          {trackModel.image && (
-            <img
-              src={trackModel.image}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          )}
+          <CoverFill src={trackModel.image} />
           {/* vinyl centre — subtle spindle detail */}
           <div
             aria-hidden

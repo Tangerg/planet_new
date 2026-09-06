@@ -45,19 +45,15 @@ type LibraryScreenProps = TrackListBindings & {
 
 export function LibraryScreen({
   data,
-  onPlay,
-  current,
-  playing,
   onOpenPlaylist,
   onOpenAlbum,
-  onOpenArtist,
-  liked,
-  toggleLike,
   tab,
   view,
   onTab,
   onView,
+  ...trackList
 }: LibraryScreenProps) {
+  const { onPlay, onOpenArtist } = trackList;
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [flowCenter, setFlowCenter] = useState(LIBRARY_INITIAL_FLOW_CENTER);
@@ -234,12 +230,7 @@ export function LibraryScreen({
                       <TrackRow
                         track={column.tracks[i]}
                         index={column.startIndex + i + 1}
-                        onPlay={onPlay}
-                        current={current}
-                        playing={playing}
-                        liked={liked}
-                        toggleLike={toggleLike}
-                        onOpenArtist={onOpenArtist}
+                        {...trackList}
                       />
                     )}
                   />

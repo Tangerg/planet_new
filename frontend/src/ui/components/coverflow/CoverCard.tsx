@@ -2,7 +2,7 @@ import type React from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 
-import { Art, artBg } from "@/components/primitives";
+import { Art, artBg, CoverFill } from "@/components/primitives";
 import { Button } from "@/components/controls/Button";
 import { PressTarget } from "@/components/controls/PressTarget";
 import { Icon } from "@/infra/icons";
@@ -132,14 +132,7 @@ export function CoverCard({
           transition: "opacity .32s",
         }}
       >
-        {item.image && (
-          <img
-            src={item.image}
-            alt=""
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        )}
+        <CoverFill src={item.image} />
       </div>
     </motion.div>
   );

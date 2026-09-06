@@ -35,6 +35,7 @@ import { StatPill } from "@/components/layout/StatPill";
 import { PageColumn } from "@/components/layout/PageColumn";
 import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { CoverFlow } from "@/components/CoverFlow";
+import { RAIL_LIFT } from "@/components/lift";
 import { XFade } from "@/components/motion";
 import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { useAccent } from "@/hooks/accent";
@@ -52,14 +53,10 @@ export function ArtistScreen({
   tracks,
   albums,
   similar,
-  onPlay,
-  current,
-  playing,
-  liked,
-  toggleLike,
   onOpenAlbum,
-  onOpenArtist,
+  ...trackList
 }: ArtistScreenProps) {
+  const { onPlay, current, playing, onOpenArtist } = trackList;
   const { t } = useTranslation();
   const accent = useAccent();
   const [tab, setTab] = useState<ArtistSectionTab>("top");
@@ -196,12 +193,7 @@ export function ArtistScreen({
             <TrackCollectionView
               view={view}
               tracks={tracks}
-              onPlay={onPlay}
-              current={current}
-              playing={playing}
-              liked={liked}
-              toggleLike={toggleLike}
-              onOpenArtist={onOpenArtist}
+              {...trackList}
               flowCenter={flowCenter}
               setFlowCenter={setFlowCenter}
               flowHeight={480}
@@ -277,8 +269,7 @@ export function ArtistScreen({
                     item={ar}
                     round
                     sub={t("common.artist")}
-                    liftScale={1.12}
-                    liftY={-6}
+                    lift={RAIL_LIFT}
                     onOpen={onOpenArtist}
                   />
                 );
