@@ -118,7 +118,7 @@ func TestScanFolderOrchestratesScannerIntoCatalog(t *testing.T) {
 		FilesSeen:    3,
 		Completeness: domain.ScanComplete,
 	}}
-	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: scanner, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	report, err := svc.scanFolder(context.Background(), "/m")
 	if err != nil {
@@ -140,10 +140,10 @@ func TestScanFolderOrchestratesScannerIntoCatalog(t *testing.T) {
 
 func TestPickAndScanUsesPickerThenScans(t *testing.T) {
 	cat := &fakeCatalog{added: 1, total: 1}
-	svc := NewService(cat, fakeScanner{snapshot: domain.ScanSnapshot{
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{snapshot: domain.ScanSnapshot{
 		FilesSeen:    1,
 		Completeness: domain.ScanComplete,
-	}}, fakePicker{folder: "/chosen"}, fakeLyrics{}, fixedClock{})
+	}}, Picker: fakePicker{folder: "/chosen"}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	report, err := svc.PickAndScan(context.Background())
 	if err != nil {
@@ -156,7 +156,7 @@ func TestPickAndScanUsesPickerThenScans(t *testing.T) {
 
 func TestPickAndScanCancelledIsNoOp(t *testing.T) {
 	cat := &fakeCatalog{}
-	svc := NewService(cat, fakeScanner{}, fakePicker{folder: ""}, fakeLyrics{}, fixedClock{}) // user cancelled
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{}, Picker: fakePicker{folder: ""}, Lyrics: fakeLyrics{}, Clock: fixedClock{}}) // user cancelled
 
 	report, err := svc.PickAndScan(context.Background())
 	if err != nil {
@@ -177,7 +177,7 @@ func TestPartialScanPersistsObservedFilesWithoutPruneAuthority(t *testing.T) {
 		FilesSeen:    1,
 		Completeness: domain.ScanPartial,
 	}}
-	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: scanner, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	report, err := svc.scanFolder(context.Background(), "/m")
 	if err != nil {
@@ -193,10 +193,10 @@ func TestPartialScanPersistsObservedFilesWithoutPruneAuthority(t *testing.T) {
 
 func TestCancelledScanDoesNotTouchCatalog(t *testing.T) {
 	cat := &fakeCatalog{}
-	svc := NewService(cat, fakeScanner{snapshot: domain.ScanSnapshot{
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{snapshot: domain.ScanSnapshot{
 		Metadata:     []domain.TrackMetadata{{Path: "/m/a.mp3"}},
 		Completeness: domain.ScanComplete,
-	}}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	}}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -212,7 +212,7 @@ func TestCancelledScanDoesNotTouchCatalog(t *testing.T) {
 func TestScanWaitingForWriterCanBeCancelled(t *testing.T) {
 	cat := &fakeCatalog{}
 	scanner := blockingScanner{started: make(chan struct{}), release: make(chan struct{})}
-	svc := NewService(cat, scanner, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: scanner, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 	firstDone := make(chan error, 1)
 	go func() {
 		_, err := svc.scanFolder(context.Background(), "/first")
@@ -239,7 +239,7 @@ func TestHomeComposesCatalogReads(t *testing.T) {
 		artists: []domain.Artist{{ID: "ar"}},
 		recent:  []domain.Track{{ID: "t"}},
 	}
-	home, err := NewService(cat, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{}).Home(context.Background())
+	home, err := NewService(Config{Catalog: cat, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}}).Home(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ func TestHomeComposesCatalogReads(t *testing.T) {
 }
 
 func TestDetailLookupsDistinguishMissingEntitiesFromEmptyDetails(t *testing.T) {
-	svc := NewService(&fakeCatalog{}, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: &fakeCatalog{}, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	album, err := svc.AlbumDetail(context.Background(), "missing")
 	if err != nil || album != nil {
@@ -267,7 +267,7 @@ func TestDetailLookupsReturnPresentEntitiesWithCompleteCollections(t *testing.T)
 		artists: []domain.Artist{{ID: "artist"}},
 		recent:  []domain.Track{{ID: "track"}},
 	}
-	svc := NewService(cat, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	album, err := svc.AlbumDetail(context.Background(), "album")
 	if err != nil || album == nil || album.Album.ID != "album" || len(album.Tracks) != 1 {
@@ -280,7 +280,7 @@ func TestDetailLookupsReturnPresentEntitiesWithCompleteCollections(t *testing.T)
 }
 
 func TestUnavailableWhenCatalogNil(t *testing.T) {
-	svc := NewService(nil, nil, fakePicker{}, nil, fixedClock{}) // infra failed to open
+	svc := NewService(Config{Picker: fakePicker{}, Clock: fixedClock{}}) // infra failed to open
 
 	if _, err := svc.Home(context.Background()); err != ErrUnavailable {
 		t.Errorf("Home err = %v, want ErrUnavailable", err)
@@ -293,12 +293,12 @@ func TestUnavailableWhenCatalogNil(t *testing.T) {
 // A missing reader/picker is a degraded backend, not "this track has no lyrics"
 // or an anonymous failure: both must project as unavailable at the wire.
 func TestUnavailableWhenPortIsMissing(t *testing.T) {
-	lyricless := NewService(&fakeCatalog{path: "/m/song.flac"}, fakeScanner{}, fakePicker{}, nil, fixedClock{})
+	lyricless := NewService(Config{Catalog: &fakeCatalog{path: "/m/song.flac"}, Scanner: fakeScanner{}, Picker: fakePicker{}, Clock: fixedClock{}})
 	if _, err := lyricless.Lyric(context.Background(), "t1"); !errors.Is(err, ErrUnavailable) {
 		t.Errorf("Lyric error = %v, want ErrUnavailable", err)
 	}
 
-	pickerless := NewService(&fakeCatalog{}, fakeScanner{}, nil, fakeLyrics{}, fixedClock{})
+	pickerless := NewService(Config{Catalog: &fakeCatalog{}, Scanner: fakeScanner{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 	if _, err := pickerless.pickFolder(context.Background()); !errors.Is(err, ErrUnavailable) {
 		t.Errorf("PickFolder error = %v, want ErrUnavailable", err)
 	}
@@ -318,7 +318,7 @@ func TestScanUnavailableWhenRequiredDependencyIsMissing(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := NewService(&fakeCatalog{}, test.scanner, fakePicker{}, fakeLyrics{}, test.clock)
+			svc := NewService(Config{Catalog: &fakeCatalog{}, Scanner: test.scanner, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: test.clock})
 			if _, err := svc.scanFolder(context.Background(), "/x"); !errors.Is(err, ErrUnavailable) {
 				t.Fatalf("ScanFolder error = %v, want ErrUnavailable", err)
 			}
@@ -329,7 +329,7 @@ func TestScanUnavailableWhenRequiredDependencyIsMissing(t *testing.T) {
 func TestLyricReadsSidecarForTrackPath(t *testing.T) {
 	cat := &fakeCatalog{path: "/m/song.flac"}
 	lyr := fakeLyrics{byPath: map[string]string{"/m/song.flac": "[00:01.00]hi"}}
-	svc := NewService(cat, fakeScanner{}, fakePicker{}, lyr, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: lyr, Clock: fixedClock{}})
 
 	got, err := svc.Lyric(context.Background(), "t1")
 	if err != nil {
@@ -342,7 +342,7 @@ func TestLyricReadsSidecarForTrackPath(t *testing.T) {
 
 func TestLyricEmptyWhenTrackHasNoPath(t *testing.T) {
 	cat := &fakeCatalog{} // TrackPath returns ""
-	svc := NewService(cat, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: cat, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	got, err := svc.Lyric(context.Background(), "missing")
 	if err != nil {
@@ -355,7 +355,7 @@ func TestLyricEmptyWhenTrackHasNoPath(t *testing.T) {
 
 func TestLyricPropagatesCatalogFailure(t *testing.T) {
 	cause := errors.New("catalog read failed")
-	svc := NewService(&fakeCatalog{pathErr: cause}, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: &fakeCatalog{pathErr: cause}, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	got, err := svc.Lyric(context.Background(), "t1")
 	if got != "" || !errors.Is(err, cause) {
@@ -364,7 +364,7 @@ func TestLyricPropagatesCatalogFailure(t *testing.T) {
 }
 
 func TestLyricPreservesCancellation(t *testing.T) {
-	svc := NewService(&fakeCatalog{pathErr: context.Canceled}, fakeScanner{}, fakePicker{}, fakeLyrics{}, fixedClock{})
+	svc := NewService(Config{Catalog: &fakeCatalog{pathErr: context.Canceled}, Scanner: fakeScanner{}, Picker: fakePicker{}, Lyrics: fakeLyrics{}, Clock: fixedClock{}})
 
 	_, err := svc.Lyric(context.Background(), "t1")
 	if !errors.Is(err, context.Canceled) {

@@ -23,11 +23,10 @@ export type ToggleGroupProps<TValue extends string = string> = {
 };
 
 /**
- * Base UI-backed single-select toggle group. Replaces the hand-rolled tab /
- * segmented / view-mode button rows (plain `<button>`s with no roving focus or
- * tablist semantics); Base UI supplies arrow-key roving, focus, and ARIA.
- * Visuals stay in vibe.css (`.tab`, `.viewtoggle`, `.seg`) and key off Base UI's
- * `data-pressed` (Radix used `data-state="on"`), so the look is unchanged.
+ * Base UI-backed single-select toggle group for the tab / segmented / view-mode
+ * button rows: Base UI supplies arrow-key roving, focus, and ARIA. Visuals stay
+ * in CSS (`.tab` / `.seg` / `.sortseg` in ToggleGroup.css, `.viewtoggle` in
+ * ViewToggle.css), keyed off Base UI's `data-pressed`.
  *
  * Base UI models the value as an untyped array even in single-select mode. The
  * group is generic over its value union and narrows by looking the reported

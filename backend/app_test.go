@@ -76,7 +76,7 @@ func TestAppShutdownEndsTheWorkLifetimeBeforeClosingInfrastructure(t *testing.T)
 		t.Fatal(err)
 	}
 	lifetime, stopWork := context.WithCancel(context.Background())
-	service := application.NewService(infra.catalog, infra.scanner, nil, nil, wallClock{})
+	service := application.NewService(application.Config{Catalog: infra.catalog, Scanner: infra.scanner, Clock: wallClock{}})
 	library := newLibrary(lifetime, service, mediaURLs{})
 	app := &App{library: library, infra: infra, stopWork: stopWork}
 

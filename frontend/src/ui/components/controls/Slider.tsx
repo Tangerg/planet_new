@@ -13,7 +13,7 @@ export type SliderProps = Omit<
 > & {
   value?: number[];
   onValueChange?: (value: number[]) => void;
-  /** Fires when a drag/keyboard change is committed (Radix's onValueCommit). */
+  /** Fires once a drag or keyboard change is committed, not on every tick. */
   onValueCommit?: (value: number[]) => void;
   min?: number;
   max?: number;
@@ -59,9 +59,9 @@ export function Slider({
   style,
   ...rest
 }: SliderProps) {
-  // Control is the extra Base UI layer between Root and Track; make it a
-  // transparent, orientation-aware flex box so the Track fills like it did
-  // directly under the Radix Root.
+  // Control is a Base UI layer between Root and Track that the call sites'
+  // styles know nothing about; make it a transparent, orientation-aware flex
+  // box so the Track still fills the Root as those styles assume.
   const controlStyle: React.CSSProperties =
     orientation === "vertical"
       ? { display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }

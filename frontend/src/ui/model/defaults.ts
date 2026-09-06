@@ -1,6 +1,6 @@
 // ============================================================
-// App-level defaults & config — values that were previously hard-coded inline
-// across Shell / screens, centralised so they're tuned in one place.
+// App-level defaults & config — the values Shell and the screens boot from,
+// held in one place so they are tuned once rather than per use site.
 // ============================================================
 import type { NowPlayingOpenMode } from "./now-playing";
 import type { VibeTrack } from "./vibe";

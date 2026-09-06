@@ -11,11 +11,8 @@ export type SwitchProps = {
 };
 
 /**
- * Base UI-backed switch.
- * Base UI supplies the switch semantics, keyboard, and focus. Visuals live in
- * Switch.css, driven off Base UI's `data-checked` attribute (Radix exposed
- * `data-state="checked"`). The wrapper's public API is unchanged, so consumers
- * stay untouched — that's what makes the swap incremental.
+ * Base UI-backed switch: the library supplies the switch semantics, keyboard
+ * and focus; visuals live in Switch.css, keyed off its `data-checked`.
  */
 export function Switch({ ref, checked, onCheckedChange, ...rest }: SwitchProps) {
   return (

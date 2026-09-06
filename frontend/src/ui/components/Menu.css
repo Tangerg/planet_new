@@ -1,6 +1,6 @@
 @reference "../../index.css";
 
-/* Right-click context menu (Radix). The surface — frosted material, radius,
+/* Right-click context menu. The surface — frosted material, radius,
    mask-feathered edges — comes from the shared `.glass-pop` (added in JSX) so it
    matches every other popover; only the item padding lives here. */
 .ctxmenu {

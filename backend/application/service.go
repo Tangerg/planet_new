@@ -60,9 +60,26 @@ type Service struct {
 	scanGate chan struct{} // serializes scans while allowing waiters to cancel
 }
 
-func NewService(catalog domain.Catalog, scanner domain.Scanner, picker FolderPicker, lyrics domain.LyricReader, clock Clock) *Service {
+// Config is the set of ports a Service runs on. Every field's zero value is
+// meaningful: a nil port does not fail construction, it makes exactly the use
+// cases that need it report ErrUnavailable. That is what lets a backend whose
+// infrastructure failed to open still answer every bound call — and it is why
+// the composition root can hand over only what it managed to build.
+type Config struct {
+	Catalog domain.Catalog
+	Scanner domain.Scanner
+	Picker  FolderPicker
+	Lyrics  domain.LyricReader
+	Clock   Clock
+}
+
+func NewService(config Config) *Service {
 	return &Service{
-		catalog: catalog, scanner: scanner, picker: picker, lyrics: lyrics, clock: clock,
+		catalog:  config.Catalog,
+		scanner:  config.Scanner,
+		picker:   config.Picker,
+		lyrics:   config.Lyrics,
+		clock:    config.Clock,
 		scanGate: make(chan struct{}, 1),
 	}
 }

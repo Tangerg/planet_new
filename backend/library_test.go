@@ -11,7 +11,7 @@ import (
 )
 
 func TestLibraryProjectsUnavailableAsStableWireError(t *testing.T) {
-	service := application.NewService(nil, nil, nil, nil, wallClock{})
+	service := application.NewService(application.Config{Clock: wallClock{}})
 	library := newLibrary(context.Background(), service, mediaURLs{})
 
 	_, err := library.Home(context.Background())
@@ -28,7 +28,7 @@ func TestLibraryProjectsUnavailableAsStableWireError(t *testing.T) {
 }
 
 func TestLibraryRejectsMalformedEntityIDsAtTheWireBoundary(t *testing.T) {
-	service := application.NewService(nil, nil, nil, nil, wallClock{})
+	service := application.NewService(application.Config{Clock: wallClock{}})
 	library := newLibrary(context.Background(), service, mediaURLs{})
 	ctx := context.Background()
 	tests := []struct {
@@ -138,7 +138,7 @@ func TestCallScopeEndsWithEitherTheCallOrTheApplication(t *testing.T) {
 
 	t.Run("application shutdown", func(t *testing.T) {
 		lifetime, stopWork := context.WithCancel(context.Background())
-		library := newLibrary(lifetime, application.NewService(nil, nil, nil, nil, wallClock{}), mediaURLs{})
+		library := newLibrary(lifetime, application.NewService(application.Config{Clock: wallClock{}}), mediaURLs{})
 
 		scoped, done := library.callScope(context.Background())
 		defer done()
@@ -148,7 +148,7 @@ func TestCallScopeEndsWithEitherTheCallOrTheApplication(t *testing.T) {
 	})
 
 	t.Run("abandoned call", func(t *testing.T) {
-		library := newLibrary(context.Background(), application.NewService(nil, nil, nil, nil, wallClock{}), mediaURLs{})
+		library := newLibrary(context.Background(), application.NewService(application.Config{Clock: wallClock{}}), mediaURLs{})
 
 		call, abandon := context.WithCancel(context.Background())
 		scoped, done := library.callScope(call)

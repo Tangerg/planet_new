@@ -1,13 +1,13 @@
 // ============================================================
-// In-page entrance / content-swap motion — the Motion (motion/react) versions
-// of the hand-written CSS keyframes (.fade-in / .rise / .xfade / .np-swap).
-// Drop-in for the old `<div className="fade-in …">`: each renders a motion.div
-// that forwards all div props (className/style/onClick/key/…), so the DOM shape
-// is unchanged.
+// In-page entrance / content-swap motion, driven by Motion (motion/react).
+// Each renders a motion.div that forwards all div props (className / style /
+// onClick / key / …), so wrapping a plain element in one leaves the DOM shape
+// untouched.
 //
 // Each reads useMorphFrozen(): on the outgoing morph layer the entrance must NOT
-// replay (it would flash as the screen leaves), so it renders at its final state
-// — the Motion equivalent of the old `.t-from * { animation: none }` freeze.
+// replay (it would flash as the screen leaves), so it renders at its final
+// state — the Motion counterpart of the `.t-from * { animation: none }` freeze
+// that stills the CSS animations on that layer.
 //
 // Explicit initial/animate OBJECTS (not variant label strings) are used on
 // purpose: variant labels propagate to motion children, which would make a
@@ -28,7 +28,7 @@ const EASE_NP = [0.32, 0.72, 0, 1] as const;
 
 type DivMotionProps = HTMLMotionProps<"div"> & { ref?: React.Ref<HTMLDivElement> };
 
-/** Screen / section fade-in (was `.fade-in`). */
+/** Screen / section fade-in. */
 export function FadeIn({ ref, children, ...rest }: DivMotionProps) {
   const frozen = useMorphFrozen();
   return (
@@ -44,7 +44,7 @@ export function FadeIn({ ref, children, ...rest }: DivMotionProps) {
   );
 }
 
-/** Element entrance — fade + travel up (was `.rise`). `delay` staggers a list. */
+/** Element entrance — fade + travel up. `delay` staggers a list. */
 export function Rise({ ref, children, delay = 0, ...rest }: DivMotionProps & { delay?: number }) {
   const frozen = useMorphFrozen();
   return (
@@ -60,7 +60,7 @@ export function Rise({ ref, children, delay = 0, ...rest }: DivMotionProps & { d
   );
 }
 
-/** Tab-panel cross-fade (was `.xfade`). Re-animates when its `key` changes. */
+/** Tab-panel cross-fade. Re-animates when its `key` changes. */
 export function XFade({ ref, children, ...rest }: DivMotionProps) {
   const frozen = useMorphFrozen();
   return (
@@ -76,7 +76,7 @@ export function XFade({ ref, children, ...rest }: DivMotionProps) {
   );
 }
 
-/** Now-Playing side-panel content swap, lyrics↔comments (was `.np-swap`). */
+/** Now-Playing side-panel content swap, lyrics↔comments. */
 export function NpSwap({ ref, children, ...rest }: DivMotionProps) {
   const frozen = useMorphFrozen();
   return (

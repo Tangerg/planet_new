@@ -93,9 +93,20 @@ func New() *App {
 	var streamProxy func(string) string
 	if err != nil {
 		fmt.Println("[backend] init failed:", err)
-		service = application.NewService(nil, nil, picker, nil, wallClock{}) // inert: reads report unavailable
+		// Inert: the ports we could not build stay nil, so their use cases
+		// report unavailable while picking a folder still works.
+		service = application.NewService(application.Config{
+			Picker: picker,
+			Clock:  wallClock{},
+		})
 	} else {
-		service = application.NewService(infra.catalog, infra.scanner, picker, scan.SidecarLyrics{}, wallClock{})
+		service = application.NewService(application.Config{
+			Catalog: infra.catalog,
+			Scanner: infra.scanner,
+			Picker:  picker,
+			Lyrics:  scan.SidecarLyrics{},
+			Clock:   wallClock{},
+		})
 		mediaBase = infra.media.BaseURL()
 		streamProxy = infra.media.StreamURL
 	}

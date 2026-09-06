@@ -1,7 +1,6 @@
 @reference "../../../index.css";
 
-/* Base UI-backed switch; visuals match the former hand-rolled toggle. State is
-   driven off Base UI's `data-checked` (Radix used `data-state="checked"`).
+/* Base UI-backed switch. State is driven off Base UI's `data-checked`;
    inline-block so the non-button root still honors its width/height. */
 .vswitch {
   @apply relative inline-block h-[26px] w-[46px] flex-none cursor-pointer rounded-full border-0 p-0;

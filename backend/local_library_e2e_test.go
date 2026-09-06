@@ -72,7 +72,7 @@ func TestLocalLibraryScanToWailsReadAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	picker := e2eFolderPicker{folder: musicDir}
-	service := application.NewService(catalog, scan.New(coversDir), picker, scan.SidecarLyrics{}, e2eClock{})
+	service := application.NewService(application.Config{Catalog: catalog, Scanner: scan.New(coversDir), Picker: picker, Lyrics: scan.SidecarLyrics{}, Clock: e2eClock{}})
 	library := newLibrary(ctx, service, mediaURLs{base: "http://127.0.0.1:9999"})
 
 	result, err := library.PickAndScan(ctx)

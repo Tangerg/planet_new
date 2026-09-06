@@ -44,13 +44,14 @@ export function useMorph(): MorphFn {
 //
 // During a transition the leaving screen is re-rendered as the `t-from` layer
 // (see MorphStage). Its in-page entrance animations must NOT replay there — a
-// from-opacity:0 entrance would flash as the screen slides away. The CSS design
-// system froze this with `.t-from * { animation: none !important }`, but that
-// `!important` only catches CSS `animation`, not Motion. So the stage wraps the
-// outgoing render in <MorphFrozen> and the Motion entrance primitives
-// (FadeIn/Rise/XFade/…) read useMorphFrozen() to render at their final state.
-// This is purely additive — the morph mechanism (clip / container-transform /
-// flying tile) is unchanged.
+// from-opacity:0 entrance would flash as the screen slides away. The stylesheet
+// freezes CSS animations there with `.t-from * { animation: none !important }`,
+// but that reaches only the `animation` property — Motion writes transforms and
+// opacity per frame and sails straight past it. So the stage wraps the outgoing
+// render in <MorphFrozen> and the Motion entrance primitives (FadeIn / Rise /
+// XFade / …) read useMorphFrozen() to render at their final state instead.
+// The freeze is a separate concern from the morph mechanism itself (clip /
+// container-transform / flying tile), which knows nothing about it.
 // ---------------------------------------------------------------------------
 const FrozenContext = createContext(false);
 
