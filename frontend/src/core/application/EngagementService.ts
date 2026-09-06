@@ -6,7 +6,7 @@ import type {
 import type { Comment } from "@domain/model/comment";
 import type { ProviderId } from "@domain/model/provider-id";
 import type { TrackSnapshot } from "@domain/model/track";
-import { QueryFailedError, QueryResult, type QueryResult as Result } from "./QueryResult";
+import { readPort, type QueryResult as Result } from "./QueryResult";
 
 /** Provider-backed user relationships and social reads. Session-only UI
  * history remains outside this service because it is presentation state. */
@@ -63,17 +63,12 @@ export class EngagementService {
     );
   }
 
-  private async read<Port, T>(
+  private read<Port, T>(
     source: EngagementSource,
     port: Port | null,
     operation: string,
     read: (port: Port) => Promise<T>,
   ): Promise<Result<T>> {
-    if (!port) return QueryResult.unsupported();
-    try {
-      return QueryResult.success(await read(port));
-    } catch (cause) {
-      return QueryResult.failed(new QueryFailedError(source.name, operation, { cause }));
-    }
+    return readPort(port, { source: source.name, operation }, read);
   }
 }

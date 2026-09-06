@@ -16,7 +16,7 @@ import {
   type MusicVideoDetailSnapshot,
   type MusicVideoSummary,
 } from "@domain/model/music-video";
-import { QueryFailedError, QueryResult, type QueryResult as Result } from "./QueryResult";
+import { QueryFailedError, QueryResult, readPort, type QueryResult as Result } from "./QueryResult";
 
 export type MusicVideoDiscoveryOptions = {
   artistLimit?: number;
@@ -158,18 +158,12 @@ export class MediaService {
     return this.read(source, source.catalog.search, "search", (port) => port.search(query));
   }
 
-  private async read<Port, T>(
+  private read<Port, T>(
     source: CatalogSource,
     port: Port | null,
     operation: string,
     read: (port: Port) => Promise<T | undefined>,
   ): Promise<Result<T>> {
-    if (!port) return QueryResult.unsupported();
-    try {
-      const data = await read(port);
-      return data === undefined ? QueryResult.notFound() : QueryResult.success(data);
-    } catch (cause) {
-      return QueryResult.failed(new QueryFailedError(source.name, operation, { cause }));
-    }
+    return readPort(port, { source: source.name, operation }, read);
   }
 }

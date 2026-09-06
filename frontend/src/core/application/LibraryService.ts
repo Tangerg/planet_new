@@ -4,7 +4,7 @@ import type {
   UserLibrary,
   UserLibrarySourcePort,
 } from "@domain/ports/user-library";
-import { QueryFailedError, QueryResult, type QueryResult as Result } from "./QueryResult";
+import { readPort, type QueryResult as Result } from "./QueryResult";
 
 /**
  * Application service for browsing the logged-in user's saved library.
@@ -30,16 +30,11 @@ export class LibraryService {
     return this.read(source, "dailyRecommendations", (library) => library.dailyRecommendations());
   }
 
-  private async read<T>(
+  private read<T>(
     source: ActiveUserLibrarySource,
     operation: string,
     read: (library: UserLibrary) => Promise<T>,
   ): Promise<Result<T>> {
-    if (!source.library) return QueryResult.unsupported();
-    try {
-      return QueryResult.success(await read(source.library));
-    } catch (cause) {
-      return QueryResult.failed(new QueryFailedError(source.diagnosticName, operation, { cause }));
-    }
+    return readPort(source.library, { source: source.diagnosticName, operation }, read);
   }
 }

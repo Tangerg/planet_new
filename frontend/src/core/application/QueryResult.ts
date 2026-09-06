@@ -31,3 +31,30 @@ export const QueryResult = {
   notFound: <T>(): QueryResult<T> => ({ status: "notFound" }),
   failed: <T>(error: QueryFailedError): QueryResult<T> => ({ status: "failed", error }),
 } as const;
+
+/** Where a failed read happened, as the boundary reports it. */
+export type QueryOrigin = Readonly<{ source: string; operation: string }>;
+
+/**
+ * Project one read against an optional port into the outcome algebra above: a
+ * port the active source does not implement is `unsupported`, a thrown cause is
+ * `failed`, a read that yields nothing is `notFound`, anything else `success`.
+ *
+ * Every application service reads exactly this way, so the classification lives
+ * beside the algebra it produces. Restated per service — as it was, three times
+ * over — one copy eventually classifies a failure differently from its
+ * siblings, and the UI's handling of that case silently stops matching.
+ */
+export async function readPort<Port, T>(
+  port: Port | null,
+  origin: QueryOrigin,
+  read: (port: Port) => Promise<T | undefined>,
+): Promise<QueryResult<T>> {
+  if (!port) return QueryResult.unsupported();
+  try {
+    const data = await read(port);
+    return data === undefined ? QueryResult.notFound() : QueryResult.success(data);
+  } catch (cause) {
+    return QueryResult.failed(new QueryFailedError(origin.source, origin.operation, { cause }));
+  }
+}
