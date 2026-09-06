@@ -23,6 +23,12 @@ var audioExts = map[string]bool{
 
 var coverNames = []string{"cover", "folder", "front", "albumart"}
 
+// The extensions a cached cover can have. normalizeImageExt maps every accepted
+// input onto one of these and existingCover probes exactly these — one list, so
+// adding a format cannot leave the "already extracted" check blind to it and
+// re-copy that album's art on every scan.
+var coverExts = []string{"jpg", "png", "webp", "gif"}
+
 // Scanner extracts album art into coversDir (once per album) while walking.
 type Scanner struct {
 	coversDir string
@@ -161,7 +167,7 @@ func (s *Scanner) coverPath(alid domain.AlbumID, ext string) string {
 }
 
 func (s *Scanner) existingCover(alid domain.AlbumID) string {
-	for _, ext := range []string{"jpg", "png", "webp", "gif"} {
+	for _, ext := range coverExts {
 		if _, err := os.Stat(s.coverPath(alid, ext)); err == nil {
 			return ext
 		}
@@ -172,16 +178,12 @@ func (s *Scanner) existingCover(alid domain.AlbumID) string {
 func isCoverName(stem string) bool { return slices.Contains(coverNames, stem) }
 
 func normalizeImageExt(ext string) string {
-	switch strings.ToLower(strings.TrimPrefix(ext, ".")) {
-	case "jpg", "jpeg":
-		return "jpg"
-	case "png":
-		return "png"
-	case "webp":
-		return "webp"
-	case "gif":
-		return "gif"
-	default:
+	normalized := strings.ToLower(strings.TrimPrefix(ext, "."))
+	if normalized == "jpeg" {
+		normalized = "jpg"
+	}
+	if !slices.Contains(coverExts, normalized) {
 		return ""
 	}
+	return normalized
 }

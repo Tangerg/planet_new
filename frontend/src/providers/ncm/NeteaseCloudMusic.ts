@@ -2,16 +2,17 @@ import type { KyInstance } from "ky";
 import ky from "ky";
 
 import { Provider } from "../provider";
-import {
-  type CatalogPorts,
-  type Account,
-  type CredentialStore,
-  type EngagementPorts,
-  type IdentityGateway,
-  type LoginFlow,
-  type LyricProvider,
-  type ProviderId,
-  type UserLibrary,
+import { PlaybackAvailabilityPolicy } from "@domain";
+import type {
+  Account,
+  CatalogPorts,
+  CredentialStore,
+  EngagementPorts,
+  IdentityGateway,
+  LoginFlow,
+  LyricProvider,
+  ProviderId,
+  UserLibrary,
 } from "@domain";
 import type { Playlist, PlaylistDetailSnapshot } from "@domain/model/playlist";
 import type { TrackPlayUrl, TrackSnapshot } from "@domain/model/track";
@@ -37,7 +38,6 @@ import {
 import { fetchNcmArtistMusicVideos, fetchNcmMusicVideoDetail } from "./music-videos";
 import { searchNcm } from "./search";
 import { fetchNcmLyrics, fetchNcmPlayUrls, fetchNcmTrackDetails } from "./tracks";
-import { PlaybackAvailabilityPolicy } from "@domain";
 
 export type Options = {
   host: string;
