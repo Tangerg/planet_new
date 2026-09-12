@@ -2,7 +2,7 @@
 
 一个 **Wails 桌面音乐播放器** —— Go 壳 + React 19 / TypeScript 前端。微内核 + 插件架构,所有数据经 provider 端口接入(网易云 / QQ / Spotify / 本地音乐可切换)。
 
-> 架构法则与开发约定见 [`frontend/CLAUDE.md`](frontend/CLAUDE.md)。
+> 架构法则与开发约定见 [`frontend/README.md`](frontend/README.md)。
 
 ---
 
