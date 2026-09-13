@@ -13,3 +13,6 @@ for this repository, and each one resolves a question `AGENTS.md` deliberately l
   code in this repository does or does not call them.
 - **Use explicit `Config` structs** for related construction settings, and give optional fields useful zero
   meanings. Do not introduce functional-options APIs.
+- **Provider ports own data access.** The application never reaches a music service directly; it calls a
+  provider, which resolves to a locally running API service. A page that fetches on its own is a second data
+  owner, and an unavailable backend must render an honest empty state rather than fail.
