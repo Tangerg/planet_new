@@ -20,20 +20,22 @@ jobs:
       HUSKY: "0"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
 
-      - name: Install Yarn Classic
-        run: npm install --global yarn@1.22.22
+      # Read from `packageManager` rather than repeated here, so the pin has one
+      # owner and CI cannot drift from what a developer's tree installs.
+      - name: Install the Yarn Classic pinned by package.json
+        run: npm install --global "yarn@$(node -p "require('./frontend/package.json').packageManager.split('@')[1]")"
 
       - name: Install frontend dependencies
         run: yarn --cwd frontend install --frozen-lockfile
@@ -51,9 +53,9 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: go.sum
