@@ -9,7 +9,7 @@
 // (CoverCard + coverTransform geometry), the meta caption, the progress dots, and
 // the expanded tracklist Sheet. Keyboard / wheel / drag driving is useCoverFlowInput.
 // ============================================================
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 
@@ -58,8 +58,10 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
 }: Props<T>) {
   const { t } = useTranslation();
   const { trackMenu, collMenu } = useScreenActions();
-  // Portal target for the tracklist Sheet — keeps it positioned within the carousel.
-  const rootRef = useRef<HTMLDivElement>(null);
+  // Portal target for the tracklist Sheet — keeps it positioned within the
+  // carousel. Held as state, not a ref: the container is read while rendering
+  // the Sheet, and a ref would still be null on the render that mounts it.
+  const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const accent = useAccent();
   const [expanded, setExpanded] = useState(false);
 
@@ -97,7 +99,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
 
   return (
     <div
-      ref={rootRef}
+      ref={setRoot}
       onWheel={input.onWheel}
       onPointerDown={input.onPointerDown}
       onPointerMove={input.onPointerMove}
@@ -225,7 +227,7 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         <CoverFlowSheet
           open={expanded}
           onOpenChange={setExpanded}
-          container={rootRef.current}
+          container={root}
           item={cur}
           tracks={sheetTracks}
           onOpen={() => cur && onOpen(cur.obj)}

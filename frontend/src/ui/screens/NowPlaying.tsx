@@ -72,7 +72,8 @@ export const NowPlaying = React.memo(function NowPlaying({
     lyricsMode,
     commentsMode,
     panelOpen,
-    rootRef,
+    root,
+    setRoot,
     queueScrollRef,
     touchHandlers,
   } = useNowPlayingModel({ initialMode, onNext, onPrev });
@@ -84,7 +85,7 @@ export const NowPlaying = React.memo(function NowPlaying({
 
   return (
     <FadeIn
-      ref={rootRef}
+      ref={setRoot}
       className="relative h-full overflow-hidden bg-[#08080b]"
       {...touchHandlers}
     >
@@ -250,7 +251,7 @@ export const NowPlaying = React.memo(function NowPlaying({
       <UpNextSheet
         open={queueOpen}
         onOpenChange={setQueueOpen}
-        container={rootRef.current}
+        container={root}
         contentRef={queueScrollRef}
         track={track}
         queue={queue}

@@ -9,7 +9,7 @@
 ## 环境要求
 
 - **Go** 1.27+(确保 `go` 在 `PATH`,通常需 `/usr/local/go/bin` 与 `~/go/bin`)
-- **Node** 22+ 与 **Yarn**(classic 1.x)
+- **Node** —— 版本由仓库根目录的 `.nvmrc` 决定(当前 24 LTS),`nvm use` 即可对齐;CI 读的是同一个文件。配 **Yarn**(classic 1.x)
 - **Wails CLI v3**(命令名是 `wails3`)。版本由 `go.mod` 决定——在 beta 线上,生成器必须与它生成所针对的运行时同版本,所以照 CI 的做法从 `go.mod` 取:
 
   ```bash

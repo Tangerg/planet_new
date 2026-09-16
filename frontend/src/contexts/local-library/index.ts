@@ -98,6 +98,4 @@ export type LocalLibraryScanResult = Readonly<{
   durationMs: number;
 }>;
 export type LocalLibraryScanOutcome =
-  | LocalLibraryScanResult
-  | Readonly<{ status: "cancelled" }>
-  | Readonly<{ status: "unavailable" }>;
+  LocalLibraryScanResult | Readonly<{ status: "cancelled" }> | Readonly<{ status: "unavailable" }>;

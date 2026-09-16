@@ -56,11 +56,18 @@ export function VisualizerCanvas({
   const playingRef = useRef(playing);
   const animatePausedRef = useRef(animateWhilePaused);
   const kickRef = useRef<() => void>(() => {});
-  samplerRef.current = sampler;
-  imageRef.current = image;
-  accentRef.current = accent;
-  playingRef.current = playing;
-  animatePausedRef.current = animateWhilePaused;
+
+  // The draw loop below is created once on mount and reads these through refs,
+  // so they have to track the latest props without re-running it. Writing them
+  // after each commit rather than during render keeps that: the loop is driven
+  // by rAF, so it can only observe a value one frame behind at worst.
+  useEffect(() => {
+    samplerRef.current = sampler;
+    imageRef.current = image;
+    accentRef.current = accent;
+    playingRef.current = playing;
+    animatePausedRef.current = animateWhilePaused;
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;

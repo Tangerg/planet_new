@@ -50,10 +50,7 @@ export type MusicVideoSnapshot = MusicVideoSummary &
 export type MusicVideoAvailabilityStatus = "ready" | "resolvable" | "unavailable";
 
 export type MusicVideoUnavailableReason =
-  | "missing-video-id"
-  | "provider-unsupported"
-  | "missing-url"
-  | "not-available";
+  "missing-video-id" | "provider-unsupported" | "missing-url" | "not-available";
 
 export type MusicVideoAvailabilityPolicy = {
   /** Provider can fetch MV detail / playback URL from a music-video id. */

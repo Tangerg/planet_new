@@ -53,6 +53,11 @@ export function VirtualGrid({
   );
 
   const rowCount = Math.ceil(count / columns);
+  // useVirtualizer hands back functions React Compiler cannot memoise, so it
+  // skips this component — a property of the library, not of the code here. The
+  // measurements stay inside this file and reach children as plain numbers, so
+  // nothing memoised downstream can go stale on them.
+  // oxlint-disable-next-line react/incompatible-library
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollRef.current,

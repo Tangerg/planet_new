@@ -16,13 +16,11 @@ import { SPOTIFY_PROVIDER_ID } from "./identity";
 
 /** Spotify returns images largest-first; map straight to domain Image[] (null → undefined). */
 export function toImages(images: SpotifyImage[] | undefined): Image[] {
-  return (images ?? []).map(
-    (im): Image => ({
-      url: im.url,
-      width: im.width ?? undefined,
-      height: im.height ?? undefined,
-    }),
-  );
+  return (images ?? []).map((im): Image => ({
+    url: im.url,
+    width: im.width ?? undefined,
+    height: im.height ?? undefined,
+  }));
 }
 
 /** A credited artist, wherever Spotify embeds one. */

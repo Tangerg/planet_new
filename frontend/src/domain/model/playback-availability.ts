@@ -1,10 +1,7 @@
 export type PlaybackAvailabilityStatus = "ready" | "resolvable" | "preview" | "unavailable";
 
 export type PlaybackUnavailableReason =
-  | "missing-playback-id"
-  | "provider-unsupported"
-  | "missing-url"
-  | "not-available";
+  "missing-playback-id" | "provider-unsupported" | "missing-url" | "not-available";
 
 export type PlaybackAvailabilityPolicy = {
   /** Provider can resolve a full stream URL from a track id on demand. */

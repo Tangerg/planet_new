@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Layer-boundary guard for the single-package clean-architecture layering.
-// Complements check-circular.mjs (which forbids cycles): this one forbids
-// *upward* / wrong-direction import edges across layers.
+// Complements oxlint's `import/no-cycle` (which forbids cycles): this one
+// forbids *upward* / wrong-direction import edges across layers.
 //
 // Dependency rule (one-way, inner <- outer):
 //   shared <- domain <- core/contexts <- providers/infrastructure <- ui <- app
@@ -11,10 +11,11 @@
 // forbidden from importing `providers` (infrastructure): the view reaches data
 // through `@contexts/*` public contracts + runtime hooks, never concrete adapters.
 
-import { execFileSync } from "node:child_process";
-import { closeSync, openSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { globSync, readFileSync } from "node:fs";
+import { dirname, join, relative, resolve, sep } from "node:path";
+
+import { parseSync } from "oxc-parser";
+import { ResolverFactory } from "oxc-resolver";
 
 // Ordered longest-prefix-first: first match wins. Paths are relative to src/.
 const LAYER_PREFIXES = [
@@ -103,33 +104,54 @@ function importsAnyOf(source, specifiers) {
   return new RegExp(`from\\s+["'](?:${specifiers.join("|")})["']`).test(source);
 }
 
-const graphFile = join(tmpdir(), "planet-check-layers-madge.json");
-let raw = "";
-try {
-  const fd = openSync(graphFile, "w");
-  try {
-    execFileSync(
-      "npx",
-      ["madge", "--extensions", "ts,tsx", "--ts-config", "tsconfig.app.json", "--json", "src/"],
-      { stdio: ["ignore", fd, "inherit"] },
-    );
-  } catch {
-    // madge can exit non-zero on warnings yet still write a full graph.
-  } finally {
-    closeSync(fd);
+// The import graph is built here, on oxc, rather than delegated to a crawler
+// that reads the TypeScript compiler API. TypeScript 7 publishes only `version`
+// from its package root, so those crawlers either crash (madge) or cap their
+// support below 7 and silently cruise zero files (dependency-cruiser) — and a
+// boundary guard that silently sees an empty graph passes everything. oxc has
+// no TypeScript dependency and resolves the tsconfig aliases with the same
+// semantics the linter already applies to these files.
+const SRC = resolve("src");
+
+const resolver = new ResolverFactory({
+  extensions: [".ts", ".tsx", ".js", ".jsx"],
+  tsconfig: { configFile: resolve("tsconfig.app.json"), references: "auto" },
+});
+
+/** Every module specifier a file names: imports, re-exports, dynamic imports. */
+function moduleRequestsOf(file, code) {
+  const { module: esm, errors } = parseSync(file, code);
+  if (errors.length > 0) {
+    console.error(`[check-layers] could not parse ${file}:`);
+    for (const error of errors) console.error(`  ${error.message}`);
+    process.exit(2);
   }
-  raw = readFileSync(graphFile, "utf8");
-} finally {
-  rmSync(graphFile, { force: true });
+  return [
+    ...esm.staticImports.map((it) => it.moduleRequest.value),
+    ...esm.staticExports.flatMap((it) =>
+      it.entries.map((entry) => entry.moduleRequest?.value).filter(Boolean),
+    ),
+    // Dynamic imports carry source offsets rather than a parsed value; every
+    // one in this tree is a string literal, so the quotes come off directly.
+    ...esm.dynamicImports.map((it) =>
+      code.slice(it.moduleRequest.start + 1, it.moduleRequest.end - 1),
+    ),
+  ];
 }
 
-let graph;
-try {
-  graph = JSON.parse(raw);
-} catch {
-  console.error("[check-layers] madge did not produce valid JSON:");
-  console.error(raw);
-  process.exit(2);
+const graph = {};
+for (const absolute of globSync(join(SRC, "**/*.{ts,tsx}"))) {
+  const file = relative(SRC, absolute).split(sep).join("/");
+  const code = readFileSync(absolute, "utf8");
+  const deps = new Set();
+  for (const request of moduleRequestsOf(file, code)) {
+    const { path: target } = resolver.sync(dirname(absolute), request);
+    // Unresolvable specifiers are type-only package shims and the like, and
+    // anything outside src/ is a third-party edge no layer rule speaks about.
+    if (!target || !target.startsWith(SRC + sep)) continue;
+    deps.add(relative(SRC, target).split(sep).join("/"));
+  }
+  graph[file] = [...deps];
 }
 
 const violations = [];

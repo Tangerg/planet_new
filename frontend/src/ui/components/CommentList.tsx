@@ -3,6 +3,7 @@
 // content · like count), with an honest empty fallback. Used by both the
 // Comments screen and Now Playing's comments mode.
 // ============================================================
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeComment } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -14,8 +15,11 @@ import { relativeTime } from "@shared/time";
 
 export function CommentList({ comments }: { comments: VibeComment[] }) {
   const { t, i18n } = useTranslation();
-  // One clock read for the whole list, so its ages are consistent with each other.
-  const now = Date.now();
+  // One clock read for the whole list, taken when it mounts: the ages stay
+  // consistent with each other, and re-rendering can no longer shift them —
+  // reading the clock in render would make a comment's age depend on when React
+  // happened to re-run it.
+  const [now] = useState(() => Date.now());
   if (!comments.length) return <Empty className="py-[50px]">{t("comments.empty")}</Empty>;
   return (
     <div className="flex max-w-[680px] flex-col gap-7">

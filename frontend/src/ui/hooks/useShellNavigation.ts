@@ -16,7 +16,7 @@
  * tree) on top of what this returns. `playContext` (the open collection's
  * tracks) is exposed so Shell's onPlay can decide the queue.
  */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { MediaService } from "@contexts/catalog";
@@ -162,29 +162,26 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
 
   /* ---- page-to-page transition engine (UI-layer infra: @/infra/morph) ---- */
   const viewRef = useRef<HTMLDivElement | null>(null);
-  const { trans, startForward, startReverse, lastTile, morph } = useMorphTransition(
-    viewRef,
-    view,
-    setView,
-    LAUNCHER_VIEW,
-  );
+  const { trans, startForward, startReverse, readLastTile, restoreLastTile, morph } =
+    useMorphTransition(viewRef, view, setView, LAUNCHER_VIEW);
 
   /* Mirror the live navigation state so a back-stack push captures the screen
-     being left without stale closures. Written during render (pure mirror);
-     placed after the morph hook so lastTile is in scope. A card morph mutates
-     lastTile only inside the click handler that follows this render, so the
-     value captured here is still the origin tile of the *current* screen. */
-  navSnapRef.current = createNavSnapshot({
-    view,
-    detail,
-    artistObj,
-    musicVideoObj,
-    musicVideoRelated,
-    libraryTab,
-    libraryView,
-    searchQuery,
-    playContext: playContext.current,
-    lastTile: lastTile.current,
+     being left without stale closures. Refreshed after each commit: every push
+     runs from a pointer or key handler, and a card morph overwrites the origin
+     tile in that same handler, so the mirror is always the screen being left. */
+  useEffect(() => {
+    navSnapRef.current = createNavSnapshot({
+      view,
+      detail,
+      artistObj,
+      musicVideoObj,
+      musicVideoRelated,
+      libraryTab,
+      libraryView,
+      searchQuery,
+      playContext: playContext.current,
+      lastTile: readLastTile(),
+    });
   });
 
   /* Back: pop one screen off the stack and restore its full data snapshot;
@@ -205,8 +202,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
     setLibraryView(prev.libraryView);
     setSeedQuery(prev.searchQuery);
     playContext.current = prev.playContext;
-    lastTile.current = prev.lastTile;
-  }, [startReverse, lastTile]);
+    restoreLastTile(prev.lastTile);
+  }, [startReverse, restoreLastTile]);
 
   /* Jump straight to the XMB root from any nesting depth: clear the back-stack
      and collapse home via the launcher morph (startReverse falls back to a

@@ -31,7 +31,15 @@ export default defineConfig(({ mode }) => {
     // The Wails plugin rewires the runtime's event module onto the generated
     // bindings so custom Go events are typed; it fails the build when
     // `frontend/bindings` is missing, which is the signal we want.
-    plugins: [tailwindcss(), react(), wails("./bindings")],
+    plugins: [
+      tailwindcss(),
+      // React Compiler memoises components for us, which is why the lint rules
+      // it publishes (refs read during render, impure render, setState in an
+      // effect) are errors here rather than advice: under the compiler those
+      // patterns produce stale UI instead of merely being untidy.
+      react({ compiler: { logDiagnostics: true } }),
+      wails("./bindings"),
+    ],
 
     /* Pre-bundle the Base UI subpaths we use so Vite doesn't re-optimize (and
      * full-reload / occasionally 504) mid-session each time a new one is first

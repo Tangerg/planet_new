@@ -141,10 +141,8 @@ export async function fetchNcmPlayUrls(
     .json<NcmPlayUrlResponse>();
   return (res.data ?? [])
     .filter((track): track is { id: string | number; url: string } => !!track.url)
-    .map(
-      (track): TrackPlayUrl => ({
-        playbackId: track.id.toString(),
-        playUrl: httpsUrl(track.url),
-      }),
-    );
+    .map((track): TrackPlayUrl => ({
+      playbackId: track.id.toString(),
+      playUrl: httpsUrl(track.url),
+    }));
 }

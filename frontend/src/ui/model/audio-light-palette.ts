@@ -144,12 +144,9 @@ export function spectralLightColors({
     return parseHexColor(hexFromArgb(Hct.from(hue, chroma, tone).toInt()), TONE_FALLBACK);
   };
 
-  const stops = Array.from(
-    { length: RAMP_STEPS },
-    (_, index): SpectralColorStop => ({
-      color: step(index / (RAMP_STEPS - 1)),
-    }),
-  );
+  const stops = Array.from({ length: RAMP_STEPS }, (_, index): SpectralColorStop => ({
+    color: step(index / (RAMP_STEPS - 1)),
+  }));
 
   const result: SpectralLightColors = { stops };
   colorsCache.set(key, result);

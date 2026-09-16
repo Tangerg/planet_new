@@ -330,10 +330,17 @@ export function useMorphTransition<V extends string>(
   // Esc/back are owned by Shell's goBack so they share the navigation
   // back-stack (pop one level) instead of always collapsing to the launcher.
 
-  // lastTile is exposed so the consumer's back-stack can snapshot/restore it: a
-  // card morph overwrites it, so without per-level restore the eventual
-  // collapse-to-launcher would fly from the wrong origin tile.
+  // The origin tile is snapshot/restored by the consumer's back-stack: a card
+  // morph overwrites it, so without per-level restore the eventual
+  // collapse-to-launcher would fly from the wrong origin tile. It is handed out
+  // as a read and a restore rather than as the ref, so this hook stays the only
+  // place that can advance it.
+  const readLastTile = useCallback(() => lastTile.current, []);
+  const restoreLastTile = useCallback((tile: MorphLastTile | null) => {
+    lastTile.current = tile;
+  }, []);
+
   // (layerStyle/EASE are module exports; `morph` is the stable trigger the Shell
   // feeds into MorphProvider for deep consumers.)
-  return { trans, startForward, startReverse, lastTile, morph };
+  return { trans, startForward, startReverse, readLastTile, restoreLastTile, morph };
 }

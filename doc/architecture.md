@@ -271,7 +271,6 @@ yarn lint
 yarn format:check
 yarn test
 yarn knip
-yarn check:circular
 yarn check:layers
 ```
 

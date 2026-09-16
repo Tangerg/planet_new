@@ -50,11 +50,11 @@
 
 ## 2 · 技术栈(选择已定,别轻易换 —— 反向不变量见 §5)
 
-- **UI**:React 19 + TypeScript。**桌面壳**:Wails v3(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `@wailsio/runtime` 的 `Application`/`Window`,统一收在 `ui/infra/wails.ts`)。Go 侧绑定用 **Service**(`application.NewService`)而非 v2 的 `Bind`,构建由根 `Taskfile.yml` 编排。
+- **UI**:React 19 + TypeScript,构建时开 **React Compiler**(`vite.config.ts` 的 `react({ compiler })`,走 oxc 实现)——所以 oxlint 的 `react(...)` 规则是错误而非建议:编译器会自动 memo,render 阶段读写 ref、不纯 render、effect 里同步 setState 在它手里会产生 stale UI。手写 `useMemo`/`memo` 只在测量证明必要时才加。**桌面壳**:Wails v3(Go),无边框窗口 + 页面伪装红绿灯(`main.go` `Frameless: true`,红绿灯走 `@wailsio/runtime` 的 `Application`/`Window`,统一收在 `ui/infra/wails.ts`)。Go 侧绑定用 **Service**(`application.NewService`)而非 v2 的 `Bind`,构建由根 `Taskfile.yml` 编排。
 - **样式**:**co-located CSS**(`ui/styles/*` 全局 token/reset + `ui/Shell.css` + 每个组件旁的同名 `.css`,均由移植的 class 体系逐字拆分而来,设计系统主体)+ **Tailwind v4(无 Preflight,工具类补充)**。**不引 CSS-in-JS / 大型 UI Kit**;动态值(accent / 渐变 / 计算量)留内联 style,静态/重复模式可用 Tailwind 工具类(如 `truncate`)。**accent 只有一个持有者**:`AccentProvider` 同时持状态与 `--accent` 自定义属性(样式表不再自带字面量),JS 里要算色就 `useAccent()`。
 - **交互件**:优先 **Base UI**(`@base-ui/react`,headless)替换手写;新组件放 `ui/components/`,用 `cn()`(clsx + tailwind-merge)。**大列表用 `@tanstack/react-virtual` 虚拟化**(行高恒定时定值 estimateSize,见 `VirtualList`)。
 - **状态 / 数据**:Zustand(多小 store)+ TanStack React Query(目录 / 详情 / 搜索 / 榜单缓存)。**无路由**(导航是 `Shell` 的 `view` 状态,见 §1.3)。
-- **HTTP**:ky。**动画**:页面间切换归 morph 引擎,页面内入场/位移归 **Motion**(`ui/components/motion.tsx` / `lift.tsx`),hover 等微交互留 CSS;缓动曲线取 `ui/styles/motion.ts` 的 token,别就地再写一条。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / madge / `check-layers` / `check-circular`,husky + lint-staged 预提交(见 §6)。
+- **HTTP**:ky。**动画**:页面间切换归 morph 引擎,页面内入场/位移归 **Motion**(`ui/components/motion.tsx` / `lift.tsx`),hover 等微交互留 CSS;缓动曲线取 `ui/styles/motion.ts` 的 token,别就地再写一条。**测试**:Vitest。**工程化**:Prettier / oxlint(`--deny-warnings`)/ knip / `check-layers`,husky + lint-staged 预提交(见 §6)。
 - **数据源**:provider 插件(NeteaseCloudMusic / QQMusic / Spotify / Local),由 `VITE_PROVIDER` 选(默认 / 兜底为 NCM)或运行时在 Settings「音乐来源」切换;QQ 对接本机 `Rain120/qq-music-api`(:3200);Local 是桌面自带的本地库(Go 侧扫盘 + SQLite + 回环媒体流,无需外部服务),扫描经 Settings 原生目录选择器触发。桌面壳动作(原生对话框 / 窗口控制)走 `ui/infra` 薄 shim,不进 Engine facade。
 
 ---

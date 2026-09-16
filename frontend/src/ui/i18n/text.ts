@@ -15,8 +15,7 @@ export type MessageKey = ParseKeys;
  * title, an artist name) and must never be keyed or translated.
  */
 export type LocalizedText =
-  | Readonly<{ key: MessageKey; values?: TOptions }>
-  | Readonly<{ text: string }>;
+  Readonly<{ key: MessageKey; values?: TOptions }> | Readonly<{ text: string }>;
 
 /** Resolve a model-authored message for rendering. */
 export function localize(t: TFunction, value: LocalizedText): string;

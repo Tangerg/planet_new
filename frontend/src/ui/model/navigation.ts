@@ -88,12 +88,7 @@ export function xmbSelectRow(
 }
 
 export type XmbInputIntent =
-  | "category-previous"
-  | "category-next"
-  | "row-previous"
-  | "row-next"
-  | "open"
-  | "none";
+  "category-previous" | "category-next" | "row-previous" | "row-next" | "open" | "none";
 
 export const XMB_WHEEL_MIN_DELTA = 6;
 export const XMB_WHEEL_AXIS_DEADZONE = 2;

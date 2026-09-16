@@ -4,7 +4,7 @@
  * ScreenActionsProvider so deeply-nested screens reach them via useScreenActions
  * (no prop-drilling, no window globals).
  */
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ArtistTarget, CardItem, VibeTrack } from "@/model/vibe";
 import type { ScreenActions } from "@/hooks/screenActions";
@@ -21,7 +21,11 @@ export function useContextMenu(opts: {
   const [menu, setMenu] = useState<MenuState>(null);
 
   const optsRef = useRef(opts);
-  optsRef.current = opts;
+  // Refreshed after commit rather than during render. Every reader below is a
+  // pointer-event handler, so it cannot run before this has caught up.
+  useEffect(() => {
+    optsRef.current = opts;
+  });
 
   // Stable handlers (read latest opts via ref) so the provider value never churns.
   const trackMenu = useCallback<ScreenActions["trackMenu"]>((e, track, options) => {

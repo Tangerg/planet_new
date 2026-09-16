@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "ignoreExportsUsedInFile": true,
-  "entry": ["scripts/*.mjs"],
+  "entry": ["scripts/*.mjs", "src/contexts/*/index.ts", "src/ui/infra/*/index.ts"],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreDependencies": ["tailwindcss"]
 }
