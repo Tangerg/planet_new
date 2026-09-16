@@ -8,9 +8,13 @@
 
 ## 环境要求
 
-- **Go** 1.25+(确保 `go` 在 `PATH`,通常需 `/usr/local/go/bin` 与 `~/go/bin`)
+- **Go** 1.27+(确保 `go` 在 `PATH`,通常需 `/usr/local/go/bin` 与 `~/go/bin`)
 - **Node** 22+ 与 **Yarn**(classic 1.x)
-- **Wails CLI v3**（`go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.4`，命令名是 `wails3`）
+- **Wails CLI v3**(命令名是 `wails3`)。版本由 `go.mod` 决定——在 beta 线上,生成器必须与它生成所针对的运行时同版本,所以照 CI 的做法从 `go.mod` 取:
+
+  ```bash
+  go install github.com/wailsapp/wails/v3/cmd/wails3@$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3)
+  ```
 - 一个**数据源后端**(见下)；只使用本地音乐时不需要
 
 > Wails v3 用 `Taskfile.yml` 编排构建(go-task 已内置在 `wails3` 里，无需单独安装 `task`)，

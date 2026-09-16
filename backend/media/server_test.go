@@ -19,6 +19,16 @@ import (
 	"github.com/Tangerg/planet_new/backend/domain"
 )
 
+// testClient replaces http.DefaultClient for every request in this file. The
+// default transport is process-global, so a connection it parks outlives the
+// test that opened it; since Go 1.27 drains unread response bodies on Close,
+// those connections stay reusable instead of being dropped. A pooled
+// connection the client dialled but never sent a request on stays StateNew to
+// the server (golang/go#21204), which makes the bounded graceful drain in
+// startTestServer block until its deadline. Closing every connection after one
+// response keeps each server's shutdown deterministic.
+var testClient = &http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
+
 // streamURL builds the loopback /stream proxy URL for a remote source, mirroring
 // what mediaURLs.stream does on the wire side.
 func streamURL(s *Server, raw string) string {
@@ -76,7 +86,7 @@ func TestServerStreamsWithRangeAndCORS(t *testing.T) {
 	srv := startTestServer(t, coversDir, fakeSource{path: audioPath, ext: "jpg"})
 
 	// Full GET.
-	resp, err := http.Get(srv.BaseURL() + "/media/" + validID)
+	resp, err := testClient.Get(srv.BaseURL() + "/media/" + validID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +99,7 @@ func TestServerStreamsWithRangeAndCORS(t *testing.T) {
 	// Range GET → 206 with exactly the requested slice + CORS header.
 	req, _ := http.NewRequest(http.MethodGet, srv.BaseURL()+"/media/"+validID, nil)
 	req.Header.Set("Range", "bytes=0-9")
-	r2, err := http.DefaultClient.Do(req)
+	r2, err := testClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +113,7 @@ func TestServerStreamsWithRangeAndCORS(t *testing.T) {
 	}
 
 	// Cover.
-	cr, err := http.Get(srv.BaseURL() + "/cover/" + validID)
+	cr, err := testClient.Get(srv.BaseURL() + "/cover/" + validID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +126,7 @@ func TestServerStreamsWithRangeAndCORS(t *testing.T) {
 func TestServerRejectsBadIDs(t *testing.T) {
 	srv := startTestServer(t, t.TempDir(), fakeSource{})
 	for _, id := range []string{"../etc/passwd", "not-hex", "abc"} {
-		resp, err := http.Get(srv.BaseURL() + "/media/" + id)
+		resp, err := testClient.Get(srv.BaseURL() + "/media/" + id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -143,7 +153,7 @@ func TestServerProxiesStreamAudioWithRangeAndCORS(t *testing.T) {
 	srv := startTestServer(t, t.TempDir(), fakeSource{}, serverOptions{allowPrivateNetwork: true})
 	req, _ := http.NewRequest(http.MethodGet, streamURL(srv, upstream.URL+"/song.mp3"), nil)
 	req.Header.Set("Range", "bytes=2-5")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := testClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +189,7 @@ func TestStreamProxyPropagatesClientCancellationUpstream(t *testing.T) {
 	}
 	done := make(chan error, 1)
 	go func() {
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := testClient.Do(req)
 		if resp != nil {
 			resp.Body.Close()
 		}
@@ -201,7 +211,7 @@ func TestStreamProxyPropagatesClientCancellationUpstream(t *testing.T) {
 func TestServerRejectsInvalidStreamURL(t *testing.T) {
 	srv := startTestServer(t, t.TempDir(), fakeSource{})
 	for _, raw := range []string{"", "file:///tmp/song.mp3", "ftp://example.com/song.mp3"} {
-		resp, err := http.Get(streamURL(srv, raw))
+		resp, err := testClient.Get(streamURL(srv, raw))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -215,7 +225,7 @@ func TestServerRejectsInvalidStreamURL(t *testing.T) {
 func TestServerRequiresStreamToken(t *testing.T) {
 	srv := startTestServer(t, t.TempDir(), fakeSource{})
 	unauthorized := srv.BaseURL() + "/stream?url=" + url.QueryEscape("https://example.com/song.mp3")
-	resp, err := http.Get(unauthorized)
+	resp, err := testClient.Get(unauthorized)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +246,7 @@ func TestServerRejectsPrivateStreamTargets(t *testing.T) {
 		if got := srv.StreamURL(raw); got != "" {
 			t.Errorf("StreamURL(%q) = %q, want fail-closed empty URL", raw, got)
 		}
-		resp, err := http.Get(streamURL(srv, raw))
+		resp, err := testClient.Get(streamURL(srv, raw))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -393,7 +403,7 @@ func TestServerRejectsUnsupportedStreamMethods(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := testClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
