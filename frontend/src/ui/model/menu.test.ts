@@ -39,7 +39,6 @@ const trackIdMock = () => vi.fn<(trackId: string, next?: boolean) => void>();
 const artistMock = () => vi.fn<(artist: ArtistTarget) => void>();
 const cardMock = () => vi.fn<(item: CardItem) => void>();
 
-/** Menu labels are message keys, so assertions read the key, not rendered text. */
 const labelKey = (item: MenuItem): string =>
   item.label && "key" in item.label ? item.label.key : "sep";
 

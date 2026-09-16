@@ -1,19 +1,3 @@
-/**
- * Shared-element transition engine — the morph phase machine that flies a
- * tile onto the destination hero and back. The page-to-page (navigation)
- * transition system, ported verbatim from the example Sonance Vibe App.
- *
- * UI-layer infra (`@/infra/morph`): framework of the transition only — it holds
- * no vibe/screen knowledge. Consumers drive it with a `view` string + setView,
- * trigger forward/reverse, and render screens themselves (see MorphStage, which
- * paints the resident container + base/from/grain layers from this state).
- * In-page animation is a separate concern (use Motion for that); this owns the
- * cross-screen morph.
- *
- * The dep arrays are intentionally curated (keyed on `view` / `trans`); the
- * referenced callbacks are recreated each render by design. Adding them to
- * deps would re-run the morph effects every frame and break the transition.
- */
 /* eslint-disable react-hooks/exhaustive-deps --
    The shared-element transition engine uses intentionally curated dependency
    arrays. The referenced callbacks are recreated each render by design;
@@ -46,8 +30,6 @@ export type MorphLastTile = {
   image?: string;
 };
 
-/** `from` is the screen being left — the stage re-renders and freezes it as the
- *  outgoing layer for the duration of the flight. */
 export type Transition<V extends string = string> = {
   from: V;
   origin: Rect;
@@ -63,11 +45,6 @@ export type Transition<V extends string = string> = {
   measured: boolean;
 };
 
-/** Style for the outgoing-screen layer (`.t-from`): fades + scales out, unless
- *  it's the start frame or a clip reveal (`hero === false`). Pure fn of EASE.
- *  Only opacity+transform animate — both compositor-only. A `filter: blur` tween
- *  was dropped: it re-rasterised the WHOLE outgoing screen every frame (no GPU
- *  path in WKWebView), the single biggest stutter on every page transition. */
 export function layerStyle(t: Transition<string>): React.CSSProperties {
   const begin = t.phase === "start" || t.hero === false;
   return {
@@ -77,11 +54,6 @@ export function layerStyle(t: Transition<string>): React.CSSProperties {
     pointerEvents: "none",
     zIndex: 20,
     opacity: begin ? 1 : 0,
-    // Opacity-only fade — deliberately NO transform/scale on the outgoing layer.
-    // Scaling it re-rasters any blur filter it contains (e.g. ForYou's blurred
-    // hero) on every frame, which blocks the main thread for the whole morph and
-    // stalls the tile's non-composited border-radius tween → square→circle snaps
-    // at the hand-off. A plain opacity fade just composites the cached layer.
     willChange: "opacity",
     transition: begin ? "none" : `opacity ${MORPH_LAYER_FADE_SEC}s ease`,
   };
@@ -91,8 +63,6 @@ export function useMorphTransition<V extends string>(
   viewRef: RefObject<HTMLDivElement | null>,
   view: V,
   setView: (v: V) => void,
-  /** The view the reverse morph collapses to — the consumer's navigation root.
-   *  Passed in rather than hard-coded so this stays screen-agnostic infra. */
   launcherView: V,
 ) {
   const [trans, setTrans] = useState<Transition<V> | null>(null);
@@ -169,8 +139,6 @@ export function useMorphTransition<V extends string>(
       }
       clearAll();
       const o = relRect(rect);
-      // Round sources (artist circles) pass radius "50%" so the tile flies as a
-      // circle the whole way; everything else is sharp (media art is square-cornered).
       const origin = { ...o, borderRadius: item.radius ?? 0 };
       const vw = viewRef.current.getBoundingClientRect();
       const px = o.left + o.width / 2,
@@ -202,11 +170,6 @@ export function useMorphTransition<V extends string>(
           setTrans(null);
         }, MORPH_FAILSAFE_MS),
       );
-      // reveal/clear are scheduled when the morph phase actually begins (see the
-      // phase-flip effect), NOT here: a heavy outgoing screen can jank the main
-      // thread before the morph starts, and a trans-set-relative reveal would cut
-      // the shape tween short (transform flies on the GPU but the non-composited
-      // border-radius never finishes → snaps at the handoff).
     },
     [view],
   );
@@ -259,9 +222,6 @@ export function useMorphTransition<V extends string>(
       const revId2 = requestAnimationFrame(() => {
         if (transitionRun.current !== runId) return;
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
-        // Same anchoring as the forward path: schedule the clear from the real
-        // morph start (after any pre-morph jank from a heavy collapsing screen),
-        // so the reverse collapse's shape tween isn't cut short → no snap.
         timers.current.push(
           setTimeout(() => {
             if (transitionRun.current !== runId) return;
@@ -275,21 +235,16 @@ export function useMorphTransition<V extends string>(
     rafIds.current.push(revId1);
   }, [view]);
 
-  // The same trigger, with a STABLE identity, for deep consumers (cards/rows)
-  // exposed via the MorphProvider context — not a window global. startForward is
-  // recreated each render (curated deps), so route through a ref.
   const startForwardRef = useRef(startForward);
   startForwardRef.current = startForward;
   const morph = useCallback<MorphFn>((source, rect) => startForwardRef.current(source, rect), []);
 
-  // Measure the destination hero once the new screen mounts.
   useLayoutEffect(() => {
     if (!trans || trans.dir !== "fwd" || trans.measured) return;
     const hero = heroRect(".t-base [data-hero]");
     setTrans((t) => t && { ...t, target: hero || t.target, hero: !!hero, measured: true });
   }, [trans]);
 
-  // Advance the forward transition to the morph phase.
   useEffect(() => {
     if (!trans || trans.dir !== "fwd" || !trans.measured || trans.phase !== "start") return;
     const runId = transitionRun.current;
@@ -297,10 +252,6 @@ export function useMorphTransition<V extends string>(
       const inner = requestAnimationFrame(() => {
         if (transitionRun.current !== runId) return;
         setTrans((t) => (t && t.phase === "start" ? { ...t, phase: "morph" } : t));
-        // Anchor reveal/clear to the real morph start (after any pre-morph jank),
-        // so the shape tween always gets its full window and the square→circle
-        // radius finishes before the hero hand-off — fixes the snap when entering
-        // from a heavy screen (e.g. the control bar → disc from ForYou).
         timers.current.push(
           setTimeout(() => {
             if (transitionRun.current !== runId) return;
@@ -321,24 +272,15 @@ export function useMorphTransition<V extends string>(
     return () => {
       cancelAnimationFrame(outer);
       rafIds.current = rafIds.current.filter((id) => id !== outer);
-      // Cancel any inner rAFs that may have already been scheduled
       rafIds.current.forEach((id) => cancelAnimationFrame(id));
       rafIds.current = [];
     };
   }, [trans]);
 
-  // Esc/back are owned by Shell's goBack so they share the navigation
-  // back-stack (pop one level) instead of always collapsing to the launcher.
-
-  // The back-stack snapshots/restores the origin tile per level, or the
-  // collapse-to-launcher flies from the wrong tile. Handed out as read/restore
-  // rather than the ref, so this hook stays its only owner.
   const readLastTile = useCallback(() => lastTile.current, []);
   const restoreLastTile = useCallback((tile: MorphLastTile | null) => {
     lastTile.current = tile;
   }, []);
 
-  // (layerStyle/EASE are module exports; `morph` is the stable trigger the Shell
-  // feeds into MorphProvider for deep consumers.)
   return { trans, startForward, startReverse, readLastTile, restoreLastTile, morph };
 }

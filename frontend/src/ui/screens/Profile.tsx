@@ -1,6 +1,3 @@
-// ============================================================
-// Profile — restrained music identity: square image · thin account type · rows.
-// ============================================================
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
@@ -98,8 +95,6 @@ export function ProfileScreen({ playlists, onOpenPlaylist }: ProfileScreenProps)
                   </span>
                 )}
               </div>
-              {/* Social counts only exist for a connected account; an anonymous
-                  profile shows no stat block rather than invented numbers. */}
               {model.social && (
                 <div className="mt-[30px] flex items-center gap-10">
                   <div>

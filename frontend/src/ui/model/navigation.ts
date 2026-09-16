@@ -1,16 +1,3 @@
-/**
- * Navigation information architecture — the XMB launcher tree.
- *
- * This is the view-model of "how a user relates to their music": a
- * capability-aware priority tree (see docs/core-architecture.md §11).
- *   L1 = bounded-context "worlds" (Now Playing · Discover · Library · You · Settings)
- *   L2 = each world's entries, in priority order (most-likely-wanted first)
- *
- * It lives in the model layer (not the XMB screen) because it describes the
- * domain's IA, not pixels: `buildWorlds` is a pure projection of catalog +
- * provider capabilities + session state into menu structure, independently
- * testable and free of React. The XMB screen consumes these types.
- */
 import { clampIndex } from "@shared/number";
 import type { CatalogAvailability } from "@contexts/catalog";
 
@@ -19,8 +6,6 @@ import type { IconName } from "@/infra/icons";
 import type { ShellScreenView } from "@/model/shell-screen";
 import type { LibrarySectionTab, ScreenData, VibeTrack } from "@/model/vibe";
 
-/** One XMB sub-item (a launcher tile under a category). Display text is named,
- *  not formatted: this projection is pure, so the XMB screen resolves it. */
 export type XmbItemModel = {
   key: string;
   label: LocalizedText;
@@ -32,7 +17,6 @@ export type XmbItemModel = {
   run?: () => void;
 };
 
-/** One XMB category column: an icon + a vertical list of items. */
 export type XmbCat = {
   id: string;
   icon: IconName;
@@ -40,27 +24,21 @@ export type XmbCat = {
   items: XmbItemModel[];
 };
 
-/** Session/data inputs the tree projects into menu structure. */
 export type NavContext = {
   catalog: ScreenData;
-  /** Active-source availability projected from its registered Catalog ports. */
   availability: CatalogAvailability;
   liked: ReadonlySet<string>;
   current?: VibeTrack;
   queueLength: number;
 };
 
-/** The run-handlers each tile is wired to (owned by the Shell navigator). */
 export type NavActions = {
-  /** Switch to a bare view (the within-launcher destinations). */
   goto: (view: ShellScreenView) => void;
   openSearch: () => void;
   openLibrary: (tab: LibrarySectionTab) => void;
   openLikedSongs: () => void;
 };
 
-/** The remembered row index per XMB category, keyed by the category's position
- *  in the tree — so a user returning to a column lands where they left it. */
 export type XmbRowMemory = Record<number, number>;
 
 export function xmbSelectedRow(rows: XmbRowMemory, categoryIndex: number): number {
@@ -137,18 +115,10 @@ export function xmbWheelNavigation({
   };
 }
 
-/**
- * Build the XMB navigation tree. Now Playing / Library / You / Settings are
- * local (always present); only Discover is provider-gated. Discover entries are
- * authored in priority order (most-likely-wanted first); Browse-by-facet has no
- * provider capability yet, so it is reserved (priority #2) but omitted until one
- * exists. Empty worlds drop out.
- */
 export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
   const { catalog, availability, liked, current, queueLength } = ctx;
   const { goto, openSearch, openLibrary, openLikedSongs } = actions;
 
-  // 2 · DISCOVER — Catalog (find music). Provider-capability gated.
   const discover: XmbItemModel[] = [];
   if (availability.personalized) {
     discover.push({
@@ -184,9 +154,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     });
   }
 
-  // The live track's own tile, present only while something is playing. Held as a
-  // typed list so the spread below keeps its element type (an inline conditional
-  // spread widens the whole array literal and loses it).
   const playerTile: XmbItemModel[] = current
     ? [
         {
@@ -203,7 +170,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     : [];
 
   const worlds: XmbCat[] = [
-    // 1 · NOW PLAYING — the live session: present (Player) · future (Up Next) · past (History).
     {
       id: "np",
       icon: "play",
@@ -229,14 +195,12 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
       ],
     },
-    // 2 · DISCOVER — Catalog (find music), provider-gated (built above).
     {
       id: "discover",
       icon: "compass",
       label: { key: "common.discover" },
       items: discover,
     },
-    // 3 · LIBRARY — the user's own world (local, never gated).
     {
       id: "library",
       icon: "stack",
@@ -280,7 +244,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
       ],
     },
-    // 4 · YOU — identity / taste (local).
     {
       id: "you",
       icon: "user",
@@ -306,7 +269,6 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
         },
       ],
     },
-    // 5 · SETTINGS — the tool (local).
     {
       id: "settings",
       icon: "gear",
@@ -333,6 +295,5 @@ export function buildWorlds(ctx: NavContext, actions: NavActions): XmbCat[] {
     },
   ];
 
-  // Never show an empty world (e.g. Discover when the provider supports none of its entries).
   return worlds.filter((w) => w.items.length > 0);
 }

@@ -1,7 +1,3 @@
-// ============================================================
-// Artist — atmospheric circular header + Top tracks · Albums · Similar, each as
-// list / grid / flow. Grids/lists are windowed; similar is a windowed rail.
-// ============================================================
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -62,8 +58,6 @@ export function ArtistScreen({
   const [tab, setTab] = useState<ArtistSectionTab>("top");
   const [view, setView] = useState<CollectionViewMode>("list");
   const [flowCenter, setFlowCenter] = useState(0);
-  // Recentre the flow per tab during render, not in an effect — an effect would
-  // paint one frame of the new tab still centered on the old index first.
   const [flowTab, setFlowTab] = useState(tab);
   if (flowTab !== tab) {
     setFlowTab(tab);
@@ -79,10 +73,6 @@ export function ArtistScreen({
       background="#0a0a0d"
       backdrop={{ image: artist.image, seed: artist.coverSeed, grad: artist.gradient }}
     >
-      {/* header — atmospheric circle: blurred backdrop + seeded colour wash +
-              a large circular portrait with a soft halo carry identity. The wash
-              stays full-bleed; the portrait/name ride the same centered column as
-              the track list below, so they line up on large screens. */}
       <div className="relative pb-8 pt-[88px]">
         <div
           aria-hidden
@@ -92,7 +82,6 @@ export function ArtistScreen({
           }}
         />
         <PageColumn className="relative z-[1] flex items-center gap-10">
-          {/* circular portrait + soft colour halo */}
           <div className="relative flex-none">
             <div
               aria-hidden
@@ -107,8 +96,6 @@ export function ArtistScreen({
               grad={artist.gradient}
               image={artist.image}
               images={artist.images}
-              // Morph anchor: opening from a round artist card flies the tile
-              // straight into this circle — a clean circle→circle morph.
               data-hero="1"
               style={{
                 position: "relative",
@@ -120,7 +107,6 @@ export function ArtistScreen({
               }}
             />
           </div>
-          {/* name + stats */}
           <div className="min-w-0 flex-1">
             <div className="line-clamp-2 text-[60px] font-extralight leading-[1.02] tracking-[0.01em] [overflow-wrap:anywhere]">
               {artist.name}
@@ -139,11 +125,6 @@ export function ArtistScreen({
               >
                 {model.playingArtistTrack ? <Icon.pause size={24} /> : <Icon.play size={24} />}
               </Button>
-              {/* No follow button: no provider exposes a follow capability, so
-                      the only honest options are to omit it or to fake a state.
-                      It used to render "Following" for every artist off a local
-                      useState(true) — a claim about the user's library that
-                      nothing backed. Restore it when a provider port exists. */}
               {statLabels.map((label) => (
                 <StatPill key={label}>{label}</StatPill>
               ))}
@@ -168,7 +149,6 @@ export function ArtistScreen({
         </PageColumn>
       </div>
 
-      {/* tabs + content */}
       <PageColumn className="pb-10 pt-[26px]">
         <div className="tabs mb-6 items-start">
           <ToggleGroup
@@ -255,7 +235,6 @@ export function ArtistScreen({
             </div>
           )}
           {tab === "similar" && (
-            // Wrapping grid (the original flex-wrap rail), windowed.
             <CardGrid
               count={similar.length}
               minColumnWidth={176}

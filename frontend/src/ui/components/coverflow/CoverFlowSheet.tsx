@@ -8,11 +8,6 @@ import { Sheet } from "@/components/Sheet";
 import type { FlowItem } from "@/model/derive";
 import type { VibeTrack } from "@/model/vibe";
 
-/**
- * The expanded in-place tracklist for the centered cover — a Base UI Dialog Sheet
- * (Escape / click-outside) sliding up from the carousel floor. Tinted from the
- * centered cover's palette.
- */
 export function CoverFlowSheet({
   open,
   onOpenChange,

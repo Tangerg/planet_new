@@ -22,11 +22,6 @@ export const SHELL_SCREEN_VIEWS = [
 
 export type ShellScreenView = (typeof SHELL_SCREEN_VIEWS)[number];
 
-/**
- * The XMB launcher — the navigation root. It is the one view the morph engine
- * collapses back to, so it is named once here rather than spelled as a literal
- * at each of the shell's launcher-boundary checks.
- */
 export const LAUNCHER_VIEW = "xmb" satisfies ShellScreenView;
 
 type DataBackedView = "detail" | "mv-detail" | "mv-theater";
@@ -39,11 +34,6 @@ export type ShellScreenRoute =
   | Readonly<{ kind: "mv-detail"; video: VibeMusicVideo }>
   | Readonly<{ kind: "mv-theater"; video: VibeMusicVideo }>;
 
-/**
- * Resolve a view into a renderable screen. Data-backed screens remain
- * unavailable until their navigation payload exists, preserving the resident
- * shell's existing skeleton/fallback behavior.
- */
 export function resolveShellScreen(
   view: ShellScreenView,
   detail: DetailTarget | null,

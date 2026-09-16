@@ -1,12 +1,5 @@
 import type { en } from "./en";
 
-// Simplified Chinese pack. Any key omitted here falls back to English via
-// i18next's fallbackLng. Adding a language = a sibling file of the same shape.
-//
-// `satisfies TranslationPack` lets zh omit keys (fallback) while still requiring
-// every key it *does* provide to be a real English key with a string value — so a
-// typo or a stale key is a compile error here, not a silently-English string at
-// runtime. English (en.ts) stays the source of truth for the key set.
 type TranslationPack<T> = {
   [K in keyof T]?: T[K] extends string ? string : TranslationPack<T[K]>;
 };

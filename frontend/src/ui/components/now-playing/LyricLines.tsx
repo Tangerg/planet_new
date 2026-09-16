@@ -21,15 +21,6 @@ export function activeLyricScrollTop(
   return scrollTop + (line.top - container.top) - container.height / 2 + line.height / 2;
 }
 
-/**
- * Timed lyric rendering plus active-line centering. The screen owns layout;
- * this component owns the lyric-reading behavior.
- *
- * React.memo: its LyricsPanel host re-renders on every progress tick, but the
- * active line only advances every few seconds. Memoizing means the whole lyric
- * list (up to a few hundred lines) is re-laid only when `active` actually
- * changes — not several times a second.
- */
 export const LyricLines = React.memo(function LyricLines({ lines, active, scrollRef }: Props) {
   const accent = useAccent();
   useEffect(() => {
@@ -39,7 +30,6 @@ export const LyricLines = React.memo(function LyricLines({ lines, active, scroll
     const elRect = el.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const top = activeLyricScrollTop(container.scrollTop, elRect, containerRect);
-    // Interrupt any in-flight smooth scroll before starting a new one.
     stopSmoothScroll(container);
     container.scrollTo({ top, behavior: "smooth" });
     return () => stopSmoothScroll(container);

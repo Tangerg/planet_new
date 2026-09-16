@@ -8,13 +8,6 @@ import {
 } from "@/model/navigation";
 import { useEventCallback } from "@/hooks/useEventCallback";
 
-/**
- * Window-level keyboard + trackpad driving for the XMB launcher: arrows and
- * horizontal/vertical wheel move the category / item cursor, Enter opens the
- * active item (anchored to its `[data-xmb-active-art]` node so the morph engine
- * measures the right rect). The listeners install once (stable handlers) yet
- * always act on the latest cursor state — see useEventCallback.
- */
 export function useXmbKeyboard(params: {
   it: number;
   item: XmbItemModel | undefined;
@@ -44,7 +37,6 @@ export function useXmbKeyboard(params: {
     applyIntent(intent);
   });
 
-  // trackpad / wheel: horizontal swipe changes category, vertical changes item
   const onWheel = useEventCallback((e: WheelEvent) => {
     const now = Date.now();
     const navigation = xmbWheelNavigation({

@@ -12,11 +12,6 @@ import {
 } from "./geometry";
 import { XmbCategory } from "./XmbCategory";
 
-/**
- * The horizontal category axis: the active category is centred at the anchor,
- * neighbours arc away along a cosine curve. y + rotate ride Motion (compositor)
- * instead of animating `top` (layout) — same arc, no per-frame reflow.
- */
 export function XmbCategoryRail({
   cats,
   c,

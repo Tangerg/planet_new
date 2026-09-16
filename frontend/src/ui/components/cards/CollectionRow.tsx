@@ -1,8 +1,3 @@
-// ============================================================
-// CollectionRow — compact list row for a collection (cover + name/sub + meta),
-// the high-density alternative to the card grid. Opening flies the morph from
-// the small cover (`.clrt`).
-// ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
@@ -13,8 +8,6 @@ import { Button } from "@/components/controls/Button";
 import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
 
-/** Rendered height of one `.crow`. Windowed lists estimate with it, so it must
- *  track the row metrics in cards.css. */
 export const COLLECTION_ROW_HEIGHT = 66;
 
 type CollectionRowProps<T extends CardItem> = CardActivation<T> & {
@@ -52,11 +45,6 @@ function CollectionRowInner<T extends CardItem>({
             style={{ width: 48, height: 48, borderRadius: round ? "50%" : 0 }}
           />
         </PressTarget>
-        {/* artists (round) are people, not playable — no cover play fab.
-            Mounted unconditionally and revealed by the row's :hover rule; gating
-            it on a hover STATE re-rendered the row on every cursor crossing. It
-            covers the artwork, so it stays pointer-transparent until revealed —
-            otherwise it would swallow the clicks meant to open the collection. */}
         {onPlay && !round && playable && (
           <Button
             onClick={(e) => {
@@ -80,8 +68,4 @@ function CollectionRowInner<T extends CardItem>({
   );
 }
 
-// React.memo: leaf of the windowed collection list; VList re-invokes renderItem
-// for all visible rows on each scroll tick. The stable per-item callbacks the
-// CardActivation contract mandates let the shallow compare bail so only entering
-// rows render. The cast preserves the generic call signature that React.memo erases.
 export const CollectionRow = React.memo(CollectionRowInner) as typeof CollectionRowInner;

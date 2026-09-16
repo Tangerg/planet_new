@@ -1,8 +1,3 @@
-// ============================================================
-// LoginSheet — provider login as a bottom sheet. For NCM it shows a QR to scan
-// with the mobile app and polls until authorized; the credential is persisted
-// by the provider, so on success we just mark logged-in and close.
-// ============================================================
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -32,7 +27,6 @@ export function LoginSheet({
   onClose: () => void;
   beginLogin: () => Promise<LoginFlow>;
   markLoggedIn: () => void;
-  /** The source being logged into, already resolved — the sheet stays a leaf. */
   sourceName: string;
 }) {
   const { t } = useTranslation();
@@ -40,7 +34,6 @@ export function LoginSheet({
   const [flow, setFlow] = useState<LoginFlow | null>(null);
   const [status, setStatus] = useState<LoginViewStatus>("pending");
 
-  // Closing resets the sheet; the effect owns only the login round-trip.
   const [openedFor, setOpenedFor] = useState(open);
   if (openedFor !== open) {
     setOpenedFor(open);
@@ -74,7 +67,7 @@ export function LoginSheet({
               onClose();
               return;
             }
-            if (next.state === "expired") return; // stop; user reopens to retry
+            if (next.state === "expired") return;
             timer = setTimeout(tick, 2000);
           } catch (error) {
             if (!alive) return;

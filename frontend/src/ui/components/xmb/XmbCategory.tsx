@@ -23,9 +23,6 @@ export function XmbCategory({
   const { t } = useTranslation();
   const I = Icon[cat.icon];
   const sz = active ? 92 : 58;
-  // Breathing glow on the active icon. Motion can't interpolate a box-shadow
-  // whose colour is `var(--accent)`, so drive a 0→1→0 value and template the
-  // shadow from it — only the numbers tween, the accent var stays literal.
   const glow = useMotionValue(0);
   useEffect(() => {
     if (!active) return;
@@ -74,11 +71,6 @@ export function XmbCategory({
           border: active ? "none" : "1px solid rgba(255,255,255,.14)",
           backdropFilter: active ? "none" : "blur(6px)",
           boxShadow: active ? catShadow : "none",
-          // box-shadow is Motion-driven (catShadow); transition the rest only, or
-          // the CSS transition would fight the per-frame shadow updates.
-          // backdrop-filter is deliberately NOT animated: tweening blur re-samples
-          // and re-blurs the area behind every icon each frame (no GPU path) — the
-          // frost just toggles, masked by the animated background/colour swap.
           transition: `width .38s ${XMB_EASE}, height .38s ${XMB_EASE}, color .38s ${XMB_EASE}, background .38s ${XMB_EASE}, border .38s ${XMB_EASE}`,
         }}
       >

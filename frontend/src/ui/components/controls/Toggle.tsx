@@ -7,12 +7,6 @@ export type ToggleProps = React.ComponentPropsWithoutRef<typeof BaseToggle> & {
   ref?: React.Ref<HTMLButtonElement>;
 };
 
-/**
- * On/off control (shuffle · repeat · like). Base UI Toggle adds `aria-pressed` +
- * `data-pressed` over a native button; `.btn` supplies the chrome reset shared
- * with <Button>. The per-state colour stays inline (driven by the live accent
- * prop), so no data-attribute CSS is coupled here.
- */
 export function Toggle({ ref, className, ...rest }: ToggleProps) {
   return <BaseToggle ref={ref} className={cn("btn", className)} {...rest} />;
 }

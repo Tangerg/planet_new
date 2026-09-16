@@ -1,8 +1,3 @@
-// ============================================================
-// CommentList — the shared track-comment list (avatar · name · relative time ·
-// content · like count), with an honest empty fallback. Used by both the
-// Comments screen and Now Playing's comments mode.
-// ============================================================
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VibeComment } from "@/model/vibe";
@@ -15,8 +10,6 @@ import { relativeTime } from "@shared/time";
 
 export function CommentList({ comments }: { comments: VibeComment[] }) {
   const { t, i18n } = useTranslation();
-  // One clock read at mount: ages stay consistent and re-rendering cannot
-  // shift them.
   const [now] = useState(() => Date.now());
   if (!comments.length) return <Empty className="py-[50px]">{t("comments.empty")}</Empty>;
   return (

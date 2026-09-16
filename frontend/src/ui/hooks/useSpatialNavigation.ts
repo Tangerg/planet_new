@@ -1,8 +1,3 @@
-/**
- * Arrow-key spatial navigation inside non-XMB screens. Picks the nearest
- * focusable element in the pressed direction by geometry. Extracted from
- * Shell.tsx.
- */
 import { useEffect } from "react";
 import type { RefObject } from "react";
 

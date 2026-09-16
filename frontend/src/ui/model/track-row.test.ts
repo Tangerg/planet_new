@@ -71,7 +71,6 @@ describe("track row model", () => {
         index: 1,
       }).badges,
     ).toEqual([
-      // Provider content and the tier mark stay verbatim; only our own copy is keyed.
       { kind: "version", label: { text: "live" } },
       { kind: "subscription", label: { text: "VIP" } },
       { kind: "unavailable", label: { key: "player.unavailable" } },

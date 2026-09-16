@@ -11,25 +11,13 @@ type Props = {
   effect: VisualEffect;
   image?: string;
   playing: boolean;
-  /** Keep animating while paused (immersive stage). The player bar passes false so
-   *  it settles to a static frame and stops the rAF loop when nothing is playing. */
   animateWhilePaused?: boolean;
   className?: string;
   style?: CSSProperties;
 };
 
-const MAX_DT = 0.05; // clamp dt so a tab-switch stall doesn't fling the field
+const MAX_DT = 0.05;
 
-/**
- * The shared visualiser host — the render-side runtime around the @shared/audio
- * engine. It samples the kernel analyser (settings from the effect's tuning), feeds
- * the bytes to a per-effect AudioEngine (which owns all frame/AGC/beat state), and
- * drives the active effect — the effect owns its 2D/WebGL context AND fetches its own
- * cover art / material (the engine stays audio-only). Both the player bar and the
- * fullscreen stage mount this; they differ only in the effect and animate-while-paused.
- * Volatile inputs are read through refs so image/accent/play changes don't restart the
- * loop; the effect id (via the canvas key) is the only thing that rebuilds the instance.
- */
 export function VisualizerCanvas({
   effect,
   image,
@@ -57,8 +45,6 @@ export function VisualizerCanvas({
   const animatePausedRef = useRef(animateWhilePaused);
   const kickRef = useRef<() => void>(() => {});
 
-  // The mount-only draw loop reads these through refs. Written after commit,
-  // not during render: rAF means it lags by a frame at worst.
   useEffect(() => {
     samplerRef.current = sampler;
     imageRef.current = image;
@@ -117,8 +103,6 @@ export function VisualizerCanvas({
         accent: accentRef.current,
       });
 
-      // Keep spinning while playing (or when the surface wants idle motion); otherwise
-      // let the last frame stand and stop — the [playing] effect re-kicks on resume.
       if (playingRef.current || animatePausedRef.current) raf = requestAnimationFrame(draw);
       else running = false;
     };
@@ -141,7 +125,6 @@ export function VisualizerCanvas({
     };
   }, [effect]);
 
-  // Re-arm the loop when it should animate again (playback resumes / mode changes).
   useEffect(() => {
     if (playing || animateWhilePaused) kickRef.current();
   }, [playing, animateWhilePaused]);

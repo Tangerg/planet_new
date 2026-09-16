@@ -11,7 +11,6 @@ export type XmbItemVisualState = Readonly<{
   titleMaxWidth: number;
 }>;
 
-/** Pure visual projection for one XMB row at a signed cursor offset. */
 export function xmbItemVisualState(active: boolean, offset: number): XmbItemVisualState {
   const distance = Math.abs(offset);
   const previous = offset < 0;

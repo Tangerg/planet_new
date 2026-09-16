@@ -1,10 +1,3 @@
-// ============================================================
-// Sonance Vibe — UI primitives: art + formatting helpers (icons: @/infra/icons)
-// Ported verbatim from example/music-player/vibe/core.jsx.
-// Only adaptation: <Art> renders a real <img> cover when given an
-// `image` URL (gradient art is the fallback / placeholder), replacing
-// the mockup-only <image-slot> drag-drop web component.
-// ============================================================
 import React from "react";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -13,7 +6,6 @@ import "./primitives.css";
 
 const EQUALIZER_BARS = [0, 1, 2, 3];
 
-/* animated equalizer mark (top-right tool in references) */
 export function Equalizer({
   playing = true,
   color = "currentColor",
@@ -26,8 +18,6 @@ export function Equalizer({
   return (
     <span className="inline-flex items-end gap-0.5" style={{ height: size, width: size }}>
       {EQUALIZER_BARS.map((i) => (
-        // Full-height bar scaled from the bottom — scaleY is GPU-composited, so it
-        // doesn't thrash layout the way the old `height` keyframe did.
         <motion.span
           key={i}
           className="h-full w-[2.5px] origin-bottom rounded-[2px]"
@@ -45,7 +35,6 @@ export function Equalizer({
   );
 }
 
-/* ---- generative cover art (copyright-safe, editorial) ---- */
 const ART_PAIRS: [string, string][] = [
   ["#1b1033", "#ff2188"],
   ["#06222b", "#19d3c5"],
@@ -79,22 +68,12 @@ export function artBg(seed = 0, grad?: string[]): string {
   );
 }
 
-/**
- * The cover layer that fills its box. `<Art>` paints it, and so does every
- * surface that has to build its own box instead — the rotating now-playing
- * disc, a cover-flow card and its mirror, an XMB tile. They render it
- * identically, so the markup and the decode hints live here rather than being
- * re-typed (and drifting) at each one.
- */
 export function CoverFill({
   src,
   lazy = false,
   className = "",
 }: {
   src?: string;
-  /** Defer the fetch until the box nears the viewport. ON for covers in long
-   *  lists and grids; OFF for art that is visible the moment it mounts, where
-   *  deferring makes the very animation it rides wait on a fetch. */
   lazy?: boolean;
   className?: string;
 }) {
@@ -105,30 +84,19 @@ export function CoverFill({
       alt=""
       draggable={false}
       loading={lazy ? "lazy" : undefined}
-      // Decode off the main thread so a grid of covers can't land as one long
-      // blocking decode.
       decoding="async"
       className={"absolute inset-0 h-full w-full object-cover " + className}
     />
   );
 }
 
-/* Art surface: gradient + grain. Renders a real cover <img> when an
-   `image` URL is given (gradient stays behind as fallback / while loading). */
 export type ArtProps = React.HTMLAttributes<HTMLDivElement> & {
   seed?: number;
   grad?: string[];
   image?: string;
-  /** Size variants (largest-first). When given, the one matching this box's
-   *  render width is chosen — small thumbs fetch small files, heroes large. */
   images?: Image[];
-  /** Render width in CSS px for image selection, when the box is sized by a CSS
-   *  class rather than an inline numeric width (cards, tiles). */
   px?: number;
   glow?: string;
-  /** Film-grain overlay (the `.grain::before` mix-blend layer). Default on; turn
-   *  OFF for fast-animating surfaces (e.g. CoverFlow) where ~N moving mix-blend
-   *  layers re-blend against the backdrop every frame and drop frames. */
   grain?: boolean;
 };
 
@@ -146,10 +114,6 @@ export function Art({
   ...rest
 }: ArtProps) {
   const bg = artBg(seed, grad);
-  // Resolve the cover: pick the variant matching this box. The render width is
-  // `px` (for CSS-sized boxes) or an inline numeric style.width; scale by DPR
-  // (capped at 2) so retina is crisp without over-fetching. Unknown width
-  // (%/full-bleed) takes the largest.
   const dpr = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
   const renderW = px ?? (typeof style.width === "number" ? style.width : undefined);
   const target = renderW != null ? renderW * dpr : "large";
@@ -158,19 +122,9 @@ export function Art({
     <div
       className={(grain ? "grain " : "") + className}
       {...rest}
-      // position/overflow stay INLINE (not utilities) so a consumer can flip
-      // position to absolute via its own style spread (e.g. full-bleed bg / hero
-      // covers) — a `position` utility here would tie with the consumer's and the
-      // winner would hinge on Tailwind's emission order.
       style={{ position: "relative", overflow: "hidden", background: bg, ...style }}
     >
-      {/* Deferred: covers in long lists/grids no longer load+decode all at once.
-          In-viewport art (heroes, the morph tile) is already near the viewport,
-          so transitions and the gradient→image fill are unaffected. */}
       <CoverFill src={src} lazy className="z-0" />
-      {/* "stage-light" glow is for the GRADIENT placeholder only. Over a real
-         cover it tints the photo (a coloured film that reads as haze), so skip
-         it once an image is present. */}
       {glow && !src && (
         <div
           className="pointer-events-none absolute inset-0 z-[2]"
@@ -184,22 +138,6 @@ export function Art({
   );
 }
 
-/**
- * Full-page background derived from a hero cover: a heavily-blurred copy of the
- * artwork supplies the real hue, and a top→bottom gradient darkens it into the
- * base across the WHOLE height (Spotify-like, but not just the top band). Render
- * it as the first child of a `position: relative` page wrapper, with the
- * scrolling content above it. Falls back to the seeded gradient with no cover.
- *
- * Atmosphere comes from sampling only a SMALL region of the artwork: the image
- * is scaled up hard (~2.4×) so cover-crop keeps just the centre. Blur is kept
- * moderate ON PURPOSE — too much (>60px) averages every hue into one flat wash
- * ("the whole page is one colour"); a lighter blur preserves the image's colour
- * structure so a vivid cover reads as real variation across the page, while
- * still abstracting any face into soft shapes. Opacity + saturation are pushed
- * so it actually reads; the scrim stays light at the top (colour breathes behind
- * the hero) and resolves to the solid base by the bottom for content legibility.
- */
 export function HeroBackdrop({
   image,
   seed = 0,
@@ -209,14 +147,8 @@ export function HeroBackdrop({
   image?: string;
   seed?: number;
   grad?: string[];
-  /** Top→bottom overlay; override to tune how far the colour reaches. */
   scrim?: string;
 }) {
-  // Two layers sample different regions of the same cover and drift in opposite
-  // directions (Motion) so the hues slowly cross — a living ambient wash, not a
-  // flat smear. The heavy blur / opacity / object-position stay static in CSS
-  // (.herobg*); only the GPU-composited transform animates. Reduced-motion holds
-  // each layer at a fixed scale (no drift).
   const reduce = useReducedMotion();
   const layer = (which: "a" | "b") => {
     const cls = `herobg-layer herobg-${which}`;

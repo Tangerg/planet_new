@@ -39,9 +39,6 @@ type Props = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
-// Hoisted so the defaults are stable references: a `= []` default is a fresh
-// array per render, which would fail this component's own memo comparison the
-// moment a caller omits the prop.
 const NO_COMMENTS: VibeComment[] = [];
 const NO_QUEUE: VibeTrack[] = [];
 
@@ -89,19 +86,16 @@ export const NowPlaying = React.memo(function NowPlaying({
       className="relative h-full overflow-hidden bg-[#08080b]"
       {...touchHandlers}
     >
-      {/* enter the fullscreen visualiser stage */}
       {onOpenStage && (
         <TopEdgeControl slot={1} onClick={onOpenStage} label={t("common.visualizer")}>
           <Icon.bars size={20} />
         </TopEdgeControl>
       )}
 
-      {/* close */}
       <TopEdgeControl onClick={onClose} label={t("common.close")}>
         <Icon.close size={20} />
       </TopEdgeControl>
 
-      {/* full-bleed hero: one atmospheric stage, not a split functional panel. */}
       <Art
         seed={trackModel.coverSeed}
         grad={trackModel.gradient}
@@ -155,7 +149,6 @@ export const NowPlaying = React.memo(function NowPlaying({
         </div>
       </Art>
 
-      {/* rotating disc — centered in cover mode, glides into the left half for lyrics / comments */}
       <div
         aria-hidden
         style={{
@@ -188,7 +181,6 @@ export const NowPlaying = React.memo(function NowPlaying({
           transition={{ duration: 26, ease: "linear", repeat: Infinity }}
         >
           <CoverFill src={trackModel.image} />
-          {/* vinyl centre — subtle spindle detail */}
           <div
             aria-hidden
             className="absolute left-1/2 top-1/2 -ml-[30px] -mt-[30px] h-[60px] w-[60px] rounded-full"
@@ -205,7 +197,6 @@ export const NowPlaying = React.memo(function NowPlaying({
         </motion.div>
       </div>
 
-      {/* lyrics/comments reading layer: transparent over the same image stage. */}
       <div
         aria-hidden={!panelOpen}
         className="absolute right-0 top-0 z-[5] h-full w-[56%] overflow-hidden"

@@ -1,8 +1,3 @@
-// ============================================================
-// TrackRow — the dense track list row (art + meta + inline like + duration),
-// with optional chart rank and multi-select. The shared list-row used by
-// Playlist/Album detail, Queue, History, Search and Library songs.
-// ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
@@ -31,9 +26,6 @@ type TrackRowProps = TrackListBindings & {
   onMenuPlay?: (track: VibeTrack) => void;
 };
 
-/** Rendered height of one `.trow` (art 44 + 11px padding each side). Windowed
- *  lists estimate with it, so it must track the row metrics in cards.css —
- *  a stale value spaces the virtualized rows wrong. */
 export const TRACK_ROW_HEIGHT = 66;
 
 const BADGE_CLASS =
@@ -48,7 +40,6 @@ function TrackLeading({
   leading: TrackRowLeading;
   color: string;
   muted: string;
-  /** A numbered playable row swaps its index for a play glyph under the cursor. */
   playable: boolean;
 }) {
   const accent = useAccent();
@@ -70,8 +61,6 @@ function TrackLeading({
           <span className="trow-index mlabel text-[12px]" style={{ color: muted }}>
             {leading.value}
           </span>
-          {/* Both glyphs are mounted and CSS swaps them on :hover — the cursor
-              must not be a React state change on a list leaf. */}
           {playable && (
             <span className="trow-play" style={{ color }}>
               <Icon.play size={15} />
@@ -111,17 +100,6 @@ function TrackBadges({ badges, muted }: { badges: readonly TrackRowBadge[]; mute
   );
 }
 
-// React.memo: this row is the leaf of every virtualized track list, so on each
-// scroll windowing tick the list re-invokes renderItem for all visible rows.
-// Memoizing means only rows whose props actually changed re-render (the row
-// entering the window, or the one whose current/selected/liked flipped) instead
-// of the whole visible set — the difference between a jittery and a 60fps scroll.
-// All call sites pass stable references (onPlay/toggleLike/current/liked/accent)
-// or primitives (index/rank/selected), so the default shallow compare bails.
-//
-// Hover is CSS (`.trow` in cards.css), NOT state: dragging the cursor down a
-// list would otherwise render two rows per row crossed, each re-running the row
-// model — the one thing the memo above cannot save us from.
 export const TrackRow = React.memo(function TrackRow({
   track,
   index,
@@ -150,8 +128,6 @@ export const TrackRow = React.memo(function TrackRow({
     e: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>,
   ) => {
     if (model.unavailable) return;
-    // Modifier-click multi-selects; keyboard Enter/Space always plays. `"button"`
-    // is present on a MouseEvent but not a KeyboardEvent, so it narrows the union.
     if ("button" in e && onSelect && (e.metaKey || e.ctrlKey || e.shiftKey)) {
       onSelect(track, e);
       return;
@@ -169,9 +145,6 @@ export const TrackRow = React.memo(function TrackRow({
         trackMenu(e, track, onMenuPlay ? { onPlay: onMenuPlay } : undefined)
       }
       className={cn("trow", !dark && "on-light", model.unavailable && "is-unavailable")}
-      // Only the SELECTED surface is inline. That's a data fact, not a pointer
-      // state, and an inline background outranks any rule — which is exactly the
-      // precedence we want (selection reads through hover).
       style={
         selected ? { background: `${accent}22`, boxShadow: `inset 2px 0 0 ${accent}` } : undefined
       }
@@ -231,8 +204,6 @@ export const TrackRow = React.memo(function TrackRow({
         }}
         aria-label={t("a11y.like")}
         className="trow-like p-1"
-        // Liked is a fact, so it colours inline; the unliked transparent→visible
-        // reveal is the row's :hover rule.
         style={isLiked ? { color: accent } : undefined}
       >
         <Icon.heart size={17} filled={isLiked} />

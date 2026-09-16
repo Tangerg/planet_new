@@ -10,13 +10,6 @@ import { TrackCard, TRACK_CARD_ROW_HEIGHT } from "@/components/cards/TrackCard";
 import { CardGrid } from "@/components/layout/CardGrid";
 import { VList } from "@/components/layout/VList";
 
-/**
- * A track collection rendered as list / grid / flow — the shared middle of the
- * Detail and Artist screens. A dumb renderer: sort order, multi-select, and
- * chart rank stay in the owning screen and arrive as optional props, so Detail
- * gets its richer list while Artist passes none of them. The caller keeps the
- * crossfade (XFade) around this, since its keying differs per screen.
- */
 export function TrackCollectionView({
   view,
   tracks,
@@ -30,9 +23,7 @@ export function TrackCollectionView({
   ...trackList
 }: TrackListBindings & {
   view: CollectionViewMode;
-  /** Grid + flow source, in natural order. */
   tracks: VibeTrack[];
-  /** List source (Detail passes its sorted rows); defaults to `tracks` in order. */
   listRows?: { t: VibeTrack; i: number }[];
   flowCenter: number;
   setFlowCenter: (n: number | ((c: number) => number)) => void;

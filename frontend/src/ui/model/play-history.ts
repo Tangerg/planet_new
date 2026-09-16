@@ -12,18 +12,11 @@ export function appendPlayHistoryTrack(
   history: readonly VibeTrack[],
   track: VibeTrack | undefined,
 ): readonly VibeTrack[] {
-  // Return the same reference on a no-op so a setState updater bails the re-render.
   if (!track || !vibeTrackKey(track)) return history;
   if (sameVibeTrack(history[history.length - 1], track)) return history;
   return [...history, track];
 }
 
-/**
- * Group play history into Today / This week / All-time. "Today" is this
- * session's plays (newest first, consecutive dupes dropped); "week" and
- * "earlier" come from the account's real play record. Each track appears in
- * only the earliest bucket it qualifies for.
- */
 export function groupPlayHistory(
   session: readonly VibeTrack[],
   week: readonly VibeTrack[],

@@ -72,9 +72,6 @@ export function readTrackDragData(
   }
 }
 
-/** The synthetic Liked Songs collection is app-authored, so its text is
- *  translated by the caller and handed in — a collection flows on into detail
- *  screens and morph targets, which read plain display strings. */
 export type LikedSongsText = Readonly<{ name: string; owner: string; description: string }>;
 
 export function syntheticLikedSongsCollection(

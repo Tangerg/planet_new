@@ -1,21 +1,9 @@
-// ============================================================
-// CardRail — windowed horizontal rail (the `.hrail` scroller). Long recommend /
-// search rails (dozens of cards) only mount the visible slice plus overscan.
-//
-// Why not the absolute-positioned virtualizer used for grids/lists: rail cards
-// keep their natural flex flow so the hover-lift overflow and the morph rect
-// measurement behave exactly as a plain rail. With a fixed item stride (card
-// width + gap) the window is just an arithmetic slice, and lead/tail flex
-// spacers preserve the full scroll width and scrollbar.
-// ============================================================
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 type CardRailProps = {
   count: number;
-  /** Fixed card width in px (rail cards are uniform, e.g. `.mcard` = 176). */
   itemWidth: number;
-  /** Gap between cards — must equal the `.hrail` flex gap (18). */
   gap?: number;
   overscan?: number;
   renderItem: (index: number) => React.ReactNode;
@@ -57,11 +45,10 @@ export function CardRail({
     };
   }, [count, stride, overscan]);
 
-  // Clamp to the current count (it can shrink between renders).
   const start = Math.min(range.start, Math.max(0, count));
   const end = Math.min(range.end, count);
-  const lead = start * stride - gap; // width of the hidden head items + their inner gaps
-  const tail = (count - end) * stride - gap; // …and the hidden tail items
+  const lead = start * stride - gap;
+  const tail = (count - end) * stride - gap;
 
   return (
     <div ref={ref} className={cn("hrail", className)} style={style}>

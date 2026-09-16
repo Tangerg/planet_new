@@ -1,6 +1,3 @@
-// ============================================================
-// ForYou — rich editorial home: hero · quick tiles · card rails.
-// ============================================================
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -34,7 +31,6 @@ import { useAccent } from "@/hooks/accent";
 
 type ForYouScreenProps = {
   data: ScreenData;
-  /** The day's recommendations ("每日推荐"); when present, headlines the hero. */
   daily: VibeTrack[];
   onPlay: (track: VibeTrack) => void;
   onOpenPlaylist: (p: VibeCollection) => void;
@@ -94,7 +90,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
     </div>
   );
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
-  // Stable so the memoized rail/tile cards don't re-render when the chip toggles.
   const openTile = useCallback(
     (tile: VibeCollection) =>
       forYouCollectionRoute(tile) === "album" ? onOpenAlbum(tile) : onOpenPlaylist(tile),
@@ -120,7 +115,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
       backdrop={{ image: featured.image, seed: featured.coverSeed, grad: featured.gradient }}
     >
       <PageColumn className="pb-[50px] pt-[60px]">
-        {/* greeting + chips */}
         {header}
 
         <HeroBanner
@@ -129,8 +123,6 @@ export const ForYouScreen = React.memo(function ForYouScreen({
           onPlay={canPlayCollection(featured) ? () => playCollection(featured) : undefined}
         />
 
-        {/* quick tiles — grid-cols-4 is repeat(4, minmax(0,1fr)): a long tile name
-            must not blow its track past its share and push the grid past the viewport. */}
         <div className="mb-[44px] grid grid-cols-4 gap-2.5">
           {tiles.map((tile) => {
             const activate = (e: React.MouseEvent | React.KeyboardEvent) =>

@@ -1,23 +1,12 @@
-// ============================================================
-// useMorphOpen — converges the "measure a card's art rect, then fly the
-// shared-element morph to the opened screen" gesture that every card/row/tile
-// repeated inline. The morph engine itself (@/infra/morph) is untouched; this is
-// just the call-site helper that measures the origin rect and invokes it.
-// ============================================================
 import { useCallback } from "react";
 import { useMorph, type MorphSource } from "@/infra/morph";
 
 export type MorphOpenOptions = Omit<MorphSource, "radius" | "run"> & {
-  /** Circular origin (artists) → the flying tile collapses as a circle. */
   round?: boolean;
-  /** Selector for the art element inside the clicked container to measure as the
-   *  morph origin; falls back to the container itself when absent/not found. */
   artSelector?: string;
-  /** Navigation to run once the morph has captured the origin rect. */
   run: () => void;
 };
 
-/** Returns `open(event, opts)` — measures the origin rect and starts the morph. */
 export function useMorphOpen() {
   const morph = useMorph();
   return useCallback(

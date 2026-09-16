@@ -6,10 +6,6 @@ import type { VibeTrack } from "./vibe";
 
 export type NowPlayingMode = "cover" | "lyrics" | "comments";
 
-/** The modes Now Playing can be *opened* in — the ones Settings offers. Derived
- *  from NowPlayingMode rather than spelled again, so the setting and the screen
- *  can never drift into two vocabularies for one fact (they had: the setting
- *  held "COVER"/"LYRICS" and the Shell translated the casing by hand). */
 export type NowPlayingOpenMode = Extract<NowPlayingMode, "cover" | "lyrics">;
 
 export const NOW_PLAYING_OPEN_MODES = [
@@ -46,7 +42,6 @@ export function toggleNowPlayingLyricsMode(mode: NowPlayingMode): NowPlayingMode
   return mode === "lyrics" ? "cover" : "lyrics";
 }
 
-/** Writing/production credits, in display order; empty when the provider gave none. */
 export function nowPlayingCredits(credits: VibeTrack["credits"] | undefined): LocalizedText[] {
   return [
     ...(credits?.music
@@ -73,22 +68,12 @@ export function nowPlayingTrackModel(track: VibeTrack | undefined): NowPlayingTr
   };
 }
 
-/** The lyric lines to render, or a single "no lyrics" line when there are none.
- *  The fallback text is required: there is no English default to fall back to. */
 export function lyricLinesOrFallback(lines: readonly Lyric[], fallback: string): Lyric[] {
   return lines.length ? [...lines] : [{ content: fallback, duration: 0 }];
 }
 
-/** The axis a Now Playing swipe resolves to (null = below the drag threshold). */
 export type SwipeAxis = "next" | "prev" | "up" | "down" | null;
 
-/**
- * Map a swipe delta to a navigation axis. A strictly-dominant horizontal swipe
- * skips tracks (left = next, right = prev); otherwise it's vertical — up opens
- * lyrics, down opens the queue (exact-magnitude ties fall to vertical/down). The
- * screen decides what "up" means against the current queue state — this is only
- * the direction, kept pure so the gesture math is testable on its own.
- */
 export function swipeAction(dx: number, dy: number, threshold = 40): SwipeAxis {
   const ax = Math.abs(dx);
   const ay = Math.abs(dy);

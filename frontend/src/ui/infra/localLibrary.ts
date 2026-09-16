@@ -8,18 +8,6 @@ import {
 } from "@contexts/local-library";
 import { isDesktopShell } from "@shared/desktop";
 
-/**
- * Desktop-shell adapter for the on-device music library — the Settings screen's
- * folder-scan action. Sits alongside `wails.ts` (window controls): both are the
- * UI's thin, undefined-safe wrappers over the Wails Go bridge for shell-level
- * actions, kept out of the Engine facade (which owns kernel/provider data, not
- * OS actions like native dialogs).
- */
-
-/**
- * Open a native folder picker and index it into the on-device library. Resolves
- * to an explicit outcome, including cancellation and bridge unavailability.
- */
 export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
   if (!isDesktopShell()) return { status: LocalLibraryScanStatus.unavailable };
   let result;
@@ -38,8 +26,6 @@ export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
     throw new Error(`Unknown local-library scan status: ${result.status}`);
   }
   return {
-    // The generated wire enum and the context's status share their string values,
-    // but they are separate contracts — translate rather than pass through.
     status:
       result.status === ScanStatus.ScanComplete
         ? LocalLibraryScanStatus.complete
@@ -52,7 +38,6 @@ export async function scanLocalFolder(): Promise<LocalLibraryScanOutcome> {
   } satisfies LocalLibraryScanResult;
 }
 
-/** Resolve a CORS-clean loopback URL for analysis-only media reads. */
 export async function localLibraryStreamURL(url: string): Promise<string | undefined> {
   if (!isDesktopShell()) return undefined;
   return (await Library.StreamURL(url)) || undefined;

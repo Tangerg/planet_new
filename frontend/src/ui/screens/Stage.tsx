@@ -19,12 +19,6 @@ type Props = {
   onClose: () => void;
 };
 
-/**
- * Fullscreen visualisation stage. A dedicated immersive view (like Now Playing /
- * MV theater): a full-bleed reactive canvas with a switchable effect. The effect
- * choice is local, transient screen state — it isn't part of navigation history, so
- * Shell doesn't own it.
- */
 export function Stage({ track, playing, onClose }: Props) {
   const { t } = useTranslation();
   const [effectId, setEffectId] = useState(DEFAULT_EFFECT_ID);

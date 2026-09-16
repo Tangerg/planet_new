@@ -19,10 +19,9 @@ import (
 	"github.com/Tangerg/planet_new/backend/domain"
 )
 
-// Connections parked in the process-global default transport outlive the test
-// that opened them, and one the client never sent a request on reads as
-// StateNew to the server (golang/go#21204), stalling the drain in
-// startTestServer. One connection per response keeps shutdown deterministic.
+// Not http.DefaultClient: connections it parks outlive the test that opened
+// them, and one never sent a request on reads as StateNew to the server
+// (golang/go#21204), stalling startTestServer's bounded drain.
 var testClient = &http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
 
 // streamURL builds the loopback /stream proxy URL for a remote source, mirroring

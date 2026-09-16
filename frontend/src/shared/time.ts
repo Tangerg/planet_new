@@ -30,12 +30,7 @@ export function relativeTime(at: Duration, now: Duration = Date.now()): Relative
   return { unit: "date", at };
 }
 
-/**
- * Format a duration.
- * @param duration length to format, in milliseconds (floored)
- * @param units granularity steps; only Hour, Minute, Second are accepted
- * @return a "[h]:[m]:[s]" string; the number of parts depends on the units passed
- */
+/** `units` accepts only Hour, Minute and Second; one output part per unit. */
 export function formatDuration(duration: Duration, units: Duration[]): string {
   duration = Math.max(duration, 0);
   return units

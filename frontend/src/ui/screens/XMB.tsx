@@ -1,13 +1,3 @@
-// ============================================================
-// XMB — XrossMediaBar launcher (PSP-style cross navigation)
-// Horizontal categories × vertical items, keyboard + click driven.
-//
-// This screen is the assembler: it owns the cursor state (active category +
-// remembered row per category) and wires the keyboard/wheel driving, then lays
-// out the ambient backdrop, the category rail, and the active category's item
-// column. The pieces live in @/components/xmb/*; the cross-layout math is in
-// ./xmb geometry; keyboard driving is useXmbKeyboard.
-// ============================================================
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +20,6 @@ import {
 type Props = {
   cats: XmbCat[];
   playing: boolean;
-  /** Now-playing cover — drives the ambient backdrop. Absent = nothing playing. */
   np?: { image?: string; seed?: number; grad?: string[] };
   showWaves?: boolean;
   onOpen?: (m: XmbItemModel, rect: DOMRect) => void;
@@ -52,8 +41,8 @@ export const XMB = React.memo(function XMB({
   setRowsState,
 }: Props) {
   const { t } = useTranslation();
-  const [cI, setCI] = useState(1); // active category (fallback)
-  const [rowsI, setRowsI] = useState<XmbRowMemory>({}); // remembered item index per category (fallback)
+  const [cI, setCI] = useState(1);
+  const [rowsI, setRowsI] = useState<XmbRowMemory>({});
   const c = cState != null ? cState : cI;
   const setC = setCState || setCI;
   const rows = rowsState != null ? rowsState : rowsI;
@@ -77,10 +66,6 @@ export const XMB = React.memo(function XMB({
 
   return (
     <FadeIn className="absolute inset-0 overflow-hidden bg-[#06060a]">
-      {/* Ambient stage backdrop driven by the NOW-PLAYING cover (not the selected
-          item), so it no longer thrashes colour on every nav — it only shifts when
-          the song changes. Same living drift as the detail pages. Nothing playing
-          → a deep, calm black (no seeded colour cycling). */}
       {np ? (
         <HeroBackdrop
           image={np.image}
@@ -99,14 +84,10 @@ export const XMB = React.memo(function XMB({
       )}
       {showWaves && <FlowWaves />}
 
-      {/* sub-item column — single vertical list at the active category's x,
-          passed items above the bar, upcoming below; the bar (icon+label) sits between */}
       <XmbItemColumn items={cat.items} it={it} onOpenItem={openItem} onSelectItem={setItem} />
 
-      {/* category rail (horizontal axis) — active centered at the anchor, label beneath */}
       <XmbCategoryRail cats={cats} c={c} onSelect={setC} />
 
-      {/* category title — top-left, one line, with the same accent tick as section heads */}
       <div className="absolute left-[84px] top-[84px] z-[8]">
         <div
           className="whitespace-nowrap text-[54px] font-light leading-none tracking-[0.005em] text-white"
@@ -116,7 +97,6 @@ export const XMB = React.memo(function XMB({
         </div>
       </div>
 
-      {/* control hint — bottom-right, clear of the left-aligned item column */}
       <div className="absolute bottom-[22px] right-11 z-[8] flex justify-end gap-[26px]">
         {[
           ["◀ ▶", t("common.category")],

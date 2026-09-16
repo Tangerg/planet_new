@@ -14,13 +14,6 @@ import { XMB_EASE } from "./geometry";
 export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boolean; o: number }) {
   const { t } = useTranslation();
   const visual = xmbItemVisualState(active, o);
-  // Rack-focus depth, but only on the immediate ±1 neighbours (further rows are
-  // already faded near-invisible by `op`, so blurring them buys nothing). A FIXED
-  // radius with NO filter transition — on its own compositing layer — is the whole
-  // point: tweening blur re-runs the convolution every frame (the XMB-scroll jank),
-  // whereas snapping it once per move and caching the layer keeps the look cheap.
-  // Breathing glow on the active art — same accent-var box-shadow trick as
-  // XmbCategory (template a 0→1→0 value so only the numbers tween).
   const glow = useMotionValue(0);
   useEffect(() => {
     if (!active) return;
@@ -59,8 +52,6 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             display: "grid",
             placeItems: "center",
             color: "#fff",
-            // box-shadow is Motion-driven (artShadow); transition the morphing
-            // box props only so the CSS transition doesn't fight per-frame writes.
             transition: `width .38s ${XMB_EASE}, height .38s ${XMB_EASE}, border-radius .38s ${XMB_EASE}`,
             overflow: "hidden",
             position: "relative",
@@ -80,16 +71,10 @@ export function XmbItem({ item, active, o }: { item: XmbItemModel; active: boole
             letterSpacing: visual.titleLetterSpacing,
             lineHeight: 1.1,
             color: visual.titleColor,
-            // Only these four differ between active/inactive; enumerated (not
-            // `all`) so the browser doesn't diff every property each frame.
             transition: `font-size .38s ${XMB_EASE}, letter-spacing .38s ${XMB_EASE}, color .38s ${XMB_EASE}, max-width .38s ${XMB_EASE}`,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            // The selected item is the focus and owns the whole bar's width, so
-            // give it a far larger cap: at 27px a shared 340px cap truncated it
-            // EARLIER than the 18px candidates, hiding text on selection. Widen
-            // it so selecting reveals more of the title, never less.
             maxWidth: visual.titleMaxWidth,
           }}
         >

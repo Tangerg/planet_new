@@ -9,15 +9,12 @@ describe("audio light palette model (cover multi-colour tonal gradient)", () => 
     const colors = spectralLightColors({ accent, tones: ["#b0402a", "#f2c14e", "#d95f3c"] });
 
     expect(colors.stops.length).toBeGreaterThan(6);
-    // Tone rises across the ramp → deeper base, brighter crest.
     expect(colors.stops[0].color.l).toBeLessThan(colors.stops[colors.stops.length - 1].color.l);
   });
 
   it("keeps every colour within the primary's family (no far jumps)", () => {
-    // A jarring off-hue extra (cyan) alongside a warm cover must be pulled in.
     const colors = spectralLightColors({ accent, tones: ["#e0662f", "#f2c14e", "#22d3d3"] });
     const hues = colors.stops.map((stop) => stop.color.h);
-    // All ramp hues stay within a cohesive band (primary ± spread + tone drift).
     expect(Math.max(...hues) - Math.min(...hues)).toBeLessThan(80);
   });
 

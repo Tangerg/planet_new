@@ -1,6 +1,3 @@
-// ============================================================
-// Settings — accent, playback and interface preferences.
-// ============================================================
 import React from "react";
 import { ACCENT_OPTIONS, type Settings } from "@/model/defaults";
 import { Icon } from "@/infra/icons";
@@ -68,12 +65,6 @@ function SetSeg<TValue extends string>({
   );
 }
 
-/**
- * On-device music: switch the active source among mounted providers and scan a
- * folder into the local library. A successful scan auto-switches to the local
- * source and invalidates cached catalog reads, so the imported music shows at
- * once (Engine.media reads through the active provider).
- */
 function LibrarySection() {
   const accent = useAccent();
   const { t } = useTranslation();

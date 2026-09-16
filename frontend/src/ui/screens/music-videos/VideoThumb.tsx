@@ -5,7 +5,6 @@ import type { VibeMusicVideo } from "@/model/vibe";
 import { useTranslation } from "react-i18next";
 import { useAccent } from "@/hooks/accent";
 
-/** 16:9 MV card used in the hub and detail rails: cover + hover play affordance. */
 export function VideoThumb({ video, onOpen }: { video: VibeMusicVideo; onOpen: () => void }) {
   const accent = useAccent();
   const { t } = useTranslation();

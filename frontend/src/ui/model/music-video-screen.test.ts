@@ -79,7 +79,6 @@ describe("music video screen model", () => {
       { text: "04:20" },
       { key: "counts.plays", values: { value: "15.3K" } },
     ]);
-    // No play count and no duration: only the quality fallback survives the join.
     expect(musicVideoMetaPieces(video("mv", { duration: "", playCount: 0 }))).toEqual([
       { text: "MV" },
       { text: "" },

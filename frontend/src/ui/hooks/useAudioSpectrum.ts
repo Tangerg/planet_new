@@ -14,14 +14,6 @@ export type AudioSpectrumSampler = {
   sample: (target: FrequencyData) => boolean;
 };
 
-/**
- * Imperative spectrum sampler for canvas visualizers. It is intentionally not a
- * React state hook: callers pull data inside requestAnimationFrame and draw
- * directly, keeping 60fps visual data out of the app state graph.
- *
- * The analyser probe follows playback inside the kernel; callers pull data
- * directly inside RAF and never pass media URLs through the UI layer.
- */
 export function useAudioSpectrum({
   enabled,
   fftSize = 128,

@@ -9,26 +9,16 @@ export type HoverCardProps = {
   onOpenChange: (open: boolean) => void;
   openDelay?: number;
   closeDelay?: number;
-  /** The element the card hangs off; it opens on hover / focus. */
   trigger: React.ReactElement;
   side?: PopupSide;
   align?: PopupAlign;
   sideOffset?: number;
   collisionPadding?: number;
-  /** Popup surface class + inline style. */
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 };
 
-/**
- * Hover-reveal card on Base UI PreviewCard — a floating dark-glass surface shown
- * on hover / focus (long-text reveal, volume slider). Encapsulates the Base UI
- * parts + the Motion enter/exit so consumers pass only a trigger, positioning,
- * and content (rather than wiring PreviewCard directly). Controlled `open` inside
- * `<AnimatePresence>` drives the exit animation; `keepMounted` on the Portal is
- * what keeps the surface in the DOM long enough for Motion to animate it out.
- */
 export function HoverCard({
   open,
   onOpenChange,

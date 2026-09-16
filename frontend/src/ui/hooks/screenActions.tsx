@@ -7,22 +7,12 @@ type TrackMenuOptions = {
   onPlay?: (track: VibeTrack) => void;
 };
 
-/**
- * Imperative screen-level actions that deeply-nested cards/rows trigger without
- * prop-drilling: open a track/collection context menu, or enqueue a track.
- * Replaces the former `window.__TRACKMENU / __COLLMENU / __ENQUEUE` globals with
- * a typed React context (provided by the Shell, fed from useContextMenu).
- */
 export type ScreenActions = {
-  /** Track row/card → its menu also offers Play (so it needs the full VibeTrack). */
   trackMenu: (e: MenuEvent, track: VibeTrack, options?: TrackMenuOptions) => void;
-  /** Collection/artist card → only needs the shared cover-bearing CardItem shape. */
   collMenu: (e: MenuEvent, item: CardItem) => void;
-  /** Add a track to the play queue by id; Shell resolves the id in the active context. */
   enqueue: (trackId: string, next?: boolean) => void;
 };
 
-// Safe defaults so a consumer outside the provider is a quiet no-op, never a crash.
 const noop: ScreenActions = {
   trackMenu: () => {},
   collMenu: () => {},
@@ -41,7 +31,6 @@ export function ScreenActionsProvider({
   return <ScreenActionsContext.Provider value={actions}>{children}</ScreenActionsContext.Provider>;
 }
 
-/** Read screen actions inside any card/row (no prop-drilling, no globals). */
 export function useScreenActions(): ScreenActions {
   return use(ScreenActionsContext);
 }

@@ -12,8 +12,6 @@ export type ProfilePlaylistItem = {
   trackCount: number;
 };
 
-/** Follower/following counts, present only for a real connected account — an
- *  anonymous profile has no social graph to report and must not invent one. */
 export type ProfileSocialCounts = Readonly<{ followers: string; following: string }>;
 
 export type ProfileScreenModel = {
@@ -21,7 +19,6 @@ export type ProfileScreenModel = {
   connectionKey: MessageKey;
   social?: ProfileSocialCounts;
   name: LocalizedText;
-  /** Whether to show the account-level membership mark (a real connected premium account). */
   membership: boolean;
   playlists: ProfilePlaylistItem[];
 };
@@ -51,8 +48,6 @@ export function profileSocialCounts(
   };
 }
 
-/** Account-level membership mark: only for a real connected account with a paid tier
- *  (never on an anonymous profile). Distinct from a track's per-song VIP badge. */
 export function profileMembership(
   account: AccountSnapshot | null | undefined,
   loggedIn: boolean,

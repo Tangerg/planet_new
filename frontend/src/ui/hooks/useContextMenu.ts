@@ -1,9 +1,3 @@
-/**
- * Right-click context menu state + the screen-action handlers (track/collection
- * menu + enqueue). Returns them as stable callbacks; the Shell hands them to the
- * ScreenActionsProvider so deeply-nested screens reach them via useScreenActions
- * (no prop-drilling, no window globals).
- */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ArtistTarget, CardItem, VibeTrack } from "@/model/vibe";
@@ -21,12 +15,10 @@ export function useContextMenu(opts: {
   const [menu, setMenu] = useState<MenuState>(null);
 
   const optsRef = useRef(opts);
-  // After commit, not during render: every reader is a pointer handler.
   useEffect(() => {
     optsRef.current = opts;
   });
 
-  // Stable handlers (read latest opts via ref) so the provider value never churns.
   const trackMenu = useCallback<ScreenActions["trackMenu"]>((e, track, options) => {
     const { onPlay, enqueue, toggleLike, liked, openArtist } = optsRef.current;
     e.preventDefault();

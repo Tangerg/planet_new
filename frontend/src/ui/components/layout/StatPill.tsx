@@ -1,6 +1,3 @@
-// ============================================================
-// StatPill — frosted rounded stat chip used in the Artist header.
-// ============================================================
 import React from "react";
 
 export function StatPill({ children }: { children: React.ReactNode }) {

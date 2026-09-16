@@ -15,9 +15,6 @@ export const FOR_YOU_DEFAULT_FILTER = FOR_YOU_FILTERS[0].value;
 
 export type ForYouCollectionRoute = "album" | "playlist";
 
-/** The synthetic Daily Mix is app-authored, so its text is translated by the
- *  caller and handed in — a collection flows on into detail screens and morph
- *  targets, which read plain display strings. */
 export type DailyMixText = Readonly<{ name: string; owner: string; description: string }>;
 
 export type ForYouScreenModel = {
@@ -77,7 +74,6 @@ export function forYouScreenModel(
   return {
     albums: data.albums,
     artists: data.artists,
-    // The day's mix headlines when there is one; otherwise a real playlist does.
     featured: dailyMix ?? data.playlists[1] ?? data.playlists[0],
     filters: FOR_YOU_FILTERS,
     greetingKey: timeOfDayGreetingKey(now),

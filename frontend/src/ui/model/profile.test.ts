@@ -56,7 +56,7 @@ describe("profile screen model", () => {
 
   it("marks membership only for a connected premium account", () => {
     expect(profileMembership(account({ premium: true }), true)).toBe(true);
-    expect(profileMembership(account({ premium: true }), false)).toBe(false); // not connected
+    expect(profileMembership(account({ premium: true }), false)).toBe(false);
     expect(profileMembership(account({ premium: false }), true)).toBe(false);
     expect(profileMembership(null, true)).toBe(false);
   });

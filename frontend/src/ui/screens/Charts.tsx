@@ -1,6 +1,3 @@
-// ============================================================
-// Charts — grid of ranked-chart banners.
-// ============================================================
 import { useTranslation } from "react-i18next";
 
 import { localize } from "@/i18n/text";
@@ -26,8 +23,6 @@ export function ChartsScreen({ data, onOpenChart }: ChartsScreenProps) {
       <PageColumn className="pb-10 pt-[60px]">
         <div className="mb-1.5 text-[36px] font-extralight">{t("charts.title")}</div>
         <div className="mlabel mb-[26px] text-tx-3">{t("charts.subtitle")}</div>
-        {/* 5-up grid of square tiles; each tile lifts on its own hover
-            (neighbours stay put). */}
         <div className="grid grid-cols-5 gap-[16px]">
           {model.tiles.map((tile) => (
             <ChartCard

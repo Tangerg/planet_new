@@ -6,8 +6,6 @@ import { ProviderId } from "@domain/model/provider-id";
 import type { VibeTrack } from "@/model/vibe";
 import { toTrack, toVibeTrack } from "./track";
 
-// The UI ↔ domain projection boundary: the adapter is the only writer of
-// `source`, and `toTrack()` is the only reader that recovers it for playback.
 const domainTrack: Track = {
   providerId: ProviderId.of("test"),
   id: "t1",

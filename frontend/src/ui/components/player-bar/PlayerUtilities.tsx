@@ -11,8 +11,6 @@ import { repeatTooltip } from "@/model/player";
 import { canAcceptTrackDrag, readTrackDragData } from "@/model/track-actions";
 import { useAccent } from "@/hooks/accent";
 
-/** Its own controls, plus whatever the volume control needs — those five are
- *  passed straight through, so this shelf does not restate them. */
 type Props = ComponentProps<typeof VolumeControl> & {
   liked: boolean;
   toggleLike: () => void;

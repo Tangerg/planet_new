@@ -64,7 +64,6 @@ describe("detail read-model helpers", () => {
     expect(normalizeDetailTarget({ id: "1", name: "Any", coverSeed: 1 }).tracks).toEqual([]);
     expect(detailKindOf({ kind: "album" })).toBe("album");
     expect(detailKindOf({ kind: "chart" })).toBe("chart");
-    // `artist` has its own screen, so Detail treats it like a plain collection.
     expect(detailKindOf({ kind: "artist" })).toBe("playlist");
     expect(detailKindOf({})).toBe("playlist");
   });

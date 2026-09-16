@@ -214,11 +214,6 @@ describe("interactive component boundaries", () => {
     expect(onPlay).toHaveBeenCalledWith(track);
   });
 
-  // Hover affordances are CSS (`.trow` in cards.css), so the row must ship the
-  // hooks CSS needs — both leading glyphs mounted and the availability class on
-  // the root. jsdom can't evaluate `:hover`, so this guards the contract rather
-  // than the paint: if someone reintroduces a hover STATE, the play glyph stops
-  // being rendered up-front and this fails.
   it("mounts both leading glyphs so the row's play affordance needs no state", () => {
     const { container } = render(
       <TrackRow

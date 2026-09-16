@@ -9,7 +9,6 @@ import type {
   VibeTrack,
 } from "./vibe";
 
-/** The tabs backed by collection cards; `songs` renders a flat track list. */
 export type LibraryCardTab = Exclude<LibrarySectionTab, "songs">;
 export type LibraryCollectionRoute = "playlist" | "album" | "artist";
 
@@ -22,9 +21,6 @@ export const LIBRARY_SECTION_TABS = [
 
 export const LIBRARY_INITIAL_FLOW_CENTER = 2;
 
-/** One column of the two-up songs list. `startIndex` is the running position of
- *  its first track in the WHOLE list, so the right column continues the left's
- *  numbering instead of restarting at 1. */
 export type LibrarySongColumn = {
   tracks: VibeTrack[];
   startIndex: number;

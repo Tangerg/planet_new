@@ -1,9 +1,3 @@
-// ============================================================
-// TrackCard — square track tile for grid views: cover + hover-rise play fab +
-// title + artist link. Activating plays the track (no morph — tracks don't open
-// a detail screen). The whole tile is a mouse hit-area, while cover/title keep
-// the keyboard-accessible targets and artist/fab stop propagation.
-// ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { ArtistRef, VibeTrack } from "@/model/vibe";
@@ -15,8 +9,6 @@ import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
 import { useAccent } from "@/hooks/accent";
 
-/** Rendered height of one grid row of track cards. Windowed grids estimate with
- *  it; slightly shorter than a media card — no second meta line. */
 export const TRACK_CARD_ROW_HEIGHT = 232;
 
 type TrackCardProps = {
@@ -25,10 +17,6 @@ type TrackCardProps = {
   onOpenArtist?: (artist: ArtistRef) => void;
 };
 
-// React.memo: leaf of the grid track view; TrackCollectionView re-invokes
-// renderItem for every visible cell on each scroll windowing tick. Call sites
-// pass stable onPlay/accent/onOpenArtist + a stable track object, so the shallow
-// compare bails and only entering cards render during a scroll.
 export const TrackCard = React.memo(function TrackCard({
   track,
   onPlay,

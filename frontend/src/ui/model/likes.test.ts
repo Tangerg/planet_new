@@ -80,7 +80,7 @@ describe("likes model", () => {
         ...over,
       });
 
-    expect(plan({})).toEqual(["a"]); // another source's like is not this account's
+    expect(plan({})).toEqual(["a"]);
     expect(plan({ synced: false })).toEqual([]);
     expect(plan({ alreadyMerged: true })).toEqual([]);
   });

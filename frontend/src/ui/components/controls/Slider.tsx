@@ -2,8 +2,6 @@ import { Slider as BaseSlider } from "@base-ui/react/slider";
 import React from "react";
 import { cn } from "@/lib/cn";
 
-/** Base UI reports a bare number for single-thumb sliders; our callers work in
- *  arrays (matching the value shape), so normalize back to an array. */
 const toArray = (v: number | readonly number[]): number[] =>
   Array.isArray(v) ? [...v] : [v as number];
 
@@ -13,19 +11,12 @@ export type SliderProps = Omit<
 > & {
   value?: number[];
   onValueChange?: (value: number[]) => void;
-  /** Fires once a drag or keyboard change is committed, not on every tick. */
   onValueCommit?: (value: number[]) => void;
   min?: number;
   max?: number;
   step?: number;
   orientation?: "horizontal" | "vertical";
   disabled?: boolean;
-  /**
-   * Per-part style hooks. The vibe sliders are driven by runtime values (accent
-   * gradients, computed fills) that can't be static utilities, so each part
-   * takes its own inline style / className from the call site. `range` maps to
-   * Base UI's Indicator (the filled portion).
-   */
   parts?: {
     track?: { className?: string; style?: React.CSSProperties };
     range?: { className?: string; style?: React.CSSProperties };
@@ -35,13 +26,6 @@ export type SliderProps = Omit<
   ref?: React.Ref<HTMLDivElement>;
 };
 
-/**
- * Base UI-backed slider. Base UI adds a `Control` wrapper around the `Track`
- * (Root › Control › Track › Indicator + Thumb) and renames the fill to
- * `Indicator`; the Control gets an orientation-aware fill layout so the rail
- * lays out exactly as before, and callers still own the visuals via `parts`.
- * The Thumb auto-positions; keyboard control, ARIA, and robust drag come free.
- */
 export function Slider({
   ref,
   value,
@@ -59,9 +43,6 @@ export function Slider({
   style,
   ...rest
 }: SliderProps) {
-  // Control is a Base UI layer between Root and Track that the call sites'
-  // styles know nothing about; make it a transparent, orientation-aware flex
-  // box so the Track still fills the Root as those styles assume.
   const controlStyle: React.CSSProperties =
     orientation === "vertical"
       ? { display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }

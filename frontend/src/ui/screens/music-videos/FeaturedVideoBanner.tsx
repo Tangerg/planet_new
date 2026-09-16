@@ -1,8 +1,3 @@
-// ============================================================
-// FeaturedVideoBanner — the music-video hub's featured hero. Same chrome as the
-// ForYou playlist banner (BannerFrame), different subject: a video's title,
-// artist, blurb and open action.
-// ============================================================
 import { useTranslation } from "react-i18next";
 
 import {

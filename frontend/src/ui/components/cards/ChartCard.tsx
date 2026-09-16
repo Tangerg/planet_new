@@ -1,8 +1,3 @@
-// ============================================================
-// ChartCard — square chart tile (cover-bleed + title + period). Hover scales the
-// tile (the "card flow" lift, via LiftButton — neighbours stay put). Opening flies
-// the morph as a square from the whole tile.
-// ============================================================
 import { artBg } from "@/components/primitives";
 import { LiftButton } from "@/components/lift";
 import { useMorphOpen } from "@/hooks/useMorphOpen";

@@ -4,13 +4,6 @@ import type { CoverParticles } from "@/model/stage-particles";
 import { coverColors, coverParticles } from "../cover";
 import type { VisualEffect, VisualEffectInstance, VisualFrame } from "../effect";
 
-// A WebGL port of Mineradio's "SILK" preset: the album cover is a plane of points
-// rippling in Z. Simplex noise driven by bass/mid/treble (plus beat bursts and each
-// particle's luma as depth) displaces them; perspective grows the near points; a
-// soft additive sprite makes the overlaps bloom. Raw WebGL (no three.js) — one
-// gl.POINTS draw over the cover cloud built by sampleCoverParticles. Consumes the
-// engine's reactive audio (frame.audio) rather than deriving it.
-
 const VERT = `
 precision highp float;
 attribute vec2 aPos;
@@ -169,8 +162,6 @@ const POINT_SCALE = 2.4;
 export const cloudEffect: VisualEffect = {
   id: "particles",
   labelKey: "stage.effect.particles",
-  // Punchier than the default: the particle cloud reads best when it's agitated —
-  // snappier damping, more contrast, and a touch more beat sensitivity.
   tuning: { levelContrast: 1.9, attack: 0.9, release: 0.55, levelFall: 0.045, burstGain: 3.8 },
   create(canvas: HTMLCanvasElement): VisualEffectInstance {
     const gl = canvas.getContext("webgl", {
@@ -221,13 +212,12 @@ export const cloudEffect: VisualEffect = {
       resize(width: number, height: number, dpr: number) {
         if (!gl) return;
         gl.viewport(0, 0, canvas.width, canvas.height);
-        aspect = height / Math.max(1, width); // compress x so the cover stays square
+        aspect = height / Math.max(1, width);
         dprPixel = dpr;
       },
 
       draw({ timeSec, audio, image, accent }: VisualFrame) {
         if (!gl || !prog || !loc || !buffers) return;
-        // The drawing side fetches its own cover cloud + palette.
         const particles = coverParticles(image);
         if (particles && particles !== seeds) upload(particles);
 
@@ -242,7 +232,7 @@ export const cloudEffect: VisualEffect = {
         if (!seeds || count === 0) return;
 
         gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE); // additive → overlaps bloom
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
         gl.useProgram(prog);
 
         bindAttrib(gl, buffers.pos, loc.aPos, 2);
@@ -277,11 +267,6 @@ export const cloudEffect: VisualEffect = {
           gl.deleteBuffer(buffers.luma);
           gl.deleteBuffer(buffers.rand);
         }
-        // NOTE: do NOT force-lose the context. React StrictMode (dev) remounts on
-        // the SAME canvas element (setup → cleanup → setup); loseContext() here
-        // poisons that shared context, so the re-created instance renders nothing
-        // until the canvas is replaced — the "first open is blank, a toggle fixes
-        // it" bug. The context is released when the canvas is removed / GC'd.
       },
     };
   },

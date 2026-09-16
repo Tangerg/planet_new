@@ -1,18 +1,3 @@
-// ============================================================
-// Sonance Vibe — Shell
-// Resident shell, ported verbatim from the example Sonance Vibe.html App; only
-// the example's mock playback became the real kernel.
-//
-// Shell is the composition root: it wires the kernel playback state, catalog
-// data, likes, and the navigation machine (useShellNavigation — view state,
-// morph engine, back-stack), then renders the active screen, the player bar,
-// and the window chrome. The heavy lifting lives in dedicated hooks/modules:
-//   - useShellNavigation  navigation state machine + shared-element morph
-//   - useGlobalShortcuts   discrete app-wide keyboard shortcuts
-//   - useSpatialNavigation arrow-key spatial nav
-//   - useContextMenu       right-click menu
-//   - buildWorlds          the XMB navigation IA tree (@/model/navigation)
-// ============================================================
 import React, { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -44,7 +29,6 @@ import { LAUNCHER_VIEW, type ShellScreenView } from "@/model/shell-screen";
 import type { NowPlayingMode } from "@/model/now-playing";
 import type { XmbRowMemory } from "@/model/navigation";
 
-// ContextMenu is only shown on right-click — lazy-load to keep it out of the main bundle.
 const LazyContextMenu = React.lazy(() =>
   import("@/components/Menu").then((m) => ({ default: m.ContextMenu })),
 );
@@ -53,13 +37,8 @@ export default function Shell() {
   const media = useMediaService();
   const queryClient = useQueryClient();
 
-  // Pull the code-split screens in once the app has settled, so the split costs
-  // nothing at first navigation while still keeping them off the startup path.
   useEffect(warmDeferredScreens, []);
 
-  /* ---- XMB launcher cursor (highlighted column/row): transient screen state
-     Shell holds so it survives the XMB's mount/unmount; not part of the
-     navigation back-stack (which the nav hook owns). ---- */
   const [xmbCategory, setXmbCategory] = useState(1);
   const [xmbRowByCategory, setXmbRowByCategory] = useState<XmbRowMemory>({});
   const [nowPlayingInitialMode, setNowPlayingInitialMode] = useState<NowPlayingMode>("cover");
@@ -93,14 +72,9 @@ export default function Shell() {
     daily,
   } = useShellLibraryData();
 
-  /* ---- likes / preferences / history ---- */
   const { liked, toggleLike, isLiked } = useLikes(playback.current);
   const { settings, setSettings } = useAppSettings();
   const history = usePlayHistory(playback.current);
-  /* ---- navigation + shared-element transition machine (extracted hook) ----
-     Owns the view string, every nav-significant screen slice, the morph engine,
-     and the back-stack. Shell composes onPlay / likedDetail / menu / shortcuts /
-     the XMB tree on top of what it returns. */
   const {
     view,
     setView,
@@ -131,10 +105,6 @@ export default function Shell() {
     startForward,
     morph,
   } = useShellNavigation(media, queryClient);
-  /* ---- navigation intents handed to memoized children (the dock, the XMB
-     tree, the window chrome). Stable identities on purpose: an inline arrow
-     here re-runs buildWorlds on every Shell render and defeats React.memo on
-     PlayerBar / XMB, which is most of what the memo was there to prevent. ---- */
   const openNowPlaying = useCallback(
     (mode: NowPlayingMode) => {
       setNowPlayingInitialMode(mode);
@@ -196,13 +166,10 @@ export default function Shell() {
     openProfile,
     openSettings,
   });
-  // The dock's like button acts on whatever is playing; keeping it out of the
-  // JSX means the memoized PlayerBar only sees a new handler when the track does.
   const toggleCurrentLike = useCallback(() => {
     if (current) toggleLike(current);
   }, [current, toggleLike]);
 
-  /* ---- global keyboard shortcuts (extracted hook) ---- */
   useGlobalShortcuts({
     view,
     goBack,
@@ -219,18 +186,10 @@ export default function Shell() {
     toggleLike,
   });
 
-  /* ---- arrow-key spatial navigation (extracted hook) ---- */
   useSpatialNavigation(viewRef, view, goBack);
 
-  // Player bar visibility: shown when a track exists and we're not in the
-  // full-screen now-playing view. Motion's AnimatePresence keeps it mounted
-  // through the slide-out so it glides instead of popping.
   const showBar = !npView && !mvTheaterView && !stageView && !!playback.current;
 
-  /* ==========================================================================
-     XMB model — the navigation IA tree, projected from catalog + provider
-     capabilities + session state (see @/model/navigation, docs §11).
-     ========================================================================== */
   const cats = useShellXmbModel({
     media,
     catalog,
@@ -243,9 +202,6 @@ export default function Shell() {
     openLikedSongs: likedDetail,
   });
 
-  /* ==========================================================================
-     render screen
-     ========================================================================== */
   const renderScreen = (screenView: ShellScreenView) => (
     <ShellScreenRouter
       view={screenView}

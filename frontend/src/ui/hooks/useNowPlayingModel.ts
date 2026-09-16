@@ -16,26 +16,15 @@ type Options = {
   onPrev?: () => void;
 };
 
-/**
- * Behavior for the Now Playing screen: view mode (cover / lyrics / comments),
- * the up-next queue sheet, and axis navigation shared by keyboard and swipe
- * (Up = lyrics, Down = queue, Left/Right = skip). Extracting it leaves the screen
- * as pure layout. The lyric auto-advance + its progress subscription live in the
- * LyricsPanel leaf, so the frequent tick never re-renders this screen.
- */
 export function useNowPlayingModel({ initialMode, onNext, onPrev }: Options) {
   const [mode, setMode] = useState<NowPlayingMode>(initialMode);
-  const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
+  const [queueOpen, setQueueOpen] = useState(false);
 
-  // Portal target for the queue Sheet; the two scroll containers auto-center.
-  // State, not a ref: it is read while rendering the Sheet.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const queueScrollRef = useRef<HTMLDivElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-  // Up axis navigation: close the queue if it's open, otherwise flip lyrics/cover.
   useEffect(() => {
-    // capture phase wins over the global spatial-nav handler
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && queueOpen) {
         e.preventDefault();

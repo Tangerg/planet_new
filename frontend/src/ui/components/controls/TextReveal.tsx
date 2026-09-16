@@ -6,27 +6,16 @@ import { cn } from "@/lib/cn";
 import "./TextReveal.css";
 
 type Props = {
-  /** The text to show — clamped in place, revealed in full on hover when it overflows. */
   children: React.ReactNode;
-  /** Lines to clamp to; 1 = single-line ellipsis, >1 = multi-line box clamp. */
   lines?: number;
   className?: string;
   style?: React.CSSProperties;
-  /** Override popover content (defaults to `children`). */
   full?: React.ReactNode;
   side?: PopupSide;
   align?: PopupAlign;
-  /** Extra style for the popover surface (e.g. a wider maxWidth for paragraphs). */
   cardStyle?: React.CSSProperties;
 };
 
-/**
- * Clamp any text and, ONLY when it actually overflows, reveal the full content
- * on hover in a floating card that matches the app's dark glass surface — so a
- * long playlist name / description / track title never deforms the layout yet
- * stays fully readable. The overflow is measured (ResizeObserver), so the popup
- * never appears for text that already fits. Reusable anywhere text can be long.
- */
 export function TextReveal({
   children,
   lines = 1,
@@ -63,7 +52,6 @@ export function TextReveal({
           overflowWrap: "anywhere",
         };
 
-  // Gate `open` on `clipped` so a fitting label never opens the card.
   return (
     <HoverCard
       open={clipped && open}

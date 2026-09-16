@@ -12,16 +12,8 @@ import {
 import { vibeTrackKey } from "@/model/vibe";
 import { useScreenActions } from "@/hooks/screenActions";
 
-/** Hero band height; also the scroll offset that reveals the condensed header. */
 const HERO = 380;
 
-/**
- * Behavior for the playlist/album/chart Detail screen: view mode, track sorting,
- * shift-range multi-selection, the selection action bar, and the scroll-driven
- * condensed header. Extracting it keeps the screen as declarative layout and
- * makes the fiddly range-select math live next to (and testable with) the rest
- * of the derivation layer.
- */
 export function useDetailScreenModel(
   tracks: VibeTrack[],
   onPlay: (track: VibeTrack) => void,
@@ -39,10 +31,6 @@ export function useDetailScreenModel(
   const sorted = useMemo(() => sortTracks(tracks, sort), [tracks, sort]);
   const selectionOrderIds = useMemo(() => detailSelectionOrderIds(sorted), [sorted]);
 
-  // Shift-click extends the selection across the *sorted* range from the anchor.
-  // Stable identity (only the sorted order is a real dep) so it can be the
-  // onSelect of memoized rows — selecting a track then re-renders just the two
-  // affected rows, not the whole visible list.
   const toggleSel = useCallback(
     (track: VibeTrack, e: React.MouseEvent) => {
       setSel((prev) =>
@@ -61,8 +49,6 @@ export function useDetailScreenModel(
 
   const clearSel = () => setSel(new Set());
 
-  // Sticky condensed header: reveal once the hero has scrolled mostly past.
-  // Written imperatively so a scroll tick never re-renders the track list.
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const bar = stickyRef.current;
     if (!bar) return;

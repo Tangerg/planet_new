@@ -1,6 +1,3 @@
-// ============================================================
-// Queue — "Up Next": now-playing hero on the left, windowed queue on the right.
-// ============================================================
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
@@ -79,8 +76,6 @@ export function QueueScreen({
                   track={model.queue[vi]}
                   index={vi + 1}
                   {...trackList}
-                  /* The screen's model re-derives "which row is current" from the
-                     queue, so it wins over the raw binding. */
                   current={model.current}
                   onRemoveFromQueue={onRemoveFromQueue}
                   onMenuPlay={onPlay}

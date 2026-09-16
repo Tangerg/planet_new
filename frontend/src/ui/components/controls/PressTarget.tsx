@@ -3,15 +3,8 @@ import type React from "react";
 import { activateOnKey } from "@/lib/keys";
 
 type PressTargetProps = {
-  /** Accessible name announced for the activation (aria-label). */
   label: string;
-  /**
-   * Mouse click and keyboard Enter/Space share this one handler. A target nested
-   * inside another clickable surface (e.g. a card whose whole body also activates)
-   * calls `e.stopPropagation()` here to avoid a double activation.
-   */
   onActivate: (e: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => void;
-  /** Take the element out of the tab order (e.g. an unavailable track row). */
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
@@ -19,15 +12,6 @@ type PressTargetProps = {
   children: React.ReactNode;
 };
 
-/**
- * The accessible activation surface for rich content that can't be a native
- * `<button>`: art tiles, track/collection rows, titles — their children are
- * block or interactive elements that are invalid inside button semantics. It
- * wires the `role="button"` contract (tabIndex, aria-label, Enter/Space via
- * onKeyDown, sharing one handler with the click) in ONE place, so the many
- * card/row/tile surfaces stop repeating it — and stop each carrying their own
- * jsx-a11y disable. For a genuinely simple text label, use a native `<button>`.
- */
 export function PressTarget({
   label,
   onActivate,

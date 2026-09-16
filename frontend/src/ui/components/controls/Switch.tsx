@@ -10,10 +10,6 @@ export type SwitchProps = {
   ref?: React.Ref<React.ComponentRef<typeof BaseSwitch.Root>>;
 };
 
-/**
- * Base UI-backed switch: the library supplies the switch semantics, keyboard
- * and focus; visuals live in Switch.css, keyed off its `data-checked`.
- */
 export function Switch({ ref, checked, onCheckedChange, ...rest }: SwitchProps) {
   return (
     <BaseSwitch.Root

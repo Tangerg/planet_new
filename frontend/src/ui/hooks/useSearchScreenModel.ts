@@ -16,10 +16,6 @@ type Options = {
   search?: SearchProvider;
 };
 
-/**
- * Search behavior sits here so the screen stays declarative: controlled query
- * in, debounced provider results out, with stale async completions ignored.
- */
 export function useSearchScreenModel({
   debounceMs = 320,
   query,
@@ -28,9 +24,6 @@ export function useSearchScreenModel({
   const [results, setResults] = useState<SearchResults>(EMPTY_SEARCH_RESULTS);
   const [loading, setLoading] = useState(false);
 
-  /* The effect below owns only the debounced request. A query that will not be
-     requested drops the old results; one that will keeps them until the
-     replacements land. `null` so a seeded first render still counts. */
   const [plannedFor, setPlannedFor] = useState<string | null>(null);
   if (plannedFor !== query) {
     setPlannedFor(query);

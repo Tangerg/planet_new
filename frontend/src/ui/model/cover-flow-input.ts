@@ -2,7 +2,6 @@ import { clampIndex } from "@shared/number";
 
 export const COVER_FLOW_WHEEL_THRESHOLD = 60;
 export const COVER_FLOW_DRAG_STEP_PX = 120;
-/** Horizontal travel (px) that promotes a pointer press from a click to a drag. */
 export const COVER_FLOW_DRAG_THRESHOLD_PX = 4;
 
 export type CoverFlowMove = "previous" | "next";
@@ -28,13 +27,6 @@ export function coverFlowWheelMotion(
   return { centerDelta: 0, accumulatedDelta: nextDelta };
 }
 
-/**
- * Whether a pointer press has moved far enough to count as a drag (vs a click).
- * Below the threshold the carousel must NOT capture the pointer, so the press
- * stays a plain click that reaches the card / play fab underneath — capturing on
- * every pointerdown redirects the follow-up `click` to the capturing container
- * and swallows the card's own handler.
- */
 export function coverFlowDragStarted(
   startX: number,
   currentX: number,

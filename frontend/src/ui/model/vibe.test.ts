@@ -49,7 +49,6 @@ describe("sameVibeTrack", () => {
   it("matches only when both sides share a source-qualified key", () => {
     const track = { providerId: netease, id: "1" };
     expect(sameVibeTrack(track, { providerId: netease, id: "1" })).toBe(true);
-    // Same bare id, different source — must NOT collide.
     expect(sameVibeTrack(track, { providerId: qq, id: "1" })).toBe(false);
     expect(sameVibeTrack(track, { providerId: netease, id: "2" })).toBe(false);
   });

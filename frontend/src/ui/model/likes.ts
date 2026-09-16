@@ -64,10 +64,6 @@ export function toggleLocalLiked(prev: ReadonlySet<string>, id: string): Set<str
   return next;
 }
 
-/**
- * The anonymous likes still owed to the account, as provider-local ids. Empty
- * while logged out, or once this login session has already carried them over.
- */
 export function likesToMerge({
   providerId,
   localLiked,
@@ -86,10 +82,6 @@ export function likesToMerge({
     .map((parts) => parts.localId);
 }
 
-/**
- * Drop exactly the given provider-local ids from the local like set — the ones
- * the account has taken over. Likes whose push failed have to stay.
- */
 export function withoutLikedIds(
   liked: ReadonlySet<string>,
   providerId: ProviderId,

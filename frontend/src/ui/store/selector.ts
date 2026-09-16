@@ -1,12 +1,5 @@
 import type { StoreApi, UseBoundStore } from "zustand";
 
-/**
- * Adds `use.<key>()` selectors to a zustand store, e.g.
- *   `useFooStore.use.bar()` is equivalent to `useFooStore((s) => s.bar)`.
- *
- * Cleaner than an explicit selector at every call site; keys are constrained by
- * the store state type.
- */
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
   : never;

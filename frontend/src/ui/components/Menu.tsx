@@ -8,13 +8,6 @@ import type { MenuItem } from "@/model/menu";
 import "./Menu.css";
 import { useAccent } from "@/hooks/accent";
 
-// ============================================================
-// ContextMenu — right-click menu on Base UI Menu primitives. Edge-aware
-// positioning, keyboard navigation, and ARIA accessibility are handled by Base
-// UI; styling lives in the co-located Menu.css. The menu is mounted only while
-// open (Shell renders it on right-click), so there's an enter animation but no
-// exit — closing unmounts it.
-// ============================================================
 type Props = {
   x: number;
   y: number;
@@ -27,7 +20,6 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
   const { t } = useTranslation();
   return (
     <Menu.Root open onOpenChange={(open) => !open && onClose()}>
-      {/* Virtual trigger at the cursor so Base UI anchors the popup there. */}
       <Menu.Trigger
         nativeButton={false}
         render={

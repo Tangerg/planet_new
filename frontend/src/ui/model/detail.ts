@@ -20,12 +20,8 @@ import type {
   VibeTrack,
 } from "@/model/vibe";
 
-/** The collection kinds Detail can actually load; `artist` has its own screen. */
 export type DetailKind = Extract<CollectionKind, "album" | "chart" | "playlist">;
 
-/** Detail reads for the three collection kinds. `null` means the source has no
- *  such collection (or cannot serve it), which the caller renders as an empty
- *  detail rather than a failure. */
 export type CollectionDetailReader = {
   albumDetail(id: string): Promise<AlbumDetailSnapshot | null>;
   playlistDetail(id: string): Promise<PlaylistDetailSnapshot | null>;
@@ -113,7 +109,6 @@ export function firstDetailSelectedTrack<T extends Pick<VibeTrack, "id">>(
   return tracks.find((track) => selected.has(track.id));
 }
 
-/** The one place a collection kind picks its detail read and projection. */
 export async function loadDetailTarget(
   reader: CollectionDetailReader,
   target: DetailTarget,

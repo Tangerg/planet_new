@@ -1,14 +1,3 @@
-// ============================================================
-// CoverFlow — Apple-style 3D cover carousel (reflections, drag, keys)
-// Realises the proposal's "Card Flow" middle layer:
-//   · background follows the centered cover
-//   · Down expands the center item's tracklist in place
-//   · Enter opens the full detail
-//
-// This is the assembler: it owns the expand state and composes the fanned cards
-// (CoverCard + coverTransform geometry), the meta caption, the progress dots, and
-// the expanded tracklist Sheet. Keyboard / wheel / drag driving is useCoverFlowInput.
-// ============================================================
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -35,13 +24,11 @@ type Props<T extends VibeTrack | VibeCollection> = {
   items: FlowItem<T>[];
   center: number;
   setCenter: (n: number | ((c: number) => number)) => void;
-  /** Receives the source object (track or collection), not the flow wrapper. */
   onOpen: (item: T) => void;
   onPlay: (item: T) => void;
   canPlay?: (item: T) => boolean;
   tracksFor?: (item: T) => VibeTrack[];
   onPlayTrack?: (track: VibeTrack) => void;
-  /** Render covers as circles (artists) instead of squares (everything else). */
   round?: boolean;
 };
 
@@ -58,26 +45,13 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
 }: Props<T>) {
   const { t } = useTranslation();
   const { trackMenu, collMenu } = useScreenActions();
-  // Portal target for the tracklist Sheet. State, not a ref: it is read while
-  // rendering the Sheet, where a ref would still be null.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const accent = useAccent();
   const [expanded, setExpanded] = useState(false);
 
   const cur = items[center];
-  // Artists (round) are people, not playable collections: no in-place tracklist
-  // and no play fab — clicking a cover just opens the artist. So the expand
-  // behaviour is gated off for round covers (clicks fall through to onOpen).
   const expandable = round ? undefined : tracksFor;
 
-  // Flipping to another cover collapses its tracklist. Adjusted during render
-  // rather than in an effect: at flick speed an effect renders + commits the new
-  // cover with the previous one's sheet still open, then re-renders to close it —
-  // two commits per step, on the most animation-sensitive surface in the app.
-  //
-  // The page background is NOT repainted per centered cover: rapidly recolouring
-  // the whole backdrop on every flip is distracting and a photosensitivity risk.
-  // The screen's own hero gradient (Detail/Library) stays put instead.
   const [expandedFor, setExpandedFor] = useState(center);
   if (expandedFor !== center) {
     setExpandedFor(center);
@@ -107,10 +81,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
       className="relative flex h-full cursor-grab select-none flex-col items-center justify-center overflow-hidden"
     >
       <motion.div
-        // preserve-3d here too: this element carries the scene `perspective` AND
-        // is itself transformed by Motion (y/scale). Without preserve-3d that
-        // transform FLATTENS the descendants, so the cards' rotateY tilt collapses
-        // to a flat row. initial={false} so it doesn't animate on first mount.
         style={{
           position: "relative",
           width: "100%",
@@ -126,7 +96,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
           style={{ position: "absolute", left: "50%", top: "44%", transformStyle: "preserve-3d" }}
         >
           {items.map((it, i) => {
-            // Windowed: skip cards outside the visible fan (+margin) — see COVER_WINDOW.
             if (Math.abs(i - center) > COVER_WINDOW) return null;
             const isC = i === center;
             return (
@@ -150,16 +119,10 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         </div>
       </motion.div>
 
-      {/* meta — NOT keyed on cur.id: re-mounting per step re-ran each TextReveal's
-          layout measure + HoverCard + the FadeIn on every flip, which stalled the
-          main thread (the "lag" on fast switching). Content updates in place. */}
       <FadeIn className="relative z-[400]" style={{ marginTop: -COVER * 0.42 }}>
         <div
           className="text-center"
           style={{
-            // Composited: animate the expand delta on the GPU (translateY) rather
-            // than reflowing margin-top. A plain div (not the motion FadeIn) so
-            // Motion's own transform management can't clobber the CSS transition.
             transform: `translateY(${expanded ? -COVER * 0.24 : 0}px)`,
             transition: `transform .34s ${EXPO_OUT_CSS}`,
           }}
@@ -175,8 +138,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
               letterSpacing: ".01em",
               maxWidth: 560,
               margin: "0 auto",
-              // One line, never wraps to two (which crammed the meta against the
-              // cover); the full title reveals on hover and in the expanded sheet.
             }}
           >
             {cur?.name}
@@ -200,7 +161,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         </div>
       </FadeIn>
 
-      {/* progress dots */}
       {!expanded && (
         <div className="z-[400] mt-[22px] flex justify-center gap-[7px]">
           {items.map((_, i) => {
@@ -221,7 +181,6 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
         </div>
       )}
 
-      {/* tracklist sheet — Base UI Dialog (Escape / click-outside), Motion slide */}
       {tracksFor && (
         <CoverFlowSheet
           open={expanded}

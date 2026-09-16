@@ -48,7 +48,6 @@ export function MusicVideoTheaterScreen({
     video,
   });
 
-  // A new source rewinds and re-arms play; the effect keeps only the DOM work.
   const source = { id: video.id, playUrl: video.playUrl, hasStream: model.hasStream };
   const [loadedSource, setLoadedSource] = useState(source);
   if (

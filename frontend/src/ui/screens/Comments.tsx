@@ -1,7 +1,3 @@
-// ============================================================
-// Comments — track comments (left cover + right list). Providers that expose a
-// comment endpoint (NCM) fill the list; others fall back to an honest empty state.
-// ============================================================
 import type { VibeComment, VibeTrack } from "@/model/vibe";
 import { commentsTrackModel } from "@/model/comments-screen";
 import { Art } from "@/components/primitives";
@@ -39,7 +35,6 @@ export function CommentsScreen({ track, comments, liked, toggleLike }: CommentsS
           className="absolute inset-0 z-[2]"
           style={{ background: "linear-gradient(180deg, rgba(8,8,11,.25), rgba(8,8,11,.6))" }}
         />
-        {/* Top tags + bottom title via flow (space-between column), not absolute. */}
         <div className="relative z-[4] flex h-full flex-col items-start justify-between px-12 pb-[44px] pt-[60px]">
           <div className="flex flex-col items-start gap-[14px]">
             <LikeHeart liked={liked} onToggle={toggleLike} />

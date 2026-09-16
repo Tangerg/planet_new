@@ -1,23 +1,13 @@
-// ============================================================
-// VList — windowed vertical list for the vibe screens. A thin composition over
-// the generic VirtualList (ui/components): it sources the scroll container from
-// ScrollContext (so screens don't prop-drill a ref) and degrades to a plain
-// stacked render when no scroller is in scope. Content-agnostic: callers pass
-// renderItem, so it lists TrackRows, CollectionRows, anything (composition, not
-// a content-specific god list).
-// ============================================================
 import React from "react";
 import { VirtualList } from "@/components/layout/VirtualList";
 import { useScrollRef, type ScrollRef } from "@/components/layout/ScrollContext";
 
 type VListProps = {
   count: number;
-  /** Fixed row height (uniform rows) — feeds the virtualizer's estimate. */
   estimateSize: number;
   renderItem: (index: number) => React.ReactNode;
   itemKey?: (index: number) => React.Key;
   overscan?: number;
-  /** Explicit scroller; defaults to the enclosing screen's ScrollContext. */
   scrollRef?: ScrollRef;
 };
 
@@ -32,8 +22,6 @@ export function VList({
   const ctx = useScrollRef();
   const scroller = scrollRef ?? ctx;
   if (!scroller) {
-    // No scroll container in scope — render every row (small/bounded lists, or a
-    // missing provider). Correct, just not windowed.
     return (
       <>
         {Array.from({ length: count }, (_, i) => (

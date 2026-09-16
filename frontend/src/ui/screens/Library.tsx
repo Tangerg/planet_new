@@ -1,7 +1,3 @@
-// ============================================================
-// Library — your collections, as grid · list · cover-flow, plus a songs tab.
-// Grid/list/songs are windowed (VirtualGrid / VirtualList via CardGrid / VList).
-// ============================================================
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -36,7 +32,6 @@ type LibraryScreenProps = TrackListBindings & {
   data: ScreenData;
   onOpenPlaylist: (p: VibeCollection) => void;
   onOpenAlbum: (a: VibeCollection) => void;
-  // Controlled by Shell so the active tab/view survives a back-navigation round-trip.
   tab: LibrarySectionTab;
   view: CollectionViewMode;
   onTab: (t: LibrarySectionTab) => void;
@@ -57,9 +52,6 @@ export function LibraryScreen({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [flowCenter, setFlowCenter] = useState(LIBRARY_INITIAL_FLOW_CENTER);
-  // Recentre the flow per collection. Adjusted during render rather than in an
-  // effect: an effect would paint one frame of the new tab still centered on the
-  // old index (often out of range) before correcting it.
   const [flowTab, setFlowTab] = useState(tab);
   if (flowTab !== tab) {
     setFlowTab(tab);
@@ -67,10 +59,6 @@ export function LibraryScreen({
   }
   const model = useMemo(() => libraryScreenModel(data, tab, view), [data, tab, view]);
   const { cardTab, collections, flowMode, round, songColumns, tabs, tracks } = model;
-  // Every callback below lands on the memoized MediaCard / CollectionRow, whose
-  // whole point is that the windowed grid/list re-invokes renderItem for all
-  // visible cells on each scroll tick. A fresh closure per render would fail the
-  // shallow compare and re-render the entire visible set — so they are stable.
   const collectionSubtitle = useCallback(
     (collection: VibeCollection) => localize(t, collectionSub(collection, tab)),
     [t, tab],
@@ -92,9 +80,6 @@ export function LibraryScreen({
           : onOpenPlaylist(o),
     [model.collectionRoute, onOpenAlbum, onOpenArtist, onOpenPlaylist],
   );
-  // Library resolves a collection's tracks per active tab (they're lazy on the
-  // object), so it can't use the shared collection.tracks-based useCollectionPlayback
-  // — it plays over the resolved list instead.
   const tracksOf = useCallback(
     (o: VibeCollection) => libraryTracksForCollection(tab, tracks, o),
     [tab, tracks],

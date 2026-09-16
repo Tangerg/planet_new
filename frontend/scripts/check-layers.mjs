@@ -104,10 +104,9 @@ function importsAnyOf(source, specifiers) {
   return new RegExp(`from\\s+["'](?:${specifiers.join("|")})["']`).test(source);
 }
 
-// Built on oxc rather than a crawler reading the TypeScript compiler API:
-// TypeScript 7 publishes only `version` from its package root, so madge crashes
-// and dependency-cruiser silently cruises zero files — and a guard handed an
-// empty graph passes everything.
+// Not a crawler reading the TypeScript compiler API: TS 7 publishes only
+// `version` from its package root, so madge crashes and dependency-cruiser
+// silently cruises zero files — and a guard handed an empty graph passes all.
 const SRC = resolve("src");
 
 const resolver = new ResolverFactory({
@@ -115,7 +114,6 @@ const resolver = new ResolverFactory({
   tsconfig: { configFile: resolve("tsconfig.app.json"), references: "auto" },
 });
 
-/** Every module specifier a file names: imports, re-exports, dynamic imports. */
 function moduleRequestsOf(file, code) {
   const { module: esm, errors } = parseSync(file, code);
   if (errors.length > 0) {
@@ -142,7 +140,6 @@ for (const absolute of globSync(join(SRC, "**/*.{ts,tsx}"))) {
   const deps = new Set();
   for (const request of moduleRequestsOf(file, code)) {
     const { path: target } = resolver.sync(dirname(absolute), request);
-    // Outside src/ is a third-party edge no layer rule speaks about.
     if (!target || !target.startsWith(SRC + sep)) continue;
     deps.add(relative(SRC, target).split(sep).join("/"));
   }

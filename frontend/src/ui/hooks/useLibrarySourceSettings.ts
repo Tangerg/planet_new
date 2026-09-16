@@ -27,11 +27,6 @@ export type LibrarySourceSettingsModel = {
   switchSource: (providerId: string) => void;
 };
 
-/**
- * Local-library preferences are UI application behavior: provider switching,
- * native folder picking, and cache invalidation. Keeping that orchestration here
- * lets Settings render a model instead of knowing how the engine refreshes.
- */
 export function useLibrarySourceSettings(): LibrarySourceSettingsModel {
   const engine = useEngine();
   const queryClient = useQueryClient();

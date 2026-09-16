@@ -2,13 +2,9 @@ import { useId } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useAccent } from "@/hooks/accent";
 
-// The drift is authored in viewBox user units (that's the space the curves are
-// drawn in) and converted to a percentage of the box below, so the wrapper
-// translation is pixel-equivalent to transforming the path itself at any size.
 const VIEW_W = 1280;
 const VIEW_H = 736;
 
-// A few drifting bezier strokes — the signature XMB "wave".
 const paths = [
   { d: "M-200 380 C 200 240, 520 520, 900 360 S 1500 220, 1800 420", w: 1.6, o: 0.4, dur: 28 },
   { d: "M-200 440 C 260 360, 560 600, 920 440 S 1520 320, 1800 500", w: 1.1, o: 0.24, dur: 36 },
@@ -19,19 +15,6 @@ const pct = (units: number, extent: number) => `${(units / extent) * 100}%`;
 const DRIFT_X = [pct(-30, VIEW_W), pct(30, VIEW_W)];
 const DRIFT_Y = [pct(-8, VIEW_H), pct(10, VIEW_H)];
 
-/**
- * The launcher's ambient waves.
- *
- * Each stroke drifts inside its own <div> rather than as a transformed SVG node:
- * browsers largely do not hardware-accelerate transforms on SVG elements, so
- * animating the <path> repainted the whole vector layer every frame — forever,
- * underneath the home screen that every shared-element transition launches from.
- * On a wrapper the same motion is a composited layer.
- *
- * The cost of one wrapper per stroke is one <svg> per stroke, hence the per-
- * instance gradient ids (useId): duplicate SVG ids resolve document-wide and
- * would cross-wire two mounted launchers.
- */
 export function FlowWaves() {
   const accent = useAccent();
   const uid = useId();

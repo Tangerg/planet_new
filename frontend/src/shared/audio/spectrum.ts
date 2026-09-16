@@ -16,8 +16,7 @@ const START_BIN = 1;
 // bands into that dead zone would just amplify noise, so cap the band range below it.
 const USABLE_BIN_RATIO = 0.72;
 
-// --- Per-band auto-level (AGC) ---------------------------------------------
-// Absolute loudness varies wildly between tracks (mastering level) and between
+// Per-band auto-level (AGC). Absolute loudness varies wildly between tracks (mastering level) and between
 // bands (music is bass-heavy, pink-ish), so a fixed mapping makes some songs
 // thrash and others barely move. Normalise each band against its own slow-moving
 // RUNNING LEVEL — a stable reference the instantaneous band swings around. Loud

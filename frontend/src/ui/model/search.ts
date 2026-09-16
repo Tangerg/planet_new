@@ -14,8 +14,6 @@ export const SEARCH_SONG_PREVIEW_LIMIT = 6;
 
 export type SearchScreenModel = SearchResults & {
   chips: readonly string[];
-  /** Lower-cased term, for matching a suggestion chip against what was typed.
-   *  The screen already holds the raw query, so the model does not echo it. */
   normalizedTerm: string;
   status: SearchStatus;
   topArtist: VibeArtist | null;

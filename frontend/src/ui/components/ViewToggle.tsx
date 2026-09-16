@@ -11,12 +11,6 @@ type ViewToggleProps = {
   style?: React.CSSProperties;
 };
 
-/**
- * The list / grid / flow view switcher, shared by Library, Detail and Artist
- * (was repeated inline in all three). Order is fixed list → grid → flow
- * everywhere. A vibe composition of the generic ToggleGroup + vibe icons + the
- * `.viewtoggle` design-system class — so it lives here, not in ui/components.
- */
 export function ViewToggle({ value, onChange, style }: ViewToggleProps) {
   const { t } = useTranslation();
   return (

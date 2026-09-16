@@ -5,7 +5,6 @@ import type { ScanResult } from "@bindings/github.com/Tangerg/planet_new/backend
 import { scanLocalFolder } from "./localLibrary";
 
 vi.mock("@bindings/github.com/Tangerg/planet_new/backend", async (importOriginal) => ({
-  // Keep the generated enums; only the bound call is replaced.
   ...(await importOriginal<object>()),
   Library: { PickAndScan: vi.fn<typeof Library.PickAndScan>() },
 }));
@@ -22,12 +21,10 @@ function scan(over: Partial<ScanResult> = {}): ScanResult {
   };
 }
 
-/** A rejection shaped the way Wails delivers a classified Go error. */
 function bridgeRejection(code: string, operation: string): Error {
   return new Error(`local library ${operation} failed (${code})`, { cause: { code, operation } });
 }
 
-/** Stand in for the Wails webview: the adapter gates every call on it. */
 function enterDesktopShell(): void {
   (window as unknown as { _wails: object })._wails = { environment: { OS: "darwin" } };
 }

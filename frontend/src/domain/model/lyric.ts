@@ -17,11 +17,6 @@ export type Lyric = {
  */
 const lrcTimestampPattern = /\[(\d{2,}):(\d{2})(?:[.:](\d{1,3}))?]/;
 
-/**
- * Parse a single LRC line into a Lyric.
- * @param lrc - one lyric line
- * @returns the Lyric, or undefined when the line has no valid timestamp
- */
 function parseLyric(lrc: string): Lyric | undefined {
   const match = lrcTimestampPattern.exec(lrc);
   if (!match) {
@@ -36,11 +31,7 @@ function parseLyric(lrc: string): Lyric | undefined {
   };
 }
 
-/**
- * Parse a multi-line LRC string into an array of Lyric.
- * @param lrcs - the full LRC text
- * @returns the parsed lyric lines (lines without a timestamp are dropped)
- */
+/** Lines without a timestamp are dropped. */
 export function parseLyrics(lrcs: string): Lyric[] {
   return lrcs
     .split("\n")

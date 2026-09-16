@@ -1,7 +1,3 @@
-// ============================================================
-// Detail — Playlist / Album / Chart detail: cover hero, sticky condensed header,
-// list · grid · flow views, multi-select action bar. List/grid are windowed.
-// ============================================================
 import type { DetailTarget, TrackListBindings, VibeTrack } from "@/model/vibe";
 import { ToggleGroup } from "@/components/controls/ToggleGroup";
 import { ViewToggle } from "@/components/ViewToggle";
@@ -63,10 +59,8 @@ export function PlaylistDetailScreen({
 
   return (
     <FadeIn style={{ height: "100%", position: "relative", background: "#0a0a0d" }}>
-      {/* Full-page background from the cover (Spotify-style, full-height). */}
       <HeroBackdrop image={p.image} seed={p.coverSeed} grad={p.gradient} />
 
-      {/* sticky condensed header on scroll */}
       <div
         ref={stickyRef}
         className="absolute inset-x-0 top-0 z-30 py-[14px]"
@@ -106,9 +100,6 @@ export function PlaylistDetailScreen({
 
       <div ref={scrollRef} onScroll={handleScroll} className="scroll relative z-[2] h-full">
         <ScrollProvider value={scrollRef}>
-          {/* HERO banner — cover + meta side by side. minHeight (not height): real
-              titles/descriptions run far longer than the example's, so the
-              bottom-aligned column grows DOWN instead of overflowing UP. */}
           <PageColumn className="flex items-end gap-[34px] pb-8" style={{ minHeight: HERO }}>
             <HeroArt
               seed={p.coverSeed}
@@ -172,7 +163,6 @@ export function PlaylistDetailScreen({
             </div>
           </PageColumn>
 
-          {/* CONTENT — width-capped, centered, with view toggle */}
           <PageColumn className={"pt-2 " + (view === "flow" ? "pb-[30px]" : "pb-10")}>
             <div className="mb-[14px] flex items-center justify-between">
               <SectionHead title={t("common.tracks")} size={22} />
@@ -217,11 +207,7 @@ export function PlaylistDetailScreen({
         </ScrollProvider>
       </div>
 
-      {/* multi-select action bar (⌘/Shift-click rows to select) */}
       {sel.size > 0 && (
-        // Flex-centred strip: the bar travels up via <Rise> (Motion owns its
-        // transform), so the old translateX(-50%) centring would clash — centre
-        // it with the wrapper instead. Strip is click-through; bar re-enables it.
         <div className="pointer-events-none absolute inset-x-0 bottom-[26px] z-40 flex justify-center">
           <Rise
             className="pointer-events-auto flex items-center gap-[18px] rounded-full py-3 pl-[22px] pr-[14px]"

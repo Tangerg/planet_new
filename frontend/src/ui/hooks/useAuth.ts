@@ -7,11 +7,6 @@ import { accountQueryEnabled } from "@/model/account-query";
 import { queryKeys } from "@/model/queryKeys";
 import { warnWriteFailure } from "@shared/debug";
 
-/**
- * UI handle for login: reactive `loggedIn` + the current `account` (React Query,
- * keyed by provider), plus begin/mark/logout. The login flow itself (QR poll)
- * is driven by LoginSheet; `markLoggedIn` is called on success to refresh state.
- */
 export function useAuth() {
   const identity = useIdentityService();
   const providerId = identity.providerId;
@@ -19,7 +14,6 @@ export function useAuth() {
   const loggedIn = useAuthStore((s) => s.loggedIn);
   const setLoggedIn = useAuthStore((s) => s.setLoggedIn);
 
-  // Seed the reactive flag from the persisted credential.
   useEffect(() => {
     setLoggedIn(identity.isLoggedIn());
   }, [identity, providerId, setLoggedIn]);
@@ -44,8 +38,6 @@ export function useAuth() {
     } catch (error) {
       warnWriteFailure(`${providerId}.logout`, error);
     } finally {
-      // The local session is authoritative for the next render/startup. A
-      // remote endpoint outage must not leave the UI claiming it is logged in.
       setLoggedIn(false);
       qc.removeQueries({ queryKey: queryKeys.accountRoot() });
     }

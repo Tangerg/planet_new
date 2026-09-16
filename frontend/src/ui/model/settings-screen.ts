@@ -21,21 +21,16 @@ export type SettingsScanState =
   | { phase: "partial"; added: number; total: number }
   | { phase: "error" };
 
-/** Audio-quality tiers. The tokens ARE the label: STD/HQ/SQ are the universal
- *  abbreviations, identical in every locale. */
 export const AUDIO_QUALITY_OPTIONS: SettingsOption<AudioQuality>[] = AUDIO_QUALITIES.map(
   (value) => ({ value, label: { text: value } }),
 );
 
-/** What Now Playing opens showing. Unlike the quality tiers these are ordinary
- *  words, so they resolve through the message catalogue. */
 export const NOW_PLAYING_OPEN_OPTIONS: SettingsOption<NowPlayingOpenMode>[] =
   NOW_PLAYING_OPEN_MODES.map((value) => ({
     value,
     label: { key: value === "cover" ? "common.cover" : "common.lyrics" },
   }));
 
-/** Source picker rows, named by the shared source-name authority. */
 export function sourceOptions(sources: readonly ProviderId[]): SourceOption[] {
   return sources.map((source) => ({ value: source, label: sourceDisplayName(source) }));
 }

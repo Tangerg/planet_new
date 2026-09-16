@@ -16,3 +16,7 @@ for this repository, and each one resolves a question `AGENTS.md` deliberately l
 - **Provider ports own data access.** The application never reaches a music service directly; it calls a
   provider, which resolves to a locally running API service. A page that fetches on its own is a second data
   owner, and an unavailable backend must render an honest empty state rather than fail.
+- **The UI layer carries no comments.** `frontend/src/ui/**` reads from its naming, types and structure
+  alone; the only exceptions are tool directives such as `oxlint-disable-*`. Elsewhere the comment rules in
+  `AGENTS.md` apply unchanged — if a UI decision needs an explanation, it belongs in that layer's README or
+  in the commit that made it.

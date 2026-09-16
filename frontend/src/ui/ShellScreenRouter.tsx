@@ -33,11 +33,6 @@ import { NowPlaying } from "@/screens/NowPlaying";
 import type { NowPlayingMode } from "@/model/now-playing";
 import { resolveShellScreen, type ShellScreenView } from "@/model/shell-screen";
 
-// Code-split screens. Only screens reached by a PLAIN view switch qualify: a
-// shared-element morph destination must render its hero synchronously for the
-// engine to measure, which a chunk still in flight cannot do. The stage (WebGL
-// effects) and the video screens are both plain-switch and heavy, so they leave
-// the startup chunk entirely.
 const importStage = () => import("@/screens/Stage");
 const importMusicVideos = () => import("@/screens/music-videos/MusicVideosScreen");
 const importMusicVideoDetail = () => import("@/screens/music-videos/MusicVideoDetailScreen");
@@ -54,12 +49,6 @@ const MusicVideoTheaterScreen = lazy(() =>
   importMusicVideoTheater().then((m) => ({ default: m.MusicVideoTheaterScreen })),
 );
 
-/**
- * Fetch the deferred screen chunks once the app is idle. Splitting them keeps
- * them off the STARTUP path (parse + execute before first paint); warming them
- * afterwards means the first navigation into one never waits on a fetch, so the
- * split costs nothing at the moment the user actually opens the screen.
- */
 export function warmDeferredScreens(): () => void {
   const schedule =
     typeof window.requestIdleCallback === "function"
@@ -77,17 +66,11 @@ export function warmDeferredScreens(): () => void {
   };
 }
 
-// The screen area while a chunk loads: the same full-bleed dark field every
-// screen paints on, so a load reads as "not drawn yet" rather than a white flash.
 const chunkFallback = <div className="h-full bg-[#08080b]" />;
 
 function ScreenChunk({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={chunkFallback}>{children}</Suspense>;
 }
-
-// Screen props grouped by bounded context so the router is a screen *assembler*,
-// not a 50-field forwarder. Field names mirror the values each screen consumes;
-// the router just destructures each bundle and hands screens what they need.
 
 type PlaybackBundle = {
   playing: boolean;
@@ -115,7 +98,6 @@ type NavigationBundle = {
   openMusicVideo: (video: VibeMusicVideo) => void;
   openMusicVideoTheater: (video: VibeMusicVideo) => void;
   openStage: () => void;
-  // XMB launcher cursor — transient highlight state Shell holds across mounts.
   cats: XmbCat[];
   xmbCategory: number;
   setXmbCategory: (value: number) => void;
@@ -235,10 +217,6 @@ export function ShellScreenRouter(props: Props) {
   } = props.musicVideo;
   const { settings, setSettings, nowPlayingInitialMode } = props.settings;
 
-  // Derived props handed to memoized screens (XMB, NowPlaying). Built here rather
-  // than inline in the branch so their identity only changes with the track —
-  // an inline object/arrow would make the shallow compare fail every render and
-  // turn those React.memo wrappers into pure overhead.
   const nowPlayingArt = useMemo(
     () =>
       hasCurrentTrack
@@ -250,9 +228,6 @@ export function ShellScreenRouter(props: Props) {
     if (current) toggleLike(current);
   }, [current, toggleLike]);
 
-  // The bindings every track surface needs, assembled once. They are spread into
-  // each screen rather than re-listed per branch: six props that always travel
-  // together drift the moment they are typed out six times.
   const trackList: TrackListBindings = {
     onPlay,
     current,
@@ -382,8 +357,6 @@ export function ShellScreenRouter(props: Props) {
         <QueueScreen
           {...trackList}
           queue={queue}
-          /* The queue plays by SELECTING an already-queued track, rather than
-             replacing the queue the way every other surface's onPlay does. */
           onPlay={selectTrack}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}

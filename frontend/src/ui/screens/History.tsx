@@ -1,8 +1,3 @@
-// ============================================================
-// History — listening history grouped into Today (this session) / This week /
-// All-time, the latter two from the account's real play record. Groups are
-// small/bounded so plain rows, not windowed.
-// ============================================================
 import { useTranslation } from "react-i18next";
 import type { TrackListBindings, VibeTrack } from "@/model/vibe";
 import { historyScreenModel, type HistorySection } from "@/model/history-screen";
@@ -17,18 +12,11 @@ import { ScreenScaffold } from "@/components/layout/ScreenScaffold";
 import { useAccent } from "@/hooks/accent";
 
 type HistoryScreenProps = TrackListBindings & {
-  /** This session's plays (newest last) → the "Today" group. */
   session: readonly VibeTrack[];
-  /** Account play record — most played last week. */
   week: VibeTrack[];
-  /** Account play record — most played all time. */
   all: VibeTrack[];
 };
 
-// Module scope on purpose: declared inside HistoryScreen this would be a NEW
-// component type on every render, so React would unmount and remount every group
-// — throwing away each memoized TrackRow's DOM and hover state on any parent
-// update (a track change, a like toggle).
 type HistoryGroupProps = TrackListBindings & { section: HistorySection };
 
 function HistoryGroup({ section, ...trackList }: HistoryGroupProps) {
@@ -65,7 +53,6 @@ export function HistoryScreen({
       backdrop={{ image: hero?.image, seed: hero?.coverSeed || 0, grad: hero?.gradient }}
     >
       <PageColumn className="pb-[30px] pt-[70px]">
-        {/* header */}
         <div className="mb-[46px] flex items-end gap-[30px]">
           <HeroArt
             seed={hero?.coverSeed || 0}
@@ -95,7 +82,6 @@ export function HistoryScreen({
             )}
           </div>
         </div>
-        {/* grouped lists */}
         {model.sections.map((section) => (
           <HistoryGroup key={section.labelKey} section={section} {...trackList} />
         ))}

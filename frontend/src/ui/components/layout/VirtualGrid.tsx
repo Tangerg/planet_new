@@ -4,30 +4,20 @@ import React, { useRef, useState } from "react";
 import { scrollTopOffset, useMeasuredInScroller } from "@/components/layout/measure";
 
 export type VirtualGridProps = {
-  /** The scrolling ancestor (the grid may sit below a hero/header). */
   scrollRef: React.RefObject<HTMLElement | null>;
   count: number;
-  /** Min column width; column count matches CSS repeat(auto-fill, minmax(w,1fr)). */
   minColumnWidth: number;
   gap: number;
-  /** Initial per-row height guess; the real height is measured per row. */
   estimateRowHeight: number;
   overscan?: number;
   renderItem: (index: number) => React.ReactNode;
   itemKey?: (index: number) => React.Key;
 };
 
-/** Column count for `repeat(auto-fill, minmax(minColumnWidth, 1fr))` at this width. */
 function autoFillColumns(width: number, minColumnWidth: number, gap: number): number {
   return Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap)));
 }
 
-/**
- * Windowed responsive grid backed by TanStack Virtual. Columns are derived from
- * the measured width with the same formula CSS `auto-fill` uses, so the layout
- * matches a plain grid; only the on-screen rows (plus overscan) are mounted, and
- * each row's height is measured so variable cover sizes stay aligned.
- */
 export function VirtualGrid({
   scrollRef,
   count,
@@ -53,8 +43,6 @@ export function VirtualGrid({
   );
 
   const rowCount = Math.ceil(count / columns);
-  // useVirtualizer returns functions React Compiler cannot memoise. Its
-  // measurements reach children as plain numbers, so nothing downstream goes stale.
   // oxlint-disable-next-line react/incompatible-library
   const virtualizer = useVirtualizer({
     count: rowCount,

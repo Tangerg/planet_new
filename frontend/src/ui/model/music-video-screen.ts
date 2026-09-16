@@ -86,7 +86,6 @@ export function musicVideoQualityLabel(video: Pick<VibeMusicVideo, "quality">): 
   return video.quality ? `${video.quality}P` : "MV";
 }
 
-/** Quality · duration · play count, in display order. */
 export function musicVideoMetaPieces(
   video: Pick<VibeMusicVideo, "duration" | "playCount" | "quality">,
 ): LocalizedText[] {

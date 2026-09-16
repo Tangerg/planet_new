@@ -1,6 +1,3 @@
-// English message pack — the source of truth for keys + the type shape every
-// other pack is checked against (see i18n/index.ts CustomTypeOptions).
-// Nested objects; react-i18next addresses them with dotted keys: t("browse.title").
 export const en = {
   common: {
     addToQueue: "Add to queue",
@@ -123,7 +120,6 @@ export const en = {
     noLyrics: "No lyrics for this track.",
     notPlaying: "Not playing",
     producedBy: "Produced by {{name}}",
-    /** Row badge: the active source does not license this track for playback. */
     unavailable: "Unavailable",
     writtenBy: "Written by {{name}}",
   },
@@ -159,8 +155,6 @@ export const en = {
   library: {
     title: "Your Library",
     section: "Library section",
-    /** The synthetic "everything you hearted" collection: its name, its owner
-     *  line and its blurb. App-authored, so it is keyed like any other copy. */
     likedSongs: "Liked Songs",
     likedSongsOwner: "You",
     likedSongsDescription: "Everything you've hearted, in one place.",

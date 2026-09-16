@@ -18,11 +18,6 @@ type Deps = {
   openLikedSongs: () => void;
 };
 
-/**
- * Project catalog + capabilities + session state into the XMB launcher tree.
- * Tile text stays as message keys here; the XMB components resolve them, so a
- * language change re-renders the labels without rebuilding the tree.
- */
 export function useShellXmbModel({
   media,
   catalog,

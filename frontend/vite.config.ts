@@ -34,10 +34,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tailwindcss(),
       // `compiler: true` crashes the Shell on first paint: React Query's
-      // in-render update re-runs the component, and the compiler's cache hook
-      // makes the second pass disagree about hook order. Reproduces on
-      // unmodified sources, so it is the transform. The source is kept
-      // compiler-clean regardless — that is what oxlint's react rules enforce.
+      // in-render update re-runs the component and the compiler's cache hook
+      // then disagrees about hook order. Reproduces on unmodified sources, so
+      // it is the transform, not this code.
       react(),
       wails("./bindings"),
     ],

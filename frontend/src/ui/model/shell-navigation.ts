@@ -8,7 +8,6 @@ import type {
   VibeTrack,
 } from "@/model/vibe";
 
-/** One frame of navigation state — enough to rebuild any screen on "back". */
 export type NavSnapshot<TLastTile> = {
   view: ShellScreenView;
   detail: DetailTarget | null;
@@ -36,10 +35,6 @@ export function createNavSnapshot<TLastTile>(
   };
 }
 
-/**
- * Back-stack with launcher semantics baked in: the XMB root is the boundary
- * handled by the morph engine, so it never enters history.
- */
 export class NavigationHistory<TLastTile> {
   private snapshots: NavSnapshot<TLastTile>[] = [];
 
@@ -62,11 +57,6 @@ export class NavigationHistory<TLastTile> {
   }
 }
 
-/**
- * A tiny generation gate for async navigation backfills. Opening another screen
- * or leaving the current one invalidates older fetches so late detail responses
- * cannot overwrite the active screen.
- */
 export class NavigationRequestGate {
   private generation = 0;
 
@@ -84,12 +74,6 @@ export class NavigationRequestGate {
   }
 }
 
-/**
- * Cohesive navigation transaction boundary: history and async freshness are two
- * sides of the same shell navigation session. Hooks decide how to render/apply a
- * transition; this object decides how a navigation intent affects back-stack and
- * pending async backfills.
- */
 export class NavigationSession<TLastTile> {
   private readonly history = new NavigationHistory<TLastTile>();
   private readonly requests = new NavigationRequestGate();

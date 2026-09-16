@@ -41,7 +41,6 @@ const playlist = (id: string): VibeCollection => ({
 
 const catalog = (tracks: VibeTrack[]): Pick<ScreenData, "allTracks"> => ({ allTracks: tracks });
 
-/** Already-translated copy, as the shell hands it in. */
 const LIKED_TEXT = { name: "Liked Songs", owner: "You", description: "Everything you hearted." };
 
 describe("track action model", () => {

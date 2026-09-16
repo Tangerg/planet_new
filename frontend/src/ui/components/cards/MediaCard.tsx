@@ -1,9 +1,3 @@
-// ============================================================
-// MediaCard — square (or round) cover card for grids & rails: art + hover-rise
-// play fab + title/sub. The whole tile opens on mouse click, while cover/title
-// keep keyboard-accessible targets and the play fab remains a sibling action.
-// Opening flies the shared-element morph from the `.art` rect.
-// ============================================================
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { CardItem } from "@/model/vibe";
@@ -14,17 +8,12 @@ import { PlayFab } from "@/components/cards/PlayFab";
 import { PressTarget } from "@/components/controls/PressTarget";
 import { useScreenActions } from "@/hooks/screenActions";
 
-/** Rendered height of one grid row of media cards (cover + two text lines).
- *  Windowed grids estimate with it. */
 export const MEDIA_CARD_ROW_HEIGHT = 240;
 
 type MediaCardProps<T extends CardItem> = CardActivation<T> & {
   sub?: string;
   round?: boolean;
-  /** Hover-lift intensity. Defaults to the hard square-cover lift; rail and
-   *  wrapping cards pass `RAIL_LIFT`. */
   lift?: LiftTuning;
-  /** Art render-width hint for image-variant selection. */
   px?: number;
 };
 
@@ -63,7 +52,6 @@ function MediaCardInner<T extends CardItem>({
             glow={round ? undefined : artPair(item.coverSeed, item.gradient)[1]}
           />
         </PressTarget>
-        {/* artists (round) are people, not playable — no cover play fab */}
         {onPlay && !round && playable && (
           <PlayFab
             className="playfab"
@@ -80,9 +68,4 @@ function MediaCardInner<T extends CardItem>({
   );
 }
 
-// React.memo: leaf of every card grid/rail; the windowed grid/rail re-invokes
-// renderItem for all visible cells on each scroll tick. With the stable per-item
-// callbacks the CardActivation contract mandates, the shallow compare bails so
-// only entering cards render. The cast preserves the generic call signature that
-// React.memo erases.
 export const MediaCard = React.memo(MediaCardInner) as typeof MediaCardInner;

@@ -1,26 +1,9 @@
-// ============================================================
-// Icon set — the app's own hand-drawn, stroke-based glyphs (no icon-library
-// dependency). One library, one place to tune the shared config: stroke weight,
-// line caps, the default size, and the fill convention all live in `Svg` below,
-// so restyling every icon (e.g. a thicker stroke) is a one-line change here.
-//
-// `Icon.<name>` + the `{ size, filled }` signature feeds both static
-// `<Icon.x/>` uses and the dynamic `Icon[name]` lookups in the XMB world tree /
-// menus. Transport glyphs are PLAIN filled shapes (no surrounding circle — the
-// round frame is the button, not the icon). `shuffle` / `loop` use the
-// industry-standard crossing-arrows / repeat geometry players converge on.
-//
-// Add new icons here (keep the 24×24 viewBox + `<Svg>` wrapper) so the whole UI
-// stays visually consistent.
-// ============================================================
 import React from "react";
 
-/** Shared stroke weight for every outline glyph — tune once to restyle the set. */
 const STROKE_WIDTH = 1.6;
 
 export type IconProps = React.SVGProps<SVGSVGElement> & {
   size?: number;
-  /** Selects the filled variant — only meaningful for icons that have one (heart). */
   filled?: boolean;
 };
 
@@ -38,9 +21,6 @@ const Svg: React.FC<IconProps> = ({
     fill={fill}
     stroke="currentColor"
     strokeWidth={STROKE_WIDTH}
-    // Set aesthetic: crisp/angular corners (miter joins → 有棱有角) but soft line
-    // ends (round caps) — "sharp with a touch of round", not hard-edged. Acute
-    // joins are clamped to a bevel by miterlimit so nothing spikes.
     strokeLinecap="round"
     strokeLinejoin="miter"
     strokeMiterlimit={2.6}
@@ -50,10 +30,6 @@ const Svg: React.FC<IconProps> = ({
   </svg>
 );
 
-/** Render `children` scaled about the 24-box centre while holding the visual
- *  stroke at STROKE_WIDTH — lets a few glyphs whose natural extent runs large
- *  (the box-filling lucide shuffle/repeat) or small be optically size-matched to
- *  the rest WITHOUT changing their stroke weight. */
 function scaled(factor: number, children: React.ReactNode) {
   return (
     <g
@@ -65,13 +41,9 @@ function scaled(factor: number, children: React.ReactNode) {
   );
 }
 
-// Volume glyphs share the speaker body+cone (and the low wave), so they can't
-// drift apart; high/low/mute differ only by the extra wave / mute ✕.
 const VOL_SPEAKER = "M4 9.5v5h3.5l5 4V5.5L7.5 9.5z";
 const VOL_WAVE = "M15.5 9.5a4 4 0 0 1 0 5";
 
-// The repeat cycle, for the same reason: `loopOne` IS `loop` plus a centred "1",
-// so restyling the arrows must not be a two-place edit.
 const LOOP_ARROWS = (
   <>
     <path d="m17 2 4 4-4 4" />
@@ -82,7 +54,6 @@ const LOOP_ARROWS = (
 );
 
 export const Icon = {
-  // transport — plain filled shapes (no surrounding circle)
   play: (p) => (
     <Svg {...p} fill="currentColor" stroke="none">
       <path d="M8 5.5v13l11-6.5z" />
@@ -104,7 +75,6 @@ export const Icon = {
       <path d="M13 12 5 18V6zM17 6h2v12h-2z" />
     </Svg>
   ),
-  // shuffle / loop — industry-standard geometry (lucide Shuffle / Repeat)
   shuffle: (p) => (
     <Svg {...p}>
       {scaled(
@@ -120,7 +90,6 @@ export const Icon = {
     </Svg>
   ),
   loop: (p) => <Svg {...p}>{scaled(0.88, LOOP_ARROWS)}</Svg>,
-  // repeat-one — the same cycle with a small "1" centred (single-track loop).
   loopOne: (p) => (
     <Svg {...p}>
       {scaled(
@@ -137,7 +106,6 @@ export const Icon = {
       <path d="M8.5 9.5a3 3 0 1 0 0 5c1.5 0 2.5-1.2 3.5-2.5s2-2.5 3.5-2.5a3 3 0 1 1 0 5c-1.5 0-2.5-1.2-3.5-2.5" />
     </Svg>
   ),
-  // chrome / library
   heart: ({ filled, ...p }) => (
     <Svg {...p}>
       <path
@@ -146,15 +114,11 @@ export const Icon = {
       />
     </Svg>
   ),
-  // crisp speech bubble — small-radius corners + a sharp tail (angular, with just
-  // a hint of round on the corners).
   comment: (p) => (
     <Svg {...p}>
       <path d="M4.5 5h15a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3v-3H4.5A1.5 1.5 0 0 1 3 14.5v-8A1.5 1.5 0 0 1 4.5 5z" />
     </Svg>
   ),
-  // lyrics — a vocal microphone (the convention for a sing-along / lyrics view);
-  // a clean stand-mic with our own proportions, not any one product's exact glyph.
   lyrics: (p) => (
     <Svg {...p}>
       <rect x="9" y="2" width="6" height="11" rx="2" />
@@ -191,8 +155,6 @@ export const Icon = {
       <path d="M5 12.5 10 17l9-10" />
     </Svg>
   ),
-  // volume — high / low / mute share the speaker body+cone (VOL_SPEAKER) and only
-  // differ by the trailing waves / mute ✕, so the speaker can't drift between them.
   volume: (p) => (
     <Svg {...p}>
       <path d={VOL_SPEAKER} />
@@ -226,7 +188,6 @@ export const Icon = {
       <path d="M7 9h4M7 12h3" />
     </Svg>
   ),
-  // view toggles
   list: (p) => (
     <Svg {...p}>
       <path d="M4 5h12M4 12h12M4 19h7M18 14v6M18 14l3 2" />
@@ -247,7 +208,6 @@ export const Icon = {
       <rect x="17.5" y="8" width="4" height="8" rx="1" />
     </Svg>
   ),
-  // XMB worlds
   star: (p) => (
     <Svg {...p}>
       <path
@@ -298,9 +258,4 @@ export const Icon = {
   ),
 } satisfies Record<string, React.FC<IconProps>>;
 
-/**
- * Every glyph in the set. Model layers that name an icon (the XMB tree, context
- * menus) declare this rather than `string`, so a typo is a compile error instead
- * of `React.createElement(undefined)` at the moment the menu opens.
- */
 export type IconName = keyof typeof Icon;

@@ -10,17 +10,12 @@ import {
 import { coverColors } from "../cover";
 import type { VisualEffect, VisualFrame } from "../effect";
 
-// Low-discrepancy scatter in [0,1): a golden-ratio additive recurrence gives an even
-// spread with no repetition for any lane count. Different seeds → independent lane
-// characters, so the stack reads as uneven, layered ribbons ("错落有致").
 const GOLDEN = 0.618033988749895;
 function scatter(index: number, seed: number): number {
   const x = index * GOLDEN + seed;
   return x - Math.floor(x);
 }
 
-// The AGC centres every band ≈ this; a lane at its running level rests here and the
-// beat swings it above/below.
 const LANE_CENTER = 0.5;
 
 function laneColor(colors: SpectralLightColors, t: number): HslColor {
@@ -44,8 +39,6 @@ type LaneStyle = {
   rest: number;
 };
 
-// Per-lane render params scattered independently so some lanes are tall & calm and
-// others low & jumpy; speed/waves/phase give each its own horizontal flow.
 function laneStyle(index: number): LaneStyle {
   const vh = scatter(index, 0.35);
   const vr = scatter(index, 0.72);
@@ -61,11 +54,6 @@ function laneStyle(index: number): LaneStyle {
   };
 }
 
-/**
- * Waves: layered flowing ribbons — one per band around the raw/overall backbone,
- * each swinging around its own resting height with the beat. Size-adaptive: this is
- * both the compact player-bar visual and the fullscreen "aurora". 2D canvas.
- */
 export const wavesEffect: VisualEffect = {
   id: "waves",
   labelKey: "stage.effect.waves",
@@ -111,10 +99,8 @@ export const wavesEffect: VisualEffect = {
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
-        // The drawing side fetches its own cover palette (memoized in spectralLightColors).
         const colors = spectralLightColors({ accent, tones: coverColors(image) ?? [accent] });
         const idleBreath = 0.5 + Math.sin(timeSec * 1.1) * 0.5;
-        // Lane 0 is the raw/overall backbone; lanes 1..N are the frequency bands.
         const levels = [audio.overall, ...audio.bands];
         const denom = Math.max(1, levels.length - 1);
 
@@ -127,9 +113,6 @@ export const wavesEffect: VisualEffect = {
           return { style, centerHeight, color: laneColor(colors, k / denom) };
         });
 
-        // Tall-resting lanes behind, shorter in front → layered depth (stable order).
-        // Plain source-over (not additive): the bar sits on a light frost where
-        // additive would blow out to white; translucent hills read the same on black.
         rendered.sort((a, b) => b.style.rest - a.style.rest);
         for (const r of rendered) {
           paintLane(width, height, timeSec, r.centerHeight, r.color, r.style);

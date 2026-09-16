@@ -87,11 +87,6 @@ export function collectionMenuItems(opts: {
   return items.filter(isMenuItem);
 }
 
-/**
- * The app menu's whole input: which entries apply, and where each one goes.
- * Named because the shell hook that opens the menu carries the same nine values
- * straight through — a contract, not nine props to spell out again at each stop.
- */
 export type AppMenuBindings = {
   canGoBack: boolean;
   hasQueue: boolean;

@@ -4,11 +4,6 @@ import type { XmbItemModel } from "@/model/navigation";
 import { XMB_ANCHOR, XMB_BAR_Y, XMB_EASE, subItemTransform } from "./geometry";
 import { XmbItem } from "./XmbItem";
 
-/**
- * The active category's vertical sub-item list: a single column anchored at the
- * bar, with passed items floating above and upcoming below. Clicking / Enter on
- * the active row opens it; on any other row it becomes the selection.
- */
 export function XmbItemColumn({
   items,
   it,

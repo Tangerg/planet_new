@@ -4,7 +4,6 @@ import { groupPlayHistory } from "./play-history";
 import type { VibeTrack } from "./vibe";
 
 export type HistorySection = {
-  /** Section heading; a bare key because a section never interpolates. */
   labelKey: MessageKey;
   items: VibeTrack[];
 };

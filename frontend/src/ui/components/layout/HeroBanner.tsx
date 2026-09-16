@@ -1,8 +1,3 @@
-// ============================================================
-// HeroBanner — the featured playlist banner on ForYou. Supplies the playlist's
-// copy and actions; the banner chrome itself is BannerFrame, shared with the
-// music-video hub's featured hero.
-// ============================================================
 import { useTranslation } from "react-i18next";
 import type { VibeCollection } from "@/model/vibe";
 import {

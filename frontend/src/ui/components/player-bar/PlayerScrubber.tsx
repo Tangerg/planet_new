@@ -59,10 +59,6 @@ export function PlayerScrubber({ positionSec, durationSec, fallbackDurationSec, 
           );
         }}
         onPointerLeave={() => setScrubHover(null)}
-        // `.pscrub` owns the thumb's hover reveal in CSS. This component
-        // subscribes to the playback clock, so it already re-renders several
-        // times a second — adding a hover state would have made merely resting
-        // the cursor on the bar re-render it twice more.
         className={scrub === null ? "pscrub" : "pscrub is-scrubbing"}
         style={{
           position: "relative",
@@ -93,8 +89,6 @@ export function PlayerScrubber({ positionSec, durationSec, fallbackDurationSec, 
             },
           },
           thumb: {
-            // Spotify-style: a small, clean white dot (no coloured glow ring) that
-            // only appears on hover or while scrubbing; hidden otherwise (.pscrub).
             className: "pscrub-thumb",
             style: {
               display: "block",

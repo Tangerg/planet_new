@@ -15,13 +15,6 @@ import {
   upNextView,
 } from "@/model/playback";
 
-/**
- * Bridge between the vibe UI and PlaybackService.
- *
- * Reads are projected from the domain queue into VibeTrack display shapes;
- * writes go back through PlaybackService with domain Tracks. Every read comes
- * from the pinned store, so a component mounting mid-session sees current state.
- */
 export function useVibePlayback() {
   const playbackService = usePlaybackService();
 

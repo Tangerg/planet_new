@@ -5,22 +5,11 @@ import type { LocalizedText } from "@/i18n/text";
 
 import { sameVibeTrack, type VibeTrack } from "./vibe";
 
-/**
- * What the row shows in its leading slot. Pointer hover is deliberately NOT an
- * input here: "a numbered playable row offers play under the cursor" is a
- * presentation rule, so the row renders both glyphs and CSS swaps them. Feeding
- * hover into the model made every mouse enter/leave a React render of a list
- * leaf — the model's job is to project track FACTS, not cursor position.
- */
 export type TrackRowLeading =
   | { kind: "rank"; value: number; active: boolean }
   | { kind: "equalizer" }
   | { kind: "index"; value: number };
 
-/** A badge's text is `LocalizedText` because the three kinds differ in origin:
- *  a version is provider content ("live", "acoustic") that must not be
- *  translated, "VIP" is a tier mark the sources print the same way in every
- *  language, and unavailability is our own copy — which has to be. */
 export type TrackRowBadge = {
   kind: "version" | "subscription" | "unavailable";
   label: LocalizedText;

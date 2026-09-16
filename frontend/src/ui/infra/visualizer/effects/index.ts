@@ -2,8 +2,6 @@ import type { VisualEffect } from "../effect";
 import { cloudEffect } from "./cloud";
 import { wavesEffect } from "./waves";
 
-// The selectable fullscreen effects, in switcher order. Adding a visual is one entry
-// here (a create() consuming the VisualFrame) — the host + switcher read this list.
 export const VISUAL_EFFECTS: readonly VisualEffect[] = [cloudEffect, wavesEffect];
 
 export const DEFAULT_EFFECT_ID = VISUAL_EFFECTS[0].id;

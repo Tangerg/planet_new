@@ -1,6 +1,3 @@
-// ============================================================
-// Search — taxonomy results: top artist · songs · playlist/artist/album rails.
-// ============================================================
 import { useTranslation } from "react-i18next";
 import type { SearchResults, TrackListBindings, VibeCollection } from "@/model/vibe";
 import { Art } from "@/components/primitives";
@@ -20,12 +17,10 @@ import { useCollectionPlayback } from "@/hooks/useCollectionPlayback";
 import { useAccent } from "@/hooks/accent";
 
 type SearchScreenProps = TrackListBindings & {
-  // Controlled by Shell so the typed query survives a back-navigation round-trip.
   query: string;
   onQuery: (q: string) => void;
   onOpenPlaylist: (p: VibeCollection) => void;
   onOpenAlbum: (a: VibeCollection) => void;
-  /** Real search: provider.search results projected to vibe shapes. */
   search?: (q: string) => Promise<SearchResults>;
 };
 
@@ -43,10 +38,7 @@ export function SearchScreen({
   const open = useMorphOpen();
   const model = useSearchScreenModel({ query: q, search });
   const { albums, artists, chips, normalizedTerm, playlists, status, topArtist, topTracks } = model;
-  // Stable so the memoized rail cards don't re-render on every keystroke.
   const { playCollection, canPlayCollection } = useCollectionPlayback(onPlay);
-  // What stands in for results, per status. "ready" never reaches here — it is
-  // the one status that renders the results themselves.
   const statusText =
     status === "idle"
       ? t("search.idle")
@@ -62,7 +54,6 @@ export function SearchScreen({
       style={{ background: "radial-gradient(120% 80% at 30% -5%, #16161d, var(--surf-0))" }}
     >
       <PageColumn className="pb-[44px] pt-[60px]">
-        {/* input */}
         <div
           className="flex max-w-[640px] items-center gap-4 pb-[14px]"
           style={{ borderBottom: `1.5px solid ${accent}` }}
@@ -104,7 +95,6 @@ export function SearchScreen({
             className="mt-10 grid gap-12"
             style={{ gridTemplateColumns: "minmax(280px, 0.9fr) minmax(0, 1.1fr)" }}
           >
-            {/* top result */}
             <div>
               <SectionHead title={t("search.topResult")} size={22} />
               {topArtist && (
@@ -139,7 +129,6 @@ export function SearchScreen({
                 </LiftButton>
               )}
             </div>
-            {/* songs */}
             <div>
               <SectionHead title={t("common.songs")} size={22} />
               {topTracks.map((track, i) => (

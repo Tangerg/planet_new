@@ -1,9 +1,3 @@
-// ============================================================
-// HeroArt — the square hero cover on a detail / session header: the artwork
-// with the shared lifted drop-shadow + seeded glow, tagged data-hero so the
-// morph engine measures it as the landing target. Only the size varies per
-// screen. (Round portraits like the Artist header stay bespoke.)
-// ============================================================
 import type { Image } from "@contexts/catalog";
 import { Art, artPair } from "@/components/primitives";
 
@@ -12,7 +6,6 @@ type HeroArtProps = {
   grad?: string[];
   image?: string;
   images?: Image[];
-  /** Square edge length in px. */
   size: number;
   className?: string;
 };

@@ -4,11 +4,6 @@ import type { TrackSnapshot as Track } from "@contexts/catalog";
 import { toTrack, toVibeTrack } from "@/model/adapters/track";
 import type { VibeTrack } from "@/model/vibe";
 
-/**
- * Playback-facing presentation projections. These functions keep queue/domain
- * semantics outside React hooks while returning the Vibe display shapes the
- * current UI renders.
- */
 export function currentTrackView(track: Track | undefined): VibeTrack | undefined {
   return track ? toVibeTrack(track) : undefined;
 }

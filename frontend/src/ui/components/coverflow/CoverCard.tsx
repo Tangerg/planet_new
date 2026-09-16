@@ -12,12 +12,6 @@ import { SETTLE } from "@/styles/motion";
 import type { CoverTransform } from "./geometry";
 import { useAccent } from "@/hooks/accent";
 
-/**
- * One Cover Flow card: the fanned 3D surface (cover art + optional play fab) and
- * its classic floor reflection. The fan geometry (translate/rotateY/scale/opacity)
- * is Motion-driven and tweens as the carousel re-centers; `initial={false}` so
- * cards entering the windowed range snap to their fanned pose (no fly-in stutter).
- */
 export function CoverCard({
   item,
   isCenter,
@@ -62,19 +56,13 @@ export function CoverCard({
         pointerEvents: o.op ? "auto" : "none",
       }}
     >
-      {/* cover */}
       <div className="relative" style={{ width: cover, height: cover }}>
-        {/* The play fab stays a sibling (not a child) so the cover activation
-            target cannot swallow it. */}
         <PressTarget label={item.name} onActivate={onActivate}>
           <Art
             seed={item.seed}
             grad={item.grad}
             image={item.image}
             images={item.images}
-            // No grain here: ~13 covers + their reflections each carry a mix-blend
-            // grain layer, and re-blending them all against the backdrop every frame
-            // dropped frames during fast flips.
             grain={false}
             style={{
               width: cover,
@@ -95,8 +83,6 @@ export function CoverCard({
             aria-label={t("a11y.playItem", { name: item.name })}
             className="absolute z-[5] grid h-[52px] w-[52px] place-items-center rounded-full"
             style={{
-              // On a circle the square corner sits outside the disc, so pull the
-              // button inward to rest on the lower-right edge.
               right: round ? 30 : 16,
               bottom: round ? 30 : 16,
               background: accent,
@@ -108,11 +94,6 @@ export function CoverCard({
           </Button>
         )}
       </div>
-      {/* reflection — classic Cover Flow mirror on the floor below the cover.
-          scaleY(-1) about CENTER keeps the mirror below (origin "top" would flip
-          it up over the cover, hiding it); since the flip also mirrors the mask,
-          the gradient is `to top` so the edge touching the cover stays brightest
-          and fades downward. */}
       <div
         aria-hidden
         style={{

@@ -23,8 +23,6 @@ describe("cover flow input model", () => {
   });
 
   it("treats a small pointer travel as a click, larger as a drag", () => {
-    // Below/at the threshold → still a click (leave the pointer uncaptured so the
-    // card underneath stays clickable); beyond it → a drag.
     expect(coverFlowDragStarted(100, 100)).toBe(false);
     expect(coverFlowDragStarted(100, 103)).toBe(false);
     expect(coverFlowDragStarted(100, 96)).toBe(false);

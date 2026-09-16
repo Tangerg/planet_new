@@ -7,15 +7,10 @@ import { MorphFrozen } from "./context";
 import { MORPH_LAYER_FADE_SEC, MORPH_SEC, layerStyle, type Transition } from "./useMorphTransition";
 
 type MorphStageProps<V extends string> = {
-  /** The resident container ref the engine measures against. */
   viewRef: RefObject<HTMLDivElement | null>;
-  /** Current screen key. */
   view: V;
-  /** Live transition state from useMorphTransition (null = idle). */
   trans: Transition<V> | null;
-  /** Renders a screen by key — supplied by the consumer (keeps infra screen-agnostic). */
   renderScreen: (v: V) => React.ReactNode;
-  /** Background for the flying tile, by (seed, grad) — injected so infra holds no art/vibe logic. */
   tileBg: (seed: number | undefined, grad: string[] | undefined) => string;
 };
 
@@ -23,27 +18,12 @@ type ClipStyle = React.CSSProperties & {
   WebkitClipPath?: string;
 };
 
-/**
- * A border-radius (px number, "<n>px", or "<n>%") as a percentage of the given
- * box edge, clamped to [0,50]. The flying tile tweens its radius as a scale-stable
- * PERCENTAGE so a shape change between the two heroes (square 0% ↔ circle 50%, or
- * rounded ↔ sharp) morphs smoothly while the FLIP transform scales the box —
- * instead of snapping at the handoff. When both ends share a shape it's a no-op
- * (equal % → no border-radius repaint), so the common sharp→sharp case stays free.
- */
 function radiusPct(r: number | string, size: number): number {
   const n = typeof r === "number" ? r : parseFloat(r) || 0;
   if (typeof r === "string" && r.trim().endsWith("%")) return Math.min(50, n);
   return size > 0 ? Math.min(50, (n / size) * 100) : 0;
 }
 
-/**
- * The morph stage: the single resident container in which screens mount/unmount,
- * plus the transition layers (base / outgoing `t-from` / flying `grain` tile)
- * the engine drives. Lifted verbatim from Shell so the page-to-page transition
- * is reusable infra, not inlined in one screen. Visual classes (`.view`,
- * `.t-base`, `.t-from`, `.grain`) live in the design-system CSS.
- */
 export function MorphStage<V extends string>({
   viewRef,
   view,
@@ -51,14 +31,6 @@ export function MorphStage<V extends string>({
   renderScreen,
   tileBg,
 }: MorphStageProps<V>) {
-  // Freeze the OUTGOING screen's render for the whole transition. A heavy `from`
-  // screen (e.g. ForYou — blurred hero + image rails) would otherwise re-render
-  // on every Shell update mid-morph (its catalog/daily/record queries resolving),
-  // churning the main thread for ~600ms. border-radius is non-composited, so that
-  // churn makes the flying tile's square→circle tween drop frames and snap at the
-  // hand-off (seen ONLY when leaving ForYou). Keyed on `trans.from` → computed
-  // once per transition; intentionally NOT re-run when `renderScreen` changes
-  // (that's the whole point — a stable frozen snapshot while the tile flies).
   const fromKey = trans?.from;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fromScreen = React.useMemo(() => (fromKey ? renderScreen(fromKey) : null), [fromKey]);
@@ -67,10 +39,6 @@ export function MorphStage<V extends string>({
       {(() => {
         const fwd = trans && trans.dir === "fwd" && trans.point;
         const clipping = fwd && trans.hero !== true;
-        // The destination hero is the shared element the flying tile represents,
-        // so keep it hidden while the tile is in flight — otherwise the cover
-        // shows twice (parked at the target + the one in transit). Revealed at
-        // "reveal", exactly as the tile fades out, for a seamless handoff.
         const hideHero = fwd && trans.hero !== false && trans.phase !== "reveal";
         const st: ClipStyle = { height: "100%" };
         if (clipping) {
@@ -92,10 +60,6 @@ export function MorphStage<V extends string>({
         <React.Fragment>
           {(() => {
             const fromStyle: ClipStyle = layerStyle(trans);
-            // On reverse, the outgoing hero is the shared element the tile carries
-            // back to the card, so hide it for the whole reverse — the tile starts
-            // exactly over it (so there's no flash) and represents it the rest of
-            // the way.
             const hideFromHero = trans.dir === "rev" && trans.hero === true;
             if (trans.dir === "rev" && trans.hero === false && trans.point) {
               const collapsed = trans.phase !== "start";
@@ -117,15 +81,6 @@ export function MorphStage<V extends string>({
           {trans.hero !== false &&
             (() => {
               const t = trans;
-              // FLIP: lay the tile out at the TARGET rect and never resize it —
-              // translate+scale it onto the ORIGIN rect, then animate the transform
-              // back. transform+opacity are the only compositor-only props (no
-              // per-frame layout/paint), so the flight stays on the GPU instead of
-              // re-laying-out the box + re-sampling the cover <img> every frame
-              // (the old left/top/width/height tween thrashed layout in WKWebView).
-              // border-radius tweens too, but as a scale-stable PERCENTAGE so a
-              // shape change between the two heroes (square↔circle, rounded↔sharp)
-              // morphs smoothly; equal shapes → equal % → no-op (no repaint).
               const target = t.target ?? t.origin;
               const o = t.origin;
               const atOrigin = t.dir === "fwd" ? t.phase === "start" : t.phase !== "start";

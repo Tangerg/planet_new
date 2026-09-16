@@ -14,25 +14,12 @@ import {
 } from "@/model/cover-flow-input";
 import { useEventCallback } from "@/hooks/useEventCallback";
 
-// `drag` is dual-use: a number accumulates horizontal wheel delta, an object
-// tracks an in-flight pointer press, null idle. `dragging` flips true only once
-// the press travels past the click/drag threshold — until then the pointer is
-// left UNCAPTURED so the press stays a click that reaches the card underneath.
 type DragState = number | { x: number; start: number; pointerId: number; dragging: boolean } | null;
 
-/**
- * Input driving for the CoverFlow carousel — keyboard (window, capture phase so
- * it wins over global spatial-nav), horizontal wheel, and pointer drag. Arrows
- * move the center / expand the tracklist, Enter opens the centered item. The
- * keydown handler is stable (installed once) but always reads the latest state
- * via useEventCallback; the pointer handlers are plain per-render closures.
- */
 export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: {
   items: FlowItem<T>[];
   center: number;
   expanded: boolean;
-  /** Whether the centered cover has a tracklist to expand — arrow-down and
-   *  arrow-up mean nothing on a surface that has none. */
   canExpand: boolean;
   onOpen: (item: T) => void;
   setCenter: (n: number | ((c: number) => number)) => void;
@@ -92,8 +79,6 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
     }
   };
   const onPointerDown = (e: React.PointerEvent) => {
-    // Do NOT capture yet: a plain click must reach the card / play fab. Capture
-    // is deferred to onPointerMove once the press is confirmed a drag.
     drag.current = { x: e.clientX, start: center, pointerId: e.pointerId, dragging: false };
   };
   const onPointerMove = (e: React.PointerEvent) => {
@@ -101,8 +86,6 @@ export function useCoverFlowInput<T extends VibeTrack | VibeCollection>(params: 
     if (!state || typeof state !== "object") return;
     if (!state.dragging) {
       if (!coverFlowDragStarted(state.x, e.clientX)) return;
-      // Confirmed drag: capture now so it survives the pointer leaving the rail,
-      // and let the follow-up click be swallowed (a drag must not activate a card).
       state.dragging = true;
       (e.currentTarget as HTMLElement).setPointerCapture?.(state.pointerId);
     }

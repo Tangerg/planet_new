@@ -20,7 +20,6 @@ export function useCatalog() {
   return { catalog, isLoading };
 }
 
-/** Returns a search(query) that calls media.search and projects to vibe shapes. */
 export function useProviderSearch() {
   const media = useMediaService();
   return useCallback(
@@ -31,7 +30,6 @@ export function useProviderSearch() {
   );
 }
 
-/** Chart list in vibe shape, for the Charts grid. */
 export function useToplists(): VibeCollection[] {
   const media = useMediaService();
   const { data } = useProjectedResultQuery({

@@ -8,10 +8,10 @@ describe("subItemTransform", () => {
   });
 
   test("row y is exact integer stacking (below grows, above is negative)", () => {
-    expect(subItemTransform(1).y).toBe(172); // 84 + 58 + 30 (after-active gap)
-    expect(subItemTransform(2).y).toBe(230); // + one row
-    expect(subItemTransform(-1).y).toBe(-82); // nearest passed row above the bar
-    expect(subItemTransform(-2).y).toBe(-140); // + one row
+    expect(subItemTransform(1).y).toBe(172);
+    expect(subItemTransform(2).y).toBe(230);
+    expect(subItemTransform(-1).y).toBe(-82);
+    expect(subItemTransform(-2).y).toBe(-140);
   });
 
   test("the bow is symmetric above/below and pushes non-active rows right", () => {
