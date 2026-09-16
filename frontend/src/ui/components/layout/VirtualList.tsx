@@ -41,10 +41,8 @@ export function VirtualList({
     count,
   );
 
-  // useVirtualizer hands back functions React Compiler cannot memoise, so it
-  // skips this component — a property of the library, not of the code here. The
-  // measurements stay inside this file and reach children as plain numbers, so
-  // nothing memoised downstream can go stale on them.
+  // useVirtualizer returns functions React Compiler cannot memoise. Its
+  // measurements reach children as plain numbers, so nothing downstream goes stale.
   // oxlint-disable-next-line react/incompatible-library
   const virtualizer = useVirtualizer({
     count,

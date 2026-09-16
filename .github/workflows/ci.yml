@@ -32,8 +32,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
 
-      # Read from `packageManager` rather than repeated here, so the pin has one
-      # owner and CI cannot drift from what a developer's tree installs.
+      # Read from `packageManager` so the pin has one owner.
       - name: Install the Yarn Classic pinned by package.json
         run: npm install --global "yarn@$(node -p "require('./frontend/package.json').packageManager.split('@')[1]")"
 

@@ -8,9 +8,8 @@ export function usePlayHistory(currentTrack: VibeTrack | undefined): readonly Vi
   const currentTrackId = currentTrack?.id;
   const [history, setHistory] = useState<readonly VibeTrack[]>([]);
 
-  /* Appending is a reaction to the track prop changing, not a synchronisation
-     with an external system, so it is adjusted during render: an effect would
-     paint the new track against the previous history first and then re-render. */
+  // Adjusted during render, not in an effect: an effect would paint the new
+  // track against the old history first.
   const [recorded, setRecorded] = useState<string | null | undefined>(null);
   if (recorded !== currentTrackId) {
     setRecorded(currentTrackId);

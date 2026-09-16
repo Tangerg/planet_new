@@ -40,10 +40,7 @@ export function LoginSheet({
   const [flow, setFlow] = useState<LoginFlow | null>(null);
   const [status, setStatus] = useState<LoginViewStatus>("pending");
 
-  /* Closing the sheet resets it — a state adjustment rather than a
-     synchronisation, so it belongs in render; the effect below owns only the
-     login round-trip. The initial state already is the closed state, so a sheet
-     that mounts closed has nothing to adjust. */
+  // Closing resets the sheet; the effect owns only the login round-trip.
   const [openedFor, setOpenedFor] = useState(open);
   if (openedFor !== open) {
     setOpenedFor(open);

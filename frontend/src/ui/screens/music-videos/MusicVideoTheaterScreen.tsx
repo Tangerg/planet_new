@@ -48,9 +48,7 @@ export function MusicVideoTheaterScreen({
     video,
   });
 
-  /* A new source rewinds the position and re-arms the play intent. That is a
-     state adjustment, so it is made during render; the effect keeps only the
-     imperative <video> work it has to do against the DOM node. */
+  // A new source rewinds and re-arms play; the effect keeps only the DOM work.
   const source = { id: video.id, playUrl: video.playUrl, hasStream: model.hasStream };
   const [loadedSource, setLoadedSource] = useState(source);
   if (

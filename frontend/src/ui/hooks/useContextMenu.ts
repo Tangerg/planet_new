@@ -21,8 +21,7 @@ export function useContextMenu(opts: {
   const [menu, setMenu] = useState<MenuState>(null);
 
   const optsRef = useRef(opts);
-  // Refreshed after commit rather than during render. Every reader below is a
-  // pointer-event handler, so it cannot run before this has caught up.
+  // After commit, not during render: every reader is a pointer handler.
   useEffect(() => {
     optsRef.current = opts;
   });

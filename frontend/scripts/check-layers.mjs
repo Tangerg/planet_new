@@ -104,13 +104,10 @@ function importsAnyOf(source, specifiers) {
   return new RegExp(`from\\s+["'](?:${specifiers.join("|")})["']`).test(source);
 }
 
-// The import graph is built here, on oxc, rather than delegated to a crawler
-// that reads the TypeScript compiler API. TypeScript 7 publishes only `version`
-// from its package root, so those crawlers either crash (madge) or cap their
-// support below 7 and silently cruise zero files (dependency-cruiser) — and a
-// boundary guard that silently sees an empty graph passes everything. oxc has
-// no TypeScript dependency and resolves the tsconfig aliases with the same
-// semantics the linter already applies to these files.
+// Built on oxc rather than a crawler reading the TypeScript compiler API:
+// TypeScript 7 publishes only `version` from its package root, so madge crashes
+// and dependency-cruiser silently cruises zero files — and a guard handed an
+// empty graph passes everything.
 const SRC = resolve("src");
 
 const resolver = new ResolverFactory({
@@ -131,8 +128,7 @@ function moduleRequestsOf(file, code) {
     ...esm.staticExports.flatMap((it) =>
       it.entries.map((entry) => entry.moduleRequest?.value).filter(Boolean),
     ),
-    // Dynamic imports carry source offsets rather than a parsed value; every
-    // one in this tree is a string literal, so the quotes come off directly.
+    // Dynamic imports carry offsets, not a value; all are string literals here.
     ...esm.dynamicImports.map((it) =>
       code.slice(it.moduleRequest.start + 1, it.moduleRequest.end - 1),
     ),
@@ -146,8 +142,7 @@ for (const absolute of globSync(join(SRC, "**/*.{ts,tsx}"))) {
   const deps = new Set();
   for (const request of moduleRequestsOf(file, code)) {
     const { path: target } = resolver.sync(dirname(absolute), request);
-    // Unresolvable specifiers are type-only package shims and the like, and
-    // anything outside src/ is a third-party edge no layer rule speaks about.
+    // Outside src/ is a third-party edge no layer rule speaks about.
     if (!target || !target.startsWith(SRC + sep)) continue;
     deps.add(relative(SRC, target).split(sep).join("/"));
   }

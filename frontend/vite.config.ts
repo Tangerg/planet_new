@@ -33,11 +33,12 @@ export default defineConfig(({ mode }) => {
     // `frontend/bindings` is missing, which is the signal we want.
     plugins: [
       tailwindcss(),
-      // React Compiler memoises components for us, which is why the lint rules
-      // it publishes (refs read during render, impure render, setState in an
-      // effect) are errors here rather than advice: under the compiler those
-      // patterns produce stale UI instead of merely being untidy.
-      react({ compiler: { logDiagnostics: true } }),
+      // `compiler: true` crashes the Shell on first paint: React Query's
+      // in-render update re-runs the component, and the compiler's cache hook
+      // makes the second pass disagree about hook order. Reproduces on
+      // unmodified sources, so it is the transform. The source is kept
+      // compiler-clean regardless — that is what oxlint's react rules enforce.
+      react(),
       wails("./bindings"),
     ],
 

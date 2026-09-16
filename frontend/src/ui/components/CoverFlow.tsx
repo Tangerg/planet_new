@@ -58,9 +58,8 @@ export function CoverFlow<T extends VibeTrack | VibeCollection>({
 }: Props<T>) {
   const { t } = useTranslation();
   const { trackMenu, collMenu } = useScreenActions();
-  // Portal target for the tracklist Sheet — keeps it positioned within the
-  // carousel. Held as state, not a ref: the container is read while rendering
-  // the Sheet, and a ref would still be null on the render that mounts it.
+  // Portal target for the tracklist Sheet. State, not a ref: it is read while
+  // rendering the Sheet, where a ref would still be null.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const accent = useAccent();
   const [expanded, setExpanded] = useState(false);

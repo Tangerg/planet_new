@@ -28,12 +28,9 @@ export function useSearchScreenModel({
   const [results, setResults] = useState<SearchResults>(EMPTY_SEARCH_RESULTS);
   const [loading, setLoading] = useState(false);
 
-  /* Reacting to a new query is a state adjustment, not a synchronisation with
-     anything outside React, so it happens here rather than in the effect below:
-     the effect owns only the debounced request. A query that will not be
-     requested drops the old results; one that will keeps them on screen until
-     the replacements land. `null` so the first render counts as a change even
-     when the screen opens with a seeded query. */
+  /* The effect below owns only the debounced request. A query that will not be
+     requested drops the old results; one that will keeps them until the
+     replacements land. `null` so a seeded first render still counts. */
   const [plannedFor, setPlannedFor] = useState<string | null>(null);
   if (plannedFor !== query) {
     setPlannedFor(query);

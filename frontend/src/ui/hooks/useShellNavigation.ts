@@ -165,10 +165,8 @@ export function useShellNavigation(media: MediaService, queryClient: QueryClient
   const { trans, startForward, startReverse, readLastTile, restoreLastTile, morph } =
     useMorphTransition(viewRef, view, setView, LAUNCHER_VIEW);
 
-  /* Mirror the live navigation state so a back-stack push captures the screen
-     being left without stale closures. Refreshed after each commit: every push
-     runs from a pointer or key handler, and a card morph overwrites the origin
-     tile in that same handler, so the mirror is always the screen being left. */
+  /* Mirrors the live nav state so a push captures the screen being left.
+     Refreshed after commit — every push runs from an input handler. */
   useEffect(() => {
     navSnapRef.current = createNavSnapshot({
       view,

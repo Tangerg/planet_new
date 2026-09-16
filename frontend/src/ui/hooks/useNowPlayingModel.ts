@@ -28,8 +28,7 @@ export function useNowPlayingModel({ initialMode, onNext, onPrev }: Options) {
   const [queueOpen, setQueueOpen] = useState(false); // down axis = queue
 
   // Portal target for the queue Sheet; the two scroll containers auto-center.
-  // State rather than a ref: the container is read while rendering the Sheet,
-  // and a ref would still be null on the render that mounts it.
+  // State, not a ref: it is read while rendering the Sheet.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const queueScrollRef = useRef<HTMLDivElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);

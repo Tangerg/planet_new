@@ -19,14 +19,10 @@ import (
 	"github.com/Tangerg/planet_new/backend/domain"
 )
 
-// testClient replaces http.DefaultClient for every request in this file. The
-// default transport is process-global, so a connection it parks outlives the
-// test that opened it; since Go 1.27 drains unread response bodies on Close,
-// those connections stay reusable instead of being dropped. A pooled
-// connection the client dialled but never sent a request on stays StateNew to
-// the server (golang/go#21204), which makes the bounded graceful drain in
-// startTestServer block until its deadline. Closing every connection after one
-// response keeps each server's shutdown deterministic.
+// Connections parked in the process-global default transport outlive the test
+// that opened them, and one the client never sent a request on reads as
+// StateNew to the server (golang/go#21204), stalling the drain in
+// startTestServer. One connection per response keeps shutdown deterministic.
 var testClient = &http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
 
 // streamURL builds the loopback /stream proxy URL for a remote source, mirroring

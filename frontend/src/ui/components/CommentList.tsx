@@ -15,10 +15,8 @@ import { relativeTime } from "@shared/time";
 
 export function CommentList({ comments }: { comments: VibeComment[] }) {
   const { t, i18n } = useTranslation();
-  // One clock read for the whole list, taken when it mounts: the ages stay
-  // consistent with each other, and re-rendering can no longer shift them —
-  // reading the clock in render would make a comment's age depend on when React
-  // happened to re-run it.
+  // One clock read at mount: ages stay consistent and re-rendering cannot
+  // shift them.
   const [now] = useState(() => Date.now());
   if (!comments.length) return <Empty className="py-[50px]">{t("comments.empty")}</Empty>;
   return (
